@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M1 Deterministic sim core — M1.1–M1.2 done (tag `m0` = M0).
+- **Milestone:** M1 Deterministic sim core — M1.1–M1.3 done (tag `m0` = M0).
 - **Last green commit:** M0.8 data tables (verify ~3.5 s; verify:full ~1 min incl. Docker, Tauri, `make arm`).
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs, 8 resources, 4 animals — 100% sourced, 22 `verify` flags.
 - **Key metrics:** headless GL = ANGLE Metal / Apple GPU (D15). Image 61.7 MB; .app 9 MB; .s9pk 47 MB.
@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
   reinstall ok. NOT verified: backup/restore (no backup target, KI-3). VM stopped.
 - **Open blockers:** none. Open issues: KI-1 icon (placeholder-quality SVG), KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M1.3 commands + tick + Sim facade.
+- **Next up:** M1.4 pathfinding (regions, JPS, budget, smoothing).
 - **Notes:** the detailed design is `docs/design/architecture-proposal.md` — its Q16 math is superseded by D1.
 
 ---
@@ -65,7 +65,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       list), ResourceStore (trees/mines/bushes/fish, `resAt` grid, 16×16 chunk index), TileMap (terrain, corner
       heights, passability bits, `bldAt`), compiled per-player rules tables from `src/data` (natural → per-tick).
       _Accept:_ tests for store churn, handle staleness, rules compile (villager speed 1.1 tiles/s → per tick).
-- [ ] **M1.3 Commands + tick.** Command union + validation, binary codec, `Sim` facade (create/step/hash/
+- [x] **M1.3 Commands + tick.** Command union + validation, binary codec, `Sim` facade (create/step/hash/
       hashBreakdown/view/serialize), event queue, tick system order per architecture doc.
       _Accept:_ move/stop commands round-trip through the codec; two sims fed the same commands hash-equal.
 - [ ] **M1.4 Pathfinding.** Land/water passability classes, connected regions (union-find, incremental on

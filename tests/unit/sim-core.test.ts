@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest';
+import { Sim, type SimConfig } from '../../src/sim/index.ts';
+import { decodeCommands, encodeCommands } from '../../src/sim/commands/codec.ts';
+import { quantize, type PlayerCommand } from '../../src/sim/commands/types.ts';
+import { MOVE_LAND } from '../../src/data/terrain.ts';
+
+const cfg = (extra: Partial<SimConfig> = {}): SimConfig => ({
+  seed: 1234,
+  map: { w: 32, h: 32 },
+  players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+  scenario: {
+    units: [
+      { type: 'villager', owner: 1, x: 2.5, y: 2.5 },
+      { type: 'villager', owner: 1, x: 3.5, y: 2.5 },
+      { type: 'clubman', owner: 2, x: 20.5, y: 20.5 },
+    ],
+  },
+  ...extra,
+});
+
+const handles = (sim: Sim): number[] => {
+  const e = sim.world.ents;
+  const out: number[] = [];
+  for (let s = 0; s < e.top; s++) if (e.alive[s]) out.push(e.handleOf(s));
+  return out;
+};
+
+describe('command codec', () => {
+  it('round-trips commands with large handles, fractional positions and queue flags', () => {
+    const cmds: PlayerCommand[] = [
+      { player: 1, cmd: { t: 'move', ids: [0, 5, 2 ** 36 + 7], x: quantize(12.3456), y: quantize(0.001) } },
+      { player: 2, cmd: { t: 'move', ids: [1], x: 31.99609375, y: 4, queue: true } },
+      { player: 8, cmd: { t: 'stop', ids: [] } },
+    ];
+    expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);
+    expect(() => decodeCommands(Uint8Array.from([1, 1]))).toThrow();
+  });
+});
+
+describe('Sim', () => {
+  it('moves a villager to its target at 1.1 tiles/s', () => {
+    const sim = Sim.create(cfg());
+    const [v] = handles(sim);
+    sim.step([{ player: 1, cmd: { t: 'move', ids: [v!], x: 13.5, y: 2.5 } }]);
+    let ticks = 1;
+    while (sim.world.orders[sim.world.ents.slotOf(v!)] && ticks < 1000) {
+      sim.step();
+      ticks++;
+    }
+    expect(sim.world.ents.x[sim.world.ents.slotOf(v!)]).toBe(13.5);
+    expect(ticks).toBe(200); // 11 tiles / (1.1 tiles/s) = 10 s = 200 ticks
+    expect(sim.drainEvents().some((e) => e.t === 'arrived')).toBe(true);
+  });
+
+  it('ignores commands for units the player does not own', () => {
+    const sim = Sim.create(cfg());
+    const enemy = handles(sim)[2]!;
+    sim.step([{ player: 1, cmd: { t: 'move', ids: [enemy], x: 1, y: 1 } }]);
+    sim.step();
+    expect(sim.world.ents.x[sim.world.ents.slotOf(enemy)]).toBe(20.5);
+  });
+
+  it('executes shift-queued moves in order', () => {
+    const sim = Sim.create(cfg());
+    const [v] = handles(sim);
+    sim.step([
+      { player: 1, cmd: { t: 'move', ids: [v!], x: 5.5, y: 2.5 } },
+      { player: 1, cmd: { t: 'move', ids: [v!], x: 5.5, y: 6.5, queue: true } },
+    ]);
+    for (let i = 0; i < 400; i++) sim.step();
+    const s = sim.world.ents.slotOf(v!);
+    expect([sim.world.ents.x[s], sim.world.ents.y[s]]).toEqual([5.5, 6.5]);
+  });
+
+  it('two sims fed identical commands stay hash-identical; a different command diverges', () => {
+    const a = Sim.create(cfg());
+    const b = Sim.create(cfg());
+    const c = Sim.create(cfg());
+    const [va, vb] = handles(a);
+    for (let t = 0; t < 300; t++) {
+      const cmds: PlayerCommand[] = t % 50 === 0 ? [{ player: 1, cmd: { t: 'move', ids: [va!, vb!], x: quantize((t / 10) % 30), y: quantize(7.3) } }] : [];
+      a.step(cmds);
+      b.step(cmds);
+      c.step(t === 100 ? [] : cmds);
+      expect(a.hash()).toBe(b.hash());
+    }
+    expect(a.hash()).not.toBe(c.hash());
+    expect(a.hashBreakdown().ents).not.toBe(c.hashBreakdown().ents);
+    expect(a.hashBreakdown().map).toBe(c.hashBreakdown().map);
+  });
+
+  it('builds maps from ASCII with blocking resources', () => {
+    const sim = Sim.create(cfg({
+      map: { w: 6, h: 3, ascii: ['..TT~~', '.,GS~w', '..B..F'] },
+      scenario: {},
+    }));
+    const m = sim.world.map;
+    expect(sim.world.res.count).toBe(6);
+    expect(m.passable(2, 0, MOVE_LAND)).toBe(false); // tree
+    expect(m.passable(1, 1, MOVE_LAND)).toBe(true); // shallows
+    expect(m.passable(4, 0, MOVE_LAND)).toBe(false); // water
+    expect(m.passable(0, 0, MOVE_LAND)).toBe(true);
+  });
+});
