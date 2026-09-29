@@ -15,7 +15,8 @@ export async function runTauriSmokeTest(app: Application, extra: () => Record<st
     const tStart = performance.now();
     for (let i = 0; i < 120; i++) {
       const t0 = performance.now();
-      app.render();
+      // Drive the whole frame (our update callbacks + Pixi's render): rAF never fires in a hidden window.
+      app.ticker.update(t0);
       gl.finish();
       times.push(performance.now() - t0);
     }
