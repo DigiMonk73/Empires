@@ -32,8 +32,19 @@ export class OrderFuzzer {
       const ids: number[] = [];
       for (let k = 0; k < n; k++) ids.push(mine[(start + k * 7) % mine.length]!);
       const roll = r.float();
+      const res = w.res;
       if (roll < 0.08) out.push({ player: p, cmd: { t: 'stop', ids } });
-      else
+      else if (roll < 0.3 && res.count) {
+        // Economy: send some units to gather a random node (non-villagers just walk there).
+        out.push({ player: p, cmd: { t: 'gather', ids, res: r.int(res.count) } });
+      } else if (roll < 0.36) {
+        // Build a house at a random spot (rejections are part of the test too).
+        out.push({ player: p, cmd: { t: 'build', ids: ids.slice(0, 3), type: r.chance(0.7) ? 'house' : 'granary', tx: r.int(w.map.w - 2), ty: r.int(w.map.h - 2) } });
+      } else if (roll < 0.42) {
+        for (let b = 0; b < e.top; b++) {
+          if (e.alive[b] && e.kind[b] === EKind.building && e.owner[b] === p) out.push({ player: p, cmd: { t: 'train', bld: e.handleOf(b), unit: 'villager', n: 1 + r.int(3) } });
+        }
+      } else
         out.push({
           player: p,
           cmd: { t: 'move', ids, x: quantize(r.float() * (w.map.w - 1) + 0.5), y: quantize(r.float() * (w.map.h - 1) + 0.5), queue: roll > 0.85 },
@@ -59,7 +70,7 @@ export function stressConfig(seed: number, size = 96, unitsPerPlayer = 250): Sim
     }
     rows.push(row);
   }
-  const types = ['villager', 'clubman', 'bowman', 'scout', 'hoplite', 'warElephant'];
+  const types = ['villager', 'villager', 'clubman', 'bowman', 'scout', 'hoplite', 'warElephant'];
   const units: { type: string; owner: number; x: number; y: number }[] = [];
   for (let p = 1; p <= 2; p++) {
     for (let i = 0; i < unitsPerPlayer; i++) {
@@ -67,5 +78,9 @@ export function stressConfig(seed: number, size = 96, unitsPerPlayer = 250): Sim
       units.push({ type: types[i % types.length]!, owner: p, x: bx + 0.5 + (i % 16) * 0.75, y: bx + 0.5 + Math.floor(i / 16) * 0.75 });
     }
   }
-  return { seed, map: { w: size, h: size, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'persian' }], scenario: { units } };
+  const buildings = [
+    { type: 'townCenter', owner: 1, tx: 8, ty: 2 },
+    { type: 'townCenter', owner: 2, tx: size - 11, ty: size - 5 },
+  ];
+  return { seed, map: { w: size, h: size, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'persian' }], startingResources: 'high', scenario: { units, buildings } };
 }

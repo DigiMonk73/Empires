@@ -14,6 +14,7 @@ import { CIV_BY_ID } from '../data/index.ts';
 import { POPULATION } from '../data/setup.ts';
 import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.ts';
 import { populationSystem } from './systems/population.ts';
+import type { Production, Rally } from './systems/production.ts';
 
 export interface PlayerSetup {
   civ: string;
@@ -87,6 +88,8 @@ export type SimEvent =
   | { t: 'deposit'; player: number; res: number; amount: number }
   | { t: 'depleted'; res: number }
   | { t: 'built'; h: number; player: number }
+  | { t: 'trained'; h: number; player: number }
+  | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number };
 
@@ -103,6 +106,9 @@ export class World {
   orders: (Order[] | undefined)[] = [];
   /** Per-slot path waypoints as [x0, y0, x1, y1, …] (cold data). */
   paths: (number[] | undefined)[] = [];
+  /** Per-building production queues and rally points (cold data). */
+  prod: (Production | undefined)[] = [];
+  rally: (Rally | undefined)[] = [];
   events: SimEvent[] = [];
   /** Game population limit (config). */
   readonly popLimit: number;
@@ -227,6 +233,8 @@ export class World {
     if (slot < 0) return;
     this.orders[slot] = undefined;
     this.paths[slot] = undefined;
+    this.prod[slot] = undefined;
+    this.rally[slot] = undefined;
     this.pathing.cancel(slot);
     unstampLos(this, slot);
     this.ents.act[slot] = Act.idle;

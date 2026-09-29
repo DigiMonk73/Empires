@@ -10,6 +10,9 @@ const CMD_STOP = 2;
 const CMD_GATHER = 3;
 const CMD_BUILD = 4;
 const CMD_CONSTRUCT = 5;
+const CMD_TRAIN = 6;
+const CMD_CANCEL_TRAIN = 7;
+const CMD_RALLY = 8;
 
 class Writer {
   bytes: number[] = [];
@@ -111,6 +114,24 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(c.h);
       w.uv(c.queue ? 1 : 0);
       return;
+    case 'train':
+      w.uv(CMD_TRAIN);
+      w.uv(c.bld);
+      w.str(c.unit);
+      w.uv(c.n ?? 1);
+      return;
+    case 'cancelTrain':
+      w.uv(CMD_CANCEL_TRAIN);
+      w.uv(c.bld);
+      w.sv(c.index ?? -1);
+      return;
+    case 'rally':
+      w.uv(CMD_RALLY);
+      w.ids(c.blds);
+      w.pos(c.x);
+      w.pos(c.y);
+      w.sv(c.res ?? -1);
+      return;
   }
 }
 
@@ -139,6 +160,24 @@ function readCommand(r: Reader): Command {
       const ty = r.sv();
       const queue = r.uv() === 1;
       return queue ? { t: 'build', ids, type, tx, ty, queue } : { t: 'build', ids, type, tx, ty };
+    }
+    case CMD_TRAIN: {
+      const bld = r.uv();
+      const unit = r.str();
+      const n = r.uv();
+      return n === 1 ? { t: 'train', bld, unit } : { t: 'train', bld, unit, n };
+    }
+    case CMD_CANCEL_TRAIN: {
+      const bld = r.uv();
+      const index = r.sv();
+      return index < 0 ? { t: 'cancelTrain', bld } : { t: 'cancelTrain', bld, index };
+    }
+    case CMD_RALLY: {
+      const blds = r.ids();
+      const x = r.pos();
+      const y = r.pos();
+      const res = r.sv();
+      return res < 0 ? { t: 'rally', blds, x, y } : { t: 'rally', blds, x, y, res };
     }
     case CMD_CONSTRUCT: {
       const ids = r.ids();

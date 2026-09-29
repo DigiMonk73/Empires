@@ -6,6 +6,7 @@ import { SIM_VERSION } from '../version.ts';
 import { World, type Order, type SimConfig } from '../world.ts';
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { populationSystem } from '../systems/population.ts';
+import type { Production, Rally } from '../systems/production.ts';
 import { ARRAY_TYPES, bytesOf, typeTag, utf8Decode, utf8Encode, type TypedArray } from './binary.ts';
 
 /**
@@ -34,6 +35,8 @@ interface Header {
   map: { passVersion: number };
   orders: [number, Order[]][];
   paths: [number, number[]][];
+  prod: [number, Production][];
+  rally: [number, Rally][];
   pathQueue: PathRequest[];
   blobs: BlobRef[];
 }
@@ -64,9 +67,13 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
 
   const orders: [number, Order[]][] = [];
   const paths: [number, number[]][] = [];
+  const prod: [number, Production][] = [];
+  const rally: [number, Rally][] = [];
   for (let s = 0; s < e.top; s++) {
     if (w.orders[s]) orders.push([s, w.orders[s]!]);
     if (w.paths[s]) paths.push([s, w.paths[s]!]);
+    if (w.prod[s]) prod.push([s, w.prod[s]!]);
+    if (w.rally[s]) rally.push([s, w.rally[s]!]);
   }
   const header: Header = {
     simVersion: SIM_VERSION,
@@ -84,6 +91,8 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     map: { passVersion: m.passVersion },
     orders,
     paths,
+    prod,
+    rally,
     pathQueue: w.pathing.queueSnapshot(),
     blobs: refs,
   };
@@ -154,6 +163,10 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
   w.paths = [];
   for (const [s, o] of header.orders) w.orders[s] = o;
   for (const [s, p] of header.paths) w.paths[s] = p;
+  w.prod = [];
+  w.rally = [];
+  for (const [s, p] of header.prod) w.prod[s] = p;
+  for (const [s, r] of header.rally) w.rally[s] = r;
   w.pathing.restoreQueue(header.pathQueue);
   w.grid.rebuild(w.ents);
   populationSystem(w);

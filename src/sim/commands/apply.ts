@@ -5,6 +5,7 @@ import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
+import { cancelUnit, queueUnit } from '../systems/production.ts';
 
 /** Slots of the command's ids that are live units owned by the issuing player (others are ignored). */
 function ownedUnitSlots(w: World, player: number, ids: readonly number[]): number[] {
@@ -136,6 +137,21 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'construct':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) startConstruct(w, slot, cmd.h, !!cmd.queue);
         break;
+      case 'train':
+        queueUnit(w, player, cmd.bld, cmd.unit, Math.max(1, Math.min(5, cmd.n ?? 1)));
+        break;
+      case 'cancelTrain':
+        cancelUnit(w, player, cmd.bld, cmd.index ?? -1);
+        break;
+      case 'rally': {
+        if (!inMap(w, cmd.x, cmd.y)) break;
+        const res = cmd.res !== undefined && cmd.res >= 0 && cmd.res < w.res.count ? cmd.res : -1;
+        for (const h of cmd.blds) {
+          const b = w.ents.slotOf(h);
+          if (b >= 0 && w.ents.owner[b] === player && w.ents.kind[b] === EKind.building) w.rally[b] = { x: cmd.x, y: cmd.y, res };
+        }
+        break;
+      }
       case 'stop':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
           w.orders[slot] = undefined;

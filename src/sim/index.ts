@@ -6,6 +6,7 @@ import { fogSystem } from './systems/fog.ts';
 import { populationSystem } from './systems/population.ts';
 import { gatherSystem } from './systems/gather.ts';
 import { buildSystem } from './systems/build.ts';
+import { productionSystem } from './systems/production.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
@@ -49,6 +50,7 @@ export class Sim {
   step(cmds: readonly PlayerCommand[] = []): void {
     const w = this.world;
     applyCommands(w, cmds);
+    productionSystem(w);
     gatherSystem(w);
     buildSystem(w);
     pathRequestSystem(w);

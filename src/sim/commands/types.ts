@@ -11,7 +11,13 @@ export type Command =
   /** Place a foundation of building `type` with its top-left at (tx, ty); the villagers in `ids` build it. */
   | { t: 'build'; ids: number[]; type: string; tx: number; ty: number; queue?: boolean }
   /** Villagers help build existing foundation `h`. */
-  | { t: 'construct'; ids: number[]; h: number; queue?: boolean };
+  | { t: 'construct'; ids: number[]; h: number; queue?: boolean }
+  /** Queue `n` of base unit `unit` at building `bld`. */
+  | { t: 'train'; bld: number; unit: string; n?: number }
+  /** Cancel a queued unit (default: the last one) at building `bld`, refunding it. */
+  | { t: 'cancelTrain'; bld: number; index?: number }
+  /** Set the rally point of buildings `blds`: a point, or a resource node (`res`) to gather. */
+  | { t: 'rally'; blds: number[]; x: number; y: number; res?: number };
 
 export interface PlayerCommand {
   /** Issuing player slot (1..8); stamped by the router, never trusted from the payload. */

@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M4 Economy — M4.1–M4.3 done (stats/effects, gather cycle, construction). M3 done (tag `m3`).
+- **Milestone:** M4 Economy — M4.1–M4.4 done (stats/effects, gather, construction, production + rally). M3 done (tag `m3`).
 - **Last green commit:** M4.3 (verify ~20 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
 - **Art:** baked villager (8 facings × idle/walk/die), trees/mines/berries, Stone-age TC + house; calibration
   IoU 1.0; Docker bakes its own sprites (D20). Placeholders remain for soldiers and other buildings.
@@ -135,7 +135,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M4.3 Construction.** `build` command: placement validation (terrain, occupancy, footprint), cost paid,
       foundation (HP grows with progress), multi-builder rate (AoE2-style (n+2)/3 — verify), units pushed off the
       footprint, completion effects (pop cap, drop site). Shift-queued builds.
-- [ ] **M4.4 Production.** `train` / `cancelTrain` (queue ≤ 5, cost at queue, refund on cancel), housing pause,
+- [x] **M4.4 Production.** `train` / `cancelTrain` (queue ≤ 5, cost at queue, refund on cancel), housing pause,
       spawn toward the rally point, `rally` command (rally on a resource → auto-gather).
 - [ ] **M4.5 Farms, shore fish, hunting.** Farms (walkable, one farmer, farmFood 250, rebuild when empty),
       shore fishing from land, hunting (spear throw; gazelle flee; carcass node with decay).
