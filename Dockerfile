@@ -6,7 +6,7 @@ FROM --platform=$BUILDPLATFORM node:22-slim AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY index.html vite.config.ts tsconfig*.json ./
+COPY *.html vite.config.ts tsconfig*.json ./
 COPY src ./src
 COPY public ./public
 COPY assets ./assets
