@@ -45,6 +45,39 @@ function demo(): SimConfig {
   return { seed: 7, map: { w: W, h: W, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'egyptian' }], scenario: units };
 }
 
+/** A standard game start (econ:1.5, econ:8): Town Center, 3 villagers, berries, trees, gold and stone nearby. */
+function start(): SimConfig {
+  const W = 40;
+  const rows: string[] = [];
+  for (let y = 0; y < W; y++) {
+    let row = '';
+    for (let x = 0; x < W; x++) {
+      let c = '.';
+      const d2 = (cx: number, cy: number): number => (x - cx) * (x - cx) + (y - cy) * (y - cy);
+      if (d2(4, 30) <= 22 || d2(34, 8) <= 18 || (x < 3 && y < 18)) c = 'F';
+      if ((x === 11 || x === 12) && y >= 23 && y <= 25) c = 'B';
+      if (x >= 27 && x <= 28 && y >= 14 && y <= 16) c = 'G';
+      if (x >= 12 && x <= 13 && y >= 8 && y <= 9) c = 'S';
+      if ((x * 7 + y * 11) % 37 === 0 && c === '.' && d2(20, 20) > 60) c = 'T';
+      row += c;
+    }
+    rows.push(row);
+  }
+  return {
+    seed: 11,
+    map: { w: W, h: W, ascii: rows },
+    players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    scenario: {
+      buildings: [{ type: 'townCenter', owner: 1, tx: 18, ty: 18 }],
+      units: [
+        { type: 'villager', owner: 1, x: 21.8, y: 17.4 },
+        { type: 'villager', owner: 1, x: 22.4, y: 18.3 },
+        { type: 'villager', owner: 1, x: 22.1, y: 19.4 },
+      ],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -59,5 +92,6 @@ function crowd(n: number): SimConfig {
 
 export const SCENARIOS: Record<string, () => SimConfig> = {
   demo,
+  start,
   crowd: () => crowd(1000),
 };

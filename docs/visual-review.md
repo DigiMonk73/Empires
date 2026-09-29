@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M4.6 · economy-placing-house, economy-tc-queue, economy-after
+- Real opening by mouse: placement ghost (translucent baked hut on green/red tiles), build menu with original
+  hotkeys + next-age buildings greyed, baked-art icons for villager/house/TC, TC portrait, queue with progress.
+- Fixed: Back button read "Ba" (looked like Barracks) → ↩ glyph; Stop → ✋.
+- Should-fix (M4.7): Granary/Storage Pit/Barracks/Dock/Farm still placeholder boxes & text icons; newly trained
+  villagers bunch at one spawn tile.
+
 ## 2026-09-29 · M3.4 · contact-townCenter, contact-house, art-closeup
 - Stone-age huts: thatch cone roofs, mud-brick walls, door toward the viewer, team band on the wall; the Town
   Center adds a storage hut, raised granary, fire pit, palisade posts and team banners.

@@ -53,6 +53,8 @@ export class WorldRenderer {
   private readonly selGfx = new Graphics();
   private readonly hpGfx = new Graphics();
   private readonly markerGfx = new Graphics();
+  private readonly ghostGfx = new Graphics();
+  private ghostSprite: Sprite | null = null;
   private markers: { x: number; y: number; t0: number; color: number }[] = [];
   /** Visible terrain chunks after the last cull (≈ terrain draw calls). */
   terrainDrawCalls = 0;
@@ -67,7 +69,7 @@ export class WorldRenderer {
     this.objectLayer.sortableChildren = true;
     this.fog = new FogLayer(world);
     this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.fog.mesh, this.overlayLayer);
-    this.decalLayer.addChild(this.selGfx, this.markerGfx);
+    this.decalLayer.addChild(this.selGfx, this.markerGfx, this.ghostGfx);
     this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
     this.buildResources();
@@ -330,6 +332,60 @@ export class WorldRenderer {
       }
     }
     return best;
+  }
+
+  /** Resource node under a canvas point (its sprite bounds), or -1. */
+  pickResource(gx: number, gy: number): number {
+    let best = -1;
+    let bestZ = -Infinity;
+    for (let i = 0; i < this.resViews.length; i++) {
+      const sp = this.resViews[i];
+      if (!sp || !sp.visible) continue;
+      const b = sp.getBounds();
+      const padX = b.width * 0.18;
+      if (gx < b.minX + padX || gx > b.maxX - padX || gy < b.minY + b.height * 0.1 || gy > b.maxY) continue;
+      if (sp.zIndex > bestZ) {
+        bestZ = sp.zIndex;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Building placement ghost at tile (tx, ty): the building drawn translucent plus a green/red diamond per
+   * footprint tile. Pass typeId null to hide.
+   */
+  drawGhost(typeId: string | null, size: number, tx: number, ty: number, tileOk: readonly boolean[]): void {
+    const g = this.ghostGfx.clear();
+    if (!typeId) {
+      if (this.ghostSprite) this.ghostSprite.visible = false;
+      return;
+    }
+    const p = { x: 0, y: 0 };
+    let k = 0;
+    for (let dy = 0; dy < size; dy++) {
+      for (let dx = 0; dx < size; dx++) {
+        worldToIso(tx + dx, ty + dy, 0, p);
+        const ok = tileOk[k++];
+        g.poly([p.x, p.y, p.x + 32, p.y + 16, p.x, p.y + 32, p.x - 32, p.y + 16]).fill({ color: ok ? 0x40ff60 : 0xff3030, alpha: 0.28 });
+      }
+    }
+    const f = this.art?.frame(typeId, 'v0');
+    if (!this.ghostSprite) {
+      this.ghostSprite = new Sprite();
+      this.ghostSprite.alpha = 0.6;
+      this.overlayLayer.addChild(this.ghostSprite);
+    }
+    const sp = this.ghostSprite;
+    if (f) {
+      sp.texture = f.tex;
+      sp.anchor.set(f.anchorX, f.anchorY);
+      sp.scale.set(1 / (this.art!.meta(typeId)!.scale));
+      worldToIso(tx + size / 2, ty + size / 2, 0, p);
+      sp.position.set(p.x, p.y);
+      sp.visible = true;
+    } else sp.visible = false;
   }
 
   /** Canvas position (CSS px) of an entity's ground point. */

@@ -15,7 +15,7 @@ export interface ArtFrame {
  * `frame()` returns null and the renderer falls back to placeholder shapes.
  */
 export class BakedArt {
-  readonly models = new Map<string, { meta: AtlasMeta; frames: Map<string, ArtFrame> }>();
+  readonly models = new Map<string, { meta: AtlasMeta; frames: Map<string, ArtFrame>; pageSizes: { w: number; h: number }[] }>();
 
   static async load(base = './baked/'): Promise<BakedArt> {
     const art = new BakedArt();
@@ -44,7 +44,7 @@ export class BakedArt {
             const b = make(key);
             if (b) frames.set(key, { ...b, team: make(`${key}#t`) });
           }
-          art.models.set(id, { meta, frames });
+          art.models.set(id, { meta, frames, pageSizes: pages.map((p) => ({ w: p.source.pixelWidth, h: p.source.pixelHeight })) });
         } catch (e) {
           console.warn(`[art] failed to load ${id}`, e);
         }
@@ -59,6 +59,10 @@ export class BakedArt {
 
   meta(id: string): AtlasMeta | undefined {
     return this.models.get(id)?.meta;
+  }
+
+  pageSize(id: string, page: number): { w: number; h: number } {
+    return this.models.get(id)?.pageSizes[page] ?? { w: 1, h: 1 };
   }
 
   frame(id: string, key: string): ArtFrame | null {

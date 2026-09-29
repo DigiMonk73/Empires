@@ -4,6 +4,7 @@ import { TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
 import { playerColor } from '../render/worldRenderer.ts';
 import { hud, type SelInfo } from './store.ts';
+import { queueOf } from './commands.ts';
 
 function fmtClock(tick: number): string {
   const s = Math.floor(tick / 20);
@@ -32,6 +33,7 @@ export function syncHud(world: World, player: number, selected: readonly number[
     else if (e.build[s]! >= 1) cap += t.building?.popProvided ?? 0;
   }
   hud.pop.value = pop;
+  hud.idleVillagers.value = idleVillagers(world, player).length;
   hud.popCap.value = Math.min(cap, POPULATION.default);
   hud.clock.value = fmtClock(world.tick);
   hud.playerColor.value = `#${playerColor(player).toString(16).padStart(6, '0')}`;
@@ -51,7 +53,26 @@ export function syncHud(world: World, player: number, selected: readonly number[
       arm: u ? classStr(u.arm, ['melee', 'pierce']) : '',
       range: u?.range ?? 0,
       isBuilding: e.kind[s] === EKind.building,
+      model: t.id,
+      ...(e.kind[s] === EKind.building ? { building: e.build[s]! } : {}),
     });
   }
   hud.selection.value = sel;
+  // Single-selection extras: a villager's load, a building's queue.
+  const one = selected.length === 1 ? e.slotOf(selected[0]!) : -1;
+  hud.carry.value = one >= 0 && e.carryAmt[one]! > 0 ? `Carrying ${Math.floor(e.carryAmt[one]!)} ${CARRY_NAMES[e.carryJob[one]! - 1] ?? ''}` : '';
+  hud.queue.value = one >= 0 && e.kind[one] === EKind.building && e.owner[one] === player ? queueOf(world, selected[0]!) : [];
 }
+
+/** Own villagers with nothing to do (the QoL idle-villager button, RoR's "." key). */
+export function idleVillagers(world: World, player: number): number[] {
+  const e = world.ents;
+  const out: number[] = [];
+  for (let s = 0; s < e.top; s++) {
+    if (!e.alive[s] || e.kind[s] !== EKind.unit || e.owner[s] !== player || world.orders[s]) continue;
+    if (TYPES[e.type[s]!]!.unit?.cls === 'villager') out.push(e.handleOf(s));
+  }
+  return out;
+}
+
+const CARRY_NAMES = ['Food', 'Food', 'Meat', 'Fish', 'Wood', 'Gold', 'Stone'];

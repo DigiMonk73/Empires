@@ -13,7 +13,10 @@ import { mountHud } from './ui/mount.tsx';
 import { Minimap } from './render/minimap.ts';
 import { quantize } from './sim/commands/types.ts';
 import { BakedArt } from './render/bakedArt.ts';
-import { syncHud } from './ui/sync.ts';
+import { idleVillagers, syncHud } from './ui/sync.ts';
+import { computeCommands } from './ui/commands.ts';
+import { hud, hudActions } from './ui/store.ts';
+import { setIconArt } from './ui/icons.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -36,6 +39,7 @@ async function boot(): Promise<void> {
   const cameraRoot = new Container();
   app.stage.addChild(cameraRoot);
   const art = params.get('art') === '0' ? null : await BakedArt.load();
+  setIconArt(art);
   const wr = new WorldRenderer(app.renderer, world, art);
   cameraRoot.addChild(wr.root);
 
@@ -63,6 +67,36 @@ async function boot(): Promise<void> {
   wr.fog.enabled = !noFog;
   minimap.fogEnabled = !noFog;
   minimap.player = session.localPlayer;
+  const refreshCommands = (): void => {
+    const cmds = computeCommands(world, session.localPlayer, selection.list, input.page);
+    input.buttons = cmds;
+    hud.commands.value = cmds;
+    hud.placing.value = input.placing;
+  };
+  input.onUiChange = refreshCommands;
+  hudActions.perform = (a) => input.perform(a);
+  hudActions.cancelQueue = (i) => {
+    const b = input.ownBuildings()[0];
+    if (b !== undefined) session.router.submit(session.localPlayer, { t: 'cancelTrain', bld: b, index: i });
+  };
+  let idleCursor = 0;
+  hudActions.nextIdle = () => {
+    const idle = idleVillagers(world, session.localPlayer);
+    if (!idle.length) return;
+    const h = idle[idleCursor++ % idle.length]!;
+    selection.set([h]);
+    const s = world.ents.slotOf(h);
+    camera.centerOnWorld(world.ents.x[s]!, world.ents.y[s]!);
+    camera.apply();
+  };
+  window.addEventListener('keydown', (e) => {
+    if (e.key === '.' && !(e.target instanceof HTMLInputElement)) hudActions.nextIdle();
+  });
+  selection.onChange(() => {
+    if (!input.ownUnits().length) input.cancelPlacement();
+    input.page = input.placing ? input.page : 'main';
+    refreshCommands();
+  });
   minimap.onRightClick = (wx, wy) => {
     const ids = input.ownUnits();
     if (!ids.length) return;
@@ -96,6 +130,7 @@ async function boot(): Promise<void> {
       lastHudSync = hudTick;
       lastSelVersion = selection.version;
       syncHud(world, session.localPlayer, selection.list);
+      refreshCommands();
     }
     frameMs = t.deltaMS;
     fps = t.FPS;

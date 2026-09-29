@@ -5,6 +5,10 @@ import type { GameSession } from '../game/session.ts';
 import type { Camera } from '../render/camera.ts';
 import type { WorldRenderer } from '../render/worldRenderer.ts';
 import type { Selection } from './selection.ts';
+import { buildingTypeIndex, TYPES } from '../sim/rules/registry.ts';
+import { placementValid } from '../sim/systems/build.ts';
+import { isVillager } from '../sim/systems/gather.ts';
+import type { Action, CommandButton } from '../ui/commands.ts';
 
 const DRAG_THRESHOLD = 5;
 const DOUBLE_CLICK_MS = 350;
@@ -25,6 +29,13 @@ export class InputController {
   private readonly wr: WorldRenderer;
   private readonly sel: Selection;
   private readonly box: Graphics;
+  /** Command grid page and placement mode (UI state). */
+  page: 'main' | 'build' = 'main';
+  placing: string | null = null;
+  private pointer = { x: 0, y: 0 };
+  /** Buttons currently on the grid (for hotkeys); set by the HUD sync. */
+  buttons: CommandButton[] = [];
+  onUiChange: (() => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement, camera: Camera, session: GameSession, wr: WorldRenderer, sel: Selection, box: Graphics) {
     this.canvas = canvas;
@@ -51,6 +62,11 @@ export class InputController {
 
   private onDown(e: PointerEvent): void {
     const p = this.local({ x: e.clientX, y: e.clientY });
+    if (this.placing) {
+      if (e.button === 0) this.place(p, e.shiftKey);
+      else if (e.button === 2) this.cancelPlacement();
+      return;
+    }
     if (e.button === 0) {
       this.down = { ...p, shift: e.shiftKey };
       this.dragging = false;
@@ -60,8 +76,13 @@ export class InputController {
   }
 
   private onMove(e: PointerEvent): void {
-    if (!this.down) return;
     const p = this.local({ x: e.clientX, y: e.clientY });
+    this.pointer = p;
+    if (this.placing) {
+      this.updateGhost();
+      return;
+    }
+    if (!this.down) return;
     if (!this.dragging && Math.hypot(p.x - this.down.x, p.y - this.down.y) > DRAG_THRESHOLD) this.dragging = true;
     if (this.dragging) {
       const x = Math.min(p.x, this.down.x);
@@ -131,21 +152,135 @@ export class InputController {
     });
   }
 
+  /** Own buildings in the selection. */
+  ownBuildings(): number[] {
+    const e = this.world.ents;
+    return this.sel.list.filter((h) => {
+      const s = e.slotOf(h);
+      return s >= 0 && e.kind[s] === EKind.building && e.owner[s] === this.session.localPlayer;
+    });
+  }
+
+  /**
+   * Right-click in context: villagers gather a resource or help build an own foundation; buildings set their
+   * rally point (on a resource: new villagers gather it); otherwise units move.
+   */
   private command(p: { x: number; y: number }, queue: boolean): void {
-    const ids = this.ownUnits();
-    if (!ids.length) return;
+    const me = this.session.localPlayer;
     const w = this.camera.screenToWorld(p.x, p.y);
     const map = this.world.map;
+    const ids = this.ownUnits();
+    const res = this.wr.pickResource(p.x, p.y);
+    if (!ids.length) {
+      const blds = this.ownBuildings();
+      if (!blds.length || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
+      this.session.router.submit(me, { t: 'rally', blds, x: quantize(w.x), y: quantize(w.y), ...(res >= 0 ? { res } : {}) });
+      this.wr.addMarker(w.x, w.y, 0xffd84a);
+      return;
+    }
+    if (res >= 0) {
+      this.session.router.submit(me, { t: 'gather', ids, res, queue });
+      const r = this.world.res;
+      this.wr.addMarker(r.tx[res]! + 0.5, r.ty[res]! + 0.5, 0xffd84a);
+      return;
+    }
+    const target = this.wr.pick(p.x, p.y);
+    const e = this.world.ents;
+    const ts = e.slotOf(target);
+    if (ts >= 0 && e.kind[ts] === EKind.building && e.owner[ts] === me && e.build[ts]! < 1) {
+      const villagers = ids.filter((h) => isVillager(this.world, e.slotOf(h)));
+      if (villagers.length) {
+        this.session.router.submit(me, { t: 'construct', ids: villagers, h: target, queue });
+        this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xffd84a);
+        return;
+      }
+    }
     if (w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
-    this.session.router.submit(this.session.localPlayer, { t: 'move', ids, x: quantize(w.x), y: quantize(w.y), queue });
+    this.session.router.submit(me, { t: 'move', ids, x: quantize(w.x), y: quantize(w.y), queue });
     this.wr.addMarker(w.x, w.y);
+  }
+
+  /** Run a command-grid action (button click or hotkey). */
+  perform(a: Action): void {
+    const me = this.session.localPlayer;
+    switch (a.kind) {
+      case 'buildMenu':
+        this.page = 'build';
+        break;
+      case 'back':
+        this.page = 'main';
+        break;
+      case 'place':
+        this.placing = a.building;
+        this.updateGhost();
+        break;
+      case 'train':
+        this.session.router.submit(me, { t: 'train', bld: a.bld, unit: a.unit });
+        break;
+      case 'stop':
+        this.session.router.submit(me, { t: 'stop', ids: this.ownUnits() });
+        break;
+    }
+    this.onUiChange?.();
+  }
+
+  /** Top-left tile of a footprint centered under the pointer. */
+  private ghostTile(size: number): { tx: number; ty: number } {
+    const w = this.camera.screenToWorld(this.pointer.x, this.pointer.y);
+    return { tx: Math.round(w.x - size / 2), ty: Math.round(w.y - size / 2) };
+  }
+
+  private updateGhost(): void {
+    if (!this.placing) {
+      this.wr.drawGhost(null, 0, 0, 0, []);
+      return;
+    }
+    const ti = buildingTypeIndex(this.placing);
+    const size = TYPES[ti]!.size;
+    const { tx, ty } = this.ghostTile(size);
+    const ok: boolean[] = [];
+    placementValid(this.world, ti, tx, ty, ok);
+    this.wr.drawGhost(this.placing, size, tx, ty, ok);
+  }
+
+  private place(p: { x: number; y: number }, keep: boolean): void {
+    this.pointer = p;
+    const ti = buildingTypeIndex(this.placing!);
+    const size = TYPES[ti]!.size;
+    const { tx, ty } = this.ghostTile(size);
+    const e = this.world.ents;
+    const villagers = this.ownUnits().filter((h) => isVillager(this.world, e.slotOf(h)));
+    if (villagers.length && placementValid(this.world, ti, tx, ty)) {
+      this.session.router.submit(this.session.localPlayer, { t: 'build', ids: villagers, type: this.placing!, tx, ty, queue: keep });
+    }
+    if (!keep) this.cancelPlacement();
+  }
+
+  cancelPlacement(): void {
+    this.placing = null;
+    this.page = 'main';
+    this.wr.drawGhost(null, 0, 0, 0, []);
+    this.onUiChange?.();
   }
 
   private onKey(e: KeyboardEvent): void {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === 'Escape') {
-      this.sel.clear();
+      if (this.placing) this.cancelPlacement();
+      else if (this.page !== 'main') {
+        this.page = 'main';
+        this.onUiChange?.();
+      } else this.sel.clear();
       return;
+    }
+    // Command-grid hotkeys (letters, no modifiers).
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && /^[a-z]$/i.test(e.key)) {
+      const b = this.buttons.find((x) => x.hotkey.toLowerCase() === e.key.toLowerCase());
+      if (b && !b.disabled) {
+        e.preventDefault();
+        this.perform(b.action);
+        return;
+      }
     }
     const digit = /^Digit([0-9])$/.exec(e.code)?.[1];
     if (digit !== undefined) {

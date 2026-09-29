@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M4 Economy — M4.1–M4.4 done (stats/effects, gather, construction, production + rally). M3 done (tag `m3`).
+- **Milestone:** M4 Economy — M4.1–M4.4, M4.6 done (stats/effects, gather, construction, production + rally, mouse UI). M3 done (tag `m3`).
 - **Last green commit:** M4.3 (verify ~20 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
 - **Art:** baked villager (8 facings × idle/walk/die), trees/mines/berries, Stone-age TC + house; calibration
   IoU 1.0; Docker bakes its own sprites (D20). Placeholders remain for soldiers and other buildings.
@@ -11,7 +11,9 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   with (n+2)/3 builders, pop/housing; sim 500 units p99 ~0.8 ms/tick; cross-engine determinism holds.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M4.4 production (train villagers, queue, rally), M4.5 farms/fish/hunt, M4.6 UI, M4.7 art.
+- **Next up:** M4.5 farms/shore fish/hunting, M4.7 art (villager work/carry clips; Granary, Storage Pit, Farm, Barracks, Dock), M4.8 metrics.
+- **Playable now:** `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
+  train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
 ---
@@ -139,7 +141,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       spawn toward the rally point, `rally` command (rally on a resource → auto-gather).
 - [ ] **M4.5 Farms, shore fish, hunting.** Farms (walkable, one farmer, farmFood 250, rebuild when empty),
       shore fishing from land, hunting (spear throw; gazelle flee; carcass node with decay).
-- [ ] **M4.6 Context commands + HUD.** Right-click context (gather/build/drop-off), command grid for villagers
+- [x] **M4.6 Context commands + HUD.** Right-click context (gather/build/drop-off), command grid for villagers
       (build menu per age) and TC (train villager), placement ghost (green/red tiles), cost tooltips, hotkeys,
       carry/queue display, idle-villager button (`.`).
 - [ ] **M4.7 Art.** Villager work clips (chop, mine, forage, hoe, hammer, throw) and carry-walks; foundation/
