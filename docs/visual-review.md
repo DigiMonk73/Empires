@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M2.4 · hud-single
+- Top bar (stockpile, pop, age, clock, buttons) and bottom panel (selection, command grid, minimap slot) in a
+  bronze-on-dark-stone style. HUD 3/5 at this stage.
+- Should-fix (M12): vendor the OFL Cinzel/Alegreya fonts (Georgia fallback today); the ⚔ glyph renders as ×
+  — replace text glyphs with baked icons; portraits come from the baker (M3/M9).
+- Should-fix (M2.x): camera centering ignores the bottom panel (visual center sits ~80 px low).
+
 ## 2026-09-29 · M2.3 · selection-box, selection-moved
 - White ellipses under selected own units, green HP bars above; drag box translucent white. Readable.
 - Fixed: HP bars sat ~10 px above villager heads — lowered.

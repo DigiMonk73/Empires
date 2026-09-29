@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M2 See & command — M2.1–M2.3 done (sim on screen; terrain meshes; mouse selection + commands). M1 done (tag `m1`).
+- **Milestone:** M2 See & command — M2.1–M2.4 done (sim on screen; terrain; mouse selection/commands; HUD). M1 done (tag `m1`).
 - **Last green commit:** M1.7 (verify ~8.5 s incl. 20k-tick cross-engine determinism + sim stress gate).
 - **Sim perf (500 units, fuzzed orders):** p50 0.07 / p99 0.77 ms per tick; blocked 2%; stuck>5s 0.2%; 0 give-ups.
 - **Determinism:** identical hash traces Node (V8) = Chromium = WebKit (JSC), 500 units × 20k ticks; save/load
@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
 - **StartOS (M0.7):** installed + verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M2.4 HUD skeleton (Preact top bar + bottom panel), M2.5 minimap.
+- **Next up:** M2.5 minimap, M2.6 fog of war, M2.7 render perf gate.
 - **Notes:** metrics history in `docs/metrics/history.csv` (appended by verify).
 
 ---
@@ -94,7 +94,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M2.3 Input + selection.** Screen→world picking; click select, drag box select, double-click same type,
       shift add/remove, Ctrl+1–9 groups; right-click move (group) with marker; selection ellipses + HP bars.
       _Accept:_ mouse-driven e2e selects and moves units in both browsers.
-- [ ] **M2.4 HUD skeleton.** Preact HUD: top bar (resources, pop, age, clock), bottom panel (selection info,
+- [x] **M2.4 HUD skeleton.** Preact HUD: top bar (resources, pop, age, clock), bottom panel (selection info,
       command grid placeholder), minimap slot. _Accept:_ e2e reads HUD values; screenshot reviewed.
 - [ ] **M2.5 Minimap.** Diamond minimap canvas: terrain, units, camera box; click/drag moves camera; right-click
       moves selection. _Accept:_ e2e minimap click moves camera.

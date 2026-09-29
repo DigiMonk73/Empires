@@ -1,4 +1,5 @@
 import { RESOURCES } from '../data/types.ts';
+import { STARTING_RESOURCES, type StartingResources } from '../data/setup.ts';
 import { terrainIndex } from '../data/terrain.ts';
 import { Act, EKind, EntityStore } from './core/entities.ts';
 import { ResourceStore } from './core/resources.ts';
@@ -39,6 +40,8 @@ export interface SimConfig {
   /** Players 1..n (Gaia is player 0 and implicit). */
   players: readonly PlayerSetup[];
   scenario?: ScenarioSpec;
+  /** Starting stockpile setting (econ:1.5); default 'default' = 200 food, 200 wood, 150 stone. */
+  startingResources?: StartingResources;
 }
 
 export interface PlayerState {
@@ -89,7 +92,10 @@ export class World {
     this.ents = new EntityStore();
     this.res = new ResourceStore(cfg.map.w, cfg.map.h);
     this.players = [{ id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length) }];
-    cfg.players.forEach((p, i) => this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res: new Float64Array(RESOURCES.length) }));
+    const start = STARTING_RESOURCES[cfg.startingResources ?? 'default'];
+    cfg.players.forEach((p, i) =>
+      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res: Float64Array.from(RESOURCES.map((r) => start[r])) }),
+    );
     this.rng = {
       combat: new Rng(this.seed, STREAM.combat),
       conversion: new Rng(this.seed, STREAM.conversion),

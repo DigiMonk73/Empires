@@ -9,6 +9,8 @@ import { installDebugApi, type RenderStats, type UnitInfo } from './debug/api.ts
 import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
 import { InputController } from './input/controller.ts';
 import { Selection } from './input/selection.ts';
+import { mountHud } from './ui/mount.tsx';
+import { syncHud } from './ui/sync.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -49,6 +51,9 @@ async function boot(): Promise<void> {
   else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
   camera.apply();
 
+  mountHud(document.getElementById('hud')!);
+  let lastHudSync = -1;
+  let lastSelVersion = -1;
   let frozen = false;
   let alpha = 0;
   let fps = 0;
@@ -65,6 +70,12 @@ async function boot(): Promise<void> {
     wr.update(alpha);
     selection.prune((h) => world.ents.valid(h));
     wr.drawOverlays(selection.list, session.localPlayer, alpha);
+    const hudTick = Math.floor(session.sim.tick / 2);
+    if (hudTick !== lastHudSync || selection.version !== lastSelVersion) {
+      lastHudSync = hudTick;
+      lastSelVersion = selection.version;
+      syncHud(world, session.localPlayer, selection.list);
+    }
     cpuMs = performance.now() - t0;
     frameMs = t.deltaMS;
     fps = t.FPS;
