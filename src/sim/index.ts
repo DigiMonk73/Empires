@@ -3,6 +3,7 @@ import type { PlayerCommand } from './commands/types.ts';
 import { hashBreakdown } from './hash.ts';
 import { followerPathSystem, movementSystem, pathRequestSystem, separationSystem } from './systems/movement.ts';
 import { fogSystem } from './systems/fog.ts';
+import { populationSystem } from './systems/population.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
@@ -52,6 +53,7 @@ export class Sim {
     movementSystem(w);
     separationSystem(w);
     fogSystem(w);
+    populationSystem(w);
     w.tick++;
   }
 

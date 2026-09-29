@@ -4,6 +4,8 @@ import type { RngState } from '../math/rng.ts';
 import type { PathRequest } from '../path/service.ts';
 import { SIM_VERSION } from '../version.ts';
 import { World, type Order, type SimConfig } from '../world.ts';
+import { compilePlayerStats } from '../rules/playerStats.ts';
+import { populationSystem } from '../systems/population.ts';
 import { ARRAY_TYPES, bytesOf, typeTag, utf8Decode, utf8Encode, type TypedArray } from './binary.ts';
 
 /**
@@ -25,7 +27,7 @@ interface Header {
   simVersion: string;
   config: SimConfig;
   tick: number;
-  players: { id: number; civ: string; team: number; res: number[] }[];
+  players: { id: number; civ: string; team: number; res: number[]; techs: string[] }[];
   rng: Record<string, RngState>;
   ents: { cap: number; top: number; count: number; free: number[] };
   res: { count: number };
@@ -70,7 +72,7 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     simVersion: SIM_VERSION,
     config,
     tick: w.tick,
-    players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res] })),
+    players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res], techs: [...p.techs] })),
     rng: {
       combat: w.rng.combat.getState(),
       conversion: w.rng.conversion.getState(),
@@ -132,6 +134,8 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
     pl.civ = p.civ;
     pl.team = p.team;
     pl.res.set(p.res);
+    pl.techs = [...p.techs];
+    pl.stats = compilePlayerStats(p.civ, pl.techs);
   });
   w.rng.combat.setState(header.rng.combat!);
   w.rng.conversion.setState(header.rng.conversion!);
@@ -152,5 +156,6 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
   for (const [s, p] of header.paths) w.paths[s] = p;
   w.pathing.restoreQueue(header.pathQueue);
   w.grid.rebuild(w.ents);
+  populationSystem(w);
   return { world: w, config: header.config };
 }

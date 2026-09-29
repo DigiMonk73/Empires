@@ -9,7 +9,11 @@ import { RESOURCE_KINDS, TYPES, buildingTypeIndex, resourceKindIndex, unitTypeIn
 import { PathService } from './path/service.ts';
 import { UnitGrid } from './core/spatial.ts';
 import { PathGrid } from './path/grid.ts';
+import { compilePlayerStats, type PlayerStats } from './rules/playerStats.ts';
+import { CIV_BY_ID } from '../data/index.ts';
+import { POPULATION } from '../data/setup.ts';
 import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.ts';
+import { populationSystem } from './systems/population.ts';
 
 export interface PlayerSetup {
   civ: string;
@@ -45,6 +49,8 @@ export interface SimConfig {
   startingResources?: StartingResources;
   /** "Reveal Map" option: the whole map starts explored (units in unwatched areas stay hidden). */
   revealMap?: boolean;
+  /** Population limit (default 50; RoR allows 25–200). */
+  popCap?: number;
 }
 
 export interface PlayerState {
@@ -53,6 +59,13 @@ export interface PlayerState {
   team: number;
   /** Stockpile: food, wood, gold, stone (RESOURCES order). */
   res: Float64Array;
+  /** Researched techs in completion order (the stats are compiled from civ + these). */
+  techs: string[];
+  /** Compiled per-player stats (derived from civ + techs; not hashed directly). */
+  stats: PlayerStats;
+  /** Current population and housing (derived each tick). */
+  pop: number;
+  popCap: number;
 }
 
 /**
@@ -80,6 +93,8 @@ export class World {
   /** Per-slot path waypoints as [x0, y0, x1, y1, …] (cold data). */
   paths: (number[] | undefined)[] = [];
   events: SimEvent[] = [];
+  /** Game population limit (config). */
+  readonly popLimit: number;
   readonly pathing: PathService;
   readonly grid: UnitGrid;
   readonly fog: FogState;
@@ -95,11 +110,21 @@ export class World {
     this.map = new TileMap(cfg.map.w, cfg.map.h, fill);
     this.ents = new EntityStore();
     this.res = new ResourceStore(cfg.map.w, cfg.map.h);
-    this.players = [{ id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length) }];
+    this.popLimit = cfg.popCap ?? POPULATION.default;
+    const gaia: PlayerState = { id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length), techs: [], stats: compilePlayerStats('gaia'), pop: 0, popCap: 0 };
+    this.players = [gaia];
     const start = STARTING_RESOURCES[cfg.startingResources ?? 'default'];
-    cfg.players.forEach((p, i) =>
-      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res: Float64Array.from(RESOURCES.map((r) => start[r])) }),
-    );
+    cfg.players.forEach((p, i) => {
+      const res = Float64Array.from(RESOURCES.map((r) => start[r]));
+      // Civ starting-stockpile modifiers (e.g. Shang −40 food).
+      for (const e of CIV_BY_ID.get(p.civ)?.bonuses ?? []) {
+        if (e.op === 'player' && e.attr.startsWith('start.')) {
+          const k = RESOURCES.indexOf(e.attr.slice(6) as (typeof RESOURCES)[number]);
+          res[k] = e.mode === 'add' ? res[k]! + e.v : e.mode === 'mul' ? res[k]! * e.v : e.v;
+        }
+      }
+      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0 });
+    });
     this.rng = {
       combat: new Rng(this.seed, STREAM.combat),
       conversion: new Rng(this.seed, STREAM.conversion),
@@ -116,6 +141,7 @@ export class World {
     for (const u of sc?.units ?? []) this.spawnUnit(unitTypeIndex(u.type), u.owner, u.x, u.y);
     this.grid.rebuild(this.ents);
     fogSystem(this);
+    populationSystem(this);
   }
 
   private applyAscii(rows: readonly string[]): void {
@@ -148,10 +174,14 @@ export class World {
     return i;
   }
 
+  /** Compiled stats of `type` for its owner. */
+  stats(owner: number, type: number) {
+    return this.players[owner]!.stats.types[type]!;
+  }
+
   spawnUnit(type: number, owner: number, x: number, y: number): number {
-    const t = TYPES[type]!;
     const h = this.ents.create(EKind.unit, type, owner, x, y);
-    this.ents.hp[this.ents.slotOf(h)] = t.hp;
+    this.ents.hp[this.ents.slotOf(h)] = this.stats(owner, type).hp;
     return h;
   }
 
@@ -161,7 +191,7 @@ export class World {
     const s = t.size;
     const h = this.ents.create(EKind.building, type, owner, tx + s / 2, ty + s / 2);
     const slot = this.ents.slotOf(h);
-    this.ents.hp[slot] = t.hp;
+    this.ents.hp[slot] = this.stats(owner, type).hp;
     const occ = t.building?.kind === 'farm' ? Occ.farm : Occ.building;
     for (let dy = 0; dy < s; dy++) {
       for (let dx = 0; dx < s; dx++) {

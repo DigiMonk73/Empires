@@ -127,8 +127,27 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - _Exit:_ calibration IoU ≥ 0.98; contact sheets ≥ 3/5; full bake ≤ 3 min; D5 fallback decided.
 
 ## M4 — Economy
-- forage, hunt, chop, mine, farm, shore-fish; drop-off; ghosting; foundations + multi-builder; train villagers;
-  housing; resource bar + selection panel; work/carry anims; rally points; idle-villager button; shift-queued builds.
+- [x] **M4.1 Player stats + population.** Per-player compiled unit/building stats (base values now; tech/civ
+      effects plug in at M7), pop and pop cap (houses/TC, cap 50 default), age = 1.
+- [ ] **M4.2 Gather cycle.** `gather` order on resource nodes: walk adjacent → work at the job's rate until carry
+      cap → nearest reachable accepting drop site (TC all; Granary forage+farm; Storage Pit wood/gold/stone/meat/
+      fish) → deposit → return; retarget the nearest same-kind node when depleted; switching resource discards the
+      load; trees/mines vanish when empty (passability + regions update). Gatherer ghosting near nodes/drop sites.
+      _Accept:_ benchmark within ±5% of research work rates; idle < 3%.
+- [ ] **M4.3 Construction.** `build` command: placement validation (terrain, occupancy, footprint), cost paid,
+      foundation (HP grows with progress), multi-builder rate (AoE2-style (n+2)/3 — verify), units pushed off the
+      footprint, completion effects (pop cap, drop site). Shift-queued builds.
+- [ ] **M4.4 Production.** `train` / `cancelTrain` (queue ≤ 5, cost at queue, refund on cancel), housing pause,
+      spawn toward the rally point, `rally` command (rally on a resource → auto-gather).
+- [ ] **M4.5 Farms, shore fish, hunting.** Farms (walkable, one farmer, farmFood 250, rebuild when empty),
+      shore fishing from land, hunting (spear throw; gazelle flee; carcass node with decay).
+- [ ] **M4.6 Context commands + HUD.** Right-click context (gather/build/drop-off), command grid for villagers
+      (build menu per age) and TC (train villager), placement ghost (green/red tiles), cost tooltips, hotkeys,
+      carry/queue display, idle-villager button (`.`).
+- [ ] **M4.7 Art.** Villager work clips (chop, mine, forage, hoe, hammer, throw) and carry-walks; foundation/
+      construction stages; Granary, Storage Pit, Farm, Barracks, Dock (Stone-age).
+- [ ] **M4.8 e2e + metrics.** Mouse-driven e2e builds a house and trains 5 villagers; scripted economy benchmark
+      and idle metric in the sim stress/verify.
 - _Exit:_ mouse e2e builds a house and trains 5 villagers; scripted economy within ±5% of research rates; idle < 3%.
 
 ## M5 — Combat

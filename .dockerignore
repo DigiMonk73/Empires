@@ -8,3 +8,4 @@ playwright-report
 .gitmodules
 *.log
 .DS_Store
+public/baked

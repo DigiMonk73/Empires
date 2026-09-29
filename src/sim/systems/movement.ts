@@ -117,8 +117,7 @@ export function movementSystem(w: World): void {
       e.actStart[s] = w.tick;
       e.lastDist[s] = Infinity;
     }
-    const speed = TYPES[e.type[s]!]!.speed;
-    let budget = speed;
+    let budget = w.stats(e.owner[s]!, e.type[s]!).speed;
     while (budget > 0 && path.length) {
       const dx = path[0]! - e.x[s]!;
       const dy = path[1]! - e.y[s]!;
@@ -266,7 +265,7 @@ function stuckCheck(w: World, s: number): void {
   const dx = path[0]! - e.x[s]!;
   const dy = path[1]! - e.y[s]!;
   const d = Math.sqrt(dx * dx + dy * dy);
-  const speed = TYPES[e.type[s]!]!.speed;
+  const speed = w.stats(e.owner[s]!, e.type[s]!).speed;
   const progressed = e.lastDist[s]! - d;
   e.lastDist[s] = d;
   if (progressed < speed * BLOCKED_PROGRESS) {
