@@ -36,7 +36,11 @@ const manifest: { models: Record<string, { hash: string; pages: string[]; json: 
 const server = await createServer({ logLevel: 'error', server: { port: 0, host: '127.0.0.1' } });
 await server.listen();
 const url = server.resolvedUrls!.local[0]!;
-const browser = await chromium.launch({ headless: true, args: ['--use-angle=metal', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const software = process.argv.includes('--software');
+const browser = await chromium.launch({
+  headless: true,
+  args: software ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--use-angle=metal', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+});
 let failed = false;
 try {
   const page = await browser.newPage();

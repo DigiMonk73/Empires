@@ -17,8 +17,12 @@ export function contactSheet(meta: AtlasMeta, pages: HTMLCanvasElement[]): HTMLC
       }
     }
   } else rows.push(keys);
-  const cellW = Math.max(...keys.map((k) => meta.frames[k]!.w)) + 24;
-  const cellH = Math.max(...keys.map((k) => meta.frames[k]!.h)) + 24;
+  const maxAx = Math.max(...keys.map((k) => meta.frames[k]!.ax));
+  const maxRight = Math.max(...keys.map((k) => meta.frames[k]!.w - meta.frames[k]!.ax));
+  const maxAy = Math.max(...keys.map((k) => meta.frames[k]!.ay));
+  const maxBelow = Math.max(...keys.map((k) => meta.frames[k]!.h - meta.frames[k]!.ay));
+  const cellW = maxAx + maxRight + 24;
+  const cellH = maxAy + maxBelow + 24;
   const cols = Math.max(...rows.map((r) => r.length));
   const c = document.createElement('canvas');
   c.width = Math.min(4096, cols * cellW);
@@ -40,8 +44,8 @@ export function contactSheet(meta: AtlasMeta, pages: HTMLCanvasElement[]): HTMLC
   rows.forEach((row, ry) => {
     row.forEach((key, rx) => {
       const f = meta.frames[key]!;
-      const cx = rx * cellW + cellW / 2;
-      const cy = ry * cellH + cellH - 16;
+      const cx = rx * cellW + 12 + maxAx;
+      const cy = ry * cellH + 12 + maxAy;
       ctx.drawImage(pages[f.p]!, f.x, f.y, f.w, f.h, cx - f.ax, cy - f.ay, f.w, f.h);
       const t = meta.frames[`${key}#t`];
       if (t) {

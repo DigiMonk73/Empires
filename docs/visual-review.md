@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M3.4 · contact-townCenter, contact-house, art-closeup
+- Stone-age huts: thatch cone roofs, mud-brick walls, door toward the viewer, team band on the wall; the Town
+  Center adds a storage hut, raised granary, fire pit, palisade posts and team banners.
+- Fixed: contact sheets cropped buildings (unit-style anchors); house team band hidden inside the tapered wall;
+  thatch texture too coarse.
+- Scores: readability 4, scale 4, light 4, team color 4 (TC banners + bands). Barracks still a placeholder box.
+
 ## 2026-09-29 · M3.3 · contact-villager, art-closeup
 - Baked villager: 8 facings × idle/walk/die, team-colored tunic; walks face their direction of travel in game.
 - Fixed: all facings identical (pose reset the facing rotation — facing now on a wrapper group); death fell

@@ -24,7 +24,7 @@ export const MATERIALS = {
   plaster: { tex: 'plaster', color: 0xe6dcc4, rough: 0.9, repeat: 1 },
   planks: { tex: 'planks', color: 0x8a6440, rough: 0.8, repeat: 1.5 },
   wood: { tex: 'planks', color: 0x6e4e30, rough: 0.8, repeat: 3 },
-  thatch: { tex: 'thatch', color: 0xc8a860, rough: 1, repeat: 1.2 },
+  thatch: { tex: 'thatch', color: 0xc8a860, rough: 1, repeat: 3 },
   rooftile: { tex: 'mudbrick', color: 0xa04a2a, rough: 0.8, repeat: 2.5 },
   cloth: { tex: 'cloth', color: 0xc8b48a, rough: 0.95, repeat: 4 },
   clothDark: { tex: 'cloth', color: 0x6a5238, rough: 0.95, repeat: 4 },

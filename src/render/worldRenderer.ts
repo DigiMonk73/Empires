@@ -147,6 +147,27 @@ export class WorldRenderer {
       this.objectLayer.addChild(root);
       return { handle: e.handleOf(slot), root, base, team, model: typeId, lastKey: '' };
     }
+    if (e.kind[slot] === EKind.building) {
+      const f = this.art?.frame(typeId, 'v0');
+      if (f) {
+        const meta = this.art!.meta(typeId)!;
+        const root = new Container();
+        const base = new Sprite(f.tex);
+        base.anchor.set(f.anchorX, f.anchorY);
+        base.scale.set(1 / meta.scale);
+        root.addChild(base);
+        let team: Sprite | null = null;
+        if (f.team) {
+          team = new Sprite(f.team.tex);
+          team.anchor.set(f.team.anchorX, f.team.anchorY);
+          team.scale.set(1 / meta.scale);
+          team.tint = playerColor(e.owner[slot]!);
+          root.addChild(team);
+        }
+        this.objectLayer.addChild(root);
+        return { handle: e.handleOf(slot), root, base, team, model: null, lastKey: '' };
+      }
+    }
     const art = this.artFor(e.type[slot]!);
     const root = new Container();
     const base = new Sprite(art.base);
