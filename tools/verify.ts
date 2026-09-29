@@ -3,8 +3,8 @@
  * non-zero if any gate fails. `--full` adds the milestone-end checks (Docker, Tauri, StartOS package).
  * `--only a,b` runs a subset (for iteration; a commit still needs a full `npm run verify`).
  */
-import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { acceptScreens, compareScreens } from './screens.ts';
 
@@ -37,6 +37,15 @@ const STEPS: Step[] = [
   { id: 'typecheck', title: 'TypeScript (sim / app / tools)', cmd: ['npm', 'run', '-s', 'typecheck'] },
   { id: 'purity', title: 'Sim purity', cmd: ['node', 'tools/check-purity.ts'] },
   { id: 'unit', title: 'Unit + determinism tests (vitest)', cmd: ['npx', 'vitest', 'run'] },
+  {
+    id: 'sim',
+    title: 'Headless sim stress (500 units, fuzzed orders)',
+    fn: async () => {
+      const note = await run('sim', ['node', 'tools/sim/cli.ts', '--ticks', '4000', '--out', 'artifacts/sim/stress.json']);
+      recordMetrics();
+      return note;
+    },
+  },
   { id: 'build', title: 'Vite build', cmd: ['npx', 'vite', 'build'] },
   {
     id: 'e2e',
@@ -91,6 +100,22 @@ const STEPS: Step[] = [
 ];
 
 let currentLog = '';
+
+/** Append this run's key metrics to docs/metrics/history.csv (committed with the change). */
+function recordMetrics(): void {
+  const r = JSON.parse(readFileSync('artifacts/sim/stress.json', 'utf8'));
+  const file = 'docs/metrics/history.csv';
+  mkdirSync('docs/metrics', { recursive: true });
+  const header = 'date,commit,sim_p50_ms,sim_p99_ms,blocked_pct,stuck_units,gave_up,searches,avg_path_work\n';
+  if (!existsSync(file)) writeFileSync(file, header);
+  let commit = 'dirty';
+  try {
+    commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {}
+  const row = [new Date().toISOString().slice(0, 16), commit, r.tickMs.p50.toFixed(3), r.tickMs.p99.toFixed(3), r.movement.blockedPct.toFixed(2),
+    r.movement.stuckOver5sUnits, r.movement.gaveUp, r.pathing.served, r.pathing.avgWork.toFixed(0)].join(',');
+  appendFileSync(file, row + '\n');
+}
 
 function run(id: string, cmd: string[], env: Record<string, string> = {}): Promise<string> {
   return new Promise((resolve, reject) => {

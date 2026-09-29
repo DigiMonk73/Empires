@@ -3,17 +3,16 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M1 Deterministic sim core — M1.1–M1.6 done (tag `m0` = M0).
-- **Last green commit:** M0.8 data tables (verify ~3.5 s; verify:full ~1 min incl. Docker, Tauri, `make arm`).
-- **Data:** 45 units, 22 buildings, 77 techs, 16 civs, 8 resources, 4 animals — 100% sourced, 22 `verify` flags.
-- **Key metrics:** headless GL = ANGLE Metal / Apple GPU (D15). Image 61.7 MB; .app 9 MB; .s9pk 47 MB.
-- **StartOS (M0.7, 2026-09-29):** installed on muscular-privacy.local; health green; UI renders in Chromium (mDNS)
-  and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
-  reinstall ok. NOT verified: backup/restore (no backup target, KI-3). VM stopped.
-- **Open blockers:** none. Open issues: KI-1 icon (placeholder-quality SVG), KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M1.7 headless runner + cross-engine determinism (Node vs Chromium vs WebKit).
-- **Movement (M1.5):** 200-unit crossing — 0.1 ms/tick, blocked 0.6% of moving ticks, stuck>5s 0%, 0 give-ups.
-- **Notes:** the detailed design is `docs/design/architecture-proposal.md` — its Q16 math is superseded by D1.
+- **Milestone:** M1 Deterministic sim core — DONE (tag `m1`). Next: **M2 See & command**.
+- **Last green commit:** M1.7 (verify ~8.5 s incl. 20k-tick cross-engine determinism + sim stress gate).
+- **Sim perf (500 units, fuzzed orders):** p50 0.07 / p99 0.77 ms per tick; blocked 2%; stuck>5s 0.2%; 0 give-ups.
+- **Determinism:** identical hash traces Node (V8) = Chromium = WebKit (JSC), 500 units × 20k ticks; save/load
+  and replay equivalent (D1 restricted doubles holds — no Q16 needed).
+- **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
+- **StartOS (M0.7):** installed + verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
+- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
+- **Next up:** M2.1 session loop + renderer bridge (units/resources/buildings on screen, interpolated).
+- **Notes:** metrics history in `docs/metrics/history.csv` (appended by verify).
 
 ---
 
@@ -79,15 +78,30 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M1.6 Save/load + replay.** Serialize/deserialize (typed-array sections + canonical JSON, gzip),
       replay = settings + seed + command stream + hash checkpoints. _Accept:_ run→save→load→run hashes equal a
       continuous run; replay re-sim matches.
-- [ ] **M1.7 Headless runner + cross-engine determinism.** `tools/sim/cli.ts` scenarios + metrics; a browser
+- [x] **M1.7 Headless runner + cross-engine determinism.** `tools/sim/cli.ts` scenarios + metrics; a browser
       sim harness page run by Playwright in Chromium and WebKit comparing hash traces with Node; added to verify.
       _Accept:_ 500 units × 20k ticks random orders — identical traces in V8, Chromium, WebKit.
 - _Exit:_ 500 units × 20k ticks identical hash traces in Node/Chromium/WebKit; save/load/replay equivalent;
   stuck < 1% on fixture maps; path p99 ≤ 2 ms/tick.
 
 ## M2 — See & command
-- terrain chunk meshes; camera; placeholder baked primitives; depth sort; interpolation; selection (click, box,
-  double-click, shift); right-click move + marker; HUD skeleton; minimap; fog (sim + render).
+- [ ] **M2.1 Session + renderer bridge.** `game/session.ts` fixed-step loop (20 Hz, speed ×1/1.5/2, catch-up cap),
+      `LocalRouter`; renderer draws sim units (placeholder shapes: body, player-color ring, facing), resources
+      and buildings from the sim with tick interpolation and depth sorting; a dev scenario (`?scenario=`).
+      _Accept:_ e2e screenshot of a scenario with units, trees, buildings; units visibly move.
+- [ ] **M2.2 Terrain rendering.** Chunk meshes (16×16) with per-terrain colors and noise variation, water tint,
+      culling by camera. _Accept:_ 250² map renders with ≤ 30 draw calls for terrain; screenshot reviewed.
+- [ ] **M2.3 Input + selection.** Screen→world picking; click select, drag box select, double-click same type,
+      shift add/remove, Ctrl+1–9 groups; right-click move (group) with marker; selection ellipses + HP bars.
+      _Accept:_ mouse-driven e2e selects and moves units in both browsers.
+- [ ] **M2.4 HUD skeleton.** Preact HUD: top bar (resources, pop, age, clock), bottom panel (selection info,
+      command grid placeholder), minimap slot. _Accept:_ e2e reads HUD values; screenshot reviewed.
+- [ ] **M2.5 Minimap.** Diamond minimap canvas: terrain, units, camera box; click/drag moves camera; right-click
+      moves selection. _Accept:_ e2e minimap click moves camera.
+- [ ] **M2.6 Fog of war.** Sim: per-player visibility counts + explored (LOS stamping on tile change); render:
+      black unexplored / grey explored with soft edges; enemy units hidden outside LOS; `?reveal=1`.
+      _Accept:_ unit tests for visibility; fog screenshot reviewed; determinism unaffected.
+- [ ] **M2.7 Perf gate.** 1000 moving units: render p95 ≤ 8 ms (Chromium, hardware GL).
 - _Exit:_ mouse-driven e2e in both browsers; 1000 moving units render p95 ≤ 8 ms.
 
 ## M3 — Art pipeline v1

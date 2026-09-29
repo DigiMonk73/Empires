@@ -1,0 +1,2 @@
+date,commit,sim_p50_ms,sim_p99_ms,blocked_pct,stuck_units,gave_up,searches,avg_path_work
+2026-09-29T22:45,6759e33,0.072,0.765,1.97,1,0,2580,3946
