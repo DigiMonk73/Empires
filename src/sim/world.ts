@@ -5,6 +5,7 @@ import { ResourceStore } from './core/resources.ts';
 import { Rng, STREAM } from './math/rng.ts';
 import { Occ, TileMap } from './map/tilemap.ts';
 import { RESOURCE_KINDS, TYPES, buildingTypeIndex, resourceKindIndex, unitTypeIndex } from './rules/registry.ts';
+import { PathService } from './path/service.ts';
 
 export interface PlayerSetup {
   civ: string;
@@ -68,6 +69,7 @@ export class World {
   /** Per-slot path waypoints as [x0, y0, x1, y1, …] (cold data). */
   paths: (number[] | undefined)[] = [];
   events: SimEvent[] = [];
+  readonly pathing: PathService;
 
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;
@@ -83,6 +85,7 @@ export class World {
       animals: new Rng(this.seed, STREAM.animals),
       misc: new Rng(this.seed, STREAM.misc),
     };
+    this.pathing = new PathService(this);
     if (cfg.map.ascii) this.applyAscii(cfg.map.ascii);
     const sc = cfg.scenario;
     for (const r of sc?.resources ?? []) this.addResource(resourceKindIndex(r.kind), r.tx, r.ty);
@@ -151,6 +154,7 @@ export class World {
     if (slot < 0) return;
     this.orders[slot] = undefined;
     this.paths[slot] = undefined;
+    this.pathing.cancel(slot);
     this.ents.act[slot] = Act.idle;
     this.ents.destroy(h);
   }

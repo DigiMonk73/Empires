@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M1 Deterministic sim core — M1.1–M1.3 done (tag `m0` = M0).
+- **Milestone:** M1 Deterministic sim core — M1.1–M1.4 done (tag `m0` = M0).
 - **Last green commit:** M0.8 data tables (verify ~3.5 s; verify:full ~1 min incl. Docker, Tauri, `make arm`).
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs, 8 resources, 4 animals — 100% sourced, 22 `verify` flags.
 - **Key metrics:** headless GL = ANGLE Metal / Apple GPU (D15). Image 61.7 MB; .app 9 MB; .s9pk 47 MB.
@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
   reinstall ok. NOT verified: backup/restore (no backup target, KI-3). VM stopped.
 - **Open blockers:** none. Open issues: KI-1 icon (placeholder-quality SVG), KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M1.4 pathfinding (regions, JPS, budget, smoothing).
+- **Next up:** M1.5 movement + collision + group moves (with shared group paths).
 - **Notes:** the detailed design is `docs/design/architecture-proposal.md` — its Q16 math is superseded by D1.
 
 ---
@@ -68,7 +68,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M1.3 Commands + tick.** Command union + validation, binary codec, `Sim` facade (create/step/hash/
       hashBreakdown/view/serialize), event queue, tick system order per architecture doc.
       _Accept:_ move/stop commands round-trip through the codec; two sims fed the same commands hash-equal.
-- [ ] **M1.4 Pathfinding.** Land/water passability classes, connected regions (union-find, incremental on
+- [x] **M1.4 Pathfinding.** Land/water passability classes, connected regions (union-find, incremental on
       open/close), JPS with goal sets (adjacent-to-footprint, within-range), deterministic per-tick node budget,
       string-pull smoothing, nearest-reachable fallback. Fixture maps (maze, forest edge, islands, 1-tile chokes).
       _Accept:_ fixture tests; p99 ≤ 2 ms/tick with 500 movers.

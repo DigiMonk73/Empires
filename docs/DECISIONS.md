@@ -44,3 +44,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   with `lib: ES2023` only; app with DOM + Preact JSX; tools/tests with Node types) instead of `tsc -b`
   references. `erasableSyntaxOnly` is on (no enums, namespaces, or parameter properties) so Node 22 runs
   `.ts` tools directly; imports use explicit `.ts` extensions.
+- **D17 — Pathing details** (2026-09-29, M1.4). JPS (PathFinding.js "diagonal only when no obstacles" rules)
+  verified equal-cost to a reference A* on 300 random maps; ~4× faster than A* at p50 on a 250² forest map
+  (0.09 ms). Budget counts deterministic work units (expansions + jump steps, ≈57k/ms on M4): 100k per tick
+  (≈1.8 ms), 150k cap per search. Unreachable goals are retargeted *before* searching to the nearest tile in
+  the unit's connected region (JPS can't produce "closest" partial paths). Regions: full 4-connected flood fill,
+  lazily recomputed when passability changes (0.28 ms warmed on 250²); incremental union-find only if perf
+  gates require it. The path heap snapshots keys per entry (a live-key heap corrupted A* optimality).

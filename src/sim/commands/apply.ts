@@ -36,6 +36,7 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
           else {
             w.orders[slot] = [order];
             w.paths[slot] = undefined;
+            w.pathing.cancel(slot);
           }
         }
         break;
@@ -44,6 +45,7 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
           w.orders[slot] = undefined;
           w.paths[slot] = undefined;
+          w.pathing.cancel(slot);
         }
         break;
     }
