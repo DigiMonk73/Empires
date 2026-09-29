@@ -3,12 +3,12 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M0 Rails — not started.
-- **Last green commit:** (none yet — bootstrap commit only)
-- **Verify:** not yet implemented.
-- **Key metrics:** n/a
+- **Milestone:** M0 Rails — M0.1–M0.3 done.
+- **Last green commit:** M0.3 (verify passes in ~3 s: typecheck, purity, vitest, build, e2e ×2 browsers, screens).
+- **Verify:** `npm run verify` green; `--full` steps (docker/tauri/startos) skip until set up.
+- **Key metrics:** headless GL = ANGLE Metal (Chromium) / Apple GPU (WebKit) — hardware (D15).
 - **Open blockers:** none
-- **Next up:** M0.1 project skeleton.
+- **Next up:** M0.4 Dockerfile, M0.5 Tauri shell, M0.6–M0.7 StartOS, M0.8 data tables.
 - **Notes for next iteration:** Research lives in `docs/research/`; the detailed design is
   `docs/design/architecture-proposal.md` (treat D1 there as superseded by `docs/DECISIONS.md` D1: restricted
   doubles, not Q16).
@@ -16,16 +16,16 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 ---
 
 ## M0 — Rails (packaging and Mac build wired on day one)
-- [ ] **M0.1 Project skeleton.** package.json (pinned: pixi.js 8.21.0, three 0.186.1, vite 8.3.1,
+- [x] **M0.1 Project skeleton.** package.json (pinned: pixi.js 8.21.0, three 0.186.1, vite 8.3.1,
       typescript 7.0.2, vitest 5.0.2, @playwright/test 1.56.1, @tauri-apps/cli 2.12.0, preact, @preact/signals,
       oxc-parser, pngjs, pixelmatch), tsconfigs (sim/data/ai without DOM; app; art; tools), vite config
       (`base:'./'`), .gitignore, README stub, LICENSE (MIT), CLAUDE.md already present.
       _Accept:_ `npm ci` works; `tsc -b` passes on an empty tree.
-- [ ] **M0.2 Hello iso scene.** Pixi v8 (WebGL2 forced) draws a 32×32 diamond grid with a camera (scroll/zoom)
+- [x] **M0.2 Hello iso scene.** Pixi v8 (WebGL2 forced) draws a 32×32 diamond grid with a camera (scroll/zoom)
       and a `window.__empires` stub (`ready()`, `renderStats()`, `worldToScreen()`).
       _Accept:_ Playwright spike opens it headless in Chromium and WebKit, logs WebGL renderer strings
       (record in DECISIONS), saves screenshots I review.
-- [ ] **M0.3 Verify harness.** `tools/verify.ts` orchestrating typecheck → purity → vitest → build → e2e →
+- [x] **M0.3 Verify harness.** `tools/verify.ts` orchestrating typecheck → purity → vitest → build → e2e →
       screenshot diff, writing `artifacts/verify/summary.{md,json}` + `artifacts/screens/CHANGED.md`;
       `tools/check-purity.ts` (oxc-parser AST); one sample unit test and one e2e test.
       _Accept:_ `npm run verify` green; a deliberately impure sim file makes it fail (then removed).

@@ -1,0 +1,130 @@
+import type { Container } from 'pixi.js';
+import { isoToWorld, worldToIso, type Point } from './iso.ts';
+
+export interface CameraOptions {
+  edgeScroll: boolean;
+  scrollSpeed: number; // logical px per second at zoom 1
+  minZoom: number;
+  maxZoom: number;
+}
+
+/** Camera over the iso world container: pan (keys, edge, middle-drag) and zoom (wheel). */
+export class Camera {
+  /** Iso-space point at the center of the view. */
+  center: Point = { x: 0, y: 0 };
+  zoom = 1;
+  private keys = new Set<string>();
+  private pointer: Point | null = null;
+  private drag: { x: number; y: number; cx: number; cy: number } | null = null;
+
+  private readonly world: Container;
+  private readonly view: HTMLElement;
+  options: CameraOptions;
+
+  constructor(
+    world: Container,
+    view: HTMLElement,
+    options: CameraOptions = { edgeScroll: true, scrollSpeed: 900, minZoom: 0.5, maxZoom: 1.5 },
+  ) {
+    this.world = world;
+    this.view = view;
+    this.options = options;
+    window.addEventListener('keydown', (e) => this.keys.add(e.key));
+    window.addEventListener('keyup', (e) => this.keys.delete(e.key));
+    window.addEventListener('blur', () => this.keys.clear());
+    view.addEventListener('pointermove', (e) => {
+      this.pointer = { x: e.clientX, y: e.clientY };
+      if (this.drag) {
+        this.center.x = this.drag.cx - (e.clientX - this.drag.x) / this.zoom;
+        this.center.y = this.drag.cy - (e.clientY - this.drag.y) / this.zoom;
+      }
+    });
+    view.addEventListener('pointerleave', () => (this.pointer = null));
+    view.addEventListener('pointerdown', (e) => {
+      if (e.button === 1) this.drag = { x: e.clientX, y: e.clientY, cx: this.center.x, cy: this.center.y };
+    });
+    window.addEventListener('pointerup', (e) => {
+      if (e.button === 1) this.drag = null;
+    });
+    view.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        const factor = Math.exp(-e.deltaY * 0.0015);
+        this.zoomAt(this.zoom * factor, e.clientX, e.clientY);
+      },
+      { passive: false },
+    );
+  }
+
+  centerOnWorld(x: number, y: number): void {
+    worldToIso(x, y, 0, this.center);
+  }
+
+  setZoom(z: number): void {
+    this.zoom = Math.min(this.options.maxZoom, Math.max(this.options.minZoom, z));
+  }
+
+  /** Zoom keeping the iso point under (px, py) fixed on screen. */
+  zoomAt(z: number, px: number, py: number): void {
+    const before = this.screenToIso(px, py);
+    this.setZoom(z);
+    const after = this.screenToIso(px, py);
+    this.center.x += before.x - after.x;
+    this.center.y += before.y - after.y;
+  }
+
+  update(dtSeconds: number): void {
+    const speed = (this.options.scrollSpeed * dtSeconds) / this.zoom;
+    let dx = 0;
+    let dy = 0;
+    if (this.keys.has('ArrowLeft')) dx -= 1;
+    if (this.keys.has('ArrowRight')) dx += 1;
+    if (this.keys.has('ArrowUp')) dy -= 1;
+    if (this.keys.has('ArrowDown')) dy += 1;
+    if (this.options.edgeScroll && this.pointer && !this.drag) {
+      const band = 8;
+      const w = this.view.clientWidth;
+      const h = this.view.clientHeight;
+      if (this.pointer.x <= band) dx -= 1;
+      if (this.pointer.x >= w - band - 1) dx += 1;
+      if (this.pointer.y <= band) dy -= 1;
+      if (this.pointer.y >= h - band - 1) dy += 1;
+    }
+    this.center.x += dx * speed;
+    this.center.y += dy * speed;
+    this.apply();
+  }
+
+  apply(): void {
+    const w = this.view.clientWidth;
+    const h = this.view.clientHeight;
+    this.world.scale.set(this.zoom);
+    // Round translation to device pixels at zoom 1 to keep sprites crisp.
+    const dpr = window.devicePixelRatio || 1;
+    const tx = w / 2 - this.center.x * this.zoom;
+    const ty = h / 2 - this.center.y * this.zoom;
+    this.world.position.set(Math.round(tx * dpr) / dpr, Math.round(ty * dpr) / dpr);
+  }
+
+  /** Page (CSS px) → iso space. */
+  screenToIso(px: number, py: number): Point {
+    const w = this.view.clientWidth;
+    const h = this.view.clientHeight;
+    return { x: this.center.x + (px - w / 2) / this.zoom, y: this.center.y + (py - h / 2) / this.zoom };
+  }
+
+  /** World tile coords → page (CSS px). */
+  worldToScreen(x: number, y: number, h = 0): Point {
+    const p = worldToIso(x, y, h);
+    return {
+      x: (p.x - this.center.x) * this.zoom + this.view.clientWidth / 2,
+      y: (p.y - this.center.y) * this.zoom + this.view.clientHeight / 2,
+    };
+  }
+
+  screenToWorld(px: number, py: number): Point {
+    const iso = this.screenToIso(px, py);
+    return isoToWorld(iso.x, iso.y);
+  }
+}

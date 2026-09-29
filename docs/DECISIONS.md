@@ -36,4 +36,11 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   FLUX.1-schnell), logged in `assets/images/manifest.json`.
 
 ## Loop decisions
-_(D15+ appended here during the loop.)_
+- **D15 — Headless GPU rendering confirmed** (2026-09-29, M0.2). Playwright 1.56.1 headless Chromium reports
+  `ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max)` with `--use-angle=metal`; headless WebKit reports
+  `Apple GPU`. Both are hardware GL, so screenshots and perf gates can run headless without SwiftShader. Tests
+  use a 1280×800 viewport at deviceScaleFactor 2 (Retina) and `?debug=1&edgeScroll=0`.
+- **D16 — TypeScript layout** (2026-09-29, M0.1). TS 7.0.2 (`tsc` native) runs three `-p` projects (sim/data/ai
+  with `lib: ES2023` only; app with DOM + Preact JSX; tools/tests with Node types) instead of `tsc -b`
+  references. `erasableSyntaxOnly` is on (no enums, namespaces, or parameter properties) so Node 22 runs
+  `.ts` tools directly; imports use explicit `.ts` extensions.
