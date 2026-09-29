@@ -9,3 +9,5 @@ what · next step. Remove entries when fixed (the commit log keeps history).
 - **KI-2 · should · AI images blocked** — the Hugging Face connector refuses Space invocations
   (`gradio=none` header), so Qwen-Image/FLUX can't be called through it. Ask the user whether to enable Space
   invocation in the connector settings before M9 (menu/loading art, emblems); until then use code-made art.
+- **KI-3 · should · StartOS backup/restore unverified** — the test VM has no backup target, so the
+  backup → restore round-trip (verify-on-startos §7) has not run. Needs a target on the box (user) before M6/M15.

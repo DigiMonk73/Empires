@@ -3,12 +3,15 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M0 Rails — M0.1–M0.5 done.
-- **Last green commit:** M0.5 (verify ~3 s; verify:full ~45 s incl. Docker both arches + Tauri hidden smoke).
-- **Verify:** `npm run verify` and `verify:full` green; startos step skips until M0.6.
+- **Milestone:** M0 Rails — M0.1–M0.7 done; M0.8 (data tables) remaining.
+- **Last green commit:** M0.7 (verify ~3 s; verify:full ~45 s + `make arm` in empires-startos).
+- **Verify:** `npm run verify` and `verify:full` green (startos step now active).
 - **Key metrics:** headless GL = ANGLE Metal (Chromium) / Apple GPU (WebKit) — hardware (D15). Image 61.7 MB; .app 9 MB.
 - **Open blockers:** none
-- **Next up:** M0.6–M0.7 StartOS workspace/package/VM, M0.8 data tables.
+- **Next up:** M0.8 data tables (transcribe docs/research → src/data with `src:` + integrity tests), then tag m0.
+- **StartOS (M0.7, 2026-09-29):** installed on muscular-privacy.local; health green; UI renders in Chromium (mDNS)
+  and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
+  reinstall ok. NOT verified: backup/restore (box has no backup target). VM stopped afterwards.
 - **Notes for next iteration:** Research lives in `docs/research/`; the detailed design is
   `docs/design/architecture-proposal.md` (treat D1 there as superseded by `docs/DECISIONS.md` D1: restricted
   doubles, not Q16).
@@ -39,14 +42,14 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       frames and exits with a JSON report.
       _Accept:_ `npx tauri build --target aarch64-apple-darwin --bundles app` produces Empires.app; smoke test
       passes (or is documented best-effort in KNOWN_ISSUES).
-- [ ] **M0.6 StartOS workspace + package.** `git -C /Users/b1ackswan/code/start-technologies pull --ff-only`;
+- [x] **M0.6 StartOS workspace + package.** `git -C /Users/b1ackswan/code/start-technologies pull --ff-only`;
       `btctx-vm-lab/bin/start-cli s9pk init-workspace /Users/b1ackswan/code`; set config host default to
       `https://muscular-privacy.local`; add notes to `/Users/b1ackswan/code/AGENTS.local.md`;
       `start-cli s9pk init-package "Empires"`; submodule `upstream-project` → local Empires path; work the
       scaffold TODO.md (manifest dockerBuild workdir, arch x86_64+aarch64, ui interface :80, daemon + /healthz
       check, main volume, i18n en/es/de/pl/fr, README, instructions, icon from our own art).
       _Accept:_ `make arm` produces a .s9pk; `npm run check` in the package passes.
-- [ ] **M0.7 VM install + verify.** Per LOOP.md StartOS protocol.
+- [x] **M0.7 VM install + verify.** Per LOOP.md StartOS protocol.
       _Accept:_ installed on muscular-privacy.local, health green, UI opens and renders the hello scene.
 - [ ] **M0.8 Data tables v1.** `src/data/*` transcribed from `docs/research/*`: units, buildings, techs, ages,
       civs (bonuses + disabled lists), armor classes, resources, terrain, player colors, map sizes. Every row
