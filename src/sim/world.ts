@@ -6,6 +6,8 @@ import { Rng, STREAM } from './math/rng.ts';
 import { Occ, TileMap } from './map/tilemap.ts';
 import { RESOURCE_KINDS, TYPES, buildingTypeIndex, resourceKindIndex, unitTypeIndex } from './rules/registry.ts';
 import { PathService } from './path/service.ts';
+import { UnitGrid } from './core/spatial.ts';
+import { PathGrid } from './path/grid.ts';
 
 export interface PlayerSetup {
   civ: string;
@@ -47,8 +49,11 @@ export interface PlayerState {
   res: Float64Array;
 }
 
-/** A queued unit order. More kinds arrive with gathering, building and combat. */
-export type Order = { k: 'move'; x: number; y: number };
+/**
+ * A queued unit order. More kinds arrive with gathering, building and combat. A group move names a `leader`
+ * (handle): followers reuse the leader's path instead of searching their own.
+ */
+export type Order = { k: 'move'; x: number; y: number; leader?: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }
@@ -70,6 +75,12 @@ export class World {
   paths: (number[] | undefined)[] = [];
   events: SimEvent[] = [];
   readonly pathing: PathService;
+  readonly grid: UnitGrid;
+  /** Reusable per-tick buffers (not state). */
+  scratch = { px: new Float64Array(256), py: new Float64Array(256) };
+  private pathGrids = new Map<number, PathGrid>();
+  /** Movement metrics (not hashed): unit-ticks spent moving / blocked. */
+  moveStats = { movingTicks: 0, blockedTicks: 0, gaveUp: 0, repaths: 0, directPaths: 0, sharedPaths: 0 };
 
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;
@@ -86,11 +97,13 @@ export class World {
       misc: new Rng(this.seed, STREAM.misc),
     };
     this.pathing = new PathService(this);
+    this.grid = new UnitGrid(cfg.map.w, cfg.map.h);
     if (cfg.map.ascii) this.applyAscii(cfg.map.ascii);
     const sc = cfg.scenario;
     for (const r of sc?.resources ?? []) this.addResource(resourceKindIndex(r.kind), r.tx, r.ty);
     for (const b of sc?.buildings ?? []) this.placeBuilding(buildingTypeIndex(b.type), b.owner, b.tx, b.ty);
     for (const u of sc?.units ?? []) this.spawnUnit(unitTypeIndex(u.type), u.owner, u.x, u.y);
+    this.grid.rebuild(this.ents);
   }
 
   private applyAscii(rows: readonly string[]): void {
@@ -146,6 +159,12 @@ export class World {
       }
     }
     return h;
+  }
+
+  pathGrid(moveClass: number): PathGrid {
+    let g = this.pathGrids.get(moveClass);
+    if (!g) this.pathGrids.set(moveClass, (g = new PathGrid(this.map, moveClass)));
+    return g;
   }
 
   /** Remove an entity and its cold data. */

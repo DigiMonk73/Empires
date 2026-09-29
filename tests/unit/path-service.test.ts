@@ -81,8 +81,9 @@ describe('path service + movement', () => {
     const units = Array.from({ length: 300 }, (_, i) => ({ x: 2.5 + (i % 20), y: 2.5 + Math.floor(i / 20) }));
     const a = sim(rows, units);
     const b = sim(rows, units);
-    a.sim.step([{ player: 1, cmd: { t: 'move', ids: a.ids, x: 110.5, y: 105.5 } }]);
-    b.sim.step([{ player: 1, cmd: { t: 'move', ids: b.ids, x: 110.5, y: 105.5 } }]);
+    // Independent orders (no group sharing): every unit needs its own search.
+    a.sim.step(a.ids.map((id) => ({ player: 1, cmd: { t: 'move' as const, ids: [id], x: 110.5, y: 105.5 } })));
+    b.sim.step(b.ids.map((id) => ({ player: 1, cmd: { t: 'move' as const, ids: [id], x: 110.5, y: 105.5 } })));
     expect(a.sim.world.pathing.stats.served).toBeLessThan(300); // not all served in the first tick
     for (let t = 0; t < 90; t++) {
       a.sim.step();
@@ -90,6 +91,42 @@ describe('path service + movement', () => {
     }
     expect(a.sim.world.pathing.stats.served).toBe(300);
     expect(a.sim.hash()).toBe(b.sim.hash());
+  });
+});
+
+describe('group moves', () => {
+  it('shares the leader path across a forest-clump map and keeps formation', () => {
+    const W = 80;
+    const rows = Array.from({ length: W }, (_, y) =>
+      Array.from({ length: W }, (_, x) => {
+        const blobs = [[30, 20, 7], [45, 40, 9], [20, 55, 6], [60, 60, 8]];
+        return blobs.some(([cx, cy, r]) => (x - cx!) * (x - cx!) + (y - cy!) * (y - cy!) <= r! * r!) ? 'F' : '.';
+      }).join(''),
+    );
+    const units = Array.from({ length: 40 }, (_, i) => ({ x: 4.5 + (i % 8) * 0.6, y: 4.5 + Math.floor(i / 8) * 0.6 }));
+    const { sim: s, ids } = sim(rows, units);
+    s.step([{ player: 1, cmd: { t: 'move', ids, x: 70.5, y: 70.5 } }]);
+    for (let t = 0; t < 2000 && ids.some((id) => s.world.orders[s.world.ents.slotOf(id)]); t++) s.step();
+    const st = s.world.moveStats;
+    expect(ids.every((id) => !s.world.orders[s.world.ents.slotOf(id)])).toBe(true);
+    expect(s.world.pathing.stats.served).toBeLessThan(8); // ~1 leader search instead of 40
+    expect(st.gaveUp).toBe(0);
+    // Everyone ends near the click, spread out (no pile-up on one point).
+    const xs = ids.map((id) => s.world.ents.x[s.world.ents.slotOf(id)]!);
+    const ys = ids.map((id) => s.world.ents.y[s.world.ents.slotOf(id)]!);
+    for (let i = 0; i < ids.length; i++) expect(Math.hypot(xs[i]! - 70.5, ys[i]! - 70.5)).toBeLessThan(5);
+    let minD = Infinity;
+    for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) minD = Math.min(minD, Math.hypot(xs[i]! - xs[j]!, ys[i]! - ys[j]!));
+    expect(minD).toBeGreaterThan(0.25);
+  });
+
+  it('a mover passes an idle unit, which steps aside', () => {
+    const { sim: s, ids } = sim(Array.from({ length: 5 }, () => '.'.repeat(20)), [{ x: 1.5, y: 2.5 }, { x: 8.5, y: 2.5 }]);
+    s.step([{ player: 1, cmd: { t: 'move', ids: [ids[0]!], x: 16.5, y: 2.5 } }]);
+    runUntilIdle(s, ids[0]!);
+    expect(pos(s, ids[0]!)[0]).toBeCloseTo(16.5, 6);
+    const [ix] = pos(s, ids[1]!);
+    expect(Math.abs(ix - 8.5)).toBeLessThan(0.5); // stepped aside, not bulldozed along
   });
 });
 

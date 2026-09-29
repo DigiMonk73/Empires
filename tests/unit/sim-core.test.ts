@@ -41,13 +41,13 @@ describe('Sim', () => {
   it('moves a villager to its target at 1.1 tiles/s', () => {
     const sim = Sim.create(cfg());
     const [v] = handles(sim);
-    sim.step([{ player: 1, cmd: { t: 'move', ids: [v!], x: 13.5, y: 2.5 } }]);
+    sim.step([{ player: 1, cmd: { t: 'move', ids: [v!], x: 2.5, y: 13.5 } }]); // unobstructed route
     let ticks = 1;
     while (sim.world.orders[sim.world.ents.slotOf(v!)] && ticks < 1000) {
       sim.step();
       ticks++;
     }
-    expect(sim.world.ents.x[sim.world.ents.slotOf(v!)]).toBe(13.5);
+    expect(sim.world.ents.y[sim.world.ents.slotOf(v!)]).toBe(13.5);
     expect(ticks).toBe(200); // 11 tiles / (1.1 tiles/s) = 10 s = 200 ticks
     expect(sim.drainEvents().some((e) => e.t === 'arrived')).toBe(true);
   });

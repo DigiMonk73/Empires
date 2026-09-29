@@ -51,3 +51,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   the unit's connected region (JPS can't produce "closest" partial paths). Regions: full 4-connected flood fill,
   lazily recomputed when passability changes (0.28 ms warmed on 250²); incremental union-find only if perf
   gates require it. The path heap snapshots keys per entry (a live-key heap corrupted A* optimality).
+- **D18 — Movement model** (2026-09-29, M1.5). Straight-line shortcut when the target is walkable-visible (no
+  search); group moves keep centroid offsets compressed to ~0.55·√n tiles (units > 8 tiles out converge) and
+  followers reuse the leader's path when both joins are walkable. Collision is soft separation on a 2-tile unit
+  grid: mover-vs-idle pushes the idle unit sideways (70% perpendicular), head-on movers keep right, pushes are
+  capped at 0.06 tiles/tick and never enter unwalkable tiles. Stuck: blocked progress < 30% of speed; repath at
+  3 s, give up at 8 s; crowded destinations accept arrival within 1.5 tiles after 0.6 s blocked.

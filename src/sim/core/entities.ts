@@ -53,6 +53,10 @@ export class EntityStore {
   timer = new Int32Array(0);
   /** Buildings: construction progress 0..1 (1 = complete). */
   build = new Float64Array(0);
+  /** Movement: consecutive blocked-progress ticks (stuck detection). */
+  stuck = new Uint16Array(0);
+  /** Movement: distance to the current waypoint at the end of the previous tick. */
+  lastDist = new Float64Array(0);
 
   constructor(initialCap = 256) {
     this.grow(initialCap);
@@ -80,6 +84,8 @@ export class EntityStore {
     this.target = copy(this.target, (n) => new Float64Array(n));
     this.timer = copy(this.timer, (n) => new Int32Array(n));
     this.build = copy(this.build, (n) => new Float64Array(n));
+    this.stuck = copy(this.stuck, (n) => new Uint16Array(n));
+    this.lastDist = copy(this.lastDist, (n) => new Float64Array(n));
     this.cap = newCap;
   }
 
@@ -107,6 +113,8 @@ export class EntityStore {
     this.target[slot] = NO_ENTITY;
     this.timer[slot] = 0;
     this.build[slot] = 1;
+    this.stuck[slot] = 0;
+    this.lastDist[slot] = 0;
     this.count++;
     return makeHandle(slot, this.gen[slot]!);
   }

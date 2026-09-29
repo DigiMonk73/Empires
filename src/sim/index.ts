@@ -1,7 +1,7 @@
 import { applyCommands } from './commands/apply.ts';
 import type { PlayerCommand } from './commands/types.ts';
 import { hashBreakdown } from './hash.ts';
-import { movementSystem, pathRequestSystem } from './systems/movement.ts';
+import { followerPathSystem, movementSystem, pathRequestSystem, separationSystem } from './systems/movement.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 
 export type { Command, PlayerCommand } from './commands/types.ts';
@@ -35,7 +35,9 @@ export class Sim {
     applyCommands(w, cmds);
     pathRequestSystem(w);
     w.pathing.process();
+    followerPathSystem(w);
     movementSystem(w);
+    separationSystem(w);
     w.tick++;
   }
 
