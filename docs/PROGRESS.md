@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M1 Deterministic sim core — DONE (tag `m1`). Next: **M2 See & command**.
+- **Milestone:** M2 See & command — M2.1 done (sim on screen with placeholder art). M1 done (tag `m1`).
 - **Last green commit:** M1.7 (verify ~8.5 s incl. 20k-tick cross-engine determinism + sim stress gate).
 - **Sim perf (500 units, fuzzed orders):** p50 0.07 / p99 0.77 ms per tick; blocked 2%; stuck>5s 0.2%; 0 give-ups.
 - **Determinism:** identical hash traces Node (V8) = Chromium = WebKit (JSC), 500 units × 20k ticks; save/load
@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
 - **StartOS (M0.7):** installed + verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M2.1 session loop + renderer bridge (units/resources/buildings on screen, interpolated).
+- **Next up:** M2.2 terrain chunk meshes (kill the checkerboard), then M2.3 input + selection.
 - **Notes:** metrics history in `docs/metrics/history.csv` (appended by verify).
 
 ---
@@ -85,7 +85,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   stuck < 1% on fixture maps; path p99 ≤ 2 ms/tick.
 
 ## M2 — See & command
-- [ ] **M2.1 Session + renderer bridge.** `game/session.ts` fixed-step loop (20 Hz, speed ×1/1.5/2, catch-up cap),
+- [x] **M2.1 Session + renderer bridge.** `game/session.ts` fixed-step loop (20 Hz, speed ×1/1.5/2, catch-up cap),
       `LocalRouter`; renderer draws sim units (placeholder shapes: body, player-color ring, facing), resources
       and buildings from the sim with tick interpolation and depth sorting; a dev scenario (`?scenario=`).
       _Accept:_ e2e screenshot of a scenario with units, trees, buildings; units visibly move.

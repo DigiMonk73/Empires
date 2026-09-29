@@ -7,18 +7,12 @@ test('boots, renders WebGL2, and projects world coordinates', async ({ page }, i
   const stats = await page.evaluate(() => window.__empires!.renderStats());
   mkdirSync('artifacts/e2e', { recursive: true });
   writeFileSync(`artifacts/e2e/renderer-${info.project.name}.json`, JSON.stringify(stats, null, 2));
-  console.log(`[${info.project.name}] renderer:`, stats.backend, '|', stats.glRenderer, '|', stats.glVendor);
   expect(stats.backend).toBe('webgl');
-
-  // Center of the map should be at the center of the viewport.
-  const p = await page.evaluate(() => window.__empires!.worldToScreen(16, 16));
-  expect(Math.abs(p.x - 640)).toBeLessThan(1);
-  expect(Math.abs(p.y - 400)).toBeLessThan(1);
-  const w = await page.evaluate(() => window.__empires!.screenToWorld(640, 400));
-  expect(w.x).toBeCloseTo(16, 5);
-  expect(w.y).toBeCloseTo(16, 5);
-
-  await snap(page, info, 'boot-grid');
+  // screen ↔ world round trip
+  const p = await page.evaluate(() => window.__empires!.worldToScreen(20.25, 17.5));
+  const w = await page.evaluate((q) => window.__empires!.screenToWorld(q.x, q.y), p);
+  expect(w.x).toBeCloseTo(20.25, 5);
+  expect(w.y).toBeCloseTo(17.5, 5);
   expect(pageErrors(page)).toEqual([]);
 });
 

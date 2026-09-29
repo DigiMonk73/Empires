@@ -1,10 +1,12 @@
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Container } from 'pixi.js';
+import { EKind } from './sim/core/entities.ts';
+import { TYPES } from './sim/rules/registry.ts';
+import { GameSession } from './game/session.ts';
+import { SCENARIOS } from './game/scenarios.ts';
 import { Camera } from './render/camera.ts';
-import { worldToIso, HALF_W, HALF_H } from './render/iso.ts';
-import { installDebugApi, type RenderStats } from './debug/api.ts';
+import { WorldRenderer } from './render/worldRenderer.ts';
+import { installDebugApi, type RenderStats, type UnitInfo } from './debug/api.ts';
 import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
-
-const MAP = 32;
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -20,25 +22,38 @@ async function boot(): Promise<void> {
   });
   host.appendChild(app.canvas);
 
-  const world = new Container();
-  app.stage.addChild(world);
-  world.addChild(drawGrid());
+  const scenario = SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!;
+  const session = new GameSession(scenario());
+  const world = session.sim.world;
 
-  const camera = new Camera(world, app.canvas, {
+  const cameraRoot = new Container();
+  app.stage.addChild(cameraRoot);
+  const wr = new WorldRenderer(app.renderer, world);
+  cameraRoot.addChild(wr.root);
+
+  const camera = new Camera(cameraRoot, app.canvas, {
     edgeScroll: params.get('edgeScroll') !== '0',
     scrollSpeed: 900,
     minZoom: 0.5,
     maxZoom: 1.5,
   });
-  camera.centerOnWorld(MAP / 2, MAP / 2);
+  const tc = findFirst(world, 1, 'townCenter');
+  if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 2);
+  else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
   camera.apply();
 
-  let frozen: number | null = null;
+  let frozen = false;
+  let alpha = 0;
   let fps = 0;
   let frameMs = 0;
+  let cpuMs = 0;
   app.ticker.add((t) => {
-    const dt = frozen === null ? t.deltaMS / 1000 : 0;
-    camera.update(dt);
+    const t0 = performance.now();
+    const dt = Math.min(0.25, t.deltaMS / 1000);
+    if (!frozen) alpha = session.update(dt);
+    camera.update(frozen ? 0 : dt);
+    wr.update(alpha);
+    cpuMs = performance.now() - t0;
     frameMs = t.deltaMS;
     fps = t.FPS;
   });
@@ -52,16 +67,25 @@ async function boot(): Promise<void> {
     glVendor: glInfo.vendor,
     fps,
     frameMs,
+    cpuMs,
     width: app.canvas.clientWidth,
     height: app.canvas.clientHeight,
     dpr: window.devicePixelRatio || 1,
+    views: wr.viewCount,
   });
   installDebugApi({
-    version: '0.1.0',
+    version: '0.2.0',
     ready: () => readyPromise,
     renderStats,
     worldToScreen: (x, y, h = 0) => camera.worldToScreen(x, y, h),
     screenToWorld: (px, py) => camera.screenToWorld(px, py),
+    entityScreenPos: (h) => {
+      const s = world.ents.slotOf(h);
+      if (s < 0) return null;
+      const x = world.ents.px[s]! + (world.ents.x[s]! - world.ents.px[s]!) * alpha;
+      const y = world.ents.py[s]! + (world.ents.y[s]! - world.ents.py[s]!) * alpha;
+      return camera.worldToScreen(x, y);
+    },
     camera: {
       centerOn: (x, y) => {
         camera.centerOnWorld(x, y);
@@ -73,59 +97,48 @@ async function boot(): Promise<void> {
       },
       get: () => ({ x: camera.center.x, y: camera.center.y, zoom: camera.zoom }),
     },
-    freezeRenderClock: (t) => {
-      frozen = t;
+    query: {
+      tick: () => session.sim.tick,
+      hash: () => session.sim.hash(),
+      units: (owner) => {
+        const out: UnitInfo[] = [];
+        const e = world.ents;
+        for (let s = 0; s < e.top; s++) {
+          if (!e.alive[s] || e.kind[s] !== EKind.unit) continue;
+          if (owner !== undefined && e.owner[s] !== owner) continue;
+          out.push({ h: e.handleOf(s), type: TYPES[e.type[s]!]!.id, owner: e.owner[s]!, x: e.x[s]!, y: e.y[s]!, act: e.act[s]!, hp: e.hp[s]!, hasOrder: !!world.orders[s] });
+        }
+        return out;
+      },
+      selection: () => [],
+      player: (p) => ({ res: [...(world.players[p]?.res ?? [])] }),
+    },
+    issue: (player, cmd) => session.router.submit(player, cmd),
+    pause: (on) => {
+      session.paused = on;
+    },
+    setSpeed: (s) => {
+      session.speed = s;
+    },
+    step: (n) => {
+      for (let i = 0; i < n; i++) session.stepOnce();
+      alpha = 1;
+    },
+    freezeRenderClock: () => {
+      frozen = true;
+      alpha = 1;
     },
   });
-  // Two frames so the first real render has happened before tests look.
   requestAnimationFrame(() => requestAnimationFrame(() => readyResolve()));
   if (params.get('smoke') === '1' && isTauri()) {
     await runTauriSmokeTest(app, () => ({ ...renderStats() }));
   }
 }
 
-function drawGrid(): Graphics {
-  const g = new Graphics();
-  const p = { x: 0, y: 0 };
-  for (let y = 0; y < MAP; y++) {
-    for (let x = 0; x < MAP; x++) {
-      worldToIso(x, y, 0, p);
-      const n = hash2(x, y);
-      const base = (x + y) % 2 === 0 ? 0x4f7a2e : 0x4a742b;
-      const color = shade(base, 0.92 + n * 0.16);
-      g.poly([p.x, p.y, p.x + HALF_W, p.y + HALF_H, p.x, p.y + 2 * HALF_H, p.x - HALF_W, p.y + HALF_H]).fill(color);
-    }
-  }
-  for (let i = 0; i <= MAP; i++) {
-    const a = worldToIso(i, 0);
-    const b = worldToIso(i, MAP);
-    g.moveTo(a.x, a.y).lineTo(b.x, b.y);
-    const c = worldToIso(0, i);
-    const d = worldToIso(MAP, i);
-    g.moveTo(c.x, c.y).lineTo(d.x, d.y);
-  }
-  g.stroke({ width: 1, color: 0x2c4a18, alpha: 0.5 });
-  // Origin + axis markers for projection checks.
-  const o = worldToIso(0, 0);
-  g.circle(o.x, o.y, 4).fill(0xffffff);
-  const xAxis = worldToIso(4, 0);
-  g.circle(xAxis.x, xAxis.y, 4).fill(0xd04040);
-  const yAxis = worldToIso(0, 4);
-  g.circle(yAxis.x, yAxis.y, 4).fill(0x4060d0);
-  return g;
-}
-
-function hash2(x: number, y: number): number {
-  let h = Math.imul(x, 374761393) + Math.imul(y, 668265263);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-
-function shade(rgb: number, k: number): number {
-  const r = Math.min(255, Math.round(((rgb >> 16) & 255) * k));
-  const g = Math.min(255, Math.round(((rgb >> 8) & 255) * k));
-  const b = Math.min(255, Math.round((rgb & 255) * k));
-  return (r << 16) | (g << 8) | b;
+function findFirst(world: GameSession['sim']['world'], owner: number, typeId: string): number {
+  const e = world.ents;
+  for (let s = 0; s < e.top; s++) if (e.alive[s] && e.owner[s] === owner && TYPES[e.type[s]!]!.id === typeId) return s;
+  return -1;
 }
 
 function readGlInfo(app: Application): { renderer: string; vendor: string } {

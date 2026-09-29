@@ -31,7 +31,9 @@ truth**, not conversation memory, because context gets summarized.
 7. **Record.** Update PROGRESS (tick tasks, rewrite header), DECISIONS, METRICS.
 8. **Commit.** `git commit -m "M<n>.<k>: <summary>"` ending with the line
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Local only — never push, never add remotes.
-9. **Milestone end.** Run `npm run verify:full`; tag `m<n>`; bump the `empires-startos` submodule and `make`.
+9. **Milestone end.** Commit, run `npm run verify:full`, and only when it is green tag `m<n>` and bump the
+   `empires-startos` submodule (its `make` runs inside verify:full, so re-run it after the bump). Never chain
+   tagging onto a command whose failure could be masked (e.g. by `| tail`).
    At M0, M6 and M15 run the StartOS VM protocol (below). Send the user a short push notification summary;
    at M6 and M15 invite a playtest.
 10. **Next.** Schedule the next wakeup in 60–120 s while work remains. Never block on the user; fold in their
