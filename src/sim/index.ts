@@ -5,6 +5,7 @@ import { followerPathSystem, movementSystem, pathRequestSystem, separationSystem
 import { fogSystem } from './systems/fog.ts';
 import { populationSystem } from './systems/population.ts';
 import { gatherSystem } from './systems/gather.ts';
+import { buildSystem } from './systems/build.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
@@ -49,6 +50,7 @@ export class Sim {
     const w = this.world;
     applyCommands(w, cmds);
     gatherSystem(w);
+    buildSystem(w);
     pathRequestSystem(w);
     w.pathing.process();
     followerPathSystem(w);

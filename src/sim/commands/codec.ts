@@ -8,6 +8,8 @@ import { POS_QUANTUM } from './types.ts';
 const CMD_MOVE = 1;
 const CMD_STOP = 2;
 const CMD_GATHER = 3;
+const CMD_BUILD = 4;
+const CMD_CONSTRUCT = 5;
 
 class Writer {
   bytes: number[] = [];
@@ -28,6 +30,10 @@ class Writer {
   ids(ids: readonly number[]): void {
     this.uv(ids.length);
     for (const id of ids) this.uv(id);
+  }
+  str(s: string): void {
+    this.uv(s.length);
+    for (let i = 0; i < s.length; i++) this.uv(s.charCodeAt(i));
   }
 }
 
@@ -61,6 +67,12 @@ class Reader {
     for (let k = 0; k < n; k++) out.push(this.uv());
     return out;
   }
+  str(): string {
+    const n = this.uv();
+    let s = '';
+    for (let k = 0; k < n; k++) s += String.fromCharCode(this.uv());
+    return s;
+  }
   get done(): boolean {
     return this.i >= this.b.length;
   }
@@ -85,6 +97,20 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(c.res);
       w.uv(c.queue ? 1 : 0);
       return;
+    case 'build':
+      w.uv(CMD_BUILD);
+      w.ids(c.ids);
+      w.str(c.type);
+      w.sv(c.tx);
+      w.sv(c.ty);
+      w.uv(c.queue ? 1 : 0);
+      return;
+    case 'construct':
+      w.uv(CMD_CONSTRUCT);
+      w.ids(c.ids);
+      w.uv(c.h);
+      w.uv(c.queue ? 1 : 0);
+      return;
   }
 }
 
@@ -105,6 +131,20 @@ function readCommand(r: Reader): Command {
       const res = r.uv();
       const queue = r.uv() === 1;
       return queue ? { t: 'gather', ids, res, queue } : { t: 'gather', ids, res };
+    }
+    case CMD_BUILD: {
+      const ids = r.ids();
+      const type = r.str();
+      const tx = r.sv();
+      const ty = r.sv();
+      const queue = r.uv() === 1;
+      return queue ? { t: 'build', ids, type, tx, ty, queue } : { t: 'build', ids, type, tx, ty };
+    }
+    case CMD_CONSTRUCT: {
+      const ids = r.ids();
+      const h = r.uv();
+      const queue = r.uv() === 1;
+      return queue ? { t: 'construct', ids, h, queue } : { t: 'construct', ids, h };
     }
     default:
       throw new Error(`unknown command type ${t}`);

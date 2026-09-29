@@ -170,11 +170,15 @@ export function separationSystem(w: World): void {
     const xs = e.x[s]!;
     const ys = e.y[s]!;
     const movingS = w.paths[s] !== undefined && w.paths[s]!.length > 0;
-    const gathererS = w.orders[s]?.[0]?.k === 'gather';
+    const ks = w.orders[s]?.[0]?.k;
+    const gathererS = ks === 'gather' || ks === 'build';
     w.grid.forEachNear(xs, ys, rs + 0.6, (j) => {
       if (j <= s) return;
       // Ghosting (D9): same-player gatherers pass through each other around resources and drop sites.
-      if (gathererS && e.owner[j] === e.owner[s] && w.orders[j]?.[0]?.k === 'gather') return;
+      if (gathererS && e.owner[j] === e.owner[s]) {
+        const kj = w.orders[j]?.[0]?.k;
+        if (kj === 'gather' || kj === 'build') return;
+      }
       const rj = TYPES[e.type[j]!]!.radius;
       let dx = e.x[j]! - xs;
       let dy = e.y[j]! - ys;

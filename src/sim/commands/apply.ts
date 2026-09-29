@@ -4,6 +4,7 @@ import type { World } from '../world.ts';
 import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
+import { placeFoundation, startConstruct } from '../systems/build.ts';
 
 /** Slots of the command's ids that are live units owned by the issuing player (others are ignored). */
 function ownedUnitSlots(w: World, player: number, ids: readonly number[]): number[] {
@@ -121,6 +122,20 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         }
         break;
       }
+      case 'build': {
+        const typeIdx = TYPES.findIndex((t) => t.building?.id === cmd.type);
+        const villagers = ownedUnitSlots(w, player, cmd.ids).filter((s) => isVillager(w, s));
+        if (typeIdx < 0 || !villagers.length || !Number.isInteger(cmd.tx) || !Number.isInteger(cmd.ty)) {
+          w.events.push({ t: 'rejected', player, reason: 'bad build command' });
+          break;
+        }
+        const h = placeFoundation(w, player, typeIdx, cmd.tx, cmd.ty);
+        if (h >= 0) for (const s of villagers) startConstruct(w, s, h, !!cmd.queue);
+        break;
+      }
+      case 'construct':
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) startConstruct(w, slot, cmd.h, !!cmd.queue);
+        break;
       case 'stop':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
           w.orders[slot] = undefined;

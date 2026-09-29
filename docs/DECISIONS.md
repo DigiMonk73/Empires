@@ -63,3 +63,11 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   premultiplied space, trimmed to the union of base+team alpha; team overlay = luminance×1.35 of team-masked
   pixels. Until M3.7 decides the Docker bake stage, `public/baked` (gitignored) is baked on the Mac by verify and
   included in the Docker build context.
+- **D20 — Docker bakes its own sprites** (2026-09-29, M3.7; resolves D5's open measurement). SwiftShader bake
+  inside `mcr.microsoft.com/playwright:v1.56.1-noble` (Node 22.20) takes 6.3 s for the current 10 models vs 1.6 s
+  on the M4 GPU (~4–6× slower; extrapolated full content ≈ 8–10 min < 20 min). The Dockerfile's `bake` stage
+  copies only art inputs so gameplay edits keep its cache; `public/baked` stays gitignored and out of the Docker
+  context. No runtime-bake fallback needed.
+- **D21 — Construction rate** (2026-09-29, M4.3). n builders progress at (n + 2)/3 × one builder (AoE2's rule);
+  AoE1's formula is unverified (`verify`). Foundations start at 1 HP and gain HP with progress; units on the
+  footprint are nudged to the nearest free tile.

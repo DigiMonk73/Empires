@@ -3,18 +3,16 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M3 Art pipeline v1 — M3.1–M3.6 done (DSL, baker, calibration, villager, resources, Stone-age TC + house, in-game). M2 done (tag `m2`).
-- **Last green commit:** M2.7 (verify ~22 s: 21 e2e in 2 browsers, 20k-tick cross-engine determinism, stress).
-- **Playable today:** demo scenario — select (click/box/double-click/groups), right-click move with formations,
-  HUD (stockpile/pop/age/clock/selection), minimap (jump + move), fog of war. Placeholder shape art.
-- **Perf:** sim 500 units p99 0.8 ms/tick; render 1000 moving units frame CPU p95 4.5 ms @ 60 fps.
-- **Determinism:** Node = Chromium = WebKit hash traces (500 units × 20k ticks); save/load/replay equivalent.
-- **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
+- **Milestone:** M4 Economy — M4.1–M4.3 done (stats/effects, gather cycle, construction). M3 done (tag `m3`).
+- **Last green commit:** M4.3 (verify ~20 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
+- **Art:** baked villager (8 facings × idle/walk/die), trees/mines/berries, Stone-age TC + house; calibration
+  IoU 1.0; Docker bakes its own sprites (D20). Placeholders remain for soldiers and other buildings.
+- **Sim:** gather at research rates (wood 0.55/s verified), drop-site rules, depletion/retarget, construction
+  with (n+2)/3 builders, pop/housing; sim 500 units p99 ~0.8 ms/tick; cross-engine determinism holds.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M3.7 Docker bake stage (SwiftShader measured: ~6× GPU time, est. 8–10 min for full content → D5 stands).
-- **Bake:** `node tools/bake/cli.ts` (M4 GPU, ~0.2 s for 7 models); contact sheets in `artifacts/bake/`.
-- **Notes:** metrics history in `docs/metrics/history.csv`; visual reviews in `docs/visual-review.md`.
+- **Next up:** M4.4 production (train villagers, queue, rally), M4.5 farms/fish/hunt, M4.6 UI, M4.7 art.
+- **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
 ---
 
@@ -122,7 +120,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M3.5 Resources.** Tree variants (scattered + forest), berry bush, gold and stone mine models.
 - [x] **M3.6 Renderer integration.** Atlas loader; baked sprites with 8-dir facing, walk/idle/die animation,
       team overlay; placeholder fallback for unbaked types.
-- [ ] **M3.7 Contact sheets + Docker bake timing.** Contact sheet per model (facings × key frames on grass with
+- [x] **M3.7 Contact sheets + Docker bake timing.** Contact sheet per model (facings × key frames on grass with
       grid); Docker bake stage measured → D5 decision.
 - _Exit:_ calibration IoU ≥ 0.98; contact sheets ≥ 3/5; full bake ≤ 3 min; D5 fallback decided.
 
@@ -134,7 +132,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       fish) → deposit → return; retarget the nearest same-kind node when depleted; switching resource discards the
       load; trees/mines vanish when empty (passability + regions update). Gatherer ghosting near nodes/drop sites.
       _Accept:_ benchmark within ±5% of research work rates; idle < 3%.
-- [ ] **M4.3 Construction.** `build` command: placement validation (terrain, occupancy, footprint), cost paid,
+- [x] **M4.3 Construction.** `build` command: placement validation (terrain, occupancy, footprint), cost paid,
       foundation (HP grows with progress), multi-builder rate (AoE2-style (n+2)/3 — verify), units pushed off the
       footprint, completion effects (pop cap, drop site). Shift-queued builds.
 - [ ] **M4.4 Production.** `train` / `cancelTrain` (queue ≤ 5, cost at queue, refund on cancel), housing pause,

@@ -78,12 +78,15 @@ export type Order =
    * Gather from resource node `res` (phase 0 = heading to the node, 1 = working, 2 = heading to drop site
    * `drop`). `retry` throttles searches when no node/drop site is available.
    */
-  | { k: 'gather'; res: number; phase: 0 | 1 | 2; drop: number; retry: number };
+  | { k: 'gather'; res: number; phase: 0 | 1 | 2; drop: number; retry: number }
+  /** Build foundation `h` (phase 0 = walking, 1 = building). */
+  | { k: 'build'; h: number; phase: 0 | 1; retry: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }
   | { t: 'deposit'; player: number; res: number; amount: number }
   | { t: 'depleted'; res: number }
+  | { t: 'built'; h: number; player: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number };
 
@@ -193,13 +196,14 @@ export class World {
     return h;
   }
 
-  /** Place a completed building with its top-left corner at tile (tx, ty). */
-  placeBuilding(type: number, owner: number, tx: number, ty: number): number {
+  /** Place a building with its top-left corner at tile (tx, ty) — complete, or as a 1-HP foundation. */
+  placeBuilding(type: number, owner: number, tx: number, ty: number, complete = true): number {
     const t = TYPES[type]!;
     const s = t.size;
     const h = this.ents.create(EKind.building, type, owner, tx + s / 2, ty + s / 2);
     const slot = this.ents.slotOf(h);
-    this.ents.hp[slot] = this.stats(owner, type).hp;
+    this.ents.hp[slot] = complete ? this.stats(owner, type).hp : 1;
+    this.ents.build[slot] = complete ? 1 : 0;
     const occ = t.building?.kind === 'farm' ? Occ.farm : Occ.building;
     for (let dy = 0; dy < s; dy++) {
       for (let dx = 0; dx < s; dx++) {
