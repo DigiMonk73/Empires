@@ -36,7 +36,8 @@ const only = onlyArg ? new Set(onlyArg.split(',')) : null;
 const STEPS: Step[] = [
   { id: 'typecheck', title: 'TypeScript (sim / app / tools)', cmd: ['npm', 'run', '-s', 'typecheck'] },
   { id: 'purity', title: 'Sim purity', cmd: ['node', 'tools/check-purity.ts'] },
-  { id: 'unit', title: 'Unit + determinism tests (vitest)', cmd: ['npx', 'vitest', 'run'] },
+  { id: 'bake', title: 'Bake sprites (incremental) → public/baked', cmd: ['node', 'tools/bake/cli.ts'] },
+  { id: 'unit', title: 'Unit + determinism tests (vitest)', cmd: ['npx', 'vitest', 'run'], needs: ['bake'] },
   {
     id: 'sim',
     title: 'Headless sim stress (500 units, fuzzed orders)',

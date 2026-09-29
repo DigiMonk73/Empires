@@ -8,6 +8,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY *.html vite.config.ts tsconfig*.json ./
 COPY src ./src
+# public/baked holds sprites baked on the Mac GPU (npm run verify / node tools/bake/cli.ts); see DECISIONS D5.
 COPY public ./public
 COPY assets ./assets
 RUN npx vite build

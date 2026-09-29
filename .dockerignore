@@ -1,7 +1,6 @@
 node_modules
 dist
 artifacts
-public/baked
 src-tauri
 test-results
 playwright-report

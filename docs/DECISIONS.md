@@ -57,3 +57,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   grid: mover-vs-idle pushes the idle unit sideways (70% perpendicular), head-on movers keep right, pushes are
   capped at 0.06 tiles/tick and never enter unwalkable tiles. Stuck: blocked progress < 30% of speed; repath at
   3 s, give up at 8 s; crowded destinations accept arrival within 1.5 tiles after 0.6 s blocked.
+- **D19 — Bake details** (2026-09-29, M3.2). Headless Chromium on ANGLE Metal bakes at ~30 frames/s-equivalent
+  (7 static models in 0.2 s). Camera: ortho, pitch 30°, yaw 45°, PX = 64√2 px per camera-plane unit at 2× →
+  calibration IoU 1.0000 for a flat tile and a 3×3×0.6 box. Frames are 4× supersampled, downsampled in
+  premultiplied space, trimmed to the union of base+team alpha; team overlay = luminance×1.35 of team-masked
+  pixels. Until M3.7 decides the Docker bake stage, `public/baked` (gitignored) is baked on the Mac by verify and
+  included in the Docker build context.

@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M3.2 · contact sheets: tree, forestTree, goldMine, stoneMine, berryBush, calTile, calBox
+- First baked art: lit, textured, soft shadows falling screen-right/down; calibration IoU 1.0000 (tile + box).
+- Round 1 → fixed: lollipop trees (thin trunk, smooth ball canopy) → sturdy trunk + limbs + lumpy clumped
+  canopy; gold was dark brown → bright ore; lighting raised; forest variants were all conifers (seed mixing bug).
+- Scores: readability 4, light 4, anchoring 5 (calibrated), edges 4. Trees now read like 1990s pre-rendered art.
+
 ## 2026-09-29 · M2.6 · demo-lake-forest (fogged), fog-scouted
 - Fog: unexplored black with soft, noisy edges; enemy base hidden until the scout arrives; minimap fogged the
   same way. Fog 4/5.

@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M2 See & command — DONE (tag `m2`). Next: **M3 Art pipeline v1** (3D-in-code → baked sprites).
+- **Milestone:** M3 Art pipeline v1 — M3.1–M3.2 done (DSL, materials, baker, calibration IoU 1.0). M2 done (tag `m2`).
 - **Last green commit:** M2.7 (verify ~22 s: 21 e2e in 2 browsers, 20k-tick cross-engine determinism, stress).
 - **Playable today:** demo scenario — select (click/box/double-click/groups), right-click move with formations,
   HUD (stockpile/pop/age/clock/selection), minimap (jump + move), fog of war. Placeholder shape art.
@@ -12,7 +12,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M3.1 model DSL + procedural materials + browser workbench.
+- **Next up:** M3.6 (early) show baked resources in game, then M3.3 humanoid rig + villager.
+- **Bake:** `node tools/bake/cli.ts` (M4 GPU, ~0.2 s for 7 models); contact sheets in `artifacts/bake/`.
 - **Notes:** metrics history in `docs/metrics/history.csv`; visual reviews in `docs/visual-review.md`.
 
 ---
@@ -106,12 +107,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - _Exit:_ mouse-driven e2e in both browsers; 1000 moving units render p95 ≤ 8 ms.
 
 ## M3 — Art pipeline v1
-- [ ] **M3.1 Model DSL + materials.** `src/art/dsl`: primitives (box, cylinder, cone, sphere, capsule, lathe,
+- [x] **M3.1 Model DSL + materials.** `src/art/dsl`: primitives (box, cylinder, cone, sphere, capsule, lathe,
       extrude), node tree with transforms and bones, procedural canvas materials (stone blocks, mudbrick, plaster,
       planks, thatch, cloth, leather, skin, hair, foliage, bark, rock, gold ore) with a `player` flag; Three.js
       scene builder; `?workbench=<model>` page (dev) rendering a model live.
       _Accept:_ workbench screenshot of a test model shows lit, textured primitives.
-- [ ] **M3.2 Baker.** Ortho camera yaw 45° / pitch 30°, key/fill/ambient + shadow map onto a transparent
+- [x] **M3.2 Baker.** Ortho camera yaw 45° / pitch 30°, key/fill/ambient + shadow map onto a transparent
       ShadowMaterial ground; 4× supersampled render, premultiplied downsample, team-mask pass, trim; maxrects
       packing → PNG atlas + JSON (anchors, clips, fps, markers); `tools/bake/cli.ts` (Playwright headless
       Chromium → `public/baked/`), content-hash incremental. Calibration test: baked 1×1 quad and 3×3 box
