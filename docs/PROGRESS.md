@@ -3,18 +3,16 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M0 Rails — M0.1–M0.7 done; M0.8 (data tables) remaining.
-- **Last green commit:** M0.7 (verify ~3 s; verify:full ~45 s + `make arm` in empires-startos).
-- **Verify:** `npm run verify` and `verify:full` green (startos step now active).
-- **Key metrics:** headless GL = ANGLE Metal (Chromium) / Apple GPU (WebKit) — hardware (D15). Image 61.7 MB; .app 9 MB.
-- **Open blockers:** none
-- **Next up:** M0.8 data tables (transcribe docs/research → src/data with `src:` + integrity tests), then tag m0.
+- **Milestone:** M0 Rails — DONE (tag `m0`). Next: **M1 Deterministic sim core**.
+- **Last green commit:** M0.8 data tables (verify ~3.5 s; verify:full ~1 min incl. Docker, Tauri, `make arm`).
+- **Data:** 45 units, 22 buildings, 77 techs, 16 civs, 8 resources, 4 animals — 100% sourced, 22 `verify` flags.
+- **Key metrics:** headless GL = ANGLE Metal / Apple GPU (D15). Image 61.7 MB; .app 9 MB; .s9pk 47 MB.
 - **StartOS (M0.7, 2026-09-29):** installed on muscular-privacy.local; health green; UI renders in Chromium (mDNS)
   and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
-  reinstall ok. NOT verified: backup/restore (box has no backup target). VM stopped afterwards.
-- **Notes for next iteration:** Research lives in `docs/research/`; the detailed design is
-  `docs/design/architecture-proposal.md` (treat D1 there as superseded by `docs/DECISIONS.md` D1: restricted
-  doubles, not Q16).
+  reinstall ok. NOT verified: backup/restore (no backup target, KI-3). VM stopped.
+- **Open blockers:** none. Open issues: KI-1 icon (placeholder-quality SVG), KI-2 AI images blocked, KI-3 backups.
+- **Next up:** M1.1 math/RNG/hash.
+- **Notes:** the detailed design is `docs/design/architecture-proposal.md` — its Q16 math is superseded by D1.
 
 ---
 
@@ -51,17 +49,38 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       _Accept:_ `make arm` produces a .s9pk; `npm run check` in the package passes.
 - [x] **M0.7 VM install + verify.** Per LOOP.md StartOS protocol.
       _Accept:_ installed on muscular-privacy.local, health green, UI opens and renders the hello scene.
-- [ ] **M0.8 Data tables v1.** `src/data/*` transcribed from `docs/research/*`: units, buildings, techs, ages,
+- [x] **M0.8 Data tables v1.** `src/data/*` transcribed from `docs/research/*`: units, buildings, techs, ages,
       civs (bonuses + disabled lists), armor classes, resources, terrain, player colors, map sizes. Every row
       has `src:`; unresolved values carry `verify:true`. Data-integrity unit tests (ids resolve, tech graph
       acyclic, every row sourced).
       _Accept:_ ≥ 90% of rows sourced; tests green.
-- [ ] **M0 exit:** verify green with screenshots from both browsers; both-arch image serves /healthz; .app
+- [x] **M0 exit:** verify green with screenshots from both browsers; both-arch image serves /healthz; .app
       builds; .s9pk installed on the VM with health green; tag `m0`.
 
 ## M1 — Deterministic sim core
-- math/RNG/hash; SoA entity store; ResourceStore; tilemap; commands + codec; tick pipeline; JPS + regions +
-  clearance + smoothing; collision + sidestep; group moves; save/load; replay; headless runner CLI.
+- [ ] **M1.1 Math, RNG, hash.** `sim/math/rng.ts` (seeded sfc32 streams: mapgen, combat, conversion, per-AI),
+      `trig.ts` (generated sin/cos table + integer `dir8/dir16(dx, dy)`), `hash.ts` (FNV-1a over typed arrays and
+      float64 bits). _Accept:_ unit tests (RNG sequences pinned, hash stable, direction octants exact).
+- [ ] **M1.2 World state.** SoA entity store (typed arrays, capacity growth, handle = slot + generation, LIFO free
+      list), ResourceStore (trees/mines/bushes/fish, `resAt` grid, 16×16 chunk index), TileMap (terrain, corner
+      heights, passability bits, `bldAt`), compiled per-player rules tables from `src/data` (natural → per-tick).
+      _Accept:_ tests for store churn, handle staleness, rules compile (villager speed 1.1 tiles/s → per tick).
+- [ ] **M1.3 Commands + tick.** Command union + validation, binary codec, `Sim` facade (create/step/hash/
+      hashBreakdown/view/serialize), event queue, tick system order per architecture doc.
+      _Accept:_ move/stop commands round-trip through the codec; two sims fed the same commands hash-equal.
+- [ ] **M1.4 Pathfinding.** Land/water passability classes, connected regions (union-find, incremental on
+      open/close), JPS with goal sets (adjacent-to-footprint, within-range), deterministic per-tick node budget,
+      string-pull smoothing, nearest-reachable fallback. Fixture maps (maze, forest edge, islands, 1-tile chokes).
+      _Accept:_ fixture tests; p99 ≤ 2 ms/tick with 500 movers.
+- [ ] **M1.5 Movement + collision.** Waypoint steering, circle collision with sidestep (±30°/±60°), repath after
+      10 blocked ticks, give-up after 60 (stuck event), soft separation, group move offsets.
+      _Accept:_ 200-unit crossing scenario: stuck < 1%, no overlaps > 50% radius at rest.
+- [ ] **M1.6 Save/load + replay.** Serialize/deserialize (typed-array sections + canonical JSON, gzip),
+      replay = settings + seed + command stream + hash checkpoints. _Accept:_ run→save→load→run hashes equal a
+      continuous run; replay re-sim matches.
+- [ ] **M1.7 Headless runner + cross-engine determinism.** `tools/sim/cli.ts` scenarios + metrics; a browser
+      sim harness page run by Playwright in Chromium and WebKit comparing hash traces with Node; added to verify.
+      _Accept:_ 500 units × 20k ticks random orders — identical traces in V8, Chromium, WebKit.
 - _Exit:_ 500 units × 20k ticks identical hash traces in Node/Chromium/WebKit; save/load/replay equivalent;
   stuck < 1% on fixture maps; path p99 ≤ 2 ms/tick.
 
