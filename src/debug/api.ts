@@ -50,6 +50,7 @@ export interface RenderStats {
   height: number;
   dpr: number;
   views: number;
+  terrainDrawCalls: number;
 }
 
 declare global {

@@ -14,5 +14,12 @@ test('demo scenario renders the sim and units move on command', async ({ page },
   const moved = after.filter((u) => villagers.includes(u.h));
   for (const v of moved) expect(Math.hypot(v.x - 26.5, v.y - 22.5)).toBeLessThan(4);
   await snap(page, info, 'demo-moved');
+  await page.evaluate(() => {
+    window.__empires!.camera.centerOn(26, 34);
+    window.__empires!.camera.setZoom(0.6);
+  });
+  await snap(page, info, 'demo-lake-forest');
+  const stats = await page.evaluate(() => window.__empires!.renderStats());
+  expect(stats.terrainDrawCalls).toBeLessThanOrEqual(30);
   expect(pageErrors(page)).toEqual([]);
 });

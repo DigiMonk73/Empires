@@ -52,6 +52,9 @@ async function boot(): Promise<void> {
     const dt = Math.min(0.25, t.deltaMS / 1000);
     if (!frozen) alpha = session.update(dt);
     camera.update(frozen ? 0 : dt);
+    const tl = camera.screenToIso(0, 0);
+    const br = camera.screenToIso(app.canvas.clientWidth, app.canvas.clientHeight);
+    wr.cull(tl.x, tl.y, br.x, br.y);
     wr.update(alpha);
     cpuMs = performance.now() - t0;
     frameMs = t.deltaMS;
@@ -72,6 +75,7 @@ async function boot(): Promise<void> {
     height: app.canvas.clientHeight,
     dpr: window.devicePixelRatio || 1,
     views: wr.viewCount,
+    terrainDrawCalls: wr.terrainDrawCalls,
   });
   installDebugApi({
     version: '0.2.0',

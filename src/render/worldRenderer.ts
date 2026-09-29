@@ -1,12 +1,12 @@
 import { Container, Graphics, Sprite, type Renderer } from 'pixi.js';
 import { PLAYER_COLORS } from '../data/setup.ts';
-import { TERRAINS } from '../data/terrain.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { ResState } from '../sim/core/resources.ts';
 import { RESOURCE_KINDS, TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
-import { worldToIso, HALF_H, HALF_W } from './iso.ts';
+import { worldToIso } from './iso.ts';
 import { buildingArt, resourceArt, unitArt, type SpriteArt } from './placeholders.ts';
+import { TerrainLayer } from './terrainMesh.ts';
 
 interface EntityView {
   handle: number;
@@ -42,6 +42,9 @@ export class WorldRenderer {
   private readonly buildingArtCache = new Map<number, SpriteArt>();
   private readonly resArtCache = new Map<number, SpriteArt>();
   private views: (EntityView | undefined)[] = [];
+  terrain!: TerrainLayer;
+  /** Visible terrain chunks after the last cull (≈ terrain draw calls). */
+  terrainDrawCalls = 0;
   private resViews: (Sprite | undefined)[] = [];
 
   constructor(renderer: Renderer, world: World) {
@@ -54,18 +57,13 @@ export class WorldRenderer {
   }
 
   private buildTerrain(): void {
-    const m = this.world.map;
-    const g = new Graphics();
-    const p = { x: 0, y: 0 };
-    for (let ty = 0; ty < m.h; ty++) {
-      for (let tx = 0; tx < m.w; tx++) {
-        worldToIso(tx, ty, 0, p);
-        const base = TERRAINS[m.terrain[m.idx(tx, ty)]!]!.color;
-        const n = hash2(tx, ty);
-        g.poly([p.x, p.y, p.x + HALF_W, p.y + HALF_H, p.x, p.y + 2 * HALF_H, p.x - HALF_W, p.y + HALF_H]).fill(shade(base, 0.94 + n * 0.12));
-      }
-    }
-    this.terrainLayer.addChild(g);
+    this.terrain = new TerrainLayer(this.world.map);
+    this.terrainLayer.addChild(this.terrain.root);
+  }
+
+  /** Cull terrain chunks to the visible iso-space rectangle. */
+  cull(vx0: number, vy0: number, vx1: number, vy1: number): void {
+    this.terrainDrawCalls = this.terrain.cull(vx0, vy0, vx1, vy1);
   }
 
   private buildResources(): void {
@@ -182,11 +180,4 @@ function hash2(x: number, y: number): number {
   let h = Math.imul(x, 374761393) + Math.imul(y, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-
-function shade(rgb: number, k: number): number {
-  const r = Math.min(255, Math.round(((rgb >> 16) & 255) * k));
-  const g = Math.min(255, Math.round(((rgb >> 8) & 255) * k));
-  const b = Math.min(255, Math.round((rgb & 255) * k));
-  return (r << 16) | (g << 8) | b;
 }
