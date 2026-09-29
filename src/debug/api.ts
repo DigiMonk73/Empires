@@ -21,6 +21,8 @@ export interface EmpiresDebugApi {
   screenToWorld(px: number, py: number): Point;
   /** Page position of an entity's ground point, or null if it is gone. */
   entityScreenPos(h: number): Point | null;
+  /** Page position of world point (x, y) on the minimap. */
+  minimapPoint(x: number, y: number): Point;
   camera: { centerOn(x: number, y: number): void; setZoom(z: number): void; get(): { x: number; y: number; zoom: number } };
   query: {
     tick(): number;

@@ -10,6 +10,8 @@ import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
 import { InputController } from './input/controller.ts';
 import { Selection } from './input/selection.ts';
 import { mountHud } from './ui/mount.tsx';
+import { Minimap } from './render/minimap.ts';
+import { quantize } from './sim/commands/types.ts';
 import { syncHud } from './ui/sync.ts';
 
 async function boot(): Promise<void> {
@@ -44,7 +46,6 @@ async function boot(): Promise<void> {
   const selection = new Selection();
   const screenLayer = new Graphics();
   app.stage.addChild(screenLayer);
-  new InputController(app.canvas, camera, session, wr, selection, screenLayer);
 
   const tc = findFirst(world, 1, 'townCenter');
   if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 2);
@@ -52,6 +53,14 @@ async function boot(): Promise<void> {
   camera.apply();
 
   mountHud(document.getElementById('hud')!);
+  const input = new InputController(app.canvas, camera, session, wr, selection, screenLayer);
+  const minimap = new Minimap(document.getElementById('minimap-slot')!, world, camera, () => ({ w: app.canvas.clientWidth, h: app.canvas.clientHeight }));
+  minimap.onRightClick = (wx, wy) => {
+    const ids = input.ownUnits();
+    if (!ids.length) return;
+    session.router.submit(session.localPlayer, { t: 'move', ids, x: quantize(wx), y: quantize(wy) });
+    wr.addMarker(wx, wy);
+  };
   let lastHudSync = -1;
   let lastSelVersion = -1;
   let frozen = false;
@@ -70,6 +79,7 @@ async function boot(): Promise<void> {
     wr.update(alpha);
     selection.prune((h) => world.ents.valid(h));
     wr.drawOverlays(selection.list, session.localPlayer, alpha);
+    minimap.draw();
     const hudTick = Math.floor(session.sim.tick / 2);
     if (hudTick !== lastHudSync || selection.version !== lastSelVersion) {
       lastHudSync = hudTick;
@@ -120,6 +130,11 @@ async function boot(): Promise<void> {
         camera.apply();
       },
       get: () => ({ x: camera.center.x, y: camera.center.y, zoom: camera.zoom }),
+    },
+    minimapPoint: (x, y) => {
+      const r = minimap.canvas.getBoundingClientRect();
+      const p = minimap.toMini(x, y);
+      return { x: r.left + p.x, y: r.top + p.y };
     },
     query: {
       tick: () => session.sim.tick,
