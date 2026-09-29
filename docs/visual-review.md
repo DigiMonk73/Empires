@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M3.3 · contact-villager, art-closeup
+- Baked villager: 8 facings × idle/walk/die, team-colored tunic; walks face their direction of travel in game.
+- Fixed: all facings identical (pose reset the facing rotation — facing now on a wrapper group); death fell
+  forward onto hands → now topples backward; tree shadows were clipped by fixed render cells (straight edges) →
+  cells auto-fit to projected model + shadow bounds; sun raised (shorter, softer shadows, opacity 0.27).
+- Scores: readability 4, scale 4, light 4, anchoring 5, team color 4. Remaining placeholders: buildings, soldiers.
+
 ## 2026-09-29 · M3.2 · contact sheets: tree, forestTree, goldMine, stoneMine, berryBush, calTile, calBox
 - First baked art: lit, textured, soft shadows falling screen-right/down; calibration IoU 1.0000 (tile + box).
 - Round 1 → fixed: lollipop trees (thin trunk, smooth ball canopy) → sturdy trunk + limbs + lumpy clumped

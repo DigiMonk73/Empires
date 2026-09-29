@@ -1,6 +1,6 @@
 import { Container, Graphics, Point, Sprite, type Renderer } from 'pixi.js';
 import { PLAYER_COLORS } from '../data/setup.ts';
-import { EKind } from '../sim/core/entities.ts';
+import { Act, EKind } from '../sim/core/entities.ts';
 import { ResState } from '../sim/core/resources.ts';
 import { RESOURCE_KINDS, TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
@@ -8,12 +8,16 @@ import { worldToIso } from './iso.ts';
 import { buildingArt, resourceArt, unitArt, type SpriteArt } from './placeholders.ts';
 import { TerrainLayer } from './terrainMesh.ts';
 import { FogLayer } from './fogLayer.ts';
+import type { BakedArt } from './bakedArt.ts';
 
 interface EntityView {
   handle: number;
   root: Container;
   base: Sprite;
   team: Sprite | null;
+  /** Baked model id when the type has baked art (animated, 8 facings). */
+  model: string | null;
+  lastKey: string;
 }
 
 const GAIA_COLOR = 0x00ab93;
@@ -54,9 +58,12 @@ export class WorldRenderer {
   terrainDrawCalls = 0;
   private resViews: (Sprite | undefined)[] = [];
 
-  constructor(renderer: Renderer, world: World) {
+  private readonly art: BakedArt | null;
+
+  constructor(renderer: Renderer, world: World, art: BakedArt | null = null) {
     this.renderer = renderer;
     this.world = world;
+    this.art = art;
     this.objectLayer.sortableChildren = true;
     this.fog = new FogLayer(world);
     this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.fog.mesh, this.overlayLayer);
@@ -81,19 +88,27 @@ export class WorldRenderer {
     for (let i = 0; i < r.count; i++) {
       const def = RESOURCE_KINDS[r.kind[i]!]!;
       if (def.job === 'fish') continue; // fish render with water effects later
-      let art = this.resArtCache.get(r.kind[i]!);
-      if (!art) this.resArtCache.set(r.kind[i]!, (art = resourceArt(this.renderer, def.id)));
-      const sp = new Sprite(art.base);
-      sp.anchor.set(art.anchorX, art.anchorY);
       const cx = r.tx[i]! + def.size / 2;
       const cy = r.ty[i]! + def.size / 2;
+      const v = hash2(r.tx[i]!, r.ty[i]!);
+      let sp: Sprite;
+      const baked = this.art?.meta(def.id);
+      if (baked) {
+        const f = this.art!.frame(def.id, `v${Math.floor(v * baked.variants) % baked.variants}`)!;
+        sp = new Sprite(f.tex);
+        sp.anchor.set(f.anchorX, f.anchorY);
+        sp.scale.set(1 / baked.scale);
+      } else {
+        let art = this.resArtCache.get(r.kind[i]!);
+        if (!art) this.resArtCache.set(r.kind[i]!, (art = resourceArt(this.renderer, def.id)));
+        sp = new Sprite(art.base);
+        sp.anchor.set(art.anchorX, art.anchorY);
+        const k = 0.9 + v * 0.25;
+        sp.scale.set(v < 0.5 ? -k : k, k);
+      }
       const p = worldToIso(cx, cy);
       sp.position.set(p.x, p.y);
       sp.zIndex = depth(cx, cy);
-      // Slight size and mirror variety so forests don't look stamped.
-      const v = hash2(r.tx[i]!, r.ty[i]!);
-      const k = 0.9 + v * 0.25;
-      sp.scale.set(v < 0.5 ? -k : k, k);
       this.objectLayer.addChild(sp);
       this.resViews[i] = sp;
     }
@@ -122,6 +137,16 @@ export class WorldRenderer {
 
   private createView(slot: number): EntityView {
     const e = this.world.ents;
+    const typeId = TYPES[e.type[slot]!]!.id;
+    if (e.kind[slot] === EKind.unit && this.art?.meta(typeId)?.clips.idle) {
+      const root = new Container();
+      const base = new Sprite();
+      const team = new Sprite();
+      team.tint = playerColor(e.owner[slot]!);
+      root.addChild(base, team);
+      this.objectLayer.addChild(root);
+      return { handle: e.handleOf(slot), root, base, team, model: typeId, lastKey: '' };
+    }
     const art = this.artFor(e.type[slot]!);
     const root = new Container();
     const base = new Sprite(art.base);
@@ -135,7 +160,35 @@ export class WorldRenderer {
       root.addChild(team);
     }
     this.objectLayer.addChild(root);
-    return { handle: e.handleOf(slot), root, base, team };
+    return { handle: e.handleOf(slot), root, base, team, model: null, lastKey: '' };
+  }
+
+  /** Pick the baked frame for a unit from its activity, facing and time in activity. */
+  private animate(v: EntityView, slot: number, alpha: number): void {
+    const e = this.world.ents;
+    const meta = this.art!.meta(v.model!)!;
+    const clipName = e.act[slot] === Act.move ? 'walk' : e.act[slot] === Act.dying ? 'die' : 'idle';
+    const clip = meta.clips[clipName] ?? meta.clips.idle!;
+    const dir = ((e.facing[slot]! + 1) >> 1) & 7; // 16 sim sectors → 8 baked facings
+    const secs = (this.world.tick - e.actStart[slot]! + alpha) / 20;
+    let f = Math.floor(secs * clip.fps);
+    f = clip.loop ? f % clip.frames : Math.min(f, clip.frames - 1);
+    const key = `${meta.clips[clipName] ? clipName : 'idle'}/${dir}/${f}`;
+    if (key === v.lastKey) return;
+    v.lastKey = key;
+    const fr = this.art!.frame(v.model!, key);
+    if (!fr) return;
+    v.base.texture = fr.tex;
+    v.base.anchor.set(fr.anchorX, fr.anchorY);
+    v.base.scale.set(1 / meta.scale);
+    if (v.team) {
+      v.team.visible = !!fr.team;
+      if (fr.team) {
+        v.team.texture = fr.team.tex;
+        v.team.anchor.set(fr.team.anchorX, fr.team.anchorY);
+        v.team.scale.set(1 / meta.scale);
+      }
+    }
   }
 
   /**
@@ -166,8 +219,9 @@ export class WorldRenderer {
       const ty = Math.floor(y);
       v.root.visible =
         e.owner[s] === player || (e.kind[s] === EKind.building ? this.fog.isExplored(player, tx, ty) : this.fog.isVisible(player, tx, ty));
-      // Face left/right by world direction projected to screen (8-dir sprites arrive with the baker).
-      if (e.kind[s] === EKind.unit) {
+      if (v.model) this.animate(v, s, alpha);
+      // Placeholders: face left/right by world direction projected to screen.
+      else if (e.kind[s] === EKind.unit) {
         const f = e.facing[s]!;
         const screenDx = Math.cos((f * Math.PI) / 8) - Math.sin((f * Math.PI) / 8);
         v.root.scale.x = screenDx < -0.01 ? -1 : 1;

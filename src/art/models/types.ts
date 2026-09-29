@@ -19,8 +19,6 @@ export interface ModelDef {
   variants?: number;
   /** Facings to bake (8 for units, 1 for static objects). */
   facings: number;
-  /** Frame cell size at 2× (px) before trimming. */
-  cell: [number, number];
   build(variant: number): THREE.Object3D;
   clips?: Record<string, ClipDef>;
 }

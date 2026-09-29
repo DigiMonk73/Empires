@@ -12,6 +12,7 @@ import { Selection } from './input/selection.ts';
 import { mountHud } from './ui/mount.tsx';
 import { Minimap } from './render/minimap.ts';
 import { quantize } from './sim/commands/types.ts';
+import { BakedArt } from './render/bakedArt.ts';
 import { syncHud } from './ui/sync.ts';
 
 async function boot(): Promise<void> {
@@ -34,7 +35,8 @@ async function boot(): Promise<void> {
 
   const cameraRoot = new Container();
   app.stage.addChild(cameraRoot);
-  const wr = new WorldRenderer(app.renderer, world);
+  const art = params.get('art') === '0' ? null : await BakedArt.load();
+  const wr = new WorldRenderer(app.renderer, world, art);
   cameraRoot.addChild(wr.root);
 
   const camera = new Camera(cameraRoot, app.canvas, {

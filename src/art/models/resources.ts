@@ -66,16 +66,22 @@ function berryBush(variant: number): THREE.Object3D {
   return build({ children: kids });
 }
 
+/** Scale a built model uniformly (tuning sizes against units without touching shape code). */
+function scaled(o: THREE.Object3D, k: number): THREE.Object3D {
+  o.scale.setScalar(k);
+  return o;
+}
+
 export const RESOURCE_MODELS: ModelDef[] = [
-  { id: 'tree', kind: 'resource', footprint: 1, variants: 6, facings: 1, cell: [180, 200], build: (v) => tree(v, false) },
-  { id: 'forestTree', kind: 'resource', footprint: 1, variants: 8, facings: 1, cell: [180, 220], build: (v) => tree(v, true) },
-  { id: 'goldMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, cell: [160, 140], build: (v) => mine(v, 'goldOre') },
-  { id: 'stoneMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, cell: [160, 140], build: (v) => mine(v, 'rock') },
-  { id: 'berryBush', kind: 'resource', footprint: 1, variants: 3, facings: 1, cell: [140, 120], build: berryBush },
+  { id: 'tree', kind: 'resource', footprint: 1, variants: 6, facings: 1, build: (v) => scaled(tree(v, false), 1.45) },
+  { id: 'forestTree', kind: 'resource', footprint: 1, variants: 8, facings: 1, build: (v) => scaled(tree(v, true), 1.45) },
+  { id: 'goldMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, build: (v) => scaled(mine(v, 'goldOre'), 1.3) },
+  { id: 'stoneMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, build: (v) => scaled(mine(v, 'rock'), 1.3) },
+  { id: 'berryBush', kind: 'resource', footprint: 1, variants: 3, facings: 1, build: (v) => scaled(berryBush(v), 1.2) },
 ];
 
 /** Calibration targets: a flat 1×1 tile and a 3×3 box footprint (see tests/e2e/bake-calibration). */
 export const TEST_MODELS: ModelDef[] = [
-  { id: 'calTile', kind: 'test', footprint: 1, facings: 1, cell: [160, 100], build: () => build({ geom: box(1, 0.002, 1), mat: 'plaster', t: [0, 0.001, 0], castShadow: false }) },
-  { id: 'calBox', kind: 'test', footprint: 3, facings: 1, cell: [420, 320], build: () => build({ geom: box(3, 0.6, 3), mat: 'stone', t: [0, 0.3, 0], castShadow: false }) },
+  { id: 'calTile', kind: 'test', footprint: 1, facings: 1, build: () => build({ geom: box(1, 0.002, 1), mat: 'plaster', t: [0, 0.001, 0], castShadow: false }) },
+  { id: 'calBox', kind: 'test', footprint: 3, facings: 1, build: () => build({ geom: box(3, 0.6, 3), mat: 'stone', t: [0, 0.3, 0], castShadow: false }) },
 ];

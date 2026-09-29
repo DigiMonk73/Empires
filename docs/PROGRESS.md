@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M3 Art pipeline v1 — M3.1–M3.2 done (DSL, materials, baker, calibration IoU 1.0). M2 done (tag `m2`).
+- **Milestone:** M3 Art pipeline v1 — M3.1–M3.3, M3.5 done (DSL, baker, calibration IoU 1.0, villager rig, resources); M3.6 partial. M2 done (tag `m2`).
 - **Last green commit:** M2.7 (verify ~22 s: 21 e2e in 2 browsers, 20k-tick cross-engine determinism, stress).
 - **Playable today:** demo scenario — select (click/box/double-click/groups), right-click move with formations,
   HUD (stockpile/pop/age/clock/selection), minimap (jump + move), fog of war. Placeholder shape art.
@@ -12,7 +12,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M3.6 (early) show baked resources in game, then M3.3 humanoid rig + villager.
+- **Next up:** M3.4 Stone-age Town Center + house, then M3.6 buildings in renderer, M3.7 contact sheets/Docker.
 - **Bake:** `node tools/bake/cli.ts` (M4 GPU, ~0.2 s for 7 models); contact sheets in `artifacts/bake/`.
 - **Notes:** metrics history in `docs/metrics/history.csv`; visual reviews in `docs/visual-review.md`.
 
@@ -117,9 +117,9 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       packing → PNG atlas + JSON (anchors, clips, fps, markers); `tools/bake/cli.ts` (Playwright headless
       Chromium → `public/baked/`), content-hash incremental. Calibration test: baked 1×1 quad and 3×3 box
       footprints vs iso polygons, IoU ≥ 0.98.
-- [ ] **M3.3 Humanoid rig + villager.** Skeleton + clip generators (idle, walk, die); villager model; 8 facings.
+- [x] **M3.3 Humanoid rig + villager.** Skeleton + clip generators (idle, walk, die); villager model; 8 facings.
 - [ ] **M3.4 Buildings v1.** Parametric Stone-age Town Center + house (one architecture set) with team trim.
-- [ ] **M3.5 Resources.** Tree variants (scattered + forest), berry bush, gold and stone mine models.
+- [x] **M3.5 Resources.** Tree variants (scattered + forest), berry bush, gold and stone mine models.
 - [ ] **M3.6 Renderer integration.** Atlas loader; baked sprites with 8-dir facing, walk/idle/die animation,
       team overlay; placeholder fallback for unbaked types.
 - [ ] **M3.7 Contact sheets + Docker bake timing.** Contact sheet per model (facings × key frames on grass with

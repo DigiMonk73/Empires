@@ -15,7 +15,7 @@ export const PX = 2 * 32 * Math.SQRT2;
 export const SS = 4;
 const PITCH = (30 * Math.PI) / 180;
 /** Direction toward the sun: from the viewer's upper-left, so shadows fall toward screen right/down (+x). */
-export const SUN_DIR = new THREE.Vector3(-0.66, 0.72, -0.2).normalize();
+export const SUN_DIR = new THREE.Vector3(-0.6, 0.86, -0.2).normalize();
 export const BAKER_VERSION = 1;
 
 export interface FrameMeta {
@@ -65,20 +65,21 @@ export class Baker {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap; // honours shadow.radius (PCFSoft ignores it)
     this.renderer.setClearColor(0x000000, 0);
     this.sun = new THREE.DirectionalLight(0xfff0d8, 2.9);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.bias = -0.0004;
     this.sun.shadow.normalBias = 0.01;
-    this.sun.shadow.radius = 3;
+    this.sun.shadow.radius = 6;
+    this.sun.shadow.blurSamples = 16;
     this.scene.add(this.sun, this.sun.target);
     this.scene.add(new THREE.HemisphereLight(0xdde8ff, 0x6a5a3c, 1.6));
     const fill = new THREE.DirectionalLight(0xb8c8ff, 0.45);
     fill.position.set(4, 3, 6);
     this.scene.add(fill);
-    this.ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.34 }));
+    this.ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.27 }));
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.receiveShadow = true;
     this.scene.add(this.ground);
@@ -139,18 +140,63 @@ export class Baker {
     return px;
   }
 
+  /**
+   * Screen-space (2× px, relative to the ground origin) bounds of an object and its ground shadow, in camera
+   * space — used to size render cells so nothing (especially long shadows) is clipped.
+   */
+  private screenBounds(obj: THREE.Object3D, acc: { x0: number; x1: number; y0: number; y1: number }): void {
+    obj.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(obj);
+    if (box.isEmpty()) return;
+    const right = new THREE.Vector3(1, 0, -1).normalize();
+    const up = new THREE.Vector3().subVectors(new THREE.Vector3(0, 1, 0), this.camera.position.clone().normalize().multiplyScalar(this.camera.position.clone().normalize().y)).normalize();
+    const p = new THREE.Vector3();
+    for (let i = 0; i < 8; i++) {
+      p.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z);
+      for (const q of [p.clone(), p.clone().addScaledVector(SUN_DIR, -p.y / SUN_DIR.y)]) {
+        const sx = q.dot(right) * PX;
+        const sy = -q.dot(up) * PX;
+        acc.x0 = Math.min(acc.x0, sx);
+        acc.x1 = Math.max(acc.x1, sx);
+        acc.y0 = Math.min(acc.y0, sy);
+        acc.y1 = Math.max(acc.y1, sy);
+      }
+    }
+  }
+
   /** Bake every variant × facing × clip frame of a model into packed atlas pages. */
   bake(def: ModelDef): { meta: AtlasMeta; pages: HTMLCanvasElement[] } {
-    const [cw, ch] = def.cell;
-    const ox = cw / 2;
-    // Leave room below the origin for the footprint diamond (32 px per tile at 2×) plus shadow/margin.
-    const oy = def.footprint ? ch - Math.round(def.footprint * 32 + 10) : Math.round(ch * 0.84);
-    const extent = Math.max(2, (def.footprint ?? 1) * 1.2 + 1);
+    // Size the cell to the union of every pose's projected bounds (plus shadows) with a margin.
+    const acc = { x0: 0, x1: 0, y0: 0, y1: 0 };
+    for (let v = 0; v < (def.variants ?? 1); v++) {
+      const model = def.build(v);
+      const holder = new THREE.Group();
+      holder.add(model);
+      if (!def.clips) this.screenBounds(holder, acc);
+      for (const clip of Object.values(def.clips ?? {})) {
+        for (let d = 0; d < def.facings; d++) {
+          holder.rotation.y = -(d * Math.PI * 2) / def.facings;
+          for (let f = 0; f < clip.frames; f++) {
+            clip.pose(model, clip.loop ? f / clip.frames : f / (clip.frames - 1));
+            this.screenBounds(holder, acc);
+          }
+        }
+      }
+    }
+    const M = 8;
+    const ox = Math.ceil(-acc.x0 + M);
+    const oy = Math.ceil(-acc.y0 + M);
+    const cw = Math.ceil(ox + acc.x1 + M);
+    const ch = Math.ceil(oy + acc.y1 + M);
+    const extent = Math.max(2, (def.footprint ?? 1) * 1.2 + 1.5);
     const frames: RawFrame[] = [];
     const variants = def.variants ?? 1;
     const clips = def.clips ?? {};
     for (let v = 0; v < variants; v++) {
-      const obj = def.build(v);
+      const model = def.build(v);
+      // Facing lives on a wrapper so clip poses (which may rotate the model root) never fight it.
+      const obj = new THREE.Group();
+      obj.add(model);
       if (!def.clips) {
         const { base, team } = this.renderFrame(obj, cw, ch, ox, oy, `v${v}`, extent);
         frames.push(base);
@@ -162,7 +208,7 @@ export class Baker {
           // Facing d points along world angle d·45° (0 = +x); model forward is +X.
           obj.rotation.y = -(d * Math.PI * 2) / def.facings;
           for (let f = 0; f < clip.frames; f++) {
-            clip.pose(obj, f / clip.frames);
+            clip.pose(model, clip.loop ? f / clip.frames : f / (clip.frames - 1));
             obj.updateMatrixWorld(true);
             const key = variants > 1 ? `v${v}/${name}/${d}/${f}` : `${name}/${d}/${f}`;
             const { base, team } = this.renderFrame(obj, cw, ch, ox, oy, key, extent);
