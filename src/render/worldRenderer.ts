@@ -85,11 +85,19 @@ export class WorldRenderer {
     this.terrainDrawCalls = this.terrain.cull(vx0, vy0, vx1, vy1);
   }
 
-  private buildResources(): void {
+  /** Create views for resource nodes not yet shown (all of them at start; carcasses as animals fall). */
+  private buildResources(player?: number): void {
     const r = this.world.res;
-    for (let i = 0; i < r.count; i++) {
+    for (let i = this.resViews.length; i < r.count; i++) {
+      if (r.state[i] === ResState.gone) {
+        this.resViews[i] = undefined;
+        continue;
+      }
       const def = RESOURCE_KINDS[r.kind[i]!]!;
-      if (def.job === 'fish') continue; // fish render with water effects later
+      if (def.boatsOnly) {
+        this.resViews[i] = undefined; // deep fish and whales render with water effects later
+        continue;
+      }
       const cx = r.tx[i]! + def.size / 2;
       const cy = r.ty[i]! + def.size / 2;
       const v = hash2(r.tx[i]!, r.ty[i]!);
@@ -105,12 +113,14 @@ export class WorldRenderer {
         if (!art) this.resArtCache.set(r.kind[i]!, (art = resourceArt(this.renderer, def.id)));
         sp = new Sprite(art.base);
         sp.anchor.set(art.anchorX, art.anchorY);
-        const k = 0.9 + v * 0.25;
+        const k = def.job === 'hunt' ? 1 : 0.9 + v * 0.25;
         sp.scale.set(v < 0.5 ? -k : k, k);
       }
       const p = worldToIso(cx, cy);
       sp.position.set(p.x, p.y);
-      sp.zIndex = depth(cx, cy);
+      // Fish and carcasses lie flat: sort from the tile's back corner so anything standing there draws on top.
+      sp.zIndex = def.job === 'fish' || def.job === 'hunt' ? depth(r.tx[i]!, r.ty[i]!, -1) : depth(cx, cy);
+      if (player !== undefined) sp.visible = this.fog.isExplored(player, r.tx[i]!, r.ty[i]!);
       this.objectLayer.addChild(sp);
       this.resViews[i] = sp;
     }
@@ -237,7 +247,10 @@ export class WorldRenderer {
       const y = e.py[s]! + (e.y[s]! - e.py[s]!) * alpha;
       worldToIso(x, y, 0, p);
       v.root.position.set(p.x, p.y);
-      v.root.zIndex = depth(x, y, e.kind[s] === EKind.building ? 0 : 1);
+      const flat = e.kind[s] === EKind.building && TYPES[e.type[s]!]!.building!.kind === 'farm';
+      // Farms are flat fields people walk on: sort from their back corner, under everything standing on them.
+      const half = TYPES[e.type[s]!]!.size / 2;
+      v.root.zIndex = flat ? depth(x - half, y - half, -1) : depth(x, y, e.kind[s] === EKind.building ? 0 : 1);
       const tx = Math.floor(x);
       const ty = Math.floor(y);
       v.root.visible =
@@ -251,6 +264,7 @@ export class WorldRenderer {
       }
     }
     const r = this.world.res;
+    if (this.resViews.length < r.count) this.buildResources(player);
     for (let i = 0; i < r.count; i++) {
       const sp = this.resViews[i];
       if (!sp) continue;

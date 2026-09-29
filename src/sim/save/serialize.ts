@@ -31,7 +31,7 @@ interface Header {
   players: { id: number; civ: string; team: number; res: number[]; techs: string[] }[];
   rng: Record<string, RngState>;
   ents: { cap: number; top: number; count: number; free: number[] };
-  res: { count: number };
+  res: { count: number; carcasses: number[] };
   map: { passVersion: number };
   orders: [number, Order[]][];
   paths: [number, number[]][];
@@ -87,7 +87,7 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
       misc: w.rng.misc.getState(),
     },
     ents: { cap: e.cap, top: e.top, count: e.count, free: [...e.freeList()] },
-    res: { count: r.count },
+    res: { count: r.count, carcasses: [...w.carcasses] },
     map: { passVersion: m.passVersion },
     orders,
     paths,
@@ -153,6 +153,7 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
   const eh = header.ents;
   w.ents.restore(eh.cap, eh.top, eh.count, eh.free, (f, into) => into.set(need(`ents.${f}`)));
   w.res.restore(header.res.count, (f, into) => into.set(need(`res.${f}`)));
+  w.carcasses = [...header.res.carcasses];
   for (const f of ['terrain', 'height', 'occ', 'bldAt', 'resAt', 'pass'] as const) w.map[f].set(need(`map.${f}`));
   w.map.passVersion = header.map.passVersion;
   w.pathing.regions.invalidate();

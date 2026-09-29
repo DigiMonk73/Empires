@@ -6,6 +6,8 @@ import { isVillager, startGather } from '../systems/gather.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
 import { cancelUnit, queueUnit } from '../systems/production.ts';
+import { startFarm } from '../systems/farm.ts';
+import { startAttack } from '../systems/combat.ts';
 
 /** Slots of the command's ids that are live units owned by the issuing player (others are ignored). */
 function ownedUnitSlots(w: World, player: number, ids: readonly number[]): number[] {
@@ -137,6 +139,17 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'construct':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) startConstruct(w, slot, cmd.h, !!cmd.queue);
         break;
+      case 'act': {
+        const t = w.ents.slotOf(cmd.h);
+        if (t < 0) break;
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
+          if (w.ents.kind[t] === EKind.building && w.ents.owner[t] === player) {
+            if (w.ents.build[t]! < 1) startConstruct(w, slot, cmd.h, !!cmd.queue);
+            else startFarm(w, slot, cmd.h, !!cmd.queue);
+          } else startAttack(w, slot, cmd.h, !!cmd.queue);
+        }
+        break;
+      }
       case 'train':
         queueUnit(w, player, cmd.bld, cmd.unit, Math.max(1, Math.min(5, cmd.n ?? 1)));
         break;

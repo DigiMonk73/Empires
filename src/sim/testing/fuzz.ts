@@ -40,6 +40,11 @@ export class OrderFuzzer {
       } else if (roll < 0.36) {
         // Build a house at a random spot (rejections are part of the test too).
         out.push({ player: p, cmd: { t: 'build', ids: ids.slice(0, 3), type: r.chance(0.7) ? 'house' : 'granary', tx: r.int(w.map.w - 2), ty: r.int(w.map.h - 2) } });
+      } else if (roll < 0.39) {
+        // Hunt (or, for soldiers, attack) a random Gaia animal.
+        const prey: number[] = [];
+        for (let s = 0; s < e.top; s++) if (e.alive[s] && e.kind[s] === EKind.unit && e.owner[s] === 0) prey.push(e.handleOf(s));
+        if (prey.length) out.push({ player: p, cmd: { t: 'act', ids, h: prey[r.int(prey.length)]! } });
       } else if (roll < 0.42) {
         for (let b = 0; b < e.top; b++) {
           if (e.alive[b] && e.kind[b] === EKind.building && e.owner[b] === p) out.push({ player: p, cmd: { t: 'train', bld: e.handleOf(b), unit: 'villager', n: 1 + r.int(3) } });
@@ -77,6 +82,13 @@ export function stressConfig(seed: number, size = 96, unitsPerPlayer = 250): Sim
       const bx = p === 1 ? 2 : size - 14;
       units.push({ type: types[i % types.length]!, owner: p, x: bx + 0.5 + (i % 16) * 0.75, y: bx + 0.5 + Math.floor(i / 16) * 0.75 });
     }
+  }
+  // Gaia herds in the open middle: gazelles flee, elephants fight back.
+  for (let i = 0; i < 24; i++) {
+    const x = Math.floor(size * 0.3) + r.int(Math.floor(size * 0.4));
+    const y = Math.floor(size * 0.3) + r.int(Math.floor(size * 0.4));
+    if (rows[y]![x] !== '.') continue;
+    units.push({ type: i % 6 === 5 ? 'elephant' : 'gazelle', owner: 0, x: x + 0.5, y: y + 0.5 });
   }
   const buildings = [
     { type: 'townCenter', owner: 1, tx: 8, ty: 2 },

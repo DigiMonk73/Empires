@@ -71,3 +71,11 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
 - **D21 — Construction rate** (2026-09-29, M4.3). n builders progress at (n + 2)/3 × one builder (AoE2's rule);
   AoE1's formula is unverified (`verify`). Foundations start at 1 HP and gain HP with progress; units on the
   footprint are nudged to the nearest free tile.
+- **D22 — Farms, hunting, the `act` command** (2026-09-29, M4.5). Farms: a completed field holds the owner's
+  `farmFood` (250 + techs) in the entity's `stock`; one farmer at a time (the building's `target` names them); the
+  builder who finishes it starts farming; an empty field disappears (1.0 has no reseeding). Hunting: villagers
+  attack animals with HUNTER_ATTACK (pierce 4, range 4, 80% accuracy — `verify`), resolved as instant hits until
+  M5 adds projectiles; gazelles flee 5 tiles from the attacker, other animals fight back; a kill leaves a
+  `carcass:<animal>` resource node that rots at the animal's decay rate and is butchered like any node (meat
+  goes to a TC or Storage Pit). Right-clicking an entity sends `act` (codec id 9): the sim decides the verb
+  (hunt, farm, help build, and in M5 attack), so the UI never guesses.

@@ -12,6 +12,8 @@ export type Command =
   | { t: 'build'; ids: number[]; type: string; tx: number; ty: number; queue?: boolean }
   /** Villagers help build existing foundation `h`. */
   | { t: 'construct'; ids: number[]; h: number; queue?: boolean }
+  /** Context action on entity `h`: villagers farm own fields / hunt animals; soldiers attack. */
+  | { t: 'act'; ids: number[]; h: number; queue?: boolean }
   /** Queue `n` of base unit `unit` at building `bld`. */
   | { t: 'train'; bld: number; unit: string; n?: number }
   /** Cancel a queued unit (default: the last one) at building `bld`, refunding it. */

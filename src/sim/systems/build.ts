@@ -8,6 +8,7 @@ import { nearestTile } from '../path/service.ts';
 import { TYPES, buildingTypeIndex } from '../rules/registry.ts';
 import type { World } from '../world.ts';
 import { isVillager, REACH } from './gather.ts';
+import { sowFarm, startFarm } from './farm.ts';
 
 /**
  * Construction (econ:4): placing a foundation pays the full cost; villagers walk beside it and build. Several
@@ -207,6 +208,17 @@ export function buildSystem(w: World): void {
     if (e.build[b]! >= 1 - 1e-9) {
       e.build[b] = 1;
       w.events.push({ t: 'built', h: e.handleOf(b), player: e.owner[b]! });
+      if (TYPES[e.type[b]!]!.building?.kind === 'farm') {
+        sowFarm(w, b);
+        // The first villager who built it starts farming it (econ:1.4).
+        const bh = e.handleOf(b);
+        for (let s = 0; s < e.top; s++) {
+          const o = w.orders[s]?.[0];
+          if (e.alive[s] && o?.k === 'build' && o.h === bh) {
+            if (startFarm(w, s, bh, false)) break;
+          }
+        }
+      }
     }
   }
 }

@@ -162,8 +162,8 @@ export class InputController {
   }
 
   /**
-   * Right-click in context: villagers gather a resource or help build an own foundation; buildings set their
-   * rally point (on a resource: new villagers gather it); otherwise units move.
+   * Right-click in context: villagers hunt animals, gather a resource, help build an own foundation or farm an
+   * own field; buildings set their rally point (on a resource: new villagers gather it); otherwise units move.
    */
   private command(p: { x: number; y: number }, queue: boolean): void {
     const me = this.session.localPlayer;
@@ -178,19 +178,27 @@ export class InputController {
       this.wr.addMarker(w.x, w.y, 0xffd84a);
       return;
     }
+    const target = this.wr.pick(p.x, p.y);
+    const e = this.world.ents;
+    const ts = e.slotOf(target);
+    // Animals: villagers hunt them (soldiers will attack them in M5).
+    if (ts >= 0 && e.kind[ts] === EKind.unit && TYPES[e.type[ts]!]!.animal) {
+      this.session.router.submit(me, { t: 'act', ids, h: target, queue });
+      this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);
+      return;
+    }
     if (res >= 0) {
       this.session.router.submit(me, { t: 'gather', ids, res, queue });
       const r = this.world.res;
       this.wr.addMarker(r.tx[res]! + 0.5, r.ty[res]! + 0.5, 0xffd84a);
       return;
     }
-    const target = this.wr.pick(p.x, p.y);
-    const e = this.world.ents;
-    const ts = e.slotOf(target);
-    if (ts >= 0 && e.kind[ts] === EKind.building && e.owner[ts] === me && e.build[ts]! < 1) {
+    if (ts >= 0 && e.kind[ts] === EKind.building && e.owner[ts] === me) {
       const villagers = ids.filter((h) => isVillager(this.world, e.slotOf(h)));
-      if (villagers.length) {
-        this.session.router.submit(me, { t: 'construct', ids: villagers, h: target, queue });
+      const farm = TYPES[e.type[ts]!]!.building?.kind === 'farm' && e.build[ts]! >= 1;
+      if (villagers.length && (e.build[ts]! < 1 || farm)) {
+        // Foundations: help build. Finished farms: farm them (one farmer; the first free villager takes it).
+        this.session.router.submit(me, e.build[ts]! < 1 ? { t: 'construct', ids: villagers, h: target, queue } : { t: 'act', ids: villagers.slice(0, 1), h: target, queue });
         this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xffd84a);
         return;
       }

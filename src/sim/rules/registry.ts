@@ -68,8 +68,16 @@ export function buildingTypeIndex(id: string): number {
   return i;
 }
 
-/** Resource-node kinds: data RESOURCE_OBJECTS in order (carcasses are appended in M4). */
-export const RESOURCE_KINDS: readonly ResourceDef[] = RESOURCE_OBJECTS;
+/**
+ * Resource-node kinds: data RESOURCE_OBJECTS in order, then one carcass kind per animal (the food left when it is
+ * killed, decaying at the animal's rate — econ:1.1).
+ */
+export const RESOURCE_KINDS: readonly ResourceDef[] = [
+  ...RESOURCE_OBJECTS,
+  ...ANIMALS.map(
+    (a): ResourceDef => ({ id: `carcass:${a.id}`, name: a.name, res: 'food', amount: a.food, job: 'hunt', decay: a.decay, size: 1, src: a.src }),
+  ),
+];
 const RES_INDEX: ReadonlyMap<string, number> = new Map(RESOURCE_KINDS.map((r, i) => [r.id, i]));
 
 export function resourceKindIndex(id: string): number {

@@ -3,15 +3,17 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M4 Economy — M4.1–M4.4, M4.6 done (stats/effects, gather, construction, production + rally, mouse UI). M3 done (tag `m3`).
-- **Last green commit:** M4.3 (verify ~20 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
+- **Milestone:** M4 Economy — M4.1–M4.6 done (stats/effects, gather, construction, production + rally, farms/fish/hunting, mouse UI). M3 done (tag `m3`).
+- **Last green commit:** M4.5 (verify ~25 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
 - **Art:** baked villager (8 facings × idle/walk/die), trees/mines/berries, Stone-age TC + house; calibration
   IoU 1.0; Docker bakes its own sprites (D20). Placeholders remain for soldiers and other buildings.
-- **Sim:** gather at research rates (wood 0.55/s verified), drop-site rules, depletion/retarget, construction
-  with (n+2)/3 builders, pop/housing; sim 500 units p99 ~0.8 ms/tick; cross-engine determinism holds.
+- **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
+  retarget, construction with (n+2)/3 builders, pop/housing, farms (one farmer, 250 food, vanish when empty),
+  hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
+  combat core (`systems/combat.ts`: damage formula, instant hits — projectiles in M5); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M4.5 farms/shore fish/hunting, M4.7 art (villager work/carry clips; Granary, Storage Pit, Farm, Barracks, Dock), M4.8 metrics.
+- **Next up:** M4.7 art (villager work/carry clips; Granary, Storage Pit, Farm, Barracks, Dock; gazelle + elephant), M4.8 metrics.
 - **Playable now:** `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -139,13 +141,14 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       footprint, completion effects (pop cap, drop site). Shift-queued builds.
 - [x] **M4.4 Production.** `train` / `cancelTrain` (queue ≤ 5, cost at queue, refund on cancel), housing pause,
       spawn toward the rally point, `rally` command (rally on a resource → auto-gather).
-- [ ] **M4.5 Farms, shore fish, hunting.** Farms (walkable, one farmer, farmFood 250, rebuild when empty),
+- [x] **M4.5 Farms, shore fish, hunting.** Farms (walkable, one farmer, farmFood 250, rebuild when empty),
       shore fishing from land, hunting (spear throw; gazelle flee; carcass node with decay).
 - [x] **M4.6 Context commands + HUD.** Right-click context (gather/build/drop-off), command grid for villagers
       (build menu per age) and TC (train villager), placement ghost (green/red tiles), cost tooltips, hotkeys,
       carry/queue display, idle-villager button (`.`).
 - [ ] **M4.7 Art.** Villager work clips (chop, mine, forage, hoe, hammer, throw) and carry-walks; foundation/
-      construction stages; Granary, Storage Pit, Farm, Barracks, Dock (Stone-age).
+      construction stages; Granary, Storage Pit, Farm, Barracks, Dock (Stone-age); gazelle and elephant (quadruped
+      rig: idle/walk/die) + carcass frames; shore-fish ripples.
 - [ ] **M4.8 e2e + metrics.** Mouse-driven e2e builds a house and trains 5 villagers; scripted economy benchmark
       and idle metric in the sim stress/verify.
 - _Exit:_ mouse e2e builds a house and trains 5 villagers; scripted economy within ±5% of research rates; idle < 3%.

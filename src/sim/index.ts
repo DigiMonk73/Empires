@@ -7,6 +7,8 @@ import { populationSystem } from './systems/population.ts';
 import { gatherSystem } from './systems/gather.ts';
 import { buildSystem } from './systems/build.ts';
 import { productionSystem } from './systems/production.ts';
+import { farmSystem } from './systems/farm.ts';
+import { attackSystem, decaySystem } from './systems/combat.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
@@ -52,7 +54,10 @@ export class Sim {
     applyCommands(w, cmds);
     productionSystem(w);
     gatherSystem(w);
+    farmSystem(w);
     buildSystem(w);
+    attackSystem(w);
+    decaySystem(w);
     pathRequestSystem(w);
     w.pathing.process();
     followerPathSystem(w);

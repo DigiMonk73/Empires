@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M4.5 · economy-after, economy-placing-house, economy-tc-queue
+- The start scenario now has a gazelle herd, a lone elephant and a pond with shore fish (pond edge just visible at
+  the bottom of the view). Animals are still placeholder shapes (tan ovals on legs, no heads that read): readability
+  2/5 for animals — must-fix in M4.7 (baked quadrupeds). Fish/carcass placeholders are code-drawn (ripples +
+  shoal; animal on its side) and sort flat under units standing on them.
+- Farms, fish and carcasses sort from their back corner, so farmers draw on top of their field.
+
 ## 2026-09-29 · M4.6 · economy-placing-house, economy-tc-queue, economy-after
 - Real opening by mouse: placement ghost (translucent baked hut on green/red tiles), build menu with original
   hotkeys + next-age buildings greyed, baked-art icons for villager/house/TC, TC portrait, queue with progress.

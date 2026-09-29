@@ -10,11 +10,11 @@ export function hashBreakdown(w: World): Record<string, number> {
     .array(e.alive, n).array(e.gen, n).array(e.kind, n).array(e.type, n).array(e.owner, n)
     .array(e.x, n).array(e.y, n).array(e.facing, n).array(e.hp, n).array(e.act, n).array(e.actStart, n)
     .array(e.target, n).array(e.timer, n).array(e.build, n).array(e.stuck, n).array(e.lastDist, n)
-    .array(e.losTx, n).array(e.losTy, n).array(e.losR, n).array(e.carryJob, n).array(e.carryAmt, n)
+    .array(e.losTx, n).array(e.losTy, n).array(e.losR, n).array(e.carryJob, n).array(e.carryAmt, n).array(e.stock, n)
     .array(e.freeList(), e.freeList().length, false)
     .digest();
   const r = w.res;
-  const res = new Hasher().u32(r.count).array(r.kind, r.count).array(r.tx, r.count).array(r.ty, r.count)
+  const res = new Hasher().array(w.carcasses, w.carcasses.length, false).u32(r.count).array(r.kind, r.count).array(r.tx, r.count).array(r.ty, r.count)
     .array(r.amount, r.count).array(r.state, r.count).digest();
   const m = w.map;
   const map = new Hasher().array(m.terrain).array(m.height).array(m.occ).array(m.pass).array(m.bldAt).array(m.resAt).digest();

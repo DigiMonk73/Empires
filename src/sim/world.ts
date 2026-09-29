@@ -81,7 +81,11 @@ export type Order =
    */
   | { k: 'gather'; res: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Build foundation `h` (phase 0 = walking, 1 = building). */
-  | { k: 'build'; h: number; phase: 0 | 1; retry: number };
+  | { k: 'build'; h: number; phase: 0 | 1; retry: number }
+  /** Farm field `h` (phases as gather). */
+  | { k: 'farm'; h: number; phase: 0 | 1 | 2; drop: number; retry: number }
+  /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
+  | { k: 'attack'; h: number; hunt: boolean; retarget: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }
@@ -89,6 +93,8 @@ export type SimEvent =
   | { t: 'depleted'; res: number }
   | { t: 'built'; h: number; player: number }
   | { t: 'trained'; h: number; player: number }
+  | { t: 'died'; h: number; owner: number; type: number; x: number; y: number; facing: number }
+  | { t: 'farmDepleted'; h: number; player: number }
   | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number };
@@ -106,6 +112,8 @@ export class World {
   orders: (Order[] | undefined)[] = [];
   /** Per-slot path waypoints as [x0, y0, x1, y1, …] (cold data). */
   paths: (number[] | undefined)[] = [];
+  /** Resource-node indices of carcasses that are still rotting. */
+  carcasses: number[] = [];
   /** Per-building production queues and rally points (cold data). */
   prod: (Production | undefined)[] = [];
   rally: (Rally | undefined)[] = [];
@@ -165,6 +173,7 @@ export class World {
     const T: Record<string, [string, string?]> = {
       '.': ['grass'], d: ['dirt'], s: ['desert'], b: ['beach'], ',': ['shallows'], '~': ['water'], w: ['deepWater'],
       T: ['grass', 'tree'], F: ['forest', 'forestTree'], G: ['grass', 'goldMine'], S: ['grass', 'stoneMine'], B: ['grass', 'berryBush'],
+      f: ['water', 'shoreFish'],
     };
     for (let ty = 0; ty < Math.min(rows.length, this.map.h); ty++) {
       const row = rows[ty]!;
@@ -184,8 +193,8 @@ export class World {
       for (let dx = 0; dx < def.size; dx++) {
         if (!this.map.inBounds(tx + dx, ty + dy)) continue;
         this.map.resAt[this.map.idx(tx + dx, ty + dy)] = i + 1;
-        // Fish sit in water: they don't change passability for ships in 1.0 (boats gather from adjacent water).
-        if (def.job !== 'fish') this.map.setOcc(tx + dx, ty + dy, Occ.resource, true);
+        // Fish sit in water (boats gather from adjacent water) and carcasses lie on open ground: neither blocks.
+        if (def.job !== 'fish' && def.job !== 'hunt') this.map.setOcc(tx + dx, ty + dy, Occ.resource, true);
       }
     }
     return i;
@@ -237,6 +246,19 @@ export class World {
     this.rally[slot] = undefined;
     this.pathing.cancel(slot);
     unstampLos(this, slot);
+    if (this.ents.kind[slot] === EKind.building) {
+      const t = TYPES[this.ents.type[slot]!]!;
+      const tx = Math.round(this.ents.x[slot]! - t.size / 2);
+      const ty = Math.round(this.ents.y[slot]! - t.size / 2);
+      const occ = t.building?.kind === 'farm' ? Occ.farm : Occ.building;
+      for (let dy = 0; dy < t.size; dy++) {
+        for (let dx = 0; dx < t.size; dx++) {
+          if (!this.map.inBounds(tx + dx, ty + dy)) continue;
+          this.map.bldAt[this.map.idx(tx + dx, ty + dy)] = 0;
+          this.map.setOcc(tx + dx, ty + dy, occ, false);
+        }
+      }
+    }
     this.ents.act[slot] = Act.idle;
     this.ents.destroy(h);
   }

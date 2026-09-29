@@ -58,9 +58,14 @@ export function syncHud(world: World, player: number, selected: readonly number[
     });
   }
   hud.selection.value = sel;
-  // Single-selection extras: a villager's load, a building's queue.
+  // Single-selection extras: a villager's load, a farm's food left, a building's queue.
   const one = selected.length === 1 ? e.slotOf(selected[0]!) : -1;
-  hud.carry.value = one >= 0 && e.carryAmt[one]! > 0 ? `Carrying ${Math.floor(e.carryAmt[one]!)} ${CARRY_NAMES[e.carryJob[one]! - 1] ?? ''}` : '';
+  const field = one >= 0 && e.kind[one] === EKind.building && TYPES[e.type[one]!]!.building?.kind === 'farm' && e.build[one]! >= 1;
+  hud.carry.value = field
+    ? `Food ${Math.ceil(e.stock[one]!)}`
+    : one >= 0 && e.carryAmt[one]! > 0
+      ? `Carrying ${Math.floor(e.carryAmt[one]!)} ${CARRY_NAMES[e.carryJob[one]! - 1] ?? ''}`
+      : '';
   hud.queue.value = one >= 0 && e.kind[one] === EKind.building && e.owner[one] === player ? queueOf(world, selected[0]!) : [];
 }
 

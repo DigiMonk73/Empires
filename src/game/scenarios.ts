@@ -59,6 +59,9 @@ function start(): SimConfig {
       if (x >= 27 && x <= 28 && y >= 14 && y <= 16) c = 'G';
       if (x >= 12 && x <= 13 && y >= 8 && y <= 9) c = 'S';
       if ((x * 7 + y * 11) % 37 === 0 && c === '.' && d2(20, 20) > 60) c = 'T';
+      // A pond to the south-east with fish along its shore.
+      const pond = (x - 31) * (x - 31) + (y - 30) * (y - 30) * 1.6;
+      if (pond <= 22) c = pond > 12 && (x + y) % 3 === 0 ? 'f' : '~';
       row += c;
     }
     rows.push(row);
@@ -73,6 +76,12 @@ function start(): SimConfig {
         { type: 'villager', owner: 1, x: 21.8, y: 17.4 },
         { type: 'villager', owner: 1, x: 22.4, y: 18.3 },
         { type: 'villager', owner: 1, x: 22.1, y: 19.4 },
+        // Gazelles grazing nearby, an elephant further out (econ:8).
+        { type: 'gazelle', owner: 0, x: 26.5, y: 25.2 },
+        { type: 'gazelle', owner: 0, x: 27.4, y: 24.6 },
+        { type: 'gazelle', owner: 0, x: 26.9, y: 26.1 },
+        { type: 'gazelle', owner: 0, x: 11.5, y: 14.4 },
+        { type: 'elephant', owner: 0, x: 8.5, y: 20.5 },
       ],
     },
   };

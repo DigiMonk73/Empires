@@ -178,7 +178,27 @@ export function resourceArt(renderer: Renderer, kind: string): SpriteArt {
         g.circle(0, -8, 10).fill(0x3e6a2a);
         for (const [x, y] of [[-4, -10], [3, -12], [5, -6], [-2, -5], [0, -14]] as const) g.circle(x, y, 1.8).fill(0xc02a3a);
         break;
+      case 'shoreFish':
+        // A shoal just under the surface: dark backs and a couple of ripple rings.
+        g.ellipse(0, 0, 16, 7).stroke({ color: 0xd8f0ff, alpha: 0.55, width: 1 });
+        g.ellipse(2, 1, 9, 4).stroke({ color: 0xd8f0ff, alpha: 0.4, width: 1 });
+        for (const [x, y, r] of [[-6, -1, 0.3], [4, -3, -0.4], [1, 3, 0.1]] as const) {
+          g.ellipse(x, y, 4, 1.6).fill({ color: 0x1e3a4a, alpha: 0.75 });
+          g.poly([x - 4, y, x - 7, y - 2 + r, x - 7, y + 2 + r]).fill({ color: 0x1e3a4a, alpha: 0.75 });
+        }
+        break;
       default:
+        if (kind.startsWith('carcass:')) {
+          // A fallen animal on its side: body, legs, a dark stain.
+          const big = kind === 'carcass:elephant';
+          const k = big ? 1.8 : 1;
+          const body = big ? 0x7c7c80 : kind === 'carcass:gazelle' ? 0xb88a52 : 0x9a7040;
+          g.ellipse(0, 0, 13 * k, 5 * k).fill({ color: 0x5a1a14, alpha: 0.45 });
+          g.ellipse(0, -3 * k, 10 * k, 4 * k).fill(body);
+          g.ellipse(9 * k, -4 * k, 3.5 * k, 2.6 * k).fill(body);
+          for (const x of [-6, -3, 3, 6]) g.rect(x * k, -1 * k, 1.4 * k, 4 * k).fill(shade(body, 0.7));
+          break;
+        }
         g.ellipse(0, -2, 8, 4).fill({ color: 0xa0c8e0, alpha: 0.8 });
     }
   });
