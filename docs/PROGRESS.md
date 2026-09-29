@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M0 Rails — DONE (tag `m0`). Next: **M1 Deterministic sim core**.
+- **Milestone:** M1 Deterministic sim core — M1.1–M1.2 done (tag `m0` = M0).
 - **Last green commit:** M0.8 data tables (verify ~3.5 s; verify:full ~1 min incl. Docker, Tauri, `make arm`).
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs, 8 resources, 4 animals — 100% sourced, 22 `verify` flags.
 - **Key metrics:** headless GL = ANGLE Metal / Apple GPU (D15). Image 61.7 MB; .app 9 MB; .s9pk 47 MB.
@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
   reinstall ok. NOT verified: backup/restore (no backup target, KI-3). VM stopped.
 - **Open blockers:** none. Open issues: KI-1 icon (placeholder-quality SVG), KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M1.1 math/RNG/hash.
+- **Next up:** M1.3 commands + tick + Sim facade.
 - **Notes:** the detailed design is `docs/design/architecture-proposal.md` — its Q16 math is superseded by D1.
 
 ---
@@ -58,10 +58,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       builds; .s9pk installed on the VM with health green; tag `m0`.
 
 ## M1 — Deterministic sim core
-- [ ] **M1.1 Math, RNG, hash.** `sim/math/rng.ts` (seeded sfc32 streams: mapgen, combat, conversion, per-AI),
+- [x] **M1.1 Math, RNG, hash.** `sim/math/rng.ts` (seeded sfc32 streams: mapgen, combat, conversion, per-AI),
       `trig.ts` (generated sin/cos table + integer `dir8/dir16(dx, dy)`), `hash.ts` (FNV-1a over typed arrays and
       float64 bits). _Accept:_ unit tests (RNG sequences pinned, hash stable, direction octants exact).
-- [ ] **M1.2 World state.** SoA entity store (typed arrays, capacity growth, handle = slot + generation, LIFO free
+- [x] **M1.2 World state.** SoA entity store (typed arrays, capacity growth, handle = slot + generation, LIFO free
       list), ResourceStore (trees/mines/bushes/fish, `resAt` grid, 16×16 chunk index), TileMap (terrain, corner
       heights, passability bits, `bldAt`), compiled per-player rules tables from `src/data` (natural → per-tick).
       _Accept:_ tests for store churn, handle staleness, rules compile (villager speed 1.1 tiles/s → per tick).
