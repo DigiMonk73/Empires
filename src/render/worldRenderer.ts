@@ -7,6 +7,7 @@ import type { World } from '../sim/world.ts';
 import { worldToIso } from './iso.ts';
 import { buildingArt, resourceArt, unitArt, type SpriteArt } from './placeholders.ts';
 import { TerrainLayer } from './terrainMesh.ts';
+import { FogLayer } from './fogLayer.ts';
 
 interface EntityView {
   handle: number;
@@ -43,6 +44,8 @@ export class WorldRenderer {
   private readonly resArtCache = new Map<number, SpriteArt>();
   private views: (EntityView | undefined)[] = [];
   terrain!: TerrainLayer;
+  readonly fog: FogLayer;
+  private lastFogVersion = -1;
   private readonly selGfx = new Graphics();
   private readonly hpGfx = new Graphics();
   private readonly markerGfx = new Graphics();
@@ -55,7 +58,8 @@ export class WorldRenderer {
     this.renderer = renderer;
     this.world = world;
     this.objectLayer.sortableChildren = true;
-    this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.overlayLayer);
+    this.fog = new FogLayer(world);
+    this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.fog.mesh, this.overlayLayer);
     this.decalLayer.addChild(this.selGfx, this.markerGfx);
     this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
@@ -134,9 +138,15 @@ export class WorldRenderer {
     return { handle: e.handleOf(slot), root, base, team };
   }
 
-  /** Sync views to the world. `alpha` interpolates unit positions between the previous and current tick. */
-  update(alpha: number): void {
+  /**
+   * Sync views to the world for `player`'s eyes. `alpha` interpolates unit positions between the previous and
+   * current tick. Units outside the player's sight are hidden; buildings and resources show once explored.
+   */
+  update(alpha: number, player: number): void {
     const e = this.world.ents;
+    this.fog.update(player);
+    const fogChanged = this.world.fog.version[player] !== this.lastFogVersion;
+    this.lastFogVersion = this.world.fog.version[player] ?? 0;
     const p = { x: 0, y: 0 };
     for (let s = 0; s < Math.max(e.top, this.views.length); s++) {
       let v = this.views[s];
@@ -152,6 +162,10 @@ export class WorldRenderer {
       worldToIso(x, y, 0, p);
       v.root.position.set(p.x, p.y);
       v.root.zIndex = depth(x, y, e.kind[s] === EKind.building ? 0 : 1);
+      const tx = Math.floor(x);
+      const ty = Math.floor(y);
+      v.root.visible =
+        e.owner[s] === player || (e.kind[s] === EKind.building ? this.fog.isExplored(player, tx, ty) : this.fog.isVisible(player, tx, ty));
       // Face left/right by world direction projected to screen (8-dir sprites arrive with the baker).
       if (e.kind[s] === EKind.unit) {
         const f = e.facing[s]!;
@@ -162,10 +176,11 @@ export class WorldRenderer {
     const r = this.world.res;
     for (let i = 0; i < r.count; i++) {
       const sp = this.resViews[i];
-      if (sp && r.state[i] === ResState.gone) {
+      if (!sp) continue;
+      if (r.state[i] === ResState.gone) {
         sp.destroy();
         this.resViews[i] = undefined;
-      }
+      } else if (fogChanged) sp.visible = this.fog.isExplored(player, r.tx[i]!, r.ty[i]!);
     }
   }
 

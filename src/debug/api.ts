@@ -23,7 +23,7 @@ export interface EmpiresDebugApi {
   entityScreenPos(h: number): Point | null;
   /** Page position of world point (x, y) on the minimap. */
   minimapPoint(x: number, y: number): Point;
-  camera: { centerOn(x: number, y: number): void; setZoom(z: number): void; get(): { x: number; y: number; zoom: number } };
+  camera: { centerOn(x: number, y: number): void; setZoom(z: number): void; get(): { x: number; y: number; zoom: number; screenX: number; screenY: number } };
   query: {
     tick(): number;
     hash(): number;
@@ -38,6 +38,8 @@ export interface EmpiresDebugApi {
   step(ticks: number): void;
   /** Freeze animation time for deterministic screenshots (also pauses the simulation). */
   freezeRenderClock(t: number): void;
+  /** Clear the frame-time history (perf tests). */
+  resetPerf(): void;
 }
 
 export interface RenderStats {
@@ -53,6 +55,8 @@ export interface RenderStats {
   dpr: number;
   views: number;
   terrainDrawCalls: number;
+  /** p95 of full-frame CPU ms over the last ~600 frames. */
+  cpuP95: number;
 }
 
 declare global {

@@ -31,3 +31,8 @@ export async function snap(page: Page, info: TestInfo, name: string): Promise<st
   await page.screenshot({ path: file });
   return file;
 }
+
+/** Wait for two rendered frames (views, fog and picking update in the frame loop). */
+export async function frames(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+}

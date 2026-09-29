@@ -10,8 +10,10 @@ test('minimap: click moves the camera, right-click moves the selection', async (
   const target = await page.evaluate(() => window.__empires!.minimapPoint(38, 36));
   await page.mouse.click(target.x, target.y);
   // The camera now centers on ≈(38, 36): the screen center maps back near it.
-  const vp = page.viewportSize()!;
-  const c = await page.evaluate((v) => window.__empires!.screenToWorld(v.width / 2, v.height / 2), vp);
+  const c = await page.evaluate(() => {
+    const cam = window.__empires!.camera.get();
+    return window.__empires!.screenToWorld(cam.screenX, cam.screenY);
+  });
   expect(Math.hypot(c.x - 38, c.y - 36)).toBeLessThan(1.5);
 
   // Select a villager via the API-free path: box-select after jumping back home.

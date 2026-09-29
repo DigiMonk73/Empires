@@ -3,16 +3,17 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M2 See & command — M2.1–M2.5 done (sim on screen; terrain; selection/commands; HUD; minimap). M1 done (tag `m1`).
-- **Last green commit:** M1.7 (verify ~8.5 s incl. 20k-tick cross-engine determinism + sim stress gate).
-- **Sim perf (500 units, fuzzed orders):** p50 0.07 / p99 0.77 ms per tick; blocked 2%; stuck>5s 0.2%; 0 give-ups.
-- **Determinism:** identical hash traces Node (V8) = Chromium = WebKit (JSC), 500 units × 20k ticks; save/load
-  and replay equivalent (D1 restricted doubles holds — no Q16 needed).
+- **Milestone:** M2 See & command — DONE (tag `m2`). Next: **M3 Art pipeline v1** (3D-in-code → baked sprites).
+- **Last green commit:** M2.7 (verify ~22 s: 21 e2e in 2 browsers, 20k-tick cross-engine determinism, stress).
+- **Playable today:** demo scenario — select (click/box/double-click/groups), right-click move with formations,
+  HUD (stockpile/pop/age/clock/selection), minimap (jump + move), fog of war. Placeholder shape art.
+- **Perf:** sim 500 units p99 0.8 ms/tick; render 1000 moving units frame CPU p95 4.5 ms @ 60 fps.
+- **Determinism:** Node = Chromium = WebKit hash traces (500 units × 20k ticks); save/load/replay equivalent.
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs — 100% sourced, 22 `verify` flags.
-- **StartOS (M0.7):** installed + verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
+- **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M2.6 fog of war (sim visibility + render), M2.7 render perf gate.
-- **Notes:** metrics history in `docs/metrics/history.csv` (appended by verify).
+- **Next up:** M3.1 model DSL + procedural materials + browser workbench.
+- **Notes:** metrics history in `docs/metrics/history.csv`; visual reviews in `docs/visual-review.md`.
 
 ---
 
@@ -98,15 +99,30 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       command grid placeholder), minimap slot. _Accept:_ e2e reads HUD values; screenshot reviewed.
 - [x] **M2.5 Minimap.** Diamond minimap canvas: terrain, units, camera box; click/drag moves camera; right-click
       moves selection. _Accept:_ e2e minimap click moves camera.
-- [ ] **M2.6 Fog of war.** Sim: per-player visibility counts + explored (LOS stamping on tile change); render:
+- [x] **M2.6 Fog of war.** Sim: per-player visibility counts + explored (LOS stamping on tile change); render:
       black unexplored / grey explored with soft edges; enemy units hidden outside LOS; `?reveal=1`.
       _Accept:_ unit tests for visibility; fog screenshot reviewed; determinism unaffected.
-- [ ] **M2.7 Perf gate.** 1000 moving units: render p95 ≤ 8 ms (Chromium, hardware GL).
+- [x] **M2.7 Perf gate.** 1000 moving units: render p95 ≤ 8 ms (Chromium, hardware GL).
 - _Exit:_ mouse-driven e2e in both browsers; 1000 moving units render p95 ≤ 8 ms.
 
 ## M3 — Art pipeline v1
-- model DSL; materials; baker + calibration; packer; overlay; sockets; 1×/2×; humanoid rig; villager idle/walk/die;
-  Stone TC + house (one set); trees, berries, gold, stone; terrain textures; contact sheets; Docker bake timing.
+- [ ] **M3.1 Model DSL + materials.** `src/art/dsl`: primitives (box, cylinder, cone, sphere, capsule, lathe,
+      extrude), node tree with transforms and bones, procedural canvas materials (stone blocks, mudbrick, plaster,
+      planks, thatch, cloth, leather, skin, hair, foliage, bark, rock, gold ore) with a `player` flag; Three.js
+      scene builder; `?workbench=<model>` page (dev) rendering a model live.
+      _Accept:_ workbench screenshot of a test model shows lit, textured primitives.
+- [ ] **M3.2 Baker.** Ortho camera yaw 45° / pitch 30°, key/fill/ambient + shadow map onto a transparent
+      ShadowMaterial ground; 4× supersampled render, premultiplied downsample, team-mask pass, trim; maxrects
+      packing → PNG atlas + JSON (anchors, clips, fps, markers); `tools/bake/cli.ts` (Playwright headless
+      Chromium → `public/baked/`), content-hash incremental. Calibration test: baked 1×1 quad and 3×3 box
+      footprints vs iso polygons, IoU ≥ 0.98.
+- [ ] **M3.3 Humanoid rig + villager.** Skeleton + clip generators (idle, walk, die); villager model; 8 facings.
+- [ ] **M3.4 Buildings v1.** Parametric Stone-age Town Center + house (one architecture set) with team trim.
+- [ ] **M3.5 Resources.** Tree variants (scattered + forest), berry bush, gold and stone mine models.
+- [ ] **M3.6 Renderer integration.** Atlas loader; baked sprites with 8-dir facing, walk/idle/die animation,
+      team overlay; placeholder fallback for unbaked types.
+- [ ] **M3.7 Contact sheets + Docker bake timing.** Contact sheet per model (facings × key frames on grass with
+      grid); Docker bake stage measured → D5 decision.
 - _Exit:_ calibration IoU ≥ 0.98; contact sheets ≥ 3/5; full bake ≤ 3 min; D5 fallback decided.
 
 ## M4 — Economy

@@ -9,6 +9,7 @@ import { RESOURCE_KINDS, TYPES, buildingTypeIndex, resourceKindIndex, unitTypeIn
 import { PathService } from './path/service.ts';
 import { UnitGrid } from './core/spatial.ts';
 import { PathGrid } from './path/grid.ts';
+import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.ts';
 
 export interface PlayerSetup {
   civ: string;
@@ -42,6 +43,8 @@ export interface SimConfig {
   scenario?: ScenarioSpec;
   /** Starting stockpile setting (econ:1.5); default 'default' = 200 food, 200 wood, 150 stone. */
   startingResources?: StartingResources;
+  /** "Reveal Map" option: the whole map starts explored (units in unwatched areas stay hidden). */
+  revealMap?: boolean;
 }
 
 export interface PlayerState {
@@ -79,6 +82,7 @@ export class World {
   events: SimEvent[] = [];
   readonly pathing: PathService;
   readonly grid: UnitGrid;
+  readonly fog: FogState;
   /** Reusable per-tick buffers (not state). */
   scratch = { px: new Float64Array(256), py: new Float64Array(256) };
   private pathGrids = new Map<number, PathGrid>();
@@ -104,12 +108,14 @@ export class World {
     };
     this.pathing = new PathService(this);
     this.grid = new UnitGrid(cfg.map.w, cfg.map.h);
+    this.fog = createFog(this.players.length, cfg.map.w, cfg.map.h, !!cfg.revealMap);
     if (cfg.map.ascii) this.applyAscii(cfg.map.ascii);
     const sc = cfg.scenario;
     for (const r of sc?.resources ?? []) this.addResource(resourceKindIndex(r.kind), r.tx, r.ty);
     for (const b of sc?.buildings ?? []) this.placeBuilding(buildingTypeIndex(b.type), b.owner, b.tx, b.ty);
     for (const u of sc?.units ?? []) this.spawnUnit(unitTypeIndex(u.type), u.owner, u.x, u.y);
     this.grid.rebuild(this.ents);
+    fogSystem(this);
   }
 
   private applyAscii(rows: readonly string[]): void {
@@ -180,6 +186,7 @@ export class World {
     this.orders[slot] = undefined;
     this.paths[slot] = undefined;
     this.pathing.cancel(slot);
+    unstampLos(this, slot);
     this.ents.act[slot] = Act.idle;
     this.ents.destroy(h);
   }

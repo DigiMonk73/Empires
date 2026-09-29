@@ -3,6 +3,9 @@ import { isoToWorld, worldToIso, type Point } from './iso.ts';
 
 export interface CameraOptions {
   edgeScroll: boolean;
+  /** Screen area covered by HUD bars (CSS px): the camera centers on the visible middle. */
+  insetTop?: number;
+  insetBottom?: number;
   scrollSpeed: number; // logical px per second at zoom 1
   minZoom: number;
   maxZoom: number;
@@ -96,31 +99,34 @@ export class Camera {
     this.apply();
   }
 
+  /** Screen point (CSS px) the camera centers on: the middle of the area not covered by the HUD. */
+  viewCenter(): { x: number; y: number } {
+    const t = this.options.insetTop ?? 0;
+    const b = this.options.insetBottom ?? 0;
+    return { x: this.view.clientWidth / 2, y: t + (this.view.clientHeight - t - b) / 2 };
+  }
+
   apply(): void {
-    const w = this.view.clientWidth;
-    const h = this.view.clientHeight;
+    const c = this.viewCenter();
     this.world.scale.set(this.zoom);
     // Round translation to device pixels at zoom 1 to keep sprites crisp.
     const dpr = window.devicePixelRatio || 1;
-    const tx = w / 2 - this.center.x * this.zoom;
-    const ty = h / 2 - this.center.y * this.zoom;
+    const tx = c.x - this.center.x * this.zoom;
+    const ty = c.y - this.center.y * this.zoom;
     this.world.position.set(Math.round(tx * dpr) / dpr, Math.round(ty * dpr) / dpr);
   }
 
   /** Page (CSS px) → iso space. */
   screenToIso(px: number, py: number): Point {
-    const w = this.view.clientWidth;
-    const h = this.view.clientHeight;
-    return { x: this.center.x + (px - w / 2) / this.zoom, y: this.center.y + (py - h / 2) / this.zoom };
+    const c = this.viewCenter();
+    return { x: this.center.x + (px - c.x) / this.zoom, y: this.center.y + (py - c.y) / this.zoom };
   }
 
   /** World tile coords → page (CSS px). */
   worldToScreen(x: number, y: number, h = 0): Point {
     const p = worldToIso(x, y, h);
-    return {
-      x: (p.x - this.center.x) * this.zoom + this.view.clientWidth / 2,
-      y: (p.y - this.center.y) * this.zoom + this.view.clientHeight / 2,
-    };
+    const c = this.viewCenter();
+    return { x: (p.x - this.center.x) * this.zoom + c.x, y: (p.y - this.center.y) * this.zoom + c.y };
   }
 
   screenToWorld(px: number, py: number): Point {

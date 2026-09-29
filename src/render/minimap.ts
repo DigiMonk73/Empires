@@ -33,6 +33,12 @@ export class Minimap {
   private dragging = false;
   private lastDraw = 0;
   private resVersion = -1;
+  private readonly fogCanvas: HTMLCanvasElement;
+  private readonly fogImage: ImageData;
+  private fogVersion = -1;
+  /** The player whose fog applies; -1 = no fog. */
+  player = 1;
+  fogEnabled = true;
   onRightClick: ((wx: number, wy: number) => void) | null = null;
 
   constructor(slot: HTMLElement, world: World, camera: Camera, viewSize: () => { w: number; h: number }) {
@@ -60,6 +66,10 @@ export class Minimap {
     this.base.width = this.canvas.width;
     this.base.height = this.canvas.height;
     this.renderBase();
+    this.fogCanvas = document.createElement('canvas');
+    this.fogCanvas.width = world.map.w;
+    this.fogCanvas.height = world.map.h;
+    this.fogImage = new ImageData(world.map.w, world.map.h);
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.canvas.addEventListener('pointerdown', (e) => {
       const w = this.toWorld(e.offsetX, e.offsetY);
@@ -93,6 +103,23 @@ export class Minimap {
     this.camera.centerOnWorld(x, y);
     this.camera.apply();
     this.draw(true);
+  }
+
+  /** Fog as a per-tile alpha image, drawn through the iso affine transform (smoothed → soft edges). */
+  private drawFog(vis: Uint16Array, exp: Uint8Array): void {
+    const v = this.world.fog.version[this.player] ?? 0;
+    if (v !== this.fogVersion) {
+      this.fogVersion = v;
+      const d = this.fogImage.data;
+      for (let i = 0; i < vis.length; i++) d[i * 4 + 3] = vis[i]! > 0 ? 0 : exp[i] ? 120 : 255;
+      this.fogCanvas.getContext('2d')!.putImageData(this.fogImage, 0, 0);
+    }
+    const c = this.ctx;
+    c.save();
+    c.transform(this.s, this.s / 2, -this.s, this.s / 2, this.ox, this.oy);
+    c.imageSmoothingEnabled = true;
+    c.drawImage(this.fogCanvas, 0, 0);
+    c.restore();
   }
 
   private renderBase(): void {
@@ -144,8 +171,16 @@ export class Minimap {
     c.scale(this.dpr, this.dpr);
     const e = this.world.ents;
     const u = Math.max(2, this.s * 1.4);
+    const fog = this.world.fog;
+    const W = this.world.map.w;
+    const vis = this.fogEnabled ? fog.vis[this.player] : undefined;
+    const exp = this.fogEnabled ? fog.explored[this.player] : undefined;
     for (let s = 0; s < e.top; s++) {
       if (!e.alive[s]) continue;
+      if (vis && exp && e.owner[s] !== this.player) {
+        const i = Math.floor(e.y[s]!) * W + Math.floor(e.x[s]!);
+        if (e.kind[s] === EKind.building ? !exp[i] : !vis[i]) continue;
+      }
       const p = this.toMini(e.x[s]!, e.y[s]!);
       c.fillStyle = `#${playerColor(e.owner[s]!).toString(16).padStart(6, '0')}`;
       if (e.kind[s] === EKind.building) {
@@ -156,6 +191,7 @@ export class Minimap {
         c.strokeRect(p.x - b, p.y - b / 2, b * 2, b);
       } else c.fillRect(p.x - u / 2, p.y - u / 2, u, u);
     }
+    if (vis && exp) this.drawFog(vis, exp);
     // Camera frame: the four screen corners projected onto the ground.
     const corners = [
       this.camera.screenToWorld(0, 0),

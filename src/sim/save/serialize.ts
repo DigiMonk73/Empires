@@ -44,6 +44,8 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
   for (const f of ResourceStore.FIELDS) blobs.push({ name: `res.${f}`, arr: r[f].slice(0, r.count) });
   const m = w.map;
   for (const f of ['terrain', 'height', 'occ', 'bldAt', 'resAt', 'pass'] as const) blobs.push({ name: `map.${f}`, arr: m[f] });
+  w.fog.vis.forEach((a, p) => blobs.push({ name: `fog.vis.${p}`, arr: a }));
+  w.fog.explored.forEach((a, p) => blobs.push({ name: `fog.explored.${p}`, arr: a }));
 
   const refs: BlobRef[] = [];
   let off = 0;
@@ -141,6 +143,9 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
   for (const f of ['terrain', 'height', 'occ', 'bldAt', 'resAt', 'pass'] as const) w.map[f].set(need(`map.${f}`));
   w.map.passVersion = header.map.passVersion;
   w.pathing.regions.invalidate();
+  w.fog.vis.forEach((a, p) => a.set(need(`fog.vis.${p}`)));
+  w.fog.explored.forEach((a, p) => a.set(need(`fog.explored.${p}`)));
+  w.fog.version.forEach((_, p) => w.fog.version[p]!++);
   w.orders = [];
   w.paths = [];
   for (const [s, o] of header.orders) w.orders[s] = o;

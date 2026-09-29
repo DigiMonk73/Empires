@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M2.6 · demo-lake-forest (fogged), fog-scouted
+- Fog: unexplored black with soft, noisy edges; enemy base hidden until the scout arrives; minimap fogged the
+  same way. Fog 4/5.
+- Explored-but-unwatched ground renders ~50% dark (not captured in these shots — scout LOS covers the view).
+
 ## 2026-09-29 · M2.4 · hud-single
 - Top bar (stockpile, pop, age, clock, buttons) and bottom panel (selection, command grid, minimap slot) in a
   bronze-on-dark-stone style. HUD 3/5 at this stage.

@@ -57,6 +57,10 @@ export class EntityStore {
   stuck = new Uint16Array(0);
   /** Movement: distance to the current waypoint at the end of the previous tick. */
   lastDist = new Float64Array(0);
+  /** Fog: tile and radius this entity's line of sight is currently stamped at (losR 0 = not stamped). */
+  losTx = new Int16Array(0);
+  losTy = new Int16Array(0);
+  losR = new Uint8Array(0);
 
   constructor(initialCap = 256) {
     this.grow(initialCap);
@@ -86,6 +90,9 @@ export class EntityStore {
     this.build = copy(this.build, (n) => new Float64Array(n));
     this.stuck = copy(this.stuck, (n) => new Uint16Array(n));
     this.lastDist = copy(this.lastDist, (n) => new Float64Array(n));
+    this.losTx = copy(this.losTx, (n) => new Int16Array(n));
+    this.losTy = copy(this.losTy, (n) => new Int16Array(n));
+    this.losR = copy(this.losR, (n) => new Uint8Array(n));
     this.cap = newCap;
   }
 
@@ -115,6 +122,7 @@ export class EntityStore {
     this.build[slot] = 1;
     this.stuck[slot] = 0;
     this.lastDist[slot] = 0;
+    this.losR[slot] = 0;
     this.count++;
     return makeHandle(slot, this.gen[slot]!);
   }
@@ -149,7 +157,7 @@ export class EntityStore {
   /** Names of the per-slot typed arrays, in canonical order (save/load, hashing). */
   static readonly FIELDS = [
     'alive', 'gen', 'kind', 'type', 'owner', 'x', 'y', 'px', 'py', 'facing', 'hp', 'act', 'actStart', 'target',
-    'timer', 'build', 'stuck', 'lastDist',
+    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR',
   ] as const;
 
   /** Replace all state from a snapshot's parts. */

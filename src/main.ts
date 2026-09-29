@@ -42,19 +42,25 @@ async function boot(): Promise<void> {
     scrollSpeed: 900,
     minZoom: 0.5,
     maxZoom: 1.5,
+    insetTop: 36,
+    insetBottom: 170,
   });
   const selection = new Selection();
   const screenLayer = new Graphics();
   app.stage.addChild(screenLayer);
 
   const tc = findFirst(world, 1, 'townCenter');
-  if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 2);
+  if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 1);
   else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
   camera.apply();
 
   mountHud(document.getElementById('hud')!);
   const input = new InputController(app.canvas, camera, session, wr, selection, screenLayer);
   const minimap = new Minimap(document.getElementById('minimap-slot')!, world, camera, () => ({ w: app.canvas.clientWidth, h: app.canvas.clientHeight }));
+  const noFog = params.get('fog') === '0';
+  wr.fog.enabled = !noFog;
+  minimap.fogEnabled = !noFog;
+  minimap.player = session.localPlayer;
   minimap.onRightClick = (wx, wy) => {
     const ids = input.ownUnits();
     if (!ids.length) return;
@@ -68,15 +74,18 @@ async function boot(): Promise<void> {
   let fps = 0;
   let frameMs = 0;
   let cpuMs = 0;
+  const cpuHistory: number[] = [];
+  let frameStart = 0;
   app.ticker.add((t) => {
     const t0 = performance.now();
+    frameStart = t0;
     const dt = Math.min(0.25, t.deltaMS / 1000);
     if (!frozen) alpha = session.update(dt);
     camera.update(frozen ? 0 : dt);
     const tl = camera.screenToIso(0, 0);
     const br = camera.screenToIso(app.canvas.clientWidth, app.canvas.clientHeight);
     wr.cull(tl.x, tl.y, br.x, br.y);
-    wr.update(alpha);
+    wr.update(alpha, session.localPlayer);
     selection.prune((h) => world.ents.valid(h));
     wr.drawOverlays(selection.list, session.localPlayer, alpha);
     minimap.draw();
@@ -86,10 +95,19 @@ async function boot(): Promise<void> {
       lastSelVersion = selection.version;
       syncHud(world, session.localPlayer, selection.list);
     }
-    cpuMs = performance.now() - t0;
     frameMs = t.deltaMS;
     fps = t.FPS;
   });
+  // Runs after Pixi's own render (priority LOW) → full frame CPU: sim + sync + render submission.
+  app.ticker.add(
+    () => {
+      cpuMs = performance.now() - frameStart;
+      cpuHistory.push(cpuMs);
+      if (cpuHistory.length > 600) cpuHistory.shift();
+    },
+    undefined,
+    -50,
+  );
 
   const glInfo = readGlInfo(app);
   let readyResolve!: () => void;
@@ -105,6 +123,10 @@ async function boot(): Promise<void> {
     height: app.canvas.clientHeight,
     dpr: window.devicePixelRatio || 1,
     views: wr.viewCount,
+    cpuP95: (() => {
+      const a = [...cpuHistory].sort((x, y) => x - y);
+      return a.length ? a[Math.floor(a.length * 0.95)]! : 0;
+    })(),
     terrainDrawCalls: wr.terrainDrawCalls,
   });
   installDebugApi({
@@ -129,7 +151,7 @@ async function boot(): Promise<void> {
         camera.setZoom(z);
         camera.apply();
       },
-      get: () => ({ x: camera.center.x, y: camera.center.y, zoom: camera.zoom }),
+      get: () => ({ x: camera.center.x, y: camera.center.y, zoom: camera.zoom, screenX: camera.viewCenter().x, screenY: camera.viewCenter().y }),
     },
     minimapPoint: (x, y) => {
       const r = minimap.canvas.getBoundingClientRect();
@@ -162,6 +184,9 @@ async function boot(): Promise<void> {
     step: (n) => {
       for (let i = 0; i < n; i++) session.stepOnce();
       alpha = 1;
+    },
+    resetPerf: () => {
+      cpuHistory.length = 0;
     },
     freezeRenderClock: () => {
       frozen = true;
