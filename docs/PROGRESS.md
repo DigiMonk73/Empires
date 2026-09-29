@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M1 Deterministic sim core — M1.1–M1.5 done (tag `m0` = M0).
+- **Milestone:** M1 Deterministic sim core — M1.1–M1.6 done (tag `m0` = M0).
 - **Last green commit:** M0.8 data tables (verify ~3.5 s; verify:full ~1 min incl. Docker, Tauri, `make arm`).
 - **Data:** 45 units, 22 buildings, 77 techs, 16 civs, 8 resources, 4 animals — 100% sourced, 22 `verify` flags.
 - **Key metrics:** headless GL = ANGLE Metal / Apple GPU (D15). Image 61.7 MB; .app 9 MB; .s9pk 47 MB.
@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   and WebKit (IP 192.168.64.5 — headless WebKit can't resolve .local); restart ok; logs clean; uninstall +
   reinstall ok. NOT verified: backup/restore (no backup target, KI-3). VM stopped.
 - **Open blockers:** none. Open issues: KI-1 icon (placeholder-quality SVG), KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M1.6 save/load + replay, then M1.7 headless runner + cross-engine determinism.
+- **Next up:** M1.7 headless runner + cross-engine determinism (Node vs Chromium vs WebKit).
 - **Movement (M1.5):** 200-unit crossing — 0.1 ms/tick, blocked 0.6% of moving ticks, stuck>5s 0%, 0 give-ups.
 - **Notes:** the detailed design is `docs/design/architecture-proposal.md` — its Q16 math is superseded by D1.
 
@@ -76,7 +76,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M1.5 Movement + collision.** Waypoint steering, circle collision with sidestep (±30°/±60°), repath after
       10 blocked ticks, give-up after 60 (stuck event), soft separation, group move offsets.
       _Accept:_ 200-unit crossing scenario: stuck < 1%, no overlaps > 50% radius at rest.
-- [ ] **M1.6 Save/load + replay.** Serialize/deserialize (typed-array sections + canonical JSON, gzip),
+- [x] **M1.6 Save/load + replay.** Serialize/deserialize (typed-array sections + canonical JSON, gzip),
       replay = settings + seed + command stream + hash checkpoints. _Accept:_ run→save→load→run hashes equal a
       continuous run; replay re-sim matches.
 - [ ] **M1.7 Headless runner + cross-engine determinism.** `tools/sim/cli.ts` scenarios + metrics; a browser

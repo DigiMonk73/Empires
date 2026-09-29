@@ -50,6 +50,16 @@ export class PathService {
     if (this.queue.length > this.stats.maxQueue) this.stats.maxQueue = this.queue.length;
   }
 
+  /** Pending requests in queue order (save/load). */
+  queueSnapshot(): PathRequest[] {
+    return this.queue.map((r) => ({ ...r }));
+  }
+
+  restoreQueue(list: readonly PathRequest[]): void {
+    this.queue = list.map((r) => ({ ...r }));
+    this.pendingSlots = new Set(this.queue.map((r) => r.slot));
+  }
+
   cancel(slot: number): void {
     if (!this.pendingSlots.delete(slot)) return;
     this.queue = this.queue.filter((r) => r.slot !== slot);

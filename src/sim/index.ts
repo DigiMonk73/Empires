@@ -3,6 +3,7 @@ import type { PlayerCommand } from './commands/types.ts';
 import { hashBreakdown } from './hash.ts';
 import { followerPathSystem, movementSystem, pathRequestSystem, separationSystem } from './systems/movement.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
+import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
 export type { Command, PlayerCommand } from './commands/types.ts';
 export type { SimConfig, SimEvent, MapSpec, ScenarioSpec, PlayerSetup } from './world.ts';
@@ -23,6 +24,17 @@ export class Sim {
 
   static create(config: SimConfig): Sim {
     return new Sim(config, new World(config));
+  }
+
+  /** Rebuild a simulation from `serialize()` output. */
+  static deserialize(bytes: Uint8Array): Sim {
+    const { world, config } = deserializeWorld(bytes);
+    return new Sim(config, world);
+  }
+
+  /** Full state snapshot (uncompressed; the platform layer gzips for storage). */
+  serialize(): Uint8Array {
+    return serializeWorld(this.world, this.config);
   }
 
   get tick(): number {

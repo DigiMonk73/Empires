@@ -71,6 +71,25 @@ export class ResourceStore {
     return i;
   }
 
+  static readonly FIELDS = ['kind', 'tx', 'ty', 'amount', 'state', 'variant'] as const;
+
+  /** Replace all nodes (save/load); chunk lists are rebuilt from positions. */
+  restore(count: number, read: (field: string, into: { set(a: ArrayLike<number>): void }) => void): void {
+    this.count = 0;
+    this.cap = 0;
+    this.kind = new Uint8Array(0);
+    this.tx = new Int16Array(0);
+    this.ty = new Int16Array(0);
+    this.amount = new Float64Array(0);
+    this.state = new Uint8Array(0);
+    this.variant = new Uint8Array(0);
+    this.grow(Math.max(count, 16));
+    for (const f of ResourceStore.FIELDS) read(f, this[f]);
+    this.count = count;
+    for (const c of this.chunks) c.length = 0;
+    for (let i = 0; i < count; i++) this.chunks[this.chunkIndex(this.tx[i]!, this.ty[i]!)]!.push(i);
+  }
+
   chunkIndex(tx: number, ty: number): number {
     return Math.floor(ty / CHUNK) * this.chunksW + Math.floor(tx / CHUNK);
   }

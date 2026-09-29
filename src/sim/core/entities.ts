@@ -146,6 +146,24 @@ export class EntityStore {
     return makeHandle(slot, this.gen[slot]!);
   }
 
+  /** Names of the per-slot typed arrays, in canonical order (save/load, hashing). */
+  static readonly FIELDS = [
+    'alive', 'gen', 'kind', 'type', 'owner', 'x', 'y', 'px', 'py', 'facing', 'hp', 'act', 'actStart', 'target',
+    'timer', 'build', 'stuck', 'lastDist',
+  ] as const;
+
+  /** Replace all state from a snapshot's parts. */
+  restore(cap: number, top: number, count: number, free: readonly number[], read: (field: string, into: { set(a: ArrayLike<number>): void }) => void): void {
+    this.cap = 0;
+    this.top = 0;
+    for (const f of EntityStore.FIELDS) (this as unknown as Record<string, ArrayLike<number>>)[f] = new (this[f].constructor as new (n: number) => Uint8Array)(0);
+    this.grow(Math.max(cap, 1));
+    this.top = top;
+    this.count = count;
+    this.free = [...free];
+    for (const f of EntityStore.FIELDS) read(f, this[f]);
+  }
+
   /** Free-list contents, for save/load (order matters for determinism). */
   freeList(): readonly number[] {
     return this.free;

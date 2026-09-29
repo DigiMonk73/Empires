@@ -15,6 +15,11 @@ export class Regions {
     this.stack = new Int32Array(map.w * map.h);
   }
 
+  /** Forget cached labels (after the map is replaced wholesale, e.g. on load). */
+  invalidate(): void {
+    this.cache.clear();
+  }
+
   labels(moveClass: number): Int32Array {
     let c = this.cache.get(moveClass);
     if (!c) {
