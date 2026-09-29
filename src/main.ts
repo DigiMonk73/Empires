@@ -1,4 +1,4 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import { EKind } from './sim/core/entities.ts';
 import { TYPES } from './sim/rules/registry.ts';
 import { GameSession } from './game/session.ts';
@@ -7,6 +7,8 @@ import { Camera } from './render/camera.ts';
 import { WorldRenderer } from './render/worldRenderer.ts';
 import { installDebugApi, type RenderStats, type UnitInfo } from './debug/api.ts';
 import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
+import { InputController } from './input/controller.ts';
+import { Selection } from './input/selection.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -37,6 +39,11 @@ async function boot(): Promise<void> {
     minZoom: 0.5,
     maxZoom: 1.5,
   });
+  const selection = new Selection();
+  const screenLayer = new Graphics();
+  app.stage.addChild(screenLayer);
+  new InputController(app.canvas, camera, session, wr, selection, screenLayer);
+
   const tc = findFirst(world, 1, 'townCenter');
   if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 2);
   else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
@@ -56,6 +63,8 @@ async function boot(): Promise<void> {
     const br = camera.screenToIso(app.canvas.clientWidth, app.canvas.clientHeight);
     wr.cull(tl.x, tl.y, br.x, br.y);
     wr.update(alpha);
+    selection.prune((h) => world.ents.valid(h));
+    wr.drawOverlays(selection.list, session.localPlayer, alpha);
     cpuMs = performance.now() - t0;
     frameMs = t.deltaMS;
     fps = t.FPS;
@@ -114,7 +123,7 @@ async function boot(): Promise<void> {
         }
         return out;
       },
-      selection: () => [],
+      selection: () => [...selection.list],
       player: (p) => ({ res: [...(world.players[p]?.res ?? [])] }),
     },
     issue: (player, cmd) => session.router.submit(player, cmd),

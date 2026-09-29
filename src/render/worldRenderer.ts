@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, type Renderer } from 'pixi.js';
+import { Container, Graphics, Point, Sprite, type Renderer } from 'pixi.js';
 import { PLAYER_COLORS } from '../data/setup.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { ResState } from '../sim/core/resources.ts';
@@ -43,6 +43,10 @@ export class WorldRenderer {
   private readonly resArtCache = new Map<number, SpriteArt>();
   private views: (EntityView | undefined)[] = [];
   terrain!: TerrainLayer;
+  private readonly selGfx = new Graphics();
+  private readonly hpGfx = new Graphics();
+  private readonly markerGfx = new Graphics();
+  private markers: { x: number; y: number; t0: number; color: number }[] = [];
   /** Visible terrain chunks after the last cull (≈ terrain draw calls). */
   terrainDrawCalls = 0;
   private resViews: (Sprite | undefined)[] = [];
@@ -52,6 +56,8 @@ export class WorldRenderer {
     this.world = world;
     this.objectLayer.sortableChildren = true;
     this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.overlayLayer);
+    this.decalLayer.addChild(this.selGfx, this.markerGfx);
+    this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
     this.buildResources();
   }
@@ -161,6 +167,99 @@ export class WorldRenderer {
         this.resViews[i] = undefined;
       }
     }
+  }
+
+  /** Ground marker for a move order (animates for half a second). */
+  addMarker(x: number, y: number, color = 0x7cff6a): void {
+    this.markers.push({ x, y, t0: performance.now(), color });
+  }
+
+  /**
+   * Selection ellipses (white = own, red = enemy, yellow = Gaia) under selected entities, HP bars above them,
+   * and move markers.
+   */
+  drawOverlays(selected: readonly number[], localPlayer: number, alpha: number): void {
+    const e = this.world.ents;
+    const g = this.selGfx.clear();
+    const hp = this.hpGfx.clear();
+    const p = { x: 0, y: 0 };
+    for (const h of selected) {
+      const s = e.slotOf(h);
+      if (s < 0) continue;
+      const t = TYPES[e.type[s]!]!;
+      const x = e.px[s]! + (e.x[s]! - e.px[s]!) * alpha;
+      const y = e.py[s]! + (e.y[s]! - e.py[s]!) * alpha;
+      worldToIso(x, y, 0, p);
+      const owner = e.owner[s]!;
+      const color = owner === localPlayer ? 0xffffff : owner === 0 ? 0xf0d040 : 0xff4040;
+      const isB = e.kind[s] === EKind.building;
+      const rx = isB ? t.size * 32 * 0.95 : Math.max(9, t.radius * 64 * 0.9);
+      const ry = rx / 2;
+      if (isB) g.poly([p.x - rx, p.y, p.x, p.y + ry, p.x + rx, p.y, p.x, p.y - ry]).stroke({ width: 1.5, color, alpha: 0.9 });
+      else g.ellipse(p.x, p.y, rx, ry).stroke({ width: 1.5, color, alpha: 0.95 });
+      // HP bar above the unit / building.
+      const frac = Math.max(0, Math.min(1, e.hp[s]! / t.hp));
+      const bw = isB ? 40 + t.size * 6 : 22;
+      const by = p.y - (isB ? 26 + t.size * 14 : 28 + t.radius * 22);
+      hp.rect(p.x - bw / 2 - 1, by - 1, bw + 2, 5).fill({ color: 0x000000, alpha: 0.6 });
+      hp.rect(p.x - bw / 2, by, bw * frac, 3).fill(frac > 0.5 ? 0x3fd24a : frac > 0.25 ? 0xe8c030 : 0xe0402a);
+    }
+    const m = this.markerGfx.clear();
+    const now = performance.now();
+    this.markers = this.markers.filter((k) => now - k.t0 < 550);
+    for (const k of this.markers) {
+      const f = (now - k.t0) / 550;
+      worldToIso(k.x, k.y, 0, p);
+      const r = 5 + f * 12;
+      m.ellipse(p.x, p.y, r, r / 2).stroke({ width: 2, color: k.color, alpha: 1 - f });
+      m.ellipse(p.x, p.y, 3, 1.5).fill({ color: k.color, alpha: 1 - f });
+    }
+  }
+
+  /**
+   * Topmost entity under a canvas point (CSS px), preferring units over buildings. Returns a handle or -1.
+   * Hit areas are the sprites' bounds, shrunk a little so clicks between units don't grab the wrong one.
+   */
+  pick(gx: number, gy: number): number {
+    const e = this.world.ents;
+    let best = -1;
+    let bestZ = -Infinity;
+    let bestUnit = false;
+    for (let s = 0; s < this.views.length; s++) {
+      const v = this.views[s];
+      if (!v || !v.root.visible) continue;
+      const b = v.base.getBounds();
+      const isUnit = e.kind[s] === EKind.unit;
+      const padX = isUnit ? b.width * 0.15 : b.width * 0.12;
+      if (gx < b.minX + padX || gx > b.maxX - padX || gy < b.minY || gy > b.maxY) continue;
+      const z = v.root.zIndex;
+      if ((isUnit && !bestUnit) || (isUnit === bestUnit && z > bestZ)) {
+        best = v.handle;
+        bestZ = z;
+        bestUnit = isUnit;
+      }
+    }
+    return best;
+  }
+
+  /** Canvas position (CSS px) of an entity's ground point. */
+  screenPos(slot: number): { x: number; y: number } | null {
+    const v = this.views[slot];
+    if (!v) return null;
+    const pt = v.root.getGlobalPosition(new Point());
+    return { x: pt.x, y: pt.y };
+  }
+
+  /** Handles of units owned by `owner` whose ground point lies in the canvas rectangle. */
+  unitsInRect(x0: number, y0: number, x1: number, y1: number, owner: number): number[] {
+    const e = this.world.ents;
+    const out: number[] = [];
+    for (let s = 0; s < this.views.length; s++) {
+      if (!this.views[s] || e.kind[s] !== EKind.unit || e.owner[s] !== owner) continue;
+      const p = this.screenPos(s);
+      if (p && p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1) out.push(this.views[s]!.handle);
+    }
+    return out;
   }
 
   /** Screen-space (world container) position of an entity's ground point, interpolated. */

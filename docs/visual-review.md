@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M2.3 · selection-box, selection-moved
+- White ellipses under selected own units, green HP bars above; drag box translucent white. Readable.
+- Fixed: HP bars sat ~10 px above villager heads — lowered.
+
 ## 2026-09-29 · M2.2 · demo-start, demo-lake-forest (chromium + webkit)
 - Terrain is now chunk meshes with half-tile color blending + shader noise: no visible grid; desert and water
   blend softly into grass; forest floor reads darker under the clumps.
