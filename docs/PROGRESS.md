@@ -3,12 +3,12 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M0 Rails — M0.1–M0.3 done.
-- **Last green commit:** M0.3 (verify passes in ~3 s: typecheck, purity, vitest, build, e2e ×2 browsers, screens).
-- **Verify:** `npm run verify` green; `--full` steps (docker/tauri/startos) skip until set up.
-- **Key metrics:** headless GL = ANGLE Metal (Chromium) / Apple GPU (WebKit) — hardware (D15).
+- **Milestone:** M0 Rails — M0.1–M0.5 done.
+- **Last green commit:** M0.5 (verify ~3 s; verify:full ~45 s incl. Docker both arches + Tauri hidden smoke).
+- **Verify:** `npm run verify` and `verify:full` green; startos step skips until M0.6.
+- **Key metrics:** headless GL = ANGLE Metal (Chromium) / Apple GPU (WebKit) — hardware (D15). Image 61.7 MB; .app 9 MB.
 - **Open blockers:** none
-- **Next up:** M0.4 Dockerfile, M0.5 Tauri shell, M0.6–M0.7 StartOS, M0.8 data tables.
+- **Next up:** M0.6–M0.7 StartOS workspace/package/VM, M0.8 data tables.
 - **Notes for next iteration:** Research lives in `docs/research/`; the detailed design is
   `docs/design/architecture-proposal.md` (treat D1 there as superseded by `docs/DECISIONS.md` D1: restricted
   doubles, not Q16).
@@ -29,12 +29,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       screenshot diff, writing `artifacts/verify/summary.{md,json}` + `artifacts/screens/CHANGED.md`;
       `tools/check-purity.ts` (oxc-parser AST); one sample unit test and one e2e test.
       _Accept:_ `npm run verify` green; a deliberately impure sim file makes it fail (then removed).
-- [ ] **M0.4 Server + Docker.** `server/serve.mjs` (static, `/healthz`, correct MIME types, relative-path safe,
+- [x] **M0.4 Server + Docker.** `server/serve.mjs` (static, `/healthz`, correct MIME types, relative-path safe,
       PORT/DATA_DIR env), multi-stage Dockerfile (`--platform=$BUILDPLATFORM` build stage → `node:22-alpine`
       runtime), `.dockerignore`.
       _Accept:_ `docker buildx build --platform linux/amd64,linux/arm64` succeeds; running the arm64 image
       serves the game and `curl /healthz` returns 200.
-- [ ] **M0.5 Tauri shell.** `src-tauri/` (identifier, productName Empires, frontendDist ../dist, ad-hoc signing
+- [x] **M0.5 Tauri shell.** `src-tauri/` (identifier, productName Empires, frontendDist ../dist, ad-hoc signing
       `-`), `--smoke-test` mode with hidden window + Accessory activation policy that loads the game, runs N
       frames and exits with a JSON report.
       _Accept:_ `npx tauri build --target aarch64-apple-darwin --bundles app` produces Empires.app; smoke test

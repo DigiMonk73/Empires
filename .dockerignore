@@ -1,0 +1,11 @@
+node_modules
+dist
+artifacts
+public/baked
+src-tauri
+test-results
+playwright-report
+.git
+.gitmodules
+*.log
+.DS_Store

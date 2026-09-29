@@ -2,6 +2,7 @@ import { Application, Container, Graphics } from 'pixi.js';
 import { Camera } from './render/camera.ts';
 import { worldToIso, HALF_W, HALF_H } from './render/iso.ts';
 import { installDebugApi, type RenderStats } from './debug/api.ts';
+import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
 
 const MAP = 32;
 
@@ -45,19 +46,20 @@ async function boot(): Promise<void> {
   const glInfo = readGlInfo(app);
   let readyResolve!: () => void;
   const readyPromise = new Promise<void>((r) => (readyResolve = r));
+  const renderStats = (): RenderStats => ({
+    backend: app.renderer.name,
+    glRenderer: glInfo.renderer,
+    glVendor: glInfo.vendor,
+    fps,
+    frameMs,
+    width: app.canvas.clientWidth,
+    height: app.canvas.clientHeight,
+    dpr: window.devicePixelRatio || 1,
+  });
   installDebugApi({
     version: '0.1.0',
     ready: () => readyPromise,
-    renderStats: (): RenderStats => ({
-      backend: app.renderer.name,
-      glRenderer: glInfo.renderer,
-      glVendor: glInfo.vendor,
-      fps,
-      frameMs,
-      width: app.canvas.clientWidth,
-      height: app.canvas.clientHeight,
-      dpr: window.devicePixelRatio || 1,
-    }),
+    renderStats,
     worldToScreen: (x, y, h = 0) => camera.worldToScreen(x, y, h),
     screenToWorld: (px, py) => camera.screenToWorld(px, py),
     camera: {
@@ -77,6 +79,9 @@ async function boot(): Promise<void> {
   });
   // Two frames so the first real render has happened before tests look.
   requestAnimationFrame(() => requestAnimationFrame(() => readyResolve()));
+  if (params.get('smoke') === '1' && isTauri()) {
+    await runTauriSmokeTest(app, () => ({ ...renderStats() }));
+  }
 }
 
 function drawGrid(): Graphics {
