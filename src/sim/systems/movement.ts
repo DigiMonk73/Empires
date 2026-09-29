@@ -62,8 +62,9 @@ export function followerPathSystem(w: World): void {
     const ls = e.slotOf(order.leader);
     if (ls === s) continue;
     const lo = ls >= 0 ? w.orders[ls]?.[0] : undefined;
-    if (ls >= 0 && lo?.leader === order.leader && w.pathing.pending(ls)) continue; // leader's path not ready yet
-    const lp = ls >= 0 && lo?.leader === order.leader ? w.paths[ls] : undefined;
+    const sameGroup = !!lo && lo.k === 'move' && lo.leader === order.leader;
+    if (sameGroup && w.pathing.pending(ls)) continue; // leader's path not ready yet
+    const lp = sameGroup ? w.paths[ls] : undefined;
     const grid = gridFor(w, TYPES[e.type[s]!]!.moveClass);
     if (lp && lp.length >= 4) {
       const via = lp.slice(0, lp.length - 2);
@@ -91,7 +92,10 @@ function finishOrder(w: World, s: number, arrived: boolean): void {
   }
 }
 
-/** Phase 3: move units along their waypoints, detect lack of progress, and handle crowded arrivals. */
+/**
+ * Phase 3: move units along their waypoints. For move orders, finishing the path completes the order; for other
+ * orders (gather, build, …) the path becomes empty (`[]` = arrived) and the order's own system takes over.
+ */
 export function movementSystem(w: World): void {
   const e = w.ents;
   for (let s = 0; s < e.top; s++) {
@@ -99,16 +103,16 @@ export function movementSystem(w: World): void {
     e.px[s] = e.x[s]!;
     e.py[s] = e.y[s]!;
     const order = w.orders[s]?.[0];
-    if (!order || order.k !== 'move') {
+    const path = w.paths[s];
+    if (!order) {
       if (e.act[s] === Act.move) {
         e.act[s] = Act.idle;
         e.actStart[s] = w.tick;
       }
       continue;
     }
-    const path = w.paths[s];
-    if (path === undefined) continue; // waiting for a path
-    if (!path.length) {
+    if (path === undefined || (!path.length && order.k !== 'move')) continue; // waiting for a path, or arrived
+    if (order.k === 'move' && !path.length) {
       finishOrder(w, s, true); // no route at all (already as close as possible)
       continue;
     }
@@ -138,8 +142,12 @@ export function movementSystem(w: World): void {
     }
     w.moveStats.movingTicks++;
     if (!path.length) {
-      finishOrder(w, s, true);
-      continue;
+      if (order.k === 'move') finishOrder(w, s, true);
+      else {
+        e.act[s] = Act.idle;
+        e.actStart[s] = w.tick;
+        e.stuck[s] = 0;
+      }
     }
   }
 }
@@ -162,8 +170,11 @@ export function separationSystem(w: World): void {
     const xs = e.x[s]!;
     const ys = e.y[s]!;
     const movingS = w.paths[s] !== undefined && w.paths[s]!.length > 0;
+    const gathererS = w.orders[s]?.[0]?.k === 'gather';
     w.grid.forEachNear(xs, ys, rs + 0.6, (j) => {
       if (j <= s) return;
+      // Ghosting (D9): same-player gatherers pass through each other around resources and drop sites.
+      if (gathererS && e.owner[j] === e.owner[s] && w.orders[j]?.[0]?.k === 'gather') return;
       const rj = TYPES[e.type[j]!]!.radius;
       let dx = e.x[j]! - xs;
       let dy = e.y[j]! - ys;
@@ -274,14 +285,21 @@ function stuckCheck(w: World, s: number): void {
   } else if (e.stuck[s]! > 0) e.stuck[s] = e.stuck[s]! - 1;
   const st = e.stuck[s]!;
   const finalLeg = path.length === 2;
+  const isMove = w.orders[s]?.[0]?.k === 'move';
   if (finalLeg && d < CROWD_ARRIVE_DIST && st >= CROWD_ARRIVE_TICKS) {
-    finishOrder(w, s, true); // destination is crowded: close enough
+    // Destination is crowded: close enough.
+    if (isMove) finishOrder(w, s, true);
+    else w.paths[s] = [];
   } else if (st === STUCK_REPATH) {
     w.paths[s] = undefined; // ask for a fresh path next tick
     w.moveStats.repaths++;
   } else if (st >= STUCK_GIVE_UP) {
     w.moveStats.gaveUp++;
-    finishOrder(w, s, false);
+    if (isMove) finishOrder(w, s, false);
+    else {
+      w.paths[s] = [];
+      e.stuck[s] = 0;
+    }
   }
 }
 

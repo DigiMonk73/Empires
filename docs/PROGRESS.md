@@ -129,7 +129,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 ## M4 — Economy
 - [x] **M4.1 Player stats + population.** Per-player compiled unit/building stats (base values now; tech/civ
       effects plug in at M7), pop and pop cap (houses/TC, cap 50 default), age = 1.
-- [ ] **M4.2 Gather cycle.** `gather` order on resource nodes: walk adjacent → work at the job's rate until carry
+- [x] **M4.2 Gather cycle.** `gather` order on resource nodes: walk adjacent → work at the job's rate until carry
       cap → nearest reachable accepting drop site (TC all; Granary forage+farm; Storage Pit wood/gold/stone/meat/
       fish) → deposit → return; retarget the nearest same-kind node when depleted; switching resource discards the
       load; trees/mines vanish when empty (passability + regions update). Gatherer ghosting near nodes/drop sites.

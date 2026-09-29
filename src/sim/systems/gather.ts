@@ -1,0 +1,334 @@
+import type { Job } from '../../data/types.ts';
+import { Act, EKind } from '../core/entities.ts';
+import { NO_ENTITY } from '../core/handles.ts';
+import { ResState } from '../core/resources.ts';
+import { Occ } from '../map/tilemap.ts';
+import { dir16 } from '../math/trig.ts';
+import type { Goal } from '../path/goals.ts';
+import { RESOURCE_KINDS, TYPES } from '../rules/registry.ts';
+import type { Order, World } from '../world.ts';
+
+/**
+ * The villager gather cycle (econ:1.2): walk beside a resource node, work at the job's rate until the load is
+ * full, carry it to the nearest reachable drop site that accepts it (TC: everything; Granary: forage and farm
+ * food; Storage Pit: wood, gold, stone, meat, fish), deposit, and return. Depleted nodes vanish and the villager
+ * moves on to the nearest node of the same kind.
+ */
+export const JOBS: readonly Job[] = ['forage', 'farm', 'hunt', 'fish', 'wood', 'gold', 'stone', 'build', 'repair'];
+const RES_INDEX: Record<Job, number> = { forage: 0, farm: 0, hunt: 0, fish: 0, wood: 1, gold: 2, stone: 3, build: -1, repair: -1 };
+const DROP_KEY: Record<Job, string> = { forage: 'food', farm: 'food', hunt: 'meat', fish: 'fish', wood: 'wood', gold: 'gold', stone: 'stone', build: '', repair: '' };
+
+/** Max distance (tiles) from a villager to a node's or building's footprint to work or deposit. */
+export const REACH = 0.9;
+/** How far (tiles) a villager looks for another node of the same kind when one runs out. */
+const RETARGET_RADIUS = 10;
+const RETRY_TICKS = 20;
+
+type GatherOrder = Extract<Order, { k: 'gather' }>;
+
+export function isVillager(w: World, slot: number): boolean {
+  return TYPES[w.ents.type[slot]!]!.unit?.cls === 'villager';
+}
+
+/** Euclidean distance from a point to a [x0,x1]×[y0,y1] rectangle (0 inside). */
+function rectDist(px: number, py: number, x0: number, y0: number, x1: number, y1: number): number {
+  const dx = px < x0 ? x0 - px : px > x1 ? px - x1 : 0;
+  const dy = py < y0 ? y0 - py : py > y1 ? py - y1 : 0;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function nodeDist(w: World, i: number, x: number, y: number): number {
+  const size = RESOURCE_KINDS[w.res.kind[i]!]!.size;
+  return rectDist(x, y, w.res.tx[i]!, w.res.ty[i]!, w.res.tx[i]! + size, w.res.ty[i]! + size);
+}
+
+function buildingRect(w: World, slot: number): [number, number, number, number] {
+  const half = TYPES[w.ents.type[slot]!]!.size / 2;
+  return [w.ents.x[slot]! - half, w.ents.y[slot]! - half, w.ents.x[slot]! + half, w.ents.y[slot]! + half];
+}
+
+function nodeGoal(w: World, i: number): Goal {
+  const size = RESOURCE_KINDS[w.res.kind[i]!]!.size;
+  return { k: 'rect', x0: w.res.tx[i]!, y0: w.res.ty[i]!, x1: w.res.tx[i]! + size - 1, y1: w.res.ty[i]! + size - 1, range: 1 };
+}
+
+function buildingGoal(w: World, slot: number): Goal {
+  const size = TYPES[w.ents.type[slot]!]!.size;
+  const x0 = Math.round(w.ents.x[slot]! - size / 2);
+  const y0 = Math.round(w.ents.y[slot]! - size / 2);
+  return { k: 'rect', x0, y0, x1: x0 + size - 1, y1: y0 + size - 1, range: 1 };
+}
+
+/** Is any tile adjacent to the rect in `region` (so a unit in that region can reach it)? */
+function rectReachable(w: World, labels: Int32Array, region: number, x0: number, y0: number, x1: number, y1: number): boolean {
+  const W = w.map.w;
+  for (let y = y0 - 1; y <= y1 + 1; y++) {
+    for (let x = x0 - 1; x <= x1 + 1; x++) {
+      if (x >= x0 && x <= x1 && y >= y0 && y <= y1) continue;
+      if (x < 0 || y < 0 || x >= W || y >= w.map.h) continue;
+      if (labels[y * W + x] === region) return true;
+    }
+  }
+  return false;
+}
+
+function unitRegion(w: World, s: number): { labels: Int32Array; region: number } {
+  const labels = w.pathing.regions.labels(TYPES[w.ents.type[s]!]!.moveClass);
+  return { labels, region: labels[Math.floor(w.ents.y[s]!) * w.map.w + Math.floor(w.ents.x[s]!)] ?? 0 };
+}
+
+/** Nearest reachable completed drop site owned by the villager's player that accepts `job`'s resource. */
+export function findDropSite(w: World, s: number, job: Job): number {
+  const e = w.ents;
+  const key = DROP_KEY[job];
+  const { labels, region } = unitRegion(w, s);
+  let best = NO_ENTITY;
+  let bestD = Infinity;
+  for (let b = 0; b < e.top; b++) {
+    if (!e.alive[b] || e.kind[b] !== EKind.building || e.owner[b] !== e.owner[s] || e.build[b]! < 1) continue;
+    const def = TYPES[e.type[b]!]!.building!;
+    if (!def.dropoff?.includes(key as never)) continue;
+    const dx = e.x[b]! - e.x[s]!;
+    const dy = e.y[b]! - e.y[s]!;
+    const d = dx * dx + dy * dy;
+    if (d >= bestD) continue;
+    const [x0, y0, x1, y1] = buildingRect(w, b);
+    if (region && !rectReachable(w, labels, region, Math.round(x0), Math.round(y0), Math.round(x1) - 1, Math.round(y1) - 1)) continue;
+    bestD = d;
+    best = e.handleOf(b);
+  }
+  return best;
+}
+
+/** Nearest standing, reachable node gathered with the same job within RETARGET_RADIUS of (x, y). */
+export function findNearbyNode(w: World, s: number, job: Job, x: number, y: number): number {
+  const r = w.res;
+  const { labels, region } = unitRegion(w, s);
+  let best = -1;
+  let bestD = Infinity;
+  const cx0 = Math.max(0, Math.floor((x - RETARGET_RADIUS) / 16));
+  const cx1 = Math.min(r.chunksAcross - 1, Math.floor((x + RETARGET_RADIUS) / 16));
+  const cy0 = Math.max(0, Math.floor((y - RETARGET_RADIUS) / 16));
+  const cy1 = Math.floor((y + RETARGET_RADIUS) / 16);
+  for (let cy = cy0; cy <= cy1; cy++) {
+    for (let cx = cx0; cx <= cx1; cx++) {
+      const list = r.chunks[cy * r.chunksAcross + cx];
+      if (!list) continue;
+      for (const i of list) {
+        if (r.state[i] !== ResState.standing || r.amount[i]! <= 0) continue;
+        const def = RESOURCE_KINDS[r.kind[i]!]!;
+        if (def.job !== job || def.boatsOnly) continue;
+        const dx = r.tx[i]! + def.size / 2 - x;
+        const dy = r.ty[i]! + def.size / 2 - y;
+        const d = dx * dx + dy * dy;
+        if (d > RETARGET_RADIUS * RETARGET_RADIUS || d >= bestD) continue;
+        if (region && !rectReachable(w, labels, region, r.tx[i]!, r.ty[i]!, r.tx[i]! + def.size - 1, r.ty[i]! + def.size - 1)) continue;
+        bestD = d;
+        best = i;
+      }
+    }
+  }
+  return best;
+}
+
+/** Remove an exhausted node from the map (tiles become passable again). */
+export function depleteNode(w: World, i: number): void {
+  const r = w.res;
+  if (r.state[i] === ResState.gone) return;
+  r.state[i] = ResState.gone;
+  r.amount[i] = 0;
+  const def = RESOURCE_KINDS[r.kind[i]!]!;
+  for (let dy = 0; dy < def.size; dy++) {
+    for (let dx = 0; dx < def.size; dx++) {
+      const tx = r.tx[i]! + dx;
+      const ty = r.ty[i]! + dy;
+      if (!w.map.inBounds(tx, ty)) continue;
+      w.map.resAt[w.map.idx(tx, ty)] = 0;
+      w.map.setOcc(tx, ty, Occ.resource, false);
+    }
+  }
+  w.events.push({ t: 'depleted', res: i });
+}
+
+/** Start a gather order (used by commands and rally points). Returns false for non-villagers or bad nodes. */
+export function startGather(w: World, s: number, node: number, queue: boolean): boolean {
+  const r = w.res;
+  if (!isVillager(w, s) || node < 0 || node >= r.count || r.state[node] !== ResState.standing) return false;
+  const def = RESOURCE_KINDS[r.kind[node]!]!;
+  if (def.boatsOnly) return false;
+  const order: GatherOrder = { k: 'gather', res: node, phase: 0, drop: NO_ENTITY, retry: 0 };
+  const q = w.orders[s];
+  if (queue && q && q.length) {
+    q.push(order);
+    return true;
+  }
+  // Switching to a different resource drops the current load (AoE1 rule, econ:1.2).
+  const job = JOBS.indexOf(def.job) + 1;
+  if (w.ents.carryJob[s] && w.ents.carryJob[s] !== job) {
+    w.ents.carryJob[s] = 0;
+    w.ents.carryAmt[s] = 0;
+  }
+  w.orders[s] = [order];
+  w.paths[s] = undefined;
+  w.pathing.cancel(s);
+  w.ents.stuck[s] = 0;
+  return true;
+}
+
+function finish(w: World, s: number): void {
+  const q = w.orders[s]!;
+  q.shift();
+  w.paths[s] = undefined;
+  if (!q.length) w.orders[s] = undefined;
+  w.ents.act[s] = Act.idle;
+  w.ents.actStart[s] = w.tick;
+}
+
+function deposit(w: World, s: number): void {
+  const e = w.ents;
+  const job = JOBS[e.carryJob[s]! - 1];
+  if (!job || e.carryAmt[s]! <= 0) return;
+  const p = w.players[e.owner[s]!]!;
+  const ri = RES_INDEX[job];
+  const amount = e.carryAmt[s]! * (ri === 2 ? p.stats.goldYield : 1);
+  p.res[ri] = p.res[ri]! + amount;
+  w.events.push({ t: 'deposit', player: p.id, res: ri, amount });
+  e.carryAmt[s] = 0;
+  e.carryJob[s] = 0;
+}
+
+export function gatherSystem(w: World): void {
+  const e = w.ents;
+  const r = w.res;
+  for (let s = 0; s < e.top; s++) {
+    if (!e.alive[s] || e.kind[s] !== EKind.unit) continue;
+    const o = w.orders[s]?.[0];
+    if (!o || o.k !== 'gather') continue;
+    const stats = w.players[e.owner[s]!]!.stats;
+    let def = RESOURCE_KINDS[r.kind[o.res]!]!;
+    const job = def.job;
+    const cap = stats.carry[job];
+
+    // Node gone: find another of the same kind, or deliver what we carry and stop.
+    if (r.state[o.res] !== ResState.standing && o.phase !== 2) {
+      const next = findNearbyNode(w, s, job, r.tx[o.res]! + 0.5, r.ty[o.res]! + 0.5);
+      if (next >= 0) {
+        o.res = next;
+        o.phase = 0;
+        w.paths[s] = undefined;
+        def = RESOURCE_KINDS[r.kind[next]!]!;
+      } else if (e.carryAmt[s]! > 0) {
+        o.phase = 2;
+        o.drop = NO_ENTITY;
+        w.paths[s] = undefined;
+      } else {
+        finish(w, s);
+        continue;
+      }
+    }
+
+    if (o.phase === 0) {
+      if (e.carryAmt[s]! >= cap - 1e-9) {
+        o.phase = 2;
+        o.drop = NO_ENTITY;
+        w.paths[s] = undefined;
+        continue;
+      }
+      if (nodeDist(w, o.res, e.x[s]!, e.y[s]!) <= REACH) {
+        o.phase = 1;
+        o.retry = 0;
+        w.paths[s] = [];
+        w.pathing.cancel(s);
+        e.act[s] = Act.gather;
+        e.actStart[s] = w.tick;
+      } else if (w.paths[s] === undefined && !w.pathing.pending(s)) {
+        w.pathing.request(s, nodeGoal(w, o.res));
+      } else if (w.paths[s] !== undefined && w.paths[s]!.length === 0) {
+        // Arrived but not in reach (blocked/unreachable): try another node, then give up.
+        if (++o.retry > 3) {
+          const next = findNearbyNode(w, s, job, e.x[s]!, e.y[s]!);
+          if (next >= 0 && next !== o.res) {
+            o.res = next;
+            o.retry = 0;
+          } else {
+            finish(w, s);
+            continue;
+          }
+        }
+        w.paths[s] = undefined;
+      }
+      continue;
+    }
+
+    if (o.phase === 1) {
+      if (nodeDist(w, o.res, e.x[s]!, e.y[s]!) > REACH + 0.3) {
+        o.phase = 0; // pushed away
+        w.paths[s] = undefined;
+        continue;
+      }
+      const cx = r.tx[o.res]! + def.size / 2 - e.x[s]!;
+      const cy = r.ty[o.res]! + def.size / 2 - e.y[s]!;
+      const f = dir16(cx, cy);
+      if (f >= 0) e.facing[s] = f;
+      if (e.act[s] !== Act.gather) {
+        e.act[s] = Act.gather;
+        e.actStart[s] = w.tick;
+      }
+      const jobIdx = JOBS.indexOf(job) + 1;
+      if (e.carryJob[s] !== jobIdx) {
+        e.carryJob[s] = jobIdx;
+        e.carryAmt[s] = 0;
+      }
+      const take = Math.min(stats.work[job], r.amount[o.res]!, cap - e.carryAmt[s]!);
+      r.amount[o.res] = r.amount[o.res]! - take;
+      e.carryAmt[s] = e.carryAmt[s]! + take;
+      if (r.amount[o.res]! <= 1e-9) depleteNode(w, o.res);
+      if (e.carryAmt[s]! >= cap - 1e-9 || r.state[o.res] !== ResState.standing) {
+        o.phase = 2;
+        o.drop = NO_ENTITY;
+        w.paths[s] = undefined;
+        e.act[s] = Act.idle;
+        e.actStart[s] = w.tick;
+      }
+      continue;
+    }
+
+    // Phase 2: carry the load to a drop site.
+    let ds = e.slotOf(o.drop);
+    if (ds < 0 || e.build[ds]! < 1) {
+      if (o.retry > 0) {
+        o.retry--;
+        continue;
+      }
+      const carriedJob = JOBS[e.carryJob[s]! - 1] ?? job;
+      o.drop = findDropSite(w, s, carriedJob);
+      ds = e.slotOf(o.drop);
+      if (ds < 0) {
+        o.retry = RETRY_TICKS; // nowhere to drop: wait and look again
+        e.act[s] = Act.idle;
+        continue;
+      }
+      w.paths[s] = undefined;
+    }
+    const [x0, y0, x1, y1] = buildingRect(w, ds);
+    if (rectDist(e.x[s]!, e.y[s]!, x0, y0, x1, y1) <= REACH) {
+      deposit(w, s);
+      w.paths[s] = undefined;
+      w.pathing.cancel(s);
+      if (r.state[o.res] === ResState.standing) o.phase = 0;
+      else {
+        const next = findNearbyNode(w, s, job, r.tx[o.res]! + 0.5, r.ty[o.res]! + 0.5);
+        if (next < 0) {
+          finish(w, s);
+          continue;
+        }
+        o.res = next;
+        o.phase = 0;
+      }
+    } else if (w.paths[s] === undefined && !w.pathing.pending(s)) {
+      w.pathing.request(s, buildingGoal(w, ds));
+    } else if (w.paths[s] !== undefined && w.paths[s]!.length === 0) {
+      w.paths[s] = undefined; // arrived short of the building: path again
+    }
+  }
+}

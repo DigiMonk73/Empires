@@ -10,7 +10,7 @@ export function hashBreakdown(w: World): Record<string, number> {
     .array(e.alive, n).array(e.gen, n).array(e.kind, n).array(e.type, n).array(e.owner, n)
     .array(e.x, n).array(e.y, n).array(e.facing, n).array(e.hp, n).array(e.act, n).array(e.actStart, n)
     .array(e.target, n).array(e.timer, n).array(e.build, n).array(e.stuck, n).array(e.lastDist, n)
-    .array(e.losTx, n).array(e.losTy, n).array(e.losR, n)
+    .array(e.losTx, n).array(e.losTy, n).array(e.losR, n).array(e.carryJob, n).array(e.carryAmt, n)
     .array(e.freeList(), e.freeList().length, false)
     .digest();
   const r = w.res;
@@ -31,7 +31,7 @@ export function hashBreakdown(w: World): Record<string, number> {
     const p = w.paths[s];
     if (!q && !p) continue;
     oh.u32(s);
-    if (q) for (const o of q) oh.str(o.k).f64(o.x).f64(o.y).f64(o.leader ?? -1);
+    if (q) for (const o of q) oh.str(JSON.stringify(o));
     oh.u32(0xffff);
     if (p) oh.array(p, p.length, true);
   }

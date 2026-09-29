@@ -5,7 +5,9 @@
  */
 export type Command =
   | { t: 'move'; ids: number[]; x: number; y: number; queue?: boolean }
-  | { t: 'stop'; ids: number[] };
+  | { t: 'stop'; ids: number[] }
+  /** Villagers gather resource node `res` (trees, mines, bushes, fish, carcasses). */
+  | { t: 'gather'; ids: number[]; res: number; queue?: boolean };
 
 export interface PlayerCommand {
   /** Issuing player slot (1..8); stamped by the router, never trusted from the payload. */

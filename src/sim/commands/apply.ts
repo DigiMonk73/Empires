@@ -2,6 +2,8 @@ import { EKind } from '../core/entities.ts';
 import { TYPES } from '../rules/registry.ts';
 import type { World } from '../world.ts';
 import { quantize, type PlayerCommand } from './types.ts';
+import { isVillager, startGather } from '../systems/gather.ts';
+import { RESOURCE_KINDS } from '../rules/registry.ts';
 
 /** Slots of the command's ids that are live units owned by the issuing player (others are ignored). */
 function ownedUnitSlots(w: World, player: number, ids: readonly number[]): number[] {
@@ -100,6 +102,23 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
             clearMovement(w, slot);
           }
         });
+        break;
+      }
+      case 'gather': {
+        const r = w.res;
+        if (!Number.isInteger(cmd.res) || cmd.res < 0 || cmd.res >= r.count) {
+          w.events.push({ t: 'rejected', player, reason: 'bad resource' });
+          break;
+        }
+        const size = RESOURCE_KINDS[r.kind[cmd.res]!]!.size;
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
+          if (isVillager(w, slot)) startGather(w, slot, cmd.res, !!cmd.queue);
+          else {
+            // Soldiers just walk to the node.
+            w.orders[slot] = [{ k: 'move', x: quantize(r.tx[cmd.res]! + size / 2), y: quantize(r.ty[cmd.res]! + size / 2) }];
+            clearMovement(w, slot);
+          }
+        }
         break;
       }
       case 'stop':

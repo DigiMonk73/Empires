@@ -7,6 +7,7 @@ import { POS_QUANTUM } from './types.ts';
  */
 const CMD_MOVE = 1;
 const CMD_STOP = 2;
+const CMD_GATHER = 3;
 
 class Writer {
   bytes: number[] = [];
@@ -78,6 +79,12 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(CMD_STOP);
       w.ids(c.ids);
       return;
+    case 'gather':
+      w.uv(CMD_GATHER);
+      w.ids(c.ids);
+      w.uv(c.res);
+      w.uv(c.queue ? 1 : 0);
+      return;
   }
 }
 
@@ -93,6 +100,12 @@ function readCommand(r: Reader): Command {
     }
     case CMD_STOP:
       return { t: 'stop', ids: r.ids() };
+    case CMD_GATHER: {
+      const ids = r.ids();
+      const res = r.uv();
+      const queue = r.uv() === 1;
+      return queue ? { t: 'gather', ids, res, queue } : { t: 'gather', ids, res };
+    }
     default:
       throw new Error(`unknown command type ${t}`);
   }

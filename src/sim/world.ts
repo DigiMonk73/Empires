@@ -72,10 +72,18 @@ export interface PlayerState {
  * A queued unit order. More kinds arrive with gathering, building and combat. A group move names a `leader`
  * (handle): followers reuse the leader's path instead of searching their own.
  */
-export type Order = { k: 'move'; x: number; y: number; leader?: number };
+export type Order =
+  | { k: 'move'; x: number; y: number; leader?: number }
+  /**
+   * Gather from resource node `res` (phase 0 = heading to the node, 1 = working, 2 = heading to drop site
+   * `drop`). `retry` throttles searches when no node/drop site is available.
+   */
+  | { k: 'gather'; res: number; phase: 0 | 1 | 2; drop: number; retry: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }
+  | { t: 'deposit'; player: number; res: number; amount: number }
+  | { t: 'depleted'; res: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number };
 

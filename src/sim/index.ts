@@ -4,6 +4,7 @@ import { hashBreakdown } from './hash.ts';
 import { followerPathSystem, movementSystem, pathRequestSystem, separationSystem } from './systems/movement.ts';
 import { fogSystem } from './systems/fog.ts';
 import { populationSystem } from './systems/population.ts';
+import { gatherSystem } from './systems/gather.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
@@ -47,6 +48,7 @@ export class Sim {
   step(cmds: readonly PlayerCommand[] = []): void {
     const w = this.world;
     applyCommands(w, cmds);
+    gatherSystem(w);
     pathRequestSystem(w);
     w.pathing.process();
     followerPathSystem(w);
