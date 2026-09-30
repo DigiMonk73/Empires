@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1 fishing boats done; next M8.2 warships. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
+- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1 fishing boats, M8.2 warships done; next M8.3 repair. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -381,22 +381,31 @@ Ships already train at the Dock and path on water (their own move class and regi
       deliver only to a Dock; villagers deliver shore fish to the TC or a Storage Pit, not the Dock (1.0c).
       Right-click fish with a boat, and Dock rally points on fish. Deep fish and whales get placeholder sprites
       (they had none, so nothing could click them). `?scenario=harbor`. Tests: boats.test.ts (5) + water e2e.
-- [ ] **M8.2 Warships.** Scout Ship → War Galley → Trireme (pierce missiles), Catapult Trireme → Juggernaught
-      (blast, +vs buildings, fells trees), Fire Galley (range 1); ships fight units on shore and each other,
-      Engineering/Alchemy apply. _Accept:_ duel-matrix tests vs the research numbers; e2e naval skirmish.
-- [ ] **M8.3 Transports.** Light (5) / Heavy (10) Transport: land units board by right-click, the transport
+- [x] **M8.2 Warships.** The combat core already handled ships; M8.2 checks it against the research and fills the
+      gaps. naval.test.ts: damage anchors (galley line, Fire Galley's +5 from ballistae and +10 from stone
+      throwers/Catapult Triremes, catapult ships +140 vs buildings and +50 vs towers), a War Galley sinks an idle
+      Light Transport in 19 arrows 1.7 s apart, land melee sent at a ship gives up while the ship shoots back,
+      Juggernaughts fell shore trees (Catapult Triremes don't), priests can't heal ships. Dock hotkeys F/R/T/G/E
+      (the research lists the letters, not which is which — ours). e2e: Dock hotkey ×2 in Bronze; sea battle by
+      right-click (`?scenario=harbor&battle=1`).
+- [ ] **M8.3 Repair.** Villagers repair damaged buildings, ships and siege (never implemented — a land gap since
+      M5): right-click an own damaged building/ship → R; HP back at the repairer rate 0.4 (econ:1.2) scaled by
+      the target's build/train time, extra repairers stacking like builders; costs a share of the target's
+      price (rate and share unverified → `verify:true`, DECISIONS entry). _Accept:_ unit tests (rate, cost,
+      stacking, ships from the shore), e2e repair a damaged house.
+- [ ] **M8.4 Transports.** Light (5) / Heavy (10) Transport: land units board by right-click, the transport
       unloads by right-click on a shore; units inside are safe, lost with a sunk transport. _Accept:_ unit tests
       (capacity, unload onto reachable land, lost on sinking), e2e ferry across a strait.
-- [ ] **M8.4 Trade.** Trade Boat → Merchant Ship carry 20 of a chosen resource to another player's Dock and
+- [ ] **M8.5 Trade.** Trade Boat → Merchant Ship carry 20 of a chosen resource to another player's Dock and
       return gold; payout grows with distance (formula unverified → `verify:true`, DECISIONS entry). _Accept:_ unit
       test of a round trip; e2e.
-- [ ] **M8.5 Ship art.** Code-built fishing boat/ship, trade boat/merchant, transports, galley line, catapult
+- [ ] **M8.6 Ship art.** Code-built fishing boat/ship, trade boat/merchant, transports, galley line, catapult
       trireme/juggernaught, fire galley (16 facings considered — D7); deep fish and whale sprites; wakes.
       _Accept:_ contact sheets ≥ 3/5; `?scenario=harbor` screenshots.
-- [ ] **M8.6 Water maps.** Coastal, Mediterranean, Narrows, Small Islands (one island each), Large Islands
+- [ ] **M8.7 Water maps.** Coastal, Mediterranean, Narrows, Small Islands (one island each), Large Islands
       (teams share) with fair starts (shore and deep fish per player, a dock site) and setup-screen entries.
       _Accept:_ mapgen fairness tests per type; screenshots.
-- [ ] **M8.7 AI at sea.** Dock + fishing boats where fish are near; warships to guard them and raid; transports
+- [ ] **M8.8 AI at sea.** Dock + fishing boats where fish are near; warships to guard them and raid; transports
       to reach enemies on another island. _Accept:_ AI suite on water maps: no crashes, ≥ 90% of island games
       decided (exit gate).
 - _Exit:_ ≥ 90% AI island games decided; naval screenshots reviewed.

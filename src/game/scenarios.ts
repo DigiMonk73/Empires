@@ -146,9 +146,9 @@ function village(): SimConfig {
 
 /**
  * A harbor (M8): a coast with a Dock, fishing boats, shore fish along the beach and deep fish out at sea — for the
- * water tasks' tests and screenshots.
+ * water tasks' tests and screenshots. `battle=1` adds a War Galley and an enemy Scout Ship out at sea.
  */
-function harbor(): SimConfig {
+function harbor(p: URLSearchParams): SimConfig {
   const W = 32;
   const rows: string[] = [];
   for (let y = 0; y < W; y++) {
@@ -170,6 +170,12 @@ function harbor(): SimConfig {
       units: [
         { type: 'fishingBoat', owner: 1, x: 18.5, y: 12.5 },
         { type: 'villager', owner: 1, x: 12.5, y: 7.5 },
+        ...(p.get('battle') === '1'
+          ? [
+              { type: 'warGalley', owner: 1, x: 19.5, y: 9.5 },
+              { type: 'scoutShip', owner: 2, x: 27.5, y: 9.5 },
+            ]
+          : []),
       ],
       resources: [
         { kind: 'deepFish', tx: 20, ty: 8 },

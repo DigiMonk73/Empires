@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.2 · harbor-battle (new)
+- A selected War Galley (145/160) trades arrows with a red Scout Ship; the arrow in flight and the target ring
+  read. Must-fix (M8.6): every ship is the same placeholder sailboat on a dark disc — a galley can't be told
+  from a fishing boat. Others: the usual ≤ 0.16% render noise and the menu drift.
+
 ## 2026-09-30 · M8.1 · harbor-fishing (new); menu-main, menu-skirmish
 - Harbor: the Dock on the shore, two placeholder sailboats, shore-fish ripples along the beach and the new
   deep-fish schools (wider rings, more backs) read clearly; the selected boat's panel shows "Carrying 10 Fish".

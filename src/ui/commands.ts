@@ -60,6 +60,8 @@ const TRAIN_KEYS: Record<string, string> = {
   bowman: 'T', improvedBowman: 'A', chariotArcher: 'R', horseArcher: 'C', elephantArcher: 'E',
   scout: 'T', chariot: 'R', cavalry: 'C', camel: 'L', warElephant: 'E',
   hoplite: 'T', priest: 'T', stoneThrower: 'C', ballista: 'B',
+  // Dock: the research lists F / R / T / E / G without saying which is which — this mapping is ours (unverified).
+  fishingBoat: 'F', tradeBoat: 'R', lightTransport: 'T', scoutShip: 'G', catapultTrireme: 'E',
 };
 
 export function computeCommands(w: World, player: number, selected: readonly number[], page: 'main' | 'build'): CommandButton[] {
