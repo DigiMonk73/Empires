@@ -31,13 +31,17 @@ test('save and load from the game menu: the same game, tick for tick; the main m
   expect(await page.evaluate(() => window.__empires!.query.hash())).toBe(later);
   await frames(page);
 
-  // Quit to the main menu: the save is listed there; delete it.
+  // Quit to the main menu (which autosaves, M12.5): the save and the autosave are listed there; delete both.
   await page.getByTestId('menu-btn').click();
   await page.getByTestId('menu-quit').click();
   await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('menu-loadgame').click();
+  await expect(page.getByTestId('save-row')).toHaveCount(2);
+  const mine = page.getByTestId('save-row').filter({ hasText: 'Before the storm' });
+  await expect(mine).toContainText('Stone Age');
+  await expect(page.getByTestId('save-row').filter({ hasText: 'Autosave' })).toContainText('04:00');
+  await mine.getByRole('button', { name: '✕' }).click();
   await expect(page.getByTestId('save-row')).toHaveCount(1);
-  await expect(page.getByTestId('save-row')).toContainText('Stone Age');
   await page.getByTestId('save-row').getByRole('button', { name: '✕' }).click();
   await expect(page.getByTestId('save-row')).toHaveCount(0);
   await expect(page.getByText('No saved games yet.')).toBeVisible();

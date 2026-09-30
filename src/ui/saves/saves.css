@@ -113,3 +113,26 @@
   opacity: 0.45;
   cursor: default;
 }
+
+/* Where saves live (M12.5): this device or the server; the rolling autosave's badge. */
+.saves-where {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: -6px 0 10px;
+}
+.saves-where button.on {
+  background: #8a6a2e;
+  border-color: #e0b45a;
+}
+.saves-auto {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #1b140c;
+  background: #cdb487;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 7px;
+  vertical-align: 1px;
+}

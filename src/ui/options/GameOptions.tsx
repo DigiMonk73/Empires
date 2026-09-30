@@ -38,6 +38,10 @@ export function ControlOptions() {
         </span>
       </div>
       <div class="opt-row">
+        <span class="vol-name">Autosave</span>
+        <Toggle on={s.autosave} id="opt-autosave" onClick={() => setSettings({ autosave: !s.autosave })} />
+      </div>
+      <div class="opt-row">
         <span class="vol-name">Hotkeys</span>
         <span class="opt-choices">
           <button class={`speed${s.hotkeys === 'classic' ? ' on' : ''}`} data-testid="opt-keys-classic" title="The original's letters (B then E builds a House)" onClick={() => setSettings({ hotkeys: 'classic' })}>

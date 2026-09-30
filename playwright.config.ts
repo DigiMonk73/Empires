@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
+// Server saves (M12.5) go to a fresh folder per run (workers inherit the id, so they agree with the server).
+process.env.E2E_RUN ??= String(Date.now());
+const DATA_DIR = `artifacts/e2e-data/run-${process.env.E2E_RUN}`;
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -31,7 +34,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `node server/serve.mjs --dir dist --port ${PORT} --host 127.0.0.1`,
+    command: `node server/serve.mjs --dir dist --port ${PORT} --host 127.0.0.1 --data ${DATA_DIR}`,
     url: `http://127.0.0.1:${PORT}/healthz`,
     reuseExistingServer: false,
     timeout: 30_000,

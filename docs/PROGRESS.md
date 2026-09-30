@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M12 UI & QoL in progress (M12.1–4 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M12 UI & QoL in progress (M12.1–5 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m11 (verify ~127 s without a re-bake); verify:full at the M11 exit 1123 s (audio check, Docker both arches 126 MB, Tauri smoke render avg 1.9 ms, s9pk, 428 unit + 103 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M12.5 autosave + server saves (M12.1–4 done: notifications, options/hotkeys/Classic, diplomacy/tribute, post-game graphs).
+- **Next up:** M12.6 Help, Credits, scores (M12.1–5 done), then the M12 exit (verify:full, tag, s9pk 0.12.0 with README/instructions for server saves).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -666,10 +666,19 @@ fog-aware hooks, a mute toggle. No music.
       line. The game menu's **Achievements** opens the results mid-game (the original's menu had it).
       `timeline.test.ts` (4), e2e `results.spec` (14 min: 29 points per player, age marks, metric switch) and the
       victory e2e snapshots the full game's timeline.
-- [ ] **M12.5 Autosave + server saves.** Autosave every 5 min of game time (one rolling slot, plus on quit)
-      in IndexedDB; the Load list shows it. Optional server saves: `serve.mjs` `GET/PUT/DELETE /api/saves` under
-      `DATA_DIR` (`/data` in the StartOS image; size-capped, id-checked); the save dialog offers "on this
-      device" / "on the server" when the server answers. Tests: server unit test, e2e round-trip.
+- [x] **M12.5 Autosave + server saves.** Autosave: one rolling slot (`autosave`) on this device every 5 minutes
+      of game time and when quitting — skirmishes and loaded games only, never after the game is decided; an
+      Options switch (on by default); the list marks it with an AUTOSAVE badge. A save file format
+      (`game/saveCodec.ts`: "EMPS", version, header JSON, world bytes) lets `serve.mjs` keep saves in
+      `DATA_DIR/saves` (`/data` in the image = the StartOS volume, so saves reach the box's backups):
+      `GET /api/saves` (headers only, newest first), `GET/PUT/DELETE /api/saves/<id>` — ids `[a-z0-9_-]{1,64}`,
+      the header's id must match, 16 MB and 100-save caps, atomic writes; off without a data directory. The save
+      dialog shows **This device / Server** tabs when the server keeps saves (remembered); server saves load via
+      `?load=server:<id>`. The Docker smoke test now round-trips a server save; e2e runs the server with a fresh
+      data folder. Tests: `server-saves.test.ts` (codec, API: store/list/get/delete, refusals, off), e2e
+      `saves-server.spec` (server save → load, tick and hash equal; autosave at 05:00 then 10:00 in one slot).
+      Fixed on the way: re-clicking the current tab emptied the list; an autosave on a sampling tick
+      duplicated the timeline point (sampling is now once per tick).
 - [ ] **M12.6 Menus: Help, Credits, scores.** Help (controls, hotkeys, rules summary), Credits (fonts, voices,
       tools — `assets/LICENSES.md`), the F4 score list and F11 clock/speed/population toggles in game.
 - _Exit:_ ≥ 40 e2e scenarios green in both browsers.

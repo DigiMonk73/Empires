@@ -32,6 +32,8 @@ export interface GameSettings {
   /** The speed a new skirmish starts at (1.0 Normal, 1.5 Fast, 2.0 Very Fast — research §5). */
   defaultSpeed: number;
   hotkeys: HotkeyLayout;
+  /** Keep a rolling autosave every 5 minutes of game time (M12.5). */
+  autosave: boolean;
   qol: Qol;
 }
 
@@ -50,7 +52,7 @@ export const CLASSIC_QOL: Qol = { rally: false, idleButton: false, attackMove: f
 export const SPEEDS = [1, 1.5, 2] as const;
 export const SCROLL_MIN = 300;
 export const SCROLL_MAX = 1800;
-export const DEFAULT_SETTINGS: GameSettings = { scrollSpeed: 900, edgeScroll: true, defaultSpeed: 1, hotkeys: 'classic', qol: { ...MODERN_QOL } };
+export const DEFAULT_SETTINGS: GameSettings = { scrollSpeed: 900, edgeScroll: true, defaultSpeed: 1, hotkeys: 'classic', autosave: true, qol: { ...MODERN_QOL } };
 const KEY = 'empires.settings';
 
 /** Settings from untrusted JSON: anything missing or out of range falls back to its default. */
@@ -65,6 +67,7 @@ export function parseSettings(raw: unknown): GameSettings {
     edgeScroll: typeof v.edgeScroll === 'boolean' ? v.edgeScroll : DEFAULT_SETTINGS.edgeScroll,
     defaultSpeed: SPEEDS.includes(v.defaultSpeed as 1) ? (v.defaultSpeed as number) : DEFAULT_SETTINGS.defaultSpeed,
     hotkeys: v.hotkeys === 'grid' ? 'grid' : 'classic',
+    autosave: typeof v.autosave === 'boolean' ? v.autosave : DEFAULT_SETTINGS.autosave,
     qol,
   };
 }

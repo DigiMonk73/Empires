@@ -37,7 +37,7 @@ export class TimelineRecorder {
       this.data.ticks.pop();
       for (const m of METRICS) this.data.series[m].pop();
     }
-    if (!this.data.ticks.length || this.data.ticks[this.data.ticks.length - 1] !== world.tick) this.sample();
+    this.sample();
   }
 
   /** Call after every tick. */
@@ -47,12 +47,13 @@ export class TimelineRecorder {
 
   /** Take a sample now (unless one exists for this tick) and refresh the age ticks; returns the data. */
   finish(): Timeline {
-    if (this.data.ticks[this.data.ticks.length - 1] !== this.world.tick) this.sample();
+    this.sample();
     return structuredClone(this.data);
   }
 
   private sample(): void {
     const w = this.world;
+    if (this.data.ticks[this.data.ticks.length - 1] === w.tick) return; // one sample per tick (an autosave may ask first)
     const scores = computeScores(w);
     const byId = new Map(scores.map((s) => [s.player, s]));
     const col = (f: (id: number) => number): number[] => this.data.players.map(f);

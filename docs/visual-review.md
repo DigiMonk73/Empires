@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M12.5 · saves-server (new), options (Autosave row)
+- Save dialog: This device / Server tabs under the title (the chosen one lit), the server's list and the name
+  field as before. Options gain an Autosave toggle between Start speed and Hotkeys. The saved-at column shows the
+  wall-clock time, so these snapshots differ a little on every run (expected). UI 4.
+
 ## 2026-09-30 · M12.4 · victory-timeline, results-timeline (new), victory-results (tab bar)
 - Timeline graph on the results panel: gridlines and round values, minutes along the bottom, each player's line in
   their colour over a dark underline, age marks (dot + II/III on the line). The 33-minute victory shows the winner

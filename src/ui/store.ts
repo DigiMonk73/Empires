@@ -93,8 +93,8 @@ export const hudActions: {
   setMenu(open: boolean): void;
   setSpeed(v: number): void;
   setMuted(m: boolean): void;
-  saveGame(name: string, overwrite: string | null): Promise<void>;
-  loadGame(id: string): void;
+  saveGame(name: string, overwrite: string | null, where: 'local' | 'server'): Promise<void>;
+  loadGame(id: string, where: 'local' | 'server'): void;
   showTechTree(): void;
   resign(): void;
   restart(): void;

@@ -383,8 +383,8 @@ function GameMenu() {
       <SaveList
         mode={dialog}
         defaultName={hud.saveName.value}
-        onSave={(name, overwrite) => hudActions.saveGame(name, overwrite)}
-        onLoad={(id) => hudActions.loadGame(id)}
+        onSave={(name, overwrite, where) => hudActions.saveGame(name, overwrite, where)}
+        onLoad={(id, where) => hudActions.loadGame(id, where)}
         onClose={() => (hud.saveDialog.value = null)}
       />
     );

@@ -33,8 +33,9 @@ import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { AudioHooks } from './audio/hooks.ts';
-import { loadQuery, loadSession, saveSession, type SavedGame } from './game/saveGame.ts';
+import { AUTOSAVE_ID, AUTOSAVE_TICKS, loadQuery, loadSession, saveSession, type SavedGame } from './game/saveGame.ts';
 import { saves } from './platform/saves.ts';
+import { serverSaves } from './platform/serverSaves.ts';
 import { techTree } from './ui/techTree.ts';
 
 async function boot(): Promise<void> {
@@ -55,7 +56,8 @@ async function boot(): Promise<void> {
   // live village backdrop.
   let loaded: SavedGame | null = null;
   if (params.has('load')) {
-    loaded = await saves.get(params.get('load')!);
+    const id = params.get('load')!;
+    loaded = id.startsWith('server:') ? await serverSaves.get(id.slice(7)) : await saves.get(id);
     if (!loaded) throw new Error('That saved game no longer exists.');
   }
   const menuMode = !loaded && !params.has('scenario') && !params.has('smoke') && !params.has('debug');
@@ -155,26 +157,31 @@ async function boot(): Promise<void> {
     hud.saveName.value = `${kind} — ${formatClock(world.tick)}`;
     session.paused = open;
   };
-  hudActions.saveGame = async (name, overwrite) => {
+  const snapshot = (id: string, name: string): SavedGame => {
     const vc = camera.viewCenter();
     const at = camera.screenToWorld(vc.x, vc.y);
-    const save = saveSession(session, {
-      id: overwrite ?? `g${Date.now().toString(36)}`,
-      name,
-      kind,
-      savedAt: Date.now(),
-      camera: { x: at.x, y: at.y, zoom: camera.zoom },
-      timeline: timeline.finish(),
-    });
-    await saves.put(save);
+    return saveSession(session, { id, name, kind, savedAt: Date.now(), camera: { x: at.x, y: at.y, zoom: camera.zoom }, timeline: timeline.finish() });
   };
+  hudActions.saveGame = async (name, overwrite, where) => {
+    await (where === 'server' ? serverSaves : saves).put(snapshot(overwrite ?? `g${Date.now().toString(36)}`, name));
+  };
+  // Autosave (M12.5): one rolling slot on this device, every 5 minutes of game time and on quitting — real games
+  // only (skirmishes and loaded games), never after the game is decided.
+  const realGame = !menuMode && (!!loaded || params.get('scenario') === 'skirmish');
+  const autosave = async (): Promise<void> => {
+    if (!realGame || !gameSettings.value.autosave || world.gameOver) return;
+    await saves.put(snapshot(AUTOSAVE_ID, kind)).catch((e: unknown) => console.warn('[autosave]', e));
+  };
+  session.onTick(() => {
+    if (world.tick > 0 && world.tick % AUTOSAVE_TICKS === 0) void autosave();
+  });
   hudActions.showTechTree = () => {
     const me = session.localPlayer;
     const civ = world.players[me]?.civ ?? 'greek';
     hud.techTree.value = { civ, columns: techTree(civ, world, me) };
   };
-  hudActions.loadGame = (id) => {
-    location.search = loadQuery(id, params);
+  hudActions.loadGame = (id, where) => {
+    location.search = loadQuery(id, params, where);
   };
   hudActions.setSpeed = (v) => {
     session.speed = v;
@@ -186,7 +193,7 @@ async function boot(): Promise<void> {
   };
   hudActions.restart = () => location.reload();
   hudActions.quit = () => {
-    location.search = '';
+    void autosave().finally(() => (location.search = ''));
   };
   hud.speed.value = session.speed;
   hudActions.setMuted = (m) => setAudio({ muted: m });

@@ -31,6 +31,10 @@ export interface SavedGame {
 
 export type SaveMeta = Omit<SavedGame, 'world' | 'ais'>;
 
+/** The rolling autosave (M12.5): one slot, rewritten every 5 minutes of game time and when quitting. */
+export const AUTOSAVE_ID = 'autosave';
+export const AUTOSAVE_TICKS = 20 * 60 * 5;
+
 export function saveSession(session: GameSession, o: { id: string; name: string; kind: string; savedAt: number; camera: SavedGame['camera']; timeline?: Timeline }): SavedGame {
   const w = session.sim.world;
   return {
@@ -58,7 +62,7 @@ export function loadSession(save: SavedGame): GameSession {
   return session;
 }
 
-/** The URL that boots a saved game (keeping the display flags a test or the user set). */
-export function loadQuery(id: string, params: URLSearchParams): string {
-  return withFlags(`load=${encodeURIComponent(id)}`, params);
+/** The URL that boots a saved game (keeping the display flags a test or the user set); server saves: `server:<id>`. */
+export function loadQuery(id: string, params: URLSearchParams, where: 'local' | 'server' = 'local'): string {
+  return withFlags(`load=${encodeURIComponent(where === 'server' ? `server:${id}` : id)}`, params);
 }

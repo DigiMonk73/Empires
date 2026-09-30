@@ -220,7 +220,7 @@ function Menu() {
       {screen === 'main' && <MainMenu onSkirmish={() => setScreen('skirmish')} onLoad={() => setScreen('load')} onOptions={() => setScreen('options')} />}
       {screen === 'options' && <Options onBack={back} />}
       {screen === 'skirmish' && <Skirmish onBack={back} />}
-      {screen === 'load' && <SaveList mode="load" onLoad={(id) => (location.search = loadQuery(id, new URLSearchParams(location.search)))} onClose={back} />}
+      {screen === 'load' && <SaveList mode="load" onLoad={(id, where) => (location.search = loadQuery(id, new URLSearchParams(location.search), where))} onClose={back} />}
     </div>
   );
 }

@@ -1,8 +1,10 @@
 /**
- * Runs a built Empires image and checks /healthz, the index page, a relative asset, and serving under a path
- * prefix (StartOS and reverse proxies may mount the UI below /). Usage: node tools/docker-smoke.ts <image>
+ * Runs a built Empires image and checks /healthz, the index page, a relative asset, serving under a path
+ * prefix (StartOS and reverse proxies may mount the UI below /), and server saves in /data (M12.5).
+ * Usage: node tools/docker-smoke.ts <image>
  */
 import { execFileSync } from 'node:child_process';
+import { encodeSave } from '../src/game/saveCodec.ts';
 
 const image = process.argv[2] ?? 'empires:verify-arm64';
 
@@ -36,6 +38,13 @@ async function check(port: number, prefix: string): Promise<void> {
   if (!asset) throw new Error('index.html has no relative ./assets script (vite base must be ./)');
   const js = await waitFor(`${base}/${asset}`);
   if (!js.headers.get('content-type')?.includes('javascript')) throw new Error(`bad content-type for ${asset}`);
+  // Server saves: the image keeps them in /data (the StartOS volume).
+  const save = { id: 'smoke', name: 'Smoke', savedAt: 1, simVersion: '-', tick: 20, kind: 'smoke', age: 'Stone Age', localPlayer: 1, speed: 1, camera: { x: 0, y: 0, zoom: 1 }, world: new Uint8Array([7, 7, 7]), ais: [] };
+  const put = await fetch(`${base}/api/saves/smoke`, { method: 'PUT', body: encodeSave(save) as BodyInit });
+  if (!put.ok) throw new Error(`server save PUT → ${put.status}`);
+  const list = (await (await fetch(`${base}/api/saves`)).json()) as { id: string }[];
+  if (!list.some((x) => x.id === 'smoke')) throw new Error('server save not listed');
+  if ((await fetch(`${base}/api/saves/smoke`, { method: 'DELETE' })).status !== 204) throw new Error('server save DELETE failed');
 }
 
 const containers: string[] = [];
@@ -45,7 +54,7 @@ try {
   containers.push(docker('run', '-d', '--rm', '-p', '127.0.0.1:18081:80', image, 'node', '/app/server/serve.mjs', '--prefix', '/x/y'));
   await check(18081, '/x/y');
   const size = docker('image', 'inspect', image, '--format', '{{.Size}}');
-  console.log(`docker smoke ok: /healthz, index, relative assets, prefix path; image ${(Number(size) / 1e6).toFixed(1)} MB`);
+  console.log(`docker smoke ok: /healthz, index, relative assets, prefix path, server saves; image ${(Number(size) / 1e6).toFixed(1)} MB`);
 } finally {
   for (const c of containers) {
     try {

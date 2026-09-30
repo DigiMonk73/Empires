@@ -1,36 +1,68 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { SaveMeta } from '../../game/saveGame.ts';
 import { saves } from '../../platform/saves.ts';
+import { serverSaves, type SaveWhere } from '../../platform/serverSaves.ts';
 import { formatClock } from '../results.ts';
 import './saves.css';
 
+const WHERE_KEY = 'empires.saveWhere';
+function lastWhere(): SaveWhere {
+  try {
+    return localStorage.getItem(WHERE_KEY) === 'server' ? 'server' : 'local';
+  } catch {
+    return 'local';
+  }
+}
+
 /**
  * The saved-games dialog, in "save" mode (in-game: name it, or pick one to overwrite) or "load" mode (in-game and
- * on the main menu: pick one to continue, ✕ to delete).
+ * on the main menu: pick one to continue, ✕ to delete). When the server keeps saves (the StartOS package, M12.5)
+ * a tab switches between this device's saves and the server's.
  */
 export function SaveList(props: {
   mode: 'save' | 'load';
   defaultName?: string;
-  onSave?: (name: string, overwrite: string | null) => Promise<void>;
-  onLoad?: (id: string) => void;
+  onSave?: (name: string, overwrite: string | null, where: SaveWhere) => Promise<void>;
+  onLoad?: (id: string, where: SaveWhere) => void;
   onClose: () => void;
 }) {
   const [list, setList] = useState<SaveMeta[] | null>(null);
   const [name, setName] = useState(props.defaultName ?? '');
   const [picked, setPicked] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [server, setServer] = useState(false);
+  const [where, setWhereState] = useState<SaveWhere>('local');
+  const store = where === 'server' ? serverSaves : saves;
+  const setWhere = (w: SaveWhere) => {
+    if (w === where) return; // the list is already this one
+    setWhereState(w);
+    setPicked(null);
+    setList(null);
+    setNote('');
+    try {
+      localStorage.setItem(WHERE_KEY, w);
+    } catch {
+      /* not remembered */
+    }
+  };
   const refresh = () =>
-    saves.list().then(setList, (e: Error) => {
+    store.list().then(setList, (e: Error) => {
       setNote(e.message);
       setList([]);
     });
-  useEffect(() => void refresh(), []);
+  useEffect(() => {
+    void serverSaves.available().then((ok) => {
+      setServer(ok);
+      if (ok && lastWhere() === 'server') setWhereState('server');
+    });
+  }, []);
+  useEffect(() => void refresh(), [where]);
 
   const save = async () => {
     if (!props.onSave || !name.trim()) return;
     setNote('Saving…');
     try {
-      await props.onSave(name.trim(), picked);
+      await props.onSave(name.trim(), picked, where);
       setNote('Game saved.');
       setPicked(null);
       await refresh();
@@ -39,7 +71,7 @@ export function SaveList(props: {
     }
   };
   const remove = async (id: string) => {
-    await saves.remove(id).catch((e: Error) => setNote(e.message));
+    await store.remove(id).catch((e: Error) => setNote(e.message));
     await refresh();
   };
   const when = (t: number) => new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -48,6 +80,16 @@ export function SaveList(props: {
     <div class="saves" data-testid={`saves-${props.mode}`}>
       <div class="saves-panel">
         <h2>{props.mode === 'save' ? 'Save Game' : 'Load Game'}</h2>
+        {server && (
+          <div class="saves-where">
+            <button class={`small${where === 'local' ? ' on' : ''}`} data-testid="saves-local" onClick={() => setWhere('local')}>
+              This device
+            </button>
+            <button class={`small${where === 'server' ? ' on' : ''}`} data-testid="saves-server" onClick={() => setWhere('server')}>
+              Server
+            </button>
+          </div>
+        )}
         <div class="saves-list">
           {list === null ? (
             <div class="saves-empty">…</div>
@@ -62,14 +104,17 @@ export function SaveList(props: {
                     class={picked === g.id ? 'picked' : ''}
                     data-testid="save-row"
                     onClick={() => {
-                      if (props.mode === 'load') props.onLoad?.(g.id);
+                      if (props.mode === 'load') props.onLoad?.(g.id, where);
                       else {
                         setPicked(g.id);
                         setName(g.name);
                       }
                     }}
                   >
-                    <td class="saves-name">{g.name}</td>
+                    <td class="saves-name">
+                      {g.id === 'autosave' && <span class="saves-auto">Autosave</span>}
+                      {g.name}
+                    </td>
                     <td>{g.kind}</td>
                     <td>{g.age}</td>
                     <td>{formatClock(g.tick)}</td>
