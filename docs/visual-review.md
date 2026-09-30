@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.6c · harbor-battle (baked warships, fish); contact sheets
+- A blue War Galley and a red Scout Ship trade arrows: shields along the rail carry the team colour, the ram and
+  oar banks read; the fishing boat is now clearly a different ship; deep-fish schools are baked (ripple rings,
+  dark backs). Ships 3/5. Should-fix (M10): ships still sit on a flat colour — no hull reflection or waterline
+  darkening; wakes are a fixed V (not trailing the real path).
+
 ## 2026-09-30 · M8.6b · all scenes (WebP atlases, lazy textures)
 - Every scene re-shot on lossy WebP atlases: ≤ 0.16% px change anywhere but the drifting menu; art-closeup
   checked by eye — clean edges, true team colours, no blotching. No placeholder caught in any shot (tests settle

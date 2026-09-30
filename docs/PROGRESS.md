@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 ladder gate (M7 tag).
-- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; M8.6b WebP + lazy atlases (45.5 MB, textures on demand) done; next M8.6c warship art. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
+- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; M8.6 ship art + WebP/lazy atlases done (59.5 MB); next M8.7 water maps. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -414,9 +414,12 @@ Ships already train at the Dock and path on water (their own move class and regi
       public/baked 145 → 45.5 MB (31%); every model's metadata at boot, textures on first use (all decoded would be
       1.33 GB of GPU memory; the smoke scene needs 25 of 83 models); placeholders rebuild when art arrives; tests
       settle before screenshots (e2e 57 → 40 s). Tauri smoke: WKWebView decodes them. Bake prints the size (D39).
-- [ ] **M8.6c Warship art.** Scout Ship → War Galley → Trireme (oar banks that sweep), Catapult Trireme →
-      Juggernaught (deck engine with the siege clip's `hit` marker), Fire Galley (bow fire pot); deep fish and
-      whale sprites; wakes. _Accept:_ contact sheets ≥ 3/5; `?scenario=harbor&battle=1` screenshots.
+- [x] **M8.6c Warship art.** Galley line (1–3 oar banks as one bone per side that sweeps and lifts, bronze ram,
+      bow eye, team shields along the rail, braced sail), Catapult Trireme / Juggernaught (deck engine whose arm
+      throws on the siege line's 0.35 s `hit` marker; the Juggernaught plated in bronze), Fire Galley (bow fire
+      pot that flares on attack); a foam wake astern under way on every ship; baked deep-fish schools and a
+      whale. Fixed in review: oars hung like legs side-on (now near level); the wake faced down and was culled.
+      Contact sheets 3/5; public/baked 59.5 MB.
 - [ ] **M8.7 Water maps.** Coastal, Mediterranean, Narrows, Small Islands (one island each), Large Islands
       (teams share) with fair starts (shore and deep fish per player, a dock site) and setup-screen entries.
       _Accept:_ mapgen fairness tests per type; screenshots.

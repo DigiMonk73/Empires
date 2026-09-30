@@ -66,6 +66,46 @@ function berryBush(variant: number): THREE.Object3D {
   return build({ children: kids });
 }
 
+/**
+ * Fish out at sea (M8.6c): a 2×2 school — dark backs and fins just under the surface inside a ripple ring — and a
+ * whale's long back breaking the water with a spout. Flat on the water line, no shadow of note.
+ */
+function ripple(r: number, w: number, color: number): NodeSpec {
+  const g = new THREE.RingGeometry(r - w, r, 32);
+  g.rotateX(-Math.PI / 2);
+  return { geom: g, mat: { tex: 'plain', color, rough: 1 }, t: [0, 0.004, 0], castShadow: false };
+}
+
+function deepFish(variant: number): THREE.Object3D {
+  const r = seeded(variant * 29 + 5);
+  const kids: NodeSpec[] = [ripple(0.95, 0.035, 0xc6e0ea), ripple(0.62, 0.025, 0xb2d2de)];
+  for (let i = 0; i < 9; i++) {
+    const a = r() * Math.PI * 2;
+    const d = 0.15 + r() * 0.55;
+    const x = Math.cos(a) * d;
+    const z = Math.sin(a) * d;
+    const yaw = r() * Math.PI * 2;
+    kids.push({ t: [x, 0.01, z], r: [0, yaw, 0], children: [
+      { geom: sphere(0.07, 8), mat: { tex: 'plain', color: 0x1f3a4a, rough: 0.6 }, s: [1.9, 0.35, 0.7], castShadow: false },
+      { geom: cone(0.045, 0.08, 4), mat: { tex: 'plain', color: 0x1a3140, rough: 0.6 }, t: [-0.15, 0, 0], r: [0, 0, Math.PI / 2], s: [1, 1, 0.3], castShadow: false },
+    ] });
+  }
+  return build({ children: kids });
+}
+
+function whale(): THREE.Object3D {
+  const back = { tex: 'plain' as const, color: 0x2c3440, rough: 0.5 };
+  return build({
+    children: [
+      ripple(1.0, 0.04, 0xc6e0ea),
+      { geom: sphere(0.3, 14), mat: back, t: [0, 0.02, 0], s: [2.6, 0.45, 0.9] },
+      { geom: cone(0.08, 0.14, 6), mat: back, t: [-0.1, 0.13, 0] }, // dorsal hump
+      { geom: box(0.12, 0.02, 0.5), mat: back, t: [-0.88, 0.05, 0], r: [0, 0, 0.3] }, // flukes
+      ...[[0.45, 0.35, 0], [0.42, 0.46, 0.05], [0.48, 0.44, -0.06], [0.44, 0.55, 0]].map(([x, y, z]): NodeSpec => ({ geom: sphere(0.045, 6), mat: { tex: 'plain', color: 0xeef8ff, rough: 1 }, t: [x!, y!, z!], castShadow: false })),
+    ],
+  });
+}
+
 /** Scale a built model uniformly (tuning sizes against units without touching shape code). */
 function scaled(o: THREE.Object3D, k: number): THREE.Object3D {
   o.scale.setScalar(k);
@@ -78,6 +118,8 @@ export const RESOURCE_MODELS: ModelDef[] = [
   { id: 'goldMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, build: (v) => scaled(mine(v, 'goldOre'), 1.3) },
   { id: 'stoneMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, build: (v) => scaled(mine(v, 'rock'), 1.3) },
   { id: 'berryBush', kind: 'resource', footprint: 1, variants: 3, facings: 1, build: (v) => scaled(berryBush(v), 1.2) },
+  { id: 'deepFish', kind: 'resource', footprint: 2, variants: 3, facings: 1, build: (v) => deepFish(v) },
+  { id: 'whale', kind: 'resource', footprint: 2, variants: 1, facings: 1, build: () => whale() },
 ];
 
 /** Calibration targets: a flat 1×1 tile and a 3×3 box footprint (see tests/e2e/bake-calibration). */
