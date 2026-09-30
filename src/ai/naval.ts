@@ -19,7 +19,12 @@ export interface NavalState {
   /** Invasion (M8.8c): the enemy building the waves sail for, and when the current wave began boarding. */
   target?: [number, number] | null;
   boardedAt?: number;
+  /** When each 4×4 search cell was last in sight (-1: never) — the landed army's hunt (M14.6b). */
+  seenAt?: number[];
 }
+
+/** The landed army's search grid: cells of 4×4 tiles. */
+const CELL = 4;
 
 /** Fishing boats wanted by age, on a coast and on an island. */
 /**
@@ -55,9 +60,10 @@ export class NavalBrain {
   private hasTransport = false;
   private transportAt = -9999;
   private beachSkip = 0;
+  private seenAt: number[] = [];
 
   save(): NavalState {
-    return { island: this.island, sweep: this.sweep, contact: this.contact, lastRaid: this.lastRaid, target: this.target, boardedAt: this.boardedAt };
+    return { island: this.island, sweep: this.sweep, contact: this.contact, lastRaid: this.lastRaid, target: this.target, boardedAt: this.boardedAt, seenAt: [...this.seenAt] };
   }
 
   restore(st: NavalState | undefined): void {
@@ -67,6 +73,7 @@ export class NavalBrain {
     this.lastRaid = st?.lastRaid ?? -9999;
     this.target = st?.target ?? null;
     this.boardedAt = st?.boardedAt ?? 0;
+    this.seenAt = st?.seenAt ? [...st.seenAt] : [];
     this.shore = null;
   }
 
@@ -88,6 +95,7 @@ export class NavalBrain {
     const base = WARSHIPS[this.island ? 'island' : 'coast'][s.me.age] ?? 4;
     const warWant = !ai.peaceful && (this.island || this.contact) ? (contested && s.me.age >= 2 ? Math.max(base, WAR_CONTESTED) : base) : 0;
     this.fleetShort = s.units.filter((u) => u.cls === 'warship').length < warWant;
+    if (this.island) this.noteSeen(s);
     this.dock(ai, s, cmds);
     this.fishers(ai, s, cmds);
     if (!ai.peaceful) {
@@ -137,39 +145,80 @@ export class NavalBrain {
    * held during an invasion — so idle ones here go for the nearest enemy building or unit on that land, or
    * search the parts of it we haven't seen (the last buildings and villagers can be anywhere on the island).
    */
-  private ashore(s: Snapshot, cmds: Command[], home: number): void {
+  /**
+   * Landed troops: fight what is on their land, else hunt it. Returns the land of the biggest idle group left with
+   * nothing to do there while enemy buildings are known on other land — stranded; the transports fetch them
+   * from there (M14.6b: a won war stood still an hour, the army on the enemy's main island, its last buildings
+   * on two islets, the transports waiting at home for soldiers who could not come).
+   */
+  private ashore(s: Snapshot, cmds: Command[], home: number): { land: number; n: number; x: number; y: number } | null {
     const abroad = s.units.filter((u) => LAND_ARMY(u.cls) && u.idle && !s.busy.has(u.h));
-    if (!abroad.length) return;
+    if (!abroad.length) return null;
     const byLand = new Map<number, typeof abroad>();
     for (const u of abroad) {
       const l = this.landOf(s, u.x, u.y);
       if (l && l !== home) byLand.set(l, [...(byLand.get(l) ?? []), u]);
     }
-    if (!byLand.size) return;
+    if (!byLand.size) return null;
     const foes = s.v.others().filter((o) => o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY);
+    let stranded: { land: number; n: number; x: number; y: number } | null = null;
     for (const [land, group] of byLand) {
-      for (const u of group) s.busy.add(u.h);
       const ids = group.map((u) => u.h);
       const [gx, gy] = [group[0]!.x, group[0]!.y];
       const here = foes.filter((o) => this.landOf(s, o.x, o.y) === land).sort((a, b) => dist(a.x, a.y, gx, gy) - dist(b.x, b.y, gx, gy) || a.h - b.h);
       if (here.length) {
+        for (const u of group) s.busy.add(u.h);
         cmds.push({ t: 'act', ids, h: here[0]!.h });
         continue;
       }
-      // Search: the nearest tile of this land we can't see now, on a coarse grid.
-      let best: [number, number] | null = null;
-      let bd = Infinity;
-      for (let y = 2; y < s.v.mapH; y += 4) {
-        for (let x = 2; x < s.v.mapW; x += 4) {
-          if (s.v.region(1, x, y) !== land || s.v.visible(x, y)) continue;
-          const d = dist(x, y, gx, gy);
-          if (d < bd) {
-            bd = d;
-            best = [x + 0.5, y + 0.5];
+      // Nothing here, but enemy buildings known elsewhere: wait by the shore to be fetched (left idle for boarding).
+      if (foes.some((o) => o.building && this.landOf(s, o.x, o.y) !== land)) {
+        if (!stranded || group.length > stranded.n) stranded = { land, n: group.length, x: gx, y: gy };
+        continue;
+      }
+      for (const u of group) s.busy.add(u.h);
+      // Search (M14.6b): squads of three to different cells of this land, never-seen cells first, then the ones seen
+      // longest ago. (The whole group walking to the nearest cell out of sight turned back and forth on the spot
+      // while a beaten enemy's last buildings stood in unexplored ground: 3 of 8 undecided water games.)
+      const taken: [number, number][] = [];
+      for (let k = 0; k < group.length; k += 3) {
+        const squad = group.slice(k, k + 3);
+        const [sx, sy] = [squad[0]!.x, squad[0]!.y];
+        let best: [number, number] | null = null;
+        let bs = Infinity;
+        let bd = Infinity;
+        const cols = Math.ceil(s.v.mapW / CELL);
+        for (let cy = 0; cy * CELL < s.v.mapH; cy++) {
+          for (let cx = 0; cx < cols; cx++) {
+            const x = Math.min(s.v.mapW - 1, cx * CELL + 2);
+            const y = Math.min(s.v.mapH - 1, cy * CELL + 2);
+            if (s.v.region(1, x, y) !== land || s.v.visible(x, y) || taken.some(([tx, ty]) => dist(tx, ty, x, y) < 8)) continue;
+            const seen = this.seenAt[cy * cols + cx] ?? -1;
+            const d = dist(x, y, sx, sy);
+            if (seen < bs || (seen === bs && d < bd)) {
+              bs = seen;
+              bd = d;
+              best = [x + 0.5, y + 0.5];
+            }
           }
         }
+        if (!best) continue;
+        taken.push(best);
+        cmds.push({ t: 'move', ids: squad.map((u) => u.h), x: best[0], y: best[1], am: true });
       }
-      if (best) cmds.push({ t: 'move', ids, x: best[0], y: best[1], am: true });
+    }
+    return stranded;
+  }
+
+  /** Note which search cells are in sight now (the landed army's hunt goes to the ones seen longest ago). */
+  private noteSeen(s: Snapshot): void {
+    const cols = Math.ceil(s.v.mapW / CELL);
+    for (let cy = 0; cy * CELL < s.v.mapH; cy++) {
+      for (let cx = 0; cx < cols; cx++) {
+        const i = cy * cols + cx;
+        while (this.seenAt.length <= i) this.seenAt.push(-1);
+        if (s.v.visible(Math.min(s.v.mapW - 1, cx * CELL + 2), Math.min(s.v.mapH - 1, cy * CELL + 2))) this.seenAt[i] = s.v.tick;
+      }
     }
   }
 
@@ -218,6 +267,57 @@ export class NavalBrain {
   }
 
   /** The water tile nearest the Town Center that touches our land: where waves board. */
+  /** The biggest body of water (region label) — the open sea, not a cove or a lake. */
+  private mainSea(s: Snapshot): number {
+    const n = new Map<number, number>();
+    for (let y = 0; y < s.v.mapH; y++) {
+      for (let x = 0; x < s.v.mapW; x++) {
+        const r = s.v.region(2, x, y);
+        if (r) n.set(r, (n.get(r) ?? 0) + 1);
+      }
+    }
+    let best = 0;
+    let bn = 0;
+    for (const [r, c] of n) if (c > bn || (c === bn && r < best)) [best, bn] = [r, c];
+    return best;
+  }
+
+  /** The water tile of sea `sea` touching land `land` nearest (x, y), searched over the whole map. */
+  private anyBeach(s: Snapshot, x0: number, y0: number, land: number, sea: number): [number, number] | null {
+    let best: [number, number] | null = null;
+    let bd = Infinity;
+    for (let y = 0; y < s.v.mapH; y++) {
+      for (let x = 0; x < s.v.mapW; x++) {
+        if (s.v.region(2, x, y) !== sea) continue;
+        if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ax, ay]) => s.v.region(1, x + ax!, y + ay!) === land)) continue;
+        const d = dist(x, y, x0, y0);
+        if (d < bd) {
+          bd = d;
+          best = [x + 0.5, y + 0.5];
+        }
+      }
+    }
+    return best;
+  }
+
+  /** A water tile of sea `sea` touching land `land`, nearest (x, y) (not cached: a stranded group's shore). */
+  private shoreOf(s: Snapshot, land: number, sea: number, x0: number, y0: number): [number, number] | null {
+    const cx = Math.floor(x0);
+    const cy = Math.floor(y0);
+    for (let r = 1; r <= 40; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const x = cx + dx;
+          const y = cy + dy;
+          if (!s.v.region(2, x, y) || (sea && s.v.region(2, x, y) !== sea)) continue;
+          if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ax, ay]) => s.v.region(1, x + ax!, y + ay!) === land)) return [x, y];
+        }
+      }
+    }
+    return null;
+  }
+
   private shorePoint(s: Snapshot, home: number, sea = 0): [number, number] | null {
     const tc = s.tc!;
     if (this.shore && s.v.region(2, this.shore[0], this.shore[1]) && (!sea || s.v.region(2, this.shore[0], this.shore[1]) === sea)) return this.shore;
@@ -260,7 +360,10 @@ export class NavalBrain {
     }
     if (foes.length) {
       foes.sort((a, b) => dist(a.x, a.y, tc.x, tc.y) - dist(b.x, b.y, tc.x, tc.y) || a.h - b.h);
-      this.target = [foes[0]!.x, foes[0]!.y];
+      // (A building whose land can't be told — a Storage Pit deep in a forest — gives no beach to land on: three
+      // full transports waited an hour for one, M14.6b. Sail for the nearest one on known land.)
+      const t = foes.find((o) => this.landOf(s, o.x, o.y) !== 0) ?? foes[0]!;
+      this.target = [t.x, t.y];
     } else {
       // No enemy building left: on an island keep sailing for the last one (the survivors are over there) —
       // unless they are here on our land, or this is a land map (the land war hunts them).
@@ -270,14 +373,17 @@ export class NavalBrain {
       if (!this.island || onOurLand) this.target = null;
       if (!this.target) return;
     }
-    this.ashore(s, cmds, home);
+    const stranded = this.ashore(s, cmds, home);
     // One transport (5) in the Tool Age, two from the Bronze Age: a wave lands together, not in fives.
     const transports = s.units.filter((u) => u.cls === 'transport');
     this.hasTransport = transports.length > 0;
     const wantTransports = s.me.age >= 3 ? 2 : 1;
     // (One order per 90 s: units still in a Dock's queue aren't counted, and three got built where one was wanted.)
     if (transports.length < wantTransports && s.v.tick - this.transportAt > 90 * 20) {
-      const dock = ai.has(s, 'dock', true).find((d) => d.queue < 2);
+      const main = this.mainSea(s);
+      const onSea = (d: { x: number; y: number }) => s.v.seaReachable(main, d.x - 1.5, d.y - 1.5, d.x + 1.5, d.y + 1.5);
+      const docks = ai.has(s, 'dock', true).filter((d) => d.queue < 2);
+      const dock = docks.find(onSea) ?? docks[0];
       const unit = dock && ['heavyTransport', 'lightTransport'].find((u) => !s.v.trainBlocker(dock.h, u));
       if (dock && unit && s.v.canAfford(s.v.cost(unit)) && s.me.pop < s.me.popCap) {
         cmds.push({ t: 'train', bld: dock.h, unit });
@@ -295,13 +401,19 @@ export class NavalBrain {
         }
       }
     }
-    const shore = transports.length ? this.shorePoint(s, home, s.v.region(2, Math.floor(transports[0]!.x), Math.floor(transports[0]!.y))) : null;
+    // Board at home — or where a stranded group waits, when fewer stand ready at home (M14.6b).
+    const atHome = s.units.filter((u) => LAND_ARMY(u.cls) && u.idle && !s.busy.has(u.h) && this.landOf(s, u.x, u.y) === home).length;
+    const base = stranded && stranded.n >= 2 && atHome < stranded.n ? stranded.land : home;
+    const sea0 = transports.length ? s.v.region(2, Math.floor(transports[0]!.x), Math.floor(transports[0]!.y)) : 0;
+    const away = base !== home && stranded ? this.shoreOf(s, base, sea0, stranded.x, stranded.y) : null;
+    const shore = away ?? (transports.length ? this.shorePoint(s, home, sea0) : null);
     if (!transports.length || !shore) return;
-    // Each transport its own boarding spot on our shore (they can't share the tile that touches land).
-    const spots = this.shoreSpots(s, home, shore, transports.length);
+    const boardLand = away ? base : home;
+    // Each transport its own boarding spot on the shore (they can't share the tile that touches land).
+    const spots = this.shoreSpots(s, boardLand, shore, transports.length);
     const spotOf = (t: (typeof transports)[number]) => spots[transports.indexOf(t) % spots.length]!;
     const capOf = (t: (typeof transports)[number]) => (t.type === 'heavyTransport' ? 10 : 5);
-    const army = s.units.filter((u) => LAND_ARMY(u.cls) && this.landOf(s, u.x, u.y) === home);
+    const army = s.units.filter((u) => LAND_ARMY(u.cls) && this.landOf(s, u.x, u.y) === boardLand);
     const boardingFor = (h: number) => army.filter((u) => u.order === 'board' && u.target === h).length;
     const afloat = transports.filter((t) => t.order !== 'unload');
     for (const t of transports) s.busy.add(t.h);
@@ -317,7 +429,9 @@ export class NavalBrain {
       const land = this.landOf(s, this.target[0], this.target[1]);
       // A transport back with its cargo aboard didn't find ground there: try the next beach along.
       if (loaded.some((t) => t.idle && dist(t.x, t.y, this.target![0], this.target![1]) < 12)) this.beachSkip = (this.beachSkip + 1) % 6;
-      const beach = this.beachNear(s, this.target[0], this.target[1], land, sea, this.beachSkip) ?? [this.target[0], this.target[1]];
+      // (No beach within 30 tiles of an inland target: the beach of that land nearest it, however far — sailing for
+      // the building's own tile left three full transports at our shore for an hour, M14.6b.)
+      const beach = this.beachNear(s, this.target[0], this.target[1], land, sea, this.beachSkip) ?? this.anyBeach(s, this.target[0], this.target[1], land, sea) ?? [this.target[0], this.target[1]];
       cmds.push({ t: 'unload', ids: loaded.map((t) => t.h), x: Math.round(beach[0] * 4) / 4, y: Math.round(beach[1] * 4) / 4 });
       this.boardedAt = 0;
       return;
@@ -467,7 +581,8 @@ export class NavalBrain {
     if (!this.island && !s.v.fish().some((f) => dist(f.x, f.y, tc.x, tc.y) < 18)) return;
     // An island: on our nearest shore, however far (a Narrows start can be 25+ tiles from the strait). A coast:
     // near the Town Center as before.
-    const shore = this.island ? this.shorePoint(s, this.homeLand(s)) : null;
+    // (On the open sea, not a cove: transports built in a pocket of water could never sail — M14.6b, seed 402.)
+    const shore = this.island ? this.shorePoint(s, this.homeLand(s), this.mainSea(s)) : null;
     if (shore) ai.build(s, cmds, 'dock', shore[0] + 0.5, shore[1] + 0.5, 0, docks ? 12 : 6, 1);
     else if (!docks) ai.build(s, cmds, 'dock', tc.x, tc.y, 3, 22, 1);
   }

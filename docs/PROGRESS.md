@@ -839,7 +839,14 @@ of island/Narrows games decided in 2 h (11/12).
         the home island's trees run low (`woodReserve`, `afford`); the boat scrapped for a transport at full
         population may be a busy one (the rule never fired). The water gate now counts 48 fresh seeds (D55):
         31/48 → 40/48. Land maps byte-identical; ladder unchanged.
-      - [ ] **M14.6b Water to 44/48** (the 8 left: diagnose by cause, not by seed), then Hard > Moderate margin.
+      - [~] **M14.6b Water to 44/48** (the 8 left: diagnose by cause, not by seed), then Hard > Moderate margin.
+        _So far 41/48:_ a landed army with nothing in sight hunts in squads of three over search cells, never-seen
+        first, then seen longest ago (it paced to the nearest unseen tile and back); troops stranded on land with
+        no enemy while enemy buildings are known elsewhere wait to be fetched and the transports board them there;
+        an inland target lands at the nearest beach of its land, however far; the target is a building on known
+        land (not a Storage Pit lost in a forest); Docks go on the open sea and transports come from a Dock on it.
+        Left: 419 (both sides out of wood, Tiny), 441 (a beaten enemy's last warships, the winner has no navy),
+        402/410/414/426/434 (Hard mirrors on Small islands that grind on).
       Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army
