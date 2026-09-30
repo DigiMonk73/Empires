@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M7.1 · tower (new)
+- A Watch Tower's arrow leaves the platform (launch height 2.8 levels, not a soldier's shoulder) toward an
+  intruding villager; the first attempt showed a bowman's arrow instead, so the test now moves player 1's army
+  away and waits for a missile fired by the tower itself. Arrows are small at zoom 2 — fine, like the
+  original's. Readability 4.
+
 ## 2026-09-29 · M6.10 · victory, victory-results (new), ai-base
 - Victory banner over a Bronze-Age town at 35:20; results table shows kills/losses/razed, gathered totals and
   age times; the loser's −100 "Other" is the manual's elimination penalty. HUD 4.

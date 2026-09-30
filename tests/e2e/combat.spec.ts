@@ -125,3 +125,30 @@ test('battle: two armies clash (20v20 mid-fight)', async ({ page }, info) => {
   await snap(page, info, 'battle');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('tower: a Watch Tower shoots an intruder from its platform', async ({ page }, info) => {
+  await openGame(page, 'scenario=raid&fog=0&paused=1');
+  await page.evaluate(() => window.__empires!.pause(true));
+  // Player 1's soldiers leave for the far corner so only the tower (tiles 6–7, 13–14; range 5) can shoot.
+  const army = (await page.evaluate(() => window.__empires!.query.units(1))).map((u) => u.h);
+  await page.evaluate((ids) => window.__empires!.issue(1, { t: 'move', ids, x: 3.5, y: 3.5 }), army);
+  await page.evaluate(() => window.__empires!.step(20 * 25));
+  const v = (await page.evaluate(() => window.__empires!.query.units(2))).find((u) => u.type === 'villager')!;
+  await page.evaluate((h) => window.__empires!.issue(2, { t: 'move', ids: [h], x: 10.5, y: 15.5 }), v.h);
+  let arrows = 0;
+  for (let i = 0; i < 600 && !arrows; i++) {
+    await page.evaluate(() => window.__empires!.step(1));
+    arrows = (await page.evaluate(() => window.__empires!.query.missiles())).filter((m) => m.type === 'watchTower').length;
+  }
+  expect(arrows).toBe(1);
+  await page.evaluate(() => window.__empires!.step(4));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(2);
+    window.__empires!.camera.centerOn(9, 14.5);
+  });
+  await frames(page);
+  await snap(page, info, 'tower');
+  await page.evaluate(() => window.__empires!.step(20 * 30));
+  expect((await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h)).not.toContain(v.h);
+  expect(pageErrors(page)).toEqual([]);
+});

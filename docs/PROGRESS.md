@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M7 — split the full land tech tree into tasks (temple/priests, academy, siege, walls/towers, Iron Age, Wonder, 16 civs, tech-tree screen) and start with siege (it also speeds AI conquest).
+- **Next up:** M7.2 walls (drag placement, joined segments, upgrades), then M7.3 siege.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -291,8 +291,27 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - _Exit:_ e2e menu→victory; AI suite no crashes; Moderate Tool ≤ 12:00, Bronze ≤ 24:00; idle ≤ 5%; stuck ≤ 1%.
 
 ## M7 — Full land tech tree
-- temple/priests, academy, siege, government center, market techs, walls/towers, Iron Age, Wonder; 16 civs;
-  tech-tree screen.
+Data already holds every unit, building, tech and civ (M0.8) and the effects compiler applies them; M7 makes
+each one *work* in the sim, UI and AI, one slice at a time.
+- [x] **M7.1 Towers shoot.** `towerSystem`: finished towers fire at the nearest visible hostile unit in range
+      (edge to edge), stick to it while in range, ignore wildlife; arrows leave from the platform. (Towers were
+      buildable since M5 but never fired.) Unit tests + e2e `tower` with a `missiles()` debug query.
+- [ ] **M7.2 Walls.** Drag-to-place wall lines (8 directions, stone per segment), segment art that joins
+      neighbours, Small → Medium → Fortification upgrades, tower line upgrades (Sentry/Guard/Ballista).
+- [ ] **M7.3 Siege.** Siege Workshop; Stone Thrower → Catapult → Heavy Catapult (blast, friendly fire, min range),
+      Ballista → Helepolis; Engineering/Ballistics effects; art. AI builds siege for razing.
+- [ ] **M7.4 Iron Age + army lines.** Iron Age advance; Short → Broad → Long Swordsman → Legion; Academy
+      Hoplite → Phalanx → Centurion; archer, cavalry, chariot, camel, elephant lines; per-unit upgrades in the
+      field; art (kit composition). AI trains Iron-age units.
+- [ ] **M7.5 Temple + priests.** Conversion (odds, range, faith, resistances), healing, rejuvenation; temple techs
+      (Astrology, Mysticism, Polytheism, Afterlife, Monotheism, Fanaticism, Jihad, Medicine, Martyrdom).
+- [ ] **M7.6 Economy + civic techs.** Market (Wheel, Woodworking line, mining, Domestication/Plow/Irrigation,
+      Coinage), Storage Pit (armor/tool lines), Granary, Government Center (Nobility, Writing, Architecture,
+      Aristocracy, Alchemy, Engineering, Ballistics, Logistics…): every effect honoured by the sim, one test each.
+- [ ] **M7.7 Wonder.** Build it (cost, time), standing-Wonder score; Wonder victory lands in M14.
+- [ ] **M7.8 Civilizations.** All 16 civs' bonuses and disabled items enforced (train/build/research blockers),
+      civ picker shows bonuses; tests per civ.
+- [ ] **M7.9 Tech-tree screen.** Per-civ tree (ages × buildings), researched/available/disabled states.
 - _Exit:_ 100% research rows implemented + tested; AI uses Iron-age units.
 
 ## M8 — Water

@@ -2,6 +2,7 @@ import { ARMOR_CLASS } from '../../data/types.ts';
 import { HUNTER_ATTACK } from '../../data/units.ts';
 import type { ProjectileDef } from '../../data/types.ts';
 import { Act, EKind } from '../core/entities.ts';
+import { NO_ENTITY } from '../core/handles.ts';
 import { ResState } from '../core/resources.ts';
 import { DIR16_X, DIR16_Y, dir16 } from '../math/trig.ts';
 import { nearestTile } from '../path/service.ts';
@@ -407,6 +408,58 @@ export function attackSystem(w: World): void {
     if ((path === undefined || (!path.length && d > reach) || (stale && ++o.retarget % 10 === 0)) && !w.pathing.pending(s)) {
       w.pathing.request(s, { k: 'point', tx: Math.floor(e.x[t]!), ty: Math.floor(e.y[t]!), x: e.x[t]!, y: e.y[t]! });
     }
+  }
+}
+
+/**
+ * Towers (mil:1c): a finished tower shoots the nearest hostile unit it can see within range, and keeps shooting
+ * the same one while it stays in range. Arrows fly like any missile (dodgeable, damage on landing). Towers ignore
+ * wildlife and buildings; Town Centers have no attack in 1.0c.
+ */
+export function towerSystem(w: World): void {
+  const e = w.ents;
+  for (let s = 0; s < e.top; s++) {
+    if (!e.alive[s] || e.kind[s] !== EKind.building || e.build[s]! < 1) continue;
+    const owner = e.owner[s]!;
+    const st = w.stats(owner, e.type[s]!);
+    if (st.range <= 0) continue;
+    if (e.timer[s]! > 0) {
+      e.timer[s] = e.timer[s]! - 1;
+      continue;
+    }
+    const half = TYPES[e.type[s]!]!.size / 2;
+    const bx = e.x[s]!;
+    const by = e.y[s]!;
+    // Distance from the tower's footprint edge to the unit's edge.
+    const gap = (j: number): number => {
+      const dx = Math.max(0, Math.abs(e.x[j]! - bx) - half);
+      const dy = Math.max(0, Math.abs(e.y[j]! - by) - half);
+      const d = Math.sqrt(dx * dx + dy * dy) - TYPES[e.type[j]!]!.radius;
+      return d < 0 ? 0 : d;
+    };
+    const fair = (j: number): boolean =>
+      e.alive[j] === 1 && e.kind[j] === EKind.unit && e.owner[j] !== 0 && hostile(w, s, j) && !!w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)];
+    let t = e.slotOf(e.target[s]!);
+    if (t >= 0 && (!fair(t) || gap(t) > st.range)) t = -1;
+    if (t < 0) {
+      let bestD = Infinity;
+      w.grid.forEachNear(bx, by, st.range + half + 1, (j) => {
+        if (!fair(j)) return;
+        const d = gap(j);
+        if (d > st.range || d > bestD || (d === bestD && j > t)) return;
+        t = j;
+        bestD = d;
+      });
+    }
+    if (t < 0) {
+      e.target[s] = NO_ENTITY;
+      continue;
+    }
+    e.target[s] = e.handleOf(t);
+    e.timer[s] = st.reloadTicks;
+    const def = TYPES[e.type[s]!]!.building!.projectile ?? { speed: 8 };
+    w.events.push({ t: 'strike', h: e.handleOf(s), tgt: e.handleOf(t), type: e.type[s]!, x: bx, y: by, missile: true, building: false });
+    launch(w, s, t, def, false);
   }
 }
 

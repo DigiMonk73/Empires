@@ -36,6 +36,8 @@ export interface EmpiresDebugApi {
     player(p: number): { res: number[] };
     /** Missiles in flight. */
     projectiles(): number;
+    /** Missiles in flight: shooter type id and owner. */
+    missiles(): { type: string; owner: number }[];
     /** Resource node index at tile (tx, ty), or -1. */
     resourceAt(tx: number, ty: number): number;
   };

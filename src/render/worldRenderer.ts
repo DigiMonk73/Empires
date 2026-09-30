@@ -294,9 +294,11 @@ export class WorldRenderer {
       const y = p.y0 + (p.y1 - p.y0) * u;
       if (!this.fog.isVisible(player, Math.floor(x), Math.floor(y))) continue;
       const dist = Math.hypot(p.x1 - p.x0, p.y1 - p.y0);
-      // Height in elevation levels: from shoulder (≈1.4) down to chest (≈0.8), plus a parabolic arc.
+      // Height in elevation levels: from shoulder (≈1.4; a tower's platform ≈2.8) down to chest (≈0.8), plus a
+      // parabolic arc.
       const peak = p.arc ? 0.9 * dist : 0.12 * dist;
-      const hAt = (k: number): number => 1.4 + (0.8 - 1.4) * k + peak * 4 * k * (1 - k);
+      const h0 = TYPES[p.type]?.building ? 2.8 : 1.4;
+      const hAt = (k: number): number => h0 + (0.8 - h0) * k + peak * 4 * k * (1 - k);
       worldToIso(x, y, hAt(u), a);
       const u2 = Math.min(1, u + 0.04);
       worldToIso(p.x0 + (p.x1 - p.x0) * u2, p.y0 + (p.y1 - p.y0) * u2, hAt(u2), b);
