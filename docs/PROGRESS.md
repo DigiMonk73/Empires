@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M13 AI v2 in progress (M13.1 done). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m12 (verify ~135 s); verify:full at the M12 exit 699 s (audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 1.9 ms, s9pk, 452 unit + 119 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -18,8 +18,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M13 AI v2 ladder — expand into tasks (Hard > Easy ≥ 75%, water maps ≥ 90% decided, 5 levels, civ strategies, defense, micro, priests, siege; AI answers diplomacy/tribute, D47).
+- **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-8 water AI gate (M13.7). KI-7 closed (M13.1).
+- **Next up:** M13.2 stronger Hard and Hardest (hard>moderate 33/64, hardest>hard 31/64 at the M13.1 baseline).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -702,11 +702,37 @@ fog-aware hooks, a mute toggle. No music.
       deleted, VM stopped. Backup → restore still unverified (KI-3: no backup target on the VM).
 
 ## M13 — AI v2 ladder
-- 5 levels; civ strategies; defense/walls/towers; micro; priests; siege; relic/ruin/wonder play.
-- Hard > Easy ≥ 75% on the 32-map ladder (46/64 at M7 — KI-7, D41); remove it from `DEFERRED` in ai-suite.
-- Water maps: ≥ 90% of the suite's island/Narrows 1v1s decided in 2 h (7/12 at M8 — KI-8, D42): bigger coordinated
-  waves, siege carried over, hunting stray ships; set `WATER_GATED = true` in ai-suite.
-- _Exit:_ Done-definition AI gates.
+Baseline at M13.1 (32 maps × both seats = 64 games per pairing): hardest>easiest 55, hard>easy 53, moderate>easiest
+54, **easy>easiest 45**, moderate>easy 50, **hard>moderate 33**, **hardest>hard 31**; water maps decided **7/12**.
+The Done definition asks each level to beat the one below ≥ 75% (48/64; Hardest > Hard ≥ 65%, 42/64) and ≥ 90%
+of island/Narrows games decided in 2 h (11/12).
+- [x] **M13.1 Faster, wider measurement.** `tools/sim/pool.ts` + `match-worker.ts`: matches run on worker threads
+      (14 on this Mac) — results identical to the serial runs (deterministic), the quick suite 26 → 7 s, the full
+      suite with every pairing 148 s (was ~500 s without them). `--adjacent` adds the Done ladder's neighbouring
+      pairs (reported, gated at the M13 exit); `--only timing,war,ladder,water` for tuning. verify:full runs
+      `--full --adjacent`. **Hard > Easy is gated again** (53/64, KI-7 closed) and Moderate > Easy (50/64) joins.
+- [ ] **M13.2 Stronger Hard and Hardest.** Why does Hard only draw Moderate? Trace lost games (army value,
+      villagers lost, age times, idle, bank) and fix what the traces show: spending the bank, army composition
+      that counters what was scouted, focus fire and pulling back wounded units, attacking with the whole army,
+      defending villagers; the original's Hardest resource bonus (research §7: extra resources, amount unverified —
+      a DECISIONS entry). Target: hard>moderate and hardest>hard up to the gates.
+- [ ] **M13.3 Easy over Easiest.** Easiest a little slower and more passive (it already starts pushes at 18 min);
+      Easy steadier (45 → ≥ 48 of 64).
+- [ ] **M13.4 Defence.** Towers by the Town Center and woodlines (Hard+), walls rarely (the original's habit),
+      villagers flee or fight raiders by level, the army answers raids anywhere.
+- [ ] **M13.5 Priests, siege, the Iron Age.** Temples and priests (heal the army, convert elephants and siege,
+      Monotheism/Fanaticism), stone throwers → catapults escorted against buildings, Iron Age line upgrades.
+- [ ] **M13.6 Civilization strategies.** Plans weighted by civ bonuses and trees (archer civs, cavalry civs,
+      elephants, chariots, academy civs, priests), skipping what a civ lacks.
+- [ ] **M13.7 Water.** ≥ 90% of island/Narrows 1v1s decided in 2 h (KI-8, D42): bigger coordinated landings, siege
+      carried over, hunting stray ships, reaching islet forests; set `WATER_GATED = true`.
+- [ ] **M13.8 Diplomacy answers (D47).** Computers start allied with each other in free-for-alls (research §7's
+      table of how many turn hostile), a neutral computer turns hostile when attacked twice or after 10–15 min
+      without tribute, and answers tribute.
+- [ ] **M13.9 Long-game health.** The Done suite: 200 games, 0 crashes, idle ≤ 3% (Hard), stuck ≤ 0.5%, median
+      Hard-vs-Hard 1v1 25–60 min — add the missing measures to the suite.
+- Relic, ruin and Wonder play moves to M14 with those rules.
+- _Exit:_ Done-definition AI gates (adjacent ladder, water, the 200-game suite).
 
 ## M14 — Rules completeness
 - relics, ruins, wonder, score, time-limit victories; starting age/resources/pop options; allied victory;

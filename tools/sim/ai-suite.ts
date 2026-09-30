@@ -5,13 +5,20 @@
  * War runs: no crash; ≥ 75% end in conquest within 45 min; units stuck > 5 s ≤ 1%.
  * Ladder (D33): the stronger level wins — or leads 1.5:1 on score at 60 min — in ≥ 75% of games, both seats.
  * --full adds more seeds, bigger maps, 3–4 player free-for-alls, and Hard > Easy, Moderate > Easiest.
+ * --adjacent adds every neighbouring pair (Easy > Easiest … Hardest > Hard), the Done definition's ladder (M13).
+ * --only timing,war,ladder,water runs just those sections (AI tuning). Matches run on worker threads (M13.1).
  */
 import { appendFileSync, existsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { runMatch, type MatchResult } from '../../src/game/aiMatch.ts';
+import type { MatchResult } from '../../src/game/aiMatch.ts';
+import { runMatches, type MatchJob } from './pool.ts';
 import type { AiLevel, MapSizeId } from '../../src/data/setup.ts';
 
 const FULL = process.argv.includes('--full');
+const ADJACENT = process.argv.includes('--adjacent');
+const onlyArg = process.argv.indexOf('--only');
+const ONLY = onlyArg >= 0 ? new Set(process.argv[onlyArg + 1]!.split(',')) : null;
+const want = (section: string): boolean => !ONLY || ONLY.has(section);
 const fmt = (t: number): string => (t ? `${Math.floor(t / 1200)}:${String(Math.floor((t % 1200) / 20)).padStart(2, '0')}` : '—');
 type Case = { seed: number; type: 'continental' | 'inland'; size: MapSizeId; levels: AiLevel[] };
 const timing: Case[] = [1, 2, 3, 4].map((seed) => ({ seed, type: seed % 2 ? 'continental' : 'inland', size: seed > 2 ? 'small' : 'tiny', levels: ['moderate', 'moderate'] }));
@@ -25,27 +32,47 @@ if (FULL) {
 // ladder plays 32 maps (D41): on 8, one game was 6% of the score and start position decided half the mirrors.
 const ladderSeeds = FULL ? Array.from({ length: 32 }, (_, i) => 101 + i) : [101, 102, 103, 104];
 const ladderPairs: [AiLevel, AiLevel][] = FULL ? [['hardest', 'easiest'], ['hard', 'easy'], ['moderate', 'easiest']] : [['hardest', 'easiest']];
-/** Pairings reported but not gated yet: Hard > Easy was 46/64 (72%) on 32 maps at M7 — gated again in M13 (D41). */
-const DEFERRED = new Set(['hard>easy']);
+/** The Done definition's ladder: each level over the one below (Hardest > Hard needs 65%). Reported with --adjacent. */
+const ADJACENT_PAIRS: [AiLevel, AiLevel][] = [['easy', 'easiest'], ['moderate', 'easy'], ['hard', 'moderate'], ['hardest', 'hard']];
+if (ADJACENT) for (const pr of ADJACENT_PAIRS) if (!ladderPairs.some(([a, b]) => a === pr[0] && b === pr[1])) ladderPairs.push(pr);
+/**
+ * Pairings reported but not gated yet: the adjacent ladder until the M13 exit. Hard > Easy (46/64 at M7, D41) is
+ * gated again from M13.1 — 53/64 on 32 maps.
+ */
+const DEFERRED = new Set(ADJACENT_PAIRS.filter(([a, b]) => !(a === 'moderate' && b === 'easy')).map(([a, b]) => `${a}>${b}`));
+const WATER_TYPES = ['smallIslands', 'largeIslands', 'narrows'] as const;
+const water: Case[] = [];
+if (FULL) for (let k = 0; k < 12; k++) water.push({ seed: 301 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
 
 const fails: string[] = [];
 let crashes = 0;
-const run = (c: Case, minutes: number, peaceful: boolean): MatchResult | null => {
-  try {
-    return runMatch({ ...c, minutes, peaceful, clock: () => performance.now() });
-  } catch (err) {
+const t0 = performance.now();
+// Every match up front, run on the worker pool; the sections below read the results in the same order.
+const jobs: MatchJob[] = [];
+const slot = (c: Case, minutes: number, peaceful: boolean): number => jobs.push({ ...c, minutes, peaceful }) - 1;
+const timingJobs = want('timing') ? timing.map((c) => slot(c, 25, true)) : [];
+const warJobs = want('war') ? war.map((c) => slot(c, 45, false)) : [];
+const ladderJobs = want('ladder')
+  ? ladderPairs.map(([strong, weak]) => ladderSeeds.flatMap((seed) => [0, 1].map((seat) => slot({ seed, type: seed % 2 ? 'inland' : 'continental', size: 'tiny', levels: seat ? [weak, strong] : [strong, weak] }, 60, false))))
+  : ladderPairs.map(() => []);
+const waterJobs = want('water') ? water.map((c) => slot(c, 120, false)) : [];
+const results = await runMatches(jobs);
+const got = (i: number, c: { seed: number }): MatchResult | null => {
+  const r = results[i]!;
+  if (r instanceof Error) {
     crashes++;
-    fails.push(`crash seed ${c.seed}: ${String(err).slice(0, 120)}`);
+    fails.push(`crash seed ${c.seed}: ${String(r.message).slice(0, 120)}`);
     return null;
   }
+  return r;
 };
 
-const t0 = performance.now();
 let worstTool = 0;
 let worstBronze = 0;
 const idles: number[] = [];
-for (const c of timing) {
-  const r = run(c, 25, true);
+for (const [k, c] of timing.entries()) {
+  if (!want('timing')) break;
+  const r = got(timingJobs[k]!, c);
   if (!r) continue;
   for (const [i, ages] of r.ageTick.entries()) {
     worstTool = Math.max(worstTool, ages[2] || Infinity);
@@ -60,8 +87,9 @@ let duels = 0;
 let stuck = 0;
 let units = 0;
 let lengths: number[] = [];
-for (const c of war) {
-  const r = run(c, 45, false);
+for (const [k, c] of war.entries()) {
+  if (!want('war')) break;
+  const r = got(warJobs[k]!, c);
   if (!r) continue;
   // Conquest is gated on 1v1s; free-for-alls (AI v1 is weak at finishing weakened players) only must not crash.
   if (c.levels.length === 2) duels++;
@@ -77,13 +105,14 @@ for (const c of war) {
   units += r.unitsSeen;
 }
 const ladder: string[] = [];
-for (const [strong, weak] of ladderPairs) {
+for (const [pi, [strong, weak]] of ladderPairs.entries()) {
+  if (!want('ladder')) break;
   let ok = 0;
   let n = 0;
+  let j = 0;
   for (const seed of ladderSeeds) {
     for (const seat of [0, 1]) {
-      const levels: AiLevel[] = seat ? [weak, strong] : [strong, weak];
-      const r = run({ seed, type: seed % 2 ? 'inland' : 'continental', size: 'tiny', levels }, 60, false);
+      const r = got(ladderJobs[pi]![j++]!, { seed });
       if (!r) continue;
       n++;
       const won = r.winner ? r.winner.includes(seat + 1) : r.scores[seat]! >= 1.5 * r.scores[1 - seat]!;
@@ -101,14 +130,11 @@ for (const [strong, weak] of ladderPairs) {
 // enemy by sea and ferry armies over. Reported, gated again in M13 (7/12 at M8 — KI-8, D42). Full runs only.
 const WATER_GATED = false;
 let waterLine = '';
-if (FULL) {
-  const water: Case[] = [];
-  const types = ['smallIslands', 'largeIslands', 'narrows'] as const;
-  for (let k = 0; k < 12; k++) water.push({ seed: 301 + k, type: types[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
+if (FULL && want('water')) {
   let won = 0;
   const times: number[] = [];
-  for (const c of water) {
-    const r = run(c, 120, false);
+  for (const [k, c] of water.entries()) {
+    const r = got(waterJobs[k]!, c);
     if (!r) continue;
     if (r.winner) {
       won++;
@@ -124,8 +150,8 @@ if (FULL) {
 }
 const idle = idles.reduce((a, b) => a + b, 0) / Math.max(1, idles.length);
 const stuckPct = (100 * stuck) / Math.max(1, units);
-if (idle > 5) fails.push(`idle ${idle.toFixed(1)}%`);
-if (decided < Math.ceil(duels * 0.75)) fails.push(`only ${decided}/${duels} 1v1 wars decided`);
+if (want('timing') && idle > 5) fails.push(`idle ${idle.toFixed(1)}%`);
+if (want('war') && decided < Math.ceil(duels * 0.75)) fails.push(`only ${decided}/${duels} 1v1 wars decided`);
 if (stuckPct > 1) fails.push(`stuck ${stuckPct.toFixed(2)}%`);
 lengths = lengths.sort((a, b) => a - b);
 const median = lengths.length ? lengths[Math.floor(lengths.length / 2)]! : 0;

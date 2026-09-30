@@ -19,26 +19,6 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   as a permissively licensed Piper model) with `tools/voices.ts`.
 - **KI-6 · closed (M8.6b, D39)** — baked art was 145 MB and all of it loaded at boot (1.33 GB decoded): now WebP
   (45.5 MB) with textures loaded on first use.
-- **KI-7 · moved to M13 · Hard > Easy on the full AI ladder** — 46/64 (72%) on 32 maps (D41), below 75%; tagged m7
-  on the other two pairings, gate returns in M13. History: — verify:full at the
-  M7 exit is green except this. Held-out seeds 101–108: Hard loses 4–5 games, almost all as Player 1 (Greek)
-  against an Easy (Egyptian) boom. Diagnosis (seed 107): Hard lost 42 villagers to Easy's 1 — 30 of them sent
-  as militia at an army. Fixed in M7.10 (Hardest > Easiest 14→16/16, wars decided 3→4/4) but Hard > Easy stayed
-  11/16: villagers then die working 12–25 tiles out, Hard spends all its food on replacing them, never
-  researches Battle Axe and reaches Bronze at 27 min (Easy 21). Tried and reverted (3-cycle rule): villagers
-  retreat to the Town Center from an army (11/16, wars 2/4); gold miners farm when gold floats (10/16).
-  Diagnosis (second pass): the 16-game measure is dominated by start position and plan matchup, not strength.
-  Same-level mirrors on seeds 101–108 go to Player 2 in 5/8 (Easy) and 6/8 (Hard); with the same civ on both
-  sides P2 still takes 102, 103, 106, 108. Swapping the start positions flips 101, 103, 104, 106 (the map
-  decides); 102 and 108 stay with P2 wherever it starts (its rush/boom draw beats P1's). Across 32 swapped and
-  unswapped mirrors P2 wins ~20 — not a significant sim bias. Starts differ in lions within 25 tiles (P1 on 102
-  and 106) and woodline distance (106: 13 vs 7 tiles). A fourth fix (soldiers before villagers while the army
-  is under half strength) scored Hard > Easy 11/16 again and dropped Hardest > Easiest to 13 and Moderate >
-  Easiest to 11 — reverted. Each change reshuffles which seeds are won; the count barely moves.
-  Options for the user: (a) measure the ladder on more seeds (32) or small maps so one game is ~3%, not 6%;
-  (b) defer this gate to M13 (AI v2: scouting, counters, massed defence) and tag m7 now; (c) keep tuning.
-  **User chose (a)** (2026-09-30): D41 — the full ladder plays 32 maps; if Hard > Easy still falls short, that
-  pairing's gate moves to M13.
 - **KI-8 · moved to M13 (D42, the user's choice) · water AI games decided 7/12 in 2 h (gate ≥ 90%)** — the full AI suite's
   12 island/Narrows 1v1s (Moderate on tiny, Hard on small). The naval AI works end to end — Docks, fishing,
   fleets that fight, scouting, transports that board, sail and land, soldiers ashore hunting the island — and
