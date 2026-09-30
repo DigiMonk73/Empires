@@ -40,10 +40,12 @@ if (ADJACENT) for (const pr of ADJACENT_PAIRS) if (!ladderPairs.some(([a, b]) =>
 const pairsArg = process.argv.indexOf('--pairs');
 if (pairsArg >= 0) ladderPairs.splice(0, ladderPairs.length, ...process.argv[pairsArg + 1]!.split(',').map((p) => p.split('>') as [AiLevel, AiLevel]));
 /**
- * Pairings reported but not gated yet: the adjacent ladder until the M13 exit. Hard > Easy (46/64 at M7, D41) is
- * gated again from M13.1 — 53/64 on 32 maps.
+ * Pairings reported but not gated: none since the M13 exit — every adjacent pairing meets the Done ladder (≥ 75%;
+ * Hardest > Hard ≥ 65%, `LADDER_MIN`). (Hard > Easy was deferred from M7 to M13.1, D41.)
  */
-const DEFERRED = new Set(ADJACENT_PAIRS.filter(([a, b]) => !(a === 'moderate' && b === 'easy')).map(([a, b]) => `${a}>${b}`));
+const DEFERRED = new Set<string>();
+/** The Done definition's bar per pairing: 75%, Hardest over Hard 65%. */
+const LADDER_MIN = (pair: string): number => (pair === 'hardest>hard' ? 0.65 : 0.75);
 const WATER_TYPES = ['smallIslands', 'largeIslands', 'narrows'] as const;
 const water: Case[] = [];
 if (FULL) for (let k = 0; k < 12; k++) water.push({ seed: 301 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
@@ -60,6 +62,9 @@ const ladderJobs = want('ladder')
   ? ladderPairs.map(([strong, weak]) => ladderSeeds.flatMap((seed) => [0, 1].map((seat) => slot({ seed, type: seed % 2 ? 'inland' : 'continental', size: 'tiny', levels: seat ? [weak, strong] : [strong, weak] }, 60, false))))
   : ladderPairs.map(() => []);
 const waterJobs = want('water') ? water.map((c) => slot(c, 120, false)) : [];
+// The Done suite (M13.9): Hard-vs-Hard 1v1s — their median length should be 25–60 min — and Hard's idle villagers.
+const hardDuels: Case[] = FULL ? Array.from({ length: 16 }, (_, k) => ({ seed: 401 + k, type: k % 2 ? 'inland' : 'continental', size: k % 4 < 2 ? 'tiny' : 'small', levels: ['hard', 'hard'] })) : [];
+const duelJobs = want('ladder') ? hardDuels.map((c) => slot(c, 90, false)) : [];
 const results = await runMatches(jobs);
 const got = (i: number, c: { seed: number }): MatchResult | null => {
   const r = results[i]!;
@@ -128,7 +133,7 @@ for (const [pi, [strong, weak]] of ladderPairs.entries()) {
   }
   const deferred = DEFERRED.has(`${strong}>${weak}`);
   ladder.push(`${strong}>${weak} ${ok}/${n}${deferred ? ' (gate: M13)' : ''}`);
-  if (ok < Math.ceil(n * 0.75) && !deferred) fails.push(`ladder ${strong}>${weak} only ${ok}/${n}`);
+  if (ok < Math.ceil(n * LADDER_MIN(`${strong}>${weak}`)) && !deferred) fails.push(`ladder ${strong}>${weak} only ${ok}/${n}`);
 }
 // Water maps (M8.8d): island and Narrows 1v1s should be decided (≥ 90%) within 120 min — the AI has to find the
 // enemy by sea and ferry armies over. Gated since M13.7 (11/12; 7/12 at M8 — KI-8, D42). Full runs only.
@@ -152,15 +157,46 @@ if (FULL && want('water')) {
   waterLine = ` · water decided ${won}/${water.length}${times.length ? ` (median ${fmt(times[times.length >> 1]!)})` : ''}${WATER_GATED ? '' : ' (gate: M13)'}`;
   if (WATER_GATED && won < Math.ceil(water.length * 0.9)) fails.push(`water maps: only ${won}/${water.length} decided in 2 h`);
 }
+// Hard-vs-Hard length and Hard's idle villagers (every Hard seat in the ladder and the duels).
+let duelLine = '';
+if (duelJobs.length) {
+  const len: number[] = [];
+  const hardIdle: number[] = [];
+  for (const [k, c] of hardDuels.entries()) {
+    const r = got(duelJobs[k]!, c);
+    if (!r) continue;
+    len.push(r.winner ? r.ticks : Infinity);
+    hardIdle.push(...r.idlePct);
+    stuck += r.stuckUnits;
+    units += r.unitsSeen;
+  }
+  for (const [pi, [strong, weak]] of ladderPairs.entries()) {
+    let j = 0;
+    for (const seed of ladderSeeds) {
+      for (const seat of [0, 1]) {
+        const r = results[ladderJobs[pi]![j++]!];
+        if (!r || r instanceof Error) continue;
+        const levels: AiLevel[] = seat ? [weak, strong] : [strong, weak];
+        levels.forEach((lv, i) => lv === 'hard' && hardIdle.push(r.idlePct[i]!));
+      }
+    }
+  }
+  len.sort((a, b) => a - b);
+  const med = len[len.length >> 1]!;
+  const hi = hardIdle.reduce((a, b) => a + b, 0) / Math.max(1, hardIdle.length);
+  duelLine = ` · hard 1v1 median ${Number.isFinite(med) ? fmt(med) : '> 1:30:00'} (${len.filter(Number.isFinite).length}/${len.length} decided) · hard idle ${hi.toFixed(1)}%`;
+  if (!(med >= 25 * 1200 && med <= 60 * 1200)) fails.push(`median Hard-vs-Hard 1v1 ${Number.isFinite(med) ? fmt(med) : '> 90 min'} (Done: 25–60 min)`);
+  if (hi > 3) fails.push(`Hard villagers idle ${hi.toFixed(1)}% (Done: ≤ 3%)`);
+}
 const idle = idles.reduce((a, b) => a + b, 0) / Math.max(1, idles.length);
 const stuckPct = (100 * stuck) / Math.max(1, units);
 if (want('timing') && idle > 5) fails.push(`idle ${idle.toFixed(1)}%`);
 if (want('war') && decided < Math.ceil(duels * 0.75)) fails.push(`only ${decided}/${duels} 1v1 wars decided`);
-if (stuckPct > 1) fails.push(`stuck ${stuckPct.toFixed(2)}%`);
+if (stuckPct > (FULL ? 0.5 : 1)) fails.push(`stuck ${stuckPct.toFixed(2)}%`); // the Done suite: ≤ 0.5%
 lengths = lengths.sort((a, b) => a - b);
 const median = lengths.length ? lengths[Math.floor(lengths.length / 2)]! : 0;
 console.log(
-  `ai suite ${timing.length}+${war.length}+${ladderPairs.length * ladderSeeds.length * 2} matches in ${((performance.now() - t0) / 1000).toFixed(1)} s: worst Tool ${fmt(worstTool)} Bronze ${fmt(worstBronze)} · idle ${idle.toFixed(1)}% · 1v1 wars decided ${decided}/${duels} (median ${fmt(median)}) · ladder ${ladder.join(', ')}${waterLine} · stuck ${stuckPct.toFixed(2)}% · crashes ${crashes}`,
+  `ai suite ${jobs.length} matches (${timing.length} timing, ${war.length} war, ${ladderPairs.length * ladderSeeds.length * 2} ladder, ${water.length} water, ${hardDuels.length} hard duels) in ${((performance.now() - t0) / 1000).toFixed(1)} s: worst Tool ${fmt(worstTool)} Bronze ${fmt(worstBronze)} · idle ${idle.toFixed(1)}% · 1v1 wars decided ${decided}/${duels} (median ${fmt(median)}) · ladder ${ladder.join(', ')}${waterLine}${duelLine} · stuck ${stuckPct.toFixed(2)}% · crashes ${crashes}`,
 );
 if (process.argv.includes('--record')) {
   const file = 'docs/metrics/ai.csv';

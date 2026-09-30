@@ -64,7 +64,7 @@ const STEPS: Step[] = [
   },
   {
     id: 'aiFull',
-    title: 'AI suite full (ladder: 7 pairings × 64 games, water, free-for-alls)',
+    title: 'AI suite full (the Done suite: 500 games — ladder, water, hard duels, free-for-alls)',
     cmd: ['node', 'tools/sim/ai-suite.ts', '--full', '--adjacent'],
     full: true,
   },
