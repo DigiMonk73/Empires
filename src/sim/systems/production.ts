@@ -1,4 +1,4 @@
-import { CIV_BY_ID, TECH_BY_ID, UNIT_BY_ID } from '../../data/index.ts';
+import { CIV_BY_ID, TECH_BY_ID, TECHS, UNIT_BY_ID } from '../../data/index.ts';
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { TICKS_PER_SECOND } from '../time.ts';
 import { EKind } from '../core/entities.ts';
@@ -126,6 +126,10 @@ export function completeResearch(w: World, player: number, techId: string): void
       while (UNIT_BY_ID.get(root)?.upgradeOf) root = UNIT_BY_ID.get(root)!.upgradeOf!;
       const want = p.stats.upgrades.get(root);
       if (want && want !== t.unit.id) e.type[s] = unitTypeIndex(want);
+    } else if (e.kind[s] === EKind.building && t.building) {
+      // Walls and towers standing (or rising) become the upgraded type (econ:5).
+      const want = p.stats.upgrades.get(buildingLineRoot(t.building.id));
+      if (want && want !== t.building.id) e.type[s] = buildingTypeIndex(want);
     }
     const oldMax = before.types[t.index]!.hp;
     const newMax = p.stats.types[e.type[s]!]!.hp;
@@ -134,6 +138,22 @@ export function completeResearch(w: World, player: number, techId: string): void
   }
   if (p.stats.age > before.age) p.tally.ageTick[p.stats.age] = w.tick;
   w.events.push({ t: 'researched', player, tech: techId });
+}
+
+/** Building upgrade edges from the tech data (Small Wall → Medium Wall → Fortification, tower line). */
+const BUILDING_UPGRADED_FROM = new Map<string, string>();
+for (const tech of TECHS) for (const ef of tech.effects) if (ef.op === 'upgrade' && ef.kind === 'building') BUILDING_UPGRADED_FROM.set(ef.to, ef.from);
+
+/** First member of a building line ('fortification' → 'smallWall'); itself for buildings without a line. */
+export function buildingLineRoot(id: string): string {
+  let root = id;
+  while (BUILDING_UPGRADED_FROM.has(root)) root = BUILDING_UPGRADED_FROM.get(root)!;
+  return root;
+}
+
+/** The building a player actually builds when asked for `id`: the line's current member (a Wall → Fortification). */
+export function currentBuilding(w: World, player: number, id: string): string {
+  return w.players[player]!.stats.upgrades.get(buildingLineRoot(id)) ?? id;
 }
 
 /** The unit type index actually produced for base unit `unitId` (after upgrades). */

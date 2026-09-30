@@ -3,6 +3,7 @@ import { battleConfig } from '../sim/testing/battle.ts';
 import { generateMap, type LandMapType } from '../sim/mapgen/generate.ts';
 import { MAP_SIZES, type MapSizeId } from '../data/setup.ts';
 import { setupFromQuery, skirmishConfig } from './skirmish.ts';
+import { wallLine } from '../input/wallLine.ts';
 
 /**
  * Hand-made scenarios for development and tests (`?scenario=<name>`). Random maps replace these for real games
@@ -172,6 +173,39 @@ function raid(): SimConfig {
   };
 }
 
+/**
+ * Walls and towers for review (M7.2): each wall level as a straight run along both tile axes, a dragged diagonal
+ * (Bresenham steps), an L corner and a closed square; the four tower levels in a row.
+ */
+function fort(): SimConfig {
+  const walls: { type: string; owner: number; tx: number; ty: number }[] = [];
+  const add = (type: string, tiles: [number, number][]) => tiles.forEach(([tx, ty]) => walls.push({ type, owner: 1, tx, ty }));
+  const levels = ['smallWall', 'mediumWall', 'fortification'];
+  levels.forEach((lv, i) => {
+    const ox = 3 + i * 9;
+    add(lv, wallLine(ox, 3, ox + 6, 3)); // along x
+    add(lv, wallLine(ox, 5, ox, 11)); // along y
+    add(lv, wallLine(ox + 2, 6, ox + 7, 9)); // dragged at an angle
+    add(lv, [...wallLine(ox + 2, 12, ox + 6, 12), ...wallLine(ox + 6, 13, ox + 6, 16), ...wallLine(ox + 2, 16, ox + 5, 16), ...wallLine(ox + 2, 13, ox + 2, 15)]); // closed square
+  });
+  return {
+    victory: 'none',
+    seed: 4,
+    map: { w: 32, h: 32 },
+    players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    scenario: {
+      buildings: [
+        ...walls,
+        { type: 'watchTower', owner: 1, tx: 4, ty: 22 },
+        { type: 'sentryTower', owner: 1, tx: 9, ty: 22 },
+        { type: 'guardTower', owner: 1, tx: 14, ty: 22 },
+        { type: 'ballistaTower', owner: 1, tx: 19, ty: 22 },
+      ],
+      units: [{ type: 'villager', owner: 1, x: 10.5, y: 26.5 }],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -206,6 +240,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   start,
   village,
   raid,
+  fort,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

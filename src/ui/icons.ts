@@ -9,6 +9,8 @@ export function setIconArt(a: BakedArt | null): void {
 
 export function iconStyle(model: string | null, box: number): Record<string, string> | null {
   if (!model || !art) return null;
+  // Composite art (walls: post + arms) has a dedicated icon model.
+  if (!art.meta(model) && art.meta(`${model}Icon`)) model = `${model}Icon`;
   const meta = art.meta(model);
   if (!meta) return null;
   const key = meta.clips.idle ? 'idle/1/0' : 'v0';

@@ -2,6 +2,14 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M7.2 · fort, fort-closeup, wall-drag, wall-built (new); economy-placing-house
+- Walls join cleanly along both tile axes, around corners and into closed squares at all three levels; back arms
+  sit behind posts, front arms in front. Dragged diagonals read as stepped runs (inherent to a tile grid; the
+  original's diagonal walls also stepped). Fortification merlons and the tower line (timber → stone-based
+  sentry with tile roof → crenellated guard → guard with a roof ballista) read as a clear progression. Buildings 4.
+- Fixed during review: the Wall button showed a text fallback ("Sm") — walls now have an icon model.
+- Should-fix (M9): per-civ wall/tower styles; the ballista on the roof is small at zoom 1.
+
 ## 2026-09-29 · M7.1 · tower (new)
 - A Watch Tower's arrow leaves the platform (launch height 2.8 levels, not a soldier's shoulder) toward an
   intruding villager; the first attempt showed a bowman's arrow instead, so the test now moves player 1's army

@@ -7,6 +7,8 @@ import type { WorldRenderer } from '../render/worldRenderer.ts';
 import type { Selection } from './selection.ts';
 import { buildingTypeIndex, TYPES } from '../sim/rules/registry.ts';
 import { placementValid } from '../sim/systems/build.ts';
+import { currentBuilding } from '../sim/systems/production.ts';
+import { wallLine } from './wallLine.ts';
 import { isVillager } from '../sim/systems/gather.ts';
 import type { Action, CommandButton } from '../ui/commands.ts';
 
@@ -32,6 +34,8 @@ export class InputController {
   /** Command grid page and placement mode (UI state). */
   page: 'main' | 'build' = 'main';
   placing: string | null = null;
+  /** Press tile of a wall being dragged (walls are laid as a line from press to release). */
+  private wallFrom: { tx: number; ty: number } | null = null;
   /** Armed by the Attack Move button (A): the next left-click on the ground issues it. */
   targeting: 'attackMove' | null = null;
   private pointer = { x: 0, y: 0 };
@@ -65,7 +69,11 @@ export class InputController {
   private onDown(e: PointerEvent): void {
     const p = this.local({ x: e.clientX, y: e.clientY });
     if (this.placing) {
-      if (e.button === 0) this.place(p, e.shiftKey);
+      if (e.button === 0 && this.placingWall()) {
+        this.pointer = p;
+        this.wallFrom = this.ghostTile(1);
+        this.updateGhost();
+      } else if (e.button === 0) this.place(p, e.shiftKey);
       else if (e.button === 2) this.cancelPlacement();
       return;
     }
@@ -101,6 +109,11 @@ export class InputController {
   }
 
   private onUp(e: PointerEvent): void {
+    if (e.button === 0 && this.wallFrom && this.placing) {
+      this.pointer = this.local({ x: e.clientX, y: e.clientY });
+      this.placeWall(e.shiftKey);
+      return;
+    }
     if (e.button !== 0 || !this.down) return;
     const p = this.local({ x: e.clientX, y: e.clientY });
     const start = this.down;
@@ -256,9 +269,38 @@ export class InputController {
     return { tx: Math.round(w.x - size / 2), ty: Math.round(w.y - size / 2) };
   }
 
+  /** Is the building being placed a wall (dragged as a line)? */
+  private placingWall(): boolean {
+    return !!this.placing && TYPES[buildingTypeIndex(this.placing)]!.building!.kind === 'wall';
+  }
+
+  /** The wall tiles from the press to the pointer, each with whether a segment can go there. */
+  private wallTiles(): { tx: number; ty: number; ok: boolean }[] {
+    const to = this.ghostTile(1);
+    const from = this.wallFrom ?? to;
+    const ti = buildingTypeIndex(currentBuilding(this.world, this.session.localPlayer, this.placing!));
+    return wallLine(from.tx, from.ty, to.tx, to.ty).map(([tx, ty]) => ({ tx, ty, ok: placementValid(this.world, ti, tx, ty) }));
+  }
+
+  private placeWall(keep: boolean): void {
+    const tiles = this.wallTiles().filter((t) => t.ok);
+    const e = this.world.ents;
+    const villagers = this.ownUnits().filter((h) => isVillager(this.world, e.slotOf(h)));
+    tiles.forEach((t, i) => {
+      if (villagers.length) this.session.router.submit(this.session.localPlayer, { t: 'build', ids: villagers, type: this.placing!, tx: t.tx, ty: t.ty, queue: keep || i > 0 });
+    });
+    this.wallFrom = null;
+    if (!keep) this.cancelPlacement();
+    else this.updateGhost();
+  }
+
   private updateGhost(): void {
     if (!this.placing) {
       this.wr.drawGhost(null, 0, 0, 0, []);
+      return;
+    }
+    if (this.placingWall()) {
+      this.wr.drawGhostTiles(this.wallTiles());
       return;
     }
     const ti = buildingTypeIndex(this.placing);
@@ -266,7 +308,7 @@ export class InputController {
     const { tx, ty } = this.ghostTile(size);
     const ok: boolean[] = [];
     placementValid(this.world, ti, tx, ty, ok);
-    this.wr.drawGhost(this.placing, size, tx, ty, ok, this.session.localPlayer);
+    this.wr.drawGhost(currentBuilding(this.world, this.session.localPlayer, this.placing), size, tx, ty, ok, this.session.localPlayer);
   }
 
   private place(p: { x: number; y: number }, keep: boolean): void {
@@ -284,6 +326,7 @@ export class InputController {
 
   cancelPlacement(): void {
     this.placing = null;
+    this.wallFrom = null;
     this.page = 'main';
     this.wr.drawGhost(null, 0, 0, 0, []);
     this.onUiChange?.();

@@ -3,7 +3,7 @@ import { EKind } from '../sim/core/entities.ts';
 import { TYPES, buildingTypeIndex } from '../sim/rules/registry.ts';
 import { buildingAvailable, canAfford } from '../sim/systems/build.ts';
 import { isVillager } from '../sim/systems/gather.ts';
-import { MAX_QUEUE, producedType, researchBlocker, trainBlocker } from '../sim/systems/production.ts';
+import { MAX_QUEUE, currentBuilding, producedType, researchBlocker, trainBlocker } from '../sim/systems/production.ts';
 import type { World } from '../sim/world.ts';
 
 /**
@@ -66,16 +66,18 @@ export function computeCommands(w: World, player: number, selected: readonly num
   if (villagers.length && page === 'build') {
     for (const b of BUILDINGS) {
       const key = BUILD_KEYS[b.id];
-      if (!key || b.kind === 'wall' || b.kind === 'tower') continue;
-      const ti = buildingTypeIndex(b.id);
+      if (!key) continue;
+      // Walls and towers: one button per line, showing the level research has reached (Wall → Fortification).
+      const cur = currentBuilding(w, player, b.id);
+      const ti = buildingTypeIndex(cur);
       const avail = buildingAvailable(w, player, ti);
       if (!avail.ok && (avail.reason.startsWith('requires') ? p.stats.age + 1 < b.age : true)) continue; // hide far-future/disabled
       const cost = w.stats(player, ti).cost;
       out.push({
         id: `build:${b.id}`,
-        label: b.name,
+        label: TYPES[ti]!.building!.name,
         hotkey: key,
-        icon: b.id,
+        icon: cur,
         cost: [...cost] as [number, number, number, number],
         disabled: !avail.ok ? avail.reason : !canAfford(w, player, cost) ? 'not enough resources' : null,
         action: { kind: 'place', building: b.id },

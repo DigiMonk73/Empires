@@ -226,10 +226,10 @@ export function applyEffects(ps: PlayerStats, effects: readonly Effect[]): void 
         ps.enabled.add(`${e.kind}:${e.id}`);
         break;
       case 'upgrade': {
-        if (e.kind === 'unit') {
-          for (const [base, cur] of ps.upgrades) if (cur === e.from) ps.upgrades.set(base, e.to);
-          if (![...ps.upgrades.values()].includes(e.to)) ps.upgrades.set(e.from, e.to);
-        } else ps.enabled.add(`building:${e.to}`);
+        // A line's base id → its current member (unit and building ids never collide).
+        for (const [base, cur] of ps.upgrades) if (cur === e.from) ps.upgrades.set(base, e.to);
+        if (![...ps.upgrades.values()].includes(e.to)) ps.upgrades.set(e.from, e.to);
+        if (e.kind === 'building') ps.enabled.add(`building:${e.to}`);
         break;
       }
       case 'age':

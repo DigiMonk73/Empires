@@ -5,7 +5,7 @@ import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
-import { cancelUnit, queueResearch, queueUnit } from '../systems/production.ts';
+import { cancelUnit, currentBuilding, queueResearch, queueUnit } from '../systems/production.ts';
 import { startFarm } from '../systems/farm.ts';
 import { startAttack } from '../systems/combat.ts';
 
@@ -126,7 +126,9 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         break;
       }
       case 'build': {
-        const typeIdx = TYPES.findIndex((t) => t.building?.id === cmd.type);
+        // Walls and towers are built at the line's current level (after Medium Wall, a "Small Wall" is a Medium Wall).
+        const want = currentBuilding(w, player, cmd.type);
+        const typeIdx = TYPES.findIndex((t) => t.building?.id === want);
         const villagers = ownedUnitSlots(w, player, cmd.ids).filter((s) => isVillager(w, s));
         if (typeIdx < 0 || !villagers.length || !Number.isInteger(cmd.tx) || !Number.isInteger(cmd.ty)) {
           w.events.push({ t: 'rejected', player, reason: 'bad build command' });

@@ -24,7 +24,14 @@ interface EntityView {
   /** Construction-site pad under an unfinished building. */
   site: Sprite | null;
   lastKey: string;
+  /** Entity type when the view was made (research can change it: an upgraded unit, wall or tower). */
+  type: number;
+  /** Wall segments: the level's art id ('mediumWall') and the arm sprites toward joined neighbours. */
+  wall?: { level: string; arms: Sprite[]; mask: number };
 }
+
+/** The 8 neighbour directions in the arm variants' order (d·45° from +x toward +y). */
+const DIRS8: readonly (readonly [number, number])[] = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
 
 /** Construction shows in 10 steps: the building rises out of its site from the bottom of the sprite up. */
 const BUILD_STAGES = 10;
@@ -199,6 +206,20 @@ export class WorldRenderer {
   private createView(slot: number): EntityView {
     const e = this.world.ents;
     const typeId = TYPES[e.type[slot]!]!.id;
+    const bdef = TYPES[e.type[slot]!]!.building;
+    if (bdef?.kind === 'wall' && this.art?.frame(`${typeId}Post`, 'v0')) {
+      // A wall segment: post + arms toward neighbouring segments (set up in updateWall).
+      const root = new Container();
+      root.sortableChildren = true;
+      const f = this.art.frame(`${typeId}Post`, 'v0')!;
+      const base = new Sprite(f.tex);
+      base.anchor.set(f.anchorX, f.anchorY);
+      base.scale.set(1 / this.art.meta(`${typeId}Post`)!.scale);
+      base.zIndex = 1;
+      root.addChild(base);
+      this.objectLayer.addChild(root);
+      return { handle: e.handleOf(slot), root, base, team: null, model: null, building: null, site: null, lastKey: '', type: e.type[slot]!, wall: { level: typeId, arms: [], mask: -1 } };
+    }
     if (e.kind[slot] === EKind.unit && this.art?.meta(typeId)?.clips.idle) {
       const root = new Container();
       const base = new Sprite();
@@ -206,7 +227,7 @@ export class WorldRenderer {
       team.tint = playerColor(e.owner[slot]!);
       root.addChild(base, team);
       this.objectLayer.addChild(root);
-      return { handle: e.handleOf(slot), root, base, team, model: typeId, building: null, site: null, lastKey: '' };
+      return { handle: e.handleOf(slot), root, base, team, model: typeId, building: null, site: null, lastKey: '', type: e.type[slot]! };
     }
     if (e.kind[slot] === EKind.building) {
       const f = this.art?.frame(typeId, 'v0');
@@ -226,7 +247,7 @@ export class WorldRenderer {
           root.addChild(team);
         }
         this.objectLayer.addChild(root);
-        return { handle: e.handleOf(slot), root, base, team, model: null, building: typeId, site: null, lastKey: '' };
+        return { handle: e.handleOf(slot), root, base, team, model: null, building: typeId, site: null, lastKey: '', type: e.type[slot]! };
       }
     }
     const art = this.artFor(e.type[slot]!);
@@ -242,7 +263,7 @@ export class WorldRenderer {
       root.addChild(team);
     }
     this.objectLayer.addChild(root);
-    return { handle: e.handleOf(slot), root, base, team, model: null, building: null, site: null, lastKey: '' };
+    return { handle: e.handleOf(slot), root, base, team, model: null, building: null, site: null, lastKey: '', type: e.type[slot]! };
   }
 
   /** Pick the baked frame for a unit from its activity, facing and time in activity. */
@@ -355,6 +376,52 @@ export class WorldRenderer {
   }
 
   /** Baked buildings: construction reveal over a site pad; farms show their crop stage by food left. */
+  /**
+   * A wall segment joins the neighbouring segments of the same owner: an arm toward each orthogonal neighbour,
+   * and toward a diagonal one only where no orthogonal segment already turns that corner. Arms toward the back
+   * draw behind the post. Rebuilt when the map's occupancy changes (a segment built or destroyed).
+   */
+  private updateWall(v: EntityView, s: number): void {
+    const e = this.world.ents;
+    const m = this.world.map;
+    const built = e.build[s]! >= 1;
+    const tx = Math.floor(e.x[s]!);
+    const ty = Math.floor(e.y[s]!);
+    const own = e.owner[s]!;
+    const isWall = (x: number, y: number): boolean => {
+      if (!m.inBounds(x, y)) return false;
+      const j = e.slotOf(m.bldAt[m.idx(x, y)]! - 1);
+      return j >= 0 && e.owner[j] === own && e.build[j]! >= 1 && TYPES[e.type[j]!]!.building?.kind === 'wall';
+    };
+    let mask = 0;
+    if (built) {
+      DIRS8.forEach(([dx, dy], d) => {
+        if (!isWall(tx + dx, ty + dy)) return;
+        if (dx && dy && (isWall(tx + dx, ty) || isWall(tx, ty + dy))) return;
+        mask |= 1 << d;
+      });
+    }
+    v.base.alpha = built ? 1 : 0.35 + 0.65 * e.build[s]!;
+    if (mask === v.wall!.mask) return;
+    v.wall!.mask = mask;
+    for (const a of v.wall!.arms) a.destroy();
+    v.wall!.arms = [];
+    const id = `${v.wall!.level}Arm`;
+    const meta = this.art!.meta(id);
+    if (!meta) return;
+    DIRS8.forEach(([dx, dy], d) => {
+      if (!(mask & (1 << d))) return;
+      const f = this.art!.frame(id, `v${d}`);
+      if (!f) return;
+      const a = new Sprite(f.tex);
+      a.anchor.set(f.anchorX, f.anchorY);
+      a.scale.set(1 / meta.scale);
+      a.zIndex = dx + dy > 0 ? 2 : 0; // toward the viewer: in front of the post
+      v.root.addChild(a);
+      v.wall!.arms.push(a);
+    });
+  }
+
   private updateBuilding(v: EntityView, s: number): void {
     const e = this.world.ents;
     const id = v.building!;
@@ -407,7 +474,7 @@ export class WorldRenderer {
     for (let s = 0; s < Math.max(e.top, this.views.length); s++) {
       let v = this.views[s];
       const alive = s < e.top && e.alive[s] === 1;
-      if (v && (!alive || v.handle !== e.handleOf(s))) {
+      if (v && (!alive || v.handle !== e.handleOf(s) || v.type !== e.type[s])) {
         v.root.destroy({ children: true });
         this.views[s] = v = undefined;
       }
@@ -426,6 +493,7 @@ export class WorldRenderer {
       v.root.visible =
         e.owner[s] === player || (e.kind[s] === EKind.building ? this.fog.isExplored(player, tx, ty) : this.fog.isVisible(player, tx, ty));
       if (v.model) this.animate(v, s, alpha);
+      else if (v.wall) this.updateWall(v, s);
       else if (v.building) this.updateBuilding(v, s);
       else if (e.kind[s] === EKind.building) v.root.alpha = e.build[s]! < 1 ? 0.35 + 0.65 * e.build[s]! : 1;
       // Placeholders: face left/right by world direction projected to screen.
@@ -549,6 +617,17 @@ export class WorldRenderer {
    * Building placement ghost at tile (tx, ty): the building drawn translucent plus a green/red diamond per
    * footprint tile. Pass typeId null to hide.
    */
+  /** Placement preview for a wall line: one diamond per segment, green where it can go. */
+  drawGhostTiles(tiles: readonly { tx: number; ty: number; ok: boolean }[]): void {
+    const g = this.ghostGfx.clear();
+    if (this.ghostSprite) this.ghostSprite.visible = false;
+    const p = { x: 0, y: 0 };
+    for (const t of tiles) {
+      worldToIso(t.tx, t.ty, 0, p);
+      g.poly([p.x, p.y, p.x + 32, p.y + 16, p.x, p.y + 32, p.x - 32, p.y + 16]).fill({ color: t.ok ? 0x40ff60 : 0xff3030, alpha: 0.35 });
+    }
+  }
+
   drawGhost(typeId: string | null, size: number, tx: number, ty: number, tileOk: readonly boolean[], owner = 1): void {
     const g = this.ghostGfx.clear();
     if (!typeId) {

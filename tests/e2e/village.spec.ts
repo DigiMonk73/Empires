@@ -52,3 +52,59 @@ test('village through the ages: Tool mudbrick, Bronze stone and tile', async ({ 
   await expect(page.getByTestId('age')).toHaveText('Bronze Age');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('fort: walls join into lines, corners and a closed square at every level; the tower line', async ({ page }, info) => {
+  await openGame(page, 'scenario=fort&fog=0&paused=1');
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1);
+    window.__empires!.camera.centerOn(15, 13);
+  });
+  await frames(page);
+  await snap(page, info, 'fort');
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(2);
+    window.__empires!.camera.centerOn(7, 9);
+  });
+  await frames(page);
+  await snap(page, info, 'fort-closeup');
+  expect(pageErrors(page)).toEqual([]);
+});
+
+test('walls by mouse: Build → W, drag a line, villagers raise it segment by segment', async ({ page }, info) => {
+  await openGame(page, 'scenario=fort&fog=0&paused=1');
+  await page.evaluate(() => {
+    const api = window.__empires!;
+    api.grantTech(1, 'toolAge');
+    api.grantTech(1, 'smallWall');
+    api.camera.setZoom(1);
+    api.camera.centerOn(10, 27);
+  });
+  await frames(page);
+  const v = (await page.evaluate(() => window.__empires!.query.units(1)))[0]!;
+  const at = (x: number, y: number) => page.evaluate(([a, b]) => window.__empires!.worldToScreen(a!, b!), [x, y] as const);
+  const vp = (await page.evaluate((h) => window.__empires!.entityScreenPos(h), v.h))!;
+  await page.mouse.click(vp.x, vp.y - 12);
+  expect(await page.evaluate(() => window.__empires!.query.selection())).toEqual([v.h]);
+  await page.keyboard.press('b');
+  await page.keyboard.press('w');
+  // Drag from tile (6, 29) to tile (14, 29): nine segments.
+  const a = await at(6.5, 29.5);
+  const b = await at(14.5, 29.5);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move((a.x + b.x) / 2, (a.y + b.y) / 2, { steps: 4 });
+  await page.mouse.move(b.x, b.y, { steps: 4 });
+  await frames(page);
+  await snap(page, info, 'wall-drag');
+  await page.mouse.up();
+  await page.evaluate(() => window.__empires!.step(1)); // orders apply on the next tick
+  const sites = await page.evaluate(() => Array.from({ length: 9 }, (_, i) => window.__empires!.buildingAt(6 + i, 29)));
+  expect(sites.every((h) => h !== null)).toBe(true);
+  await page.evaluate(() => window.__empires!.step(20 * 110));
+  await frames(page);
+  await snap(page, info, 'wall-built');
+  // Built: the villager moved on to the last segment and is done.
+  const built = await page.evaluate(() => window.__empires!.query.units(1)[0]!.hasOrder);
+  expect(built).toBe(false);
+  expect(pageErrors(page)).toEqual([]);
+});

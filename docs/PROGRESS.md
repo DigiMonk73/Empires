@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M7.2 walls (drag placement, joined segments, upgrades), then M7.3 siege.
+- **Next up:** M7.3 siege (Siege Workshop, stone thrower and ballista lines, AI uses siege to raze).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -296,8 +296,14 @@ each one *work* in the sim, UI and AI, one slice at a time.
 - [x] **M7.1 Towers shoot.** `towerSystem`: finished towers fire at the nearest visible hostile unit in range
       (edge to edge), stick to it while in range, ignore wildlife; arrows leave from the platform. (Towers were
       buildable since M5 but never fired.) Unit tests + e2e `tower` with a `missiles()` debug query.
-- [ ] **M7.2 Walls.** Drag-to-place wall lines (8 directions, stone per segment), segment art that joins
-      neighbours, Small → Medium → Fortification upgrades, tower line upgrades (Sentry/Guard/Ballista).
+- [x] **M7.2 Walls.** Build menu gains Wall (W) and Tower (T) — one button per line, always the level research
+      reached (they were never player-buildable before). Walls are dragged: press → release lays a Bresenham line,
+      one queued foundation per segment (5 stone each); diagonal steps still seal (no corner cutting). Research
+      upgrades walls and towers standing in the field (+HP difference); a Wall order builds the current level.
+      Art: post + 8-direction arms per level (mudbrick / dressed stone / crenellated fortification) joined by the
+      renderer, arms toward the back behind the post; Sentry, Guard and Ballista towers; wall icons. Views rebuild
+      when research changes an entity's type — which also fixes upgraded units (e.g. Battle Axe) keeping their old
+      sprite since M5. `?scenario=fort` for review. Tests: walls.test.ts; e2e fort, walls-by-mouse.
 - [ ] **M7.3 Siege.** Siege Workshop; Stone Thrower → Catapult → Heavy Catapult (blast, friendly fire, min range),
       Ballista → Helepolis; Engineering/Ballistics effects; art. AI builds siege for razing.
 - [ ] **M7.4 Iron Age + army lines.** Iron Age advance; Short → Broad → Long Swordsman → Legion; Academy
