@@ -94,6 +94,12 @@ export function kill(w: World, s: number, by = -1): number {
     if (building) bt.razed++;
     else bt.kills++;
   }
+  // A sunk transport takes everyone aboard down with it (M8.4).
+  const aboard = w.cargo[s]?.length ?? 0;
+  if (aboard && owner > 0) {
+    w.players[owner]!.tally.losses += aboard;
+    if (by > 0 && by !== owner) w.players[by]!.tally.kills += aboard;
+  }
   let carcass = -1;
   if (t.animal) {
     const kind = resourceKindIndex(`carcass:${t.animal.id}`);

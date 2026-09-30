@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.3 done (fishing, warships, repair); next M8.4 transports. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
+- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.4 done (fishing, warships, repair, transports); next M8.5 trade. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -393,9 +393,13 @@ Ships already train at the Dock and path on water (their own move class and regi
       (econ:1.2) against the build/train time, stacking (n + 2) / 3; buildings free, ships and siege half their
       price pro rata, pausing while unpaid; ships from the shore only (D36, `verify:true`). `systems/repair.ts`,
       command `repair` (codec 14). Tests: repair.test.ts (7) + village e2e (right-click and R).
-- [ ] **M8.4 Transports.** Light (5) / Heavy (10) Transport: land units board by right-click, the transport
-      unloads by right-click on a shore; units inside are safe, lost with a sunk transport. _Accept:_ unit tests
-      (capacity, unload onto reachable land, lost on sinking), e2e ferry across a strait.
+- [x] **M8.4 Transports.** Light (5) / Heavy (10): land units right-click an own transport to board from the shore
+      (they leave the map as cargo records; population and conquest still count them), a loaded transport
+      right-clicked on land sails to the nearest water and lands everyone (Unload, L: land here), a sunk one
+      takes its cargo down (D37). Panel shows "Aboard n / 5". SIM_VERSION 0.8.0 (cargo in saves and the hash).
+      Tests: transport.test.ts (5) + ferry e2e (`?scenario=harbor&ferry=1`). Found in review: the top bar
+      recounted population itself and missed riders, Logistics' half-pop and the game's pop limit — it now
+      shows the sim's own pop / cap.
 - [ ] **M8.5 Trade.** Trade Boat → Merchant Ship carry 20 of a chosen resource to another player's Dock and
       return gold; payout grows with distance (formula unverified → `verify:true`, DECISIONS entry). _Accept:_ unit
       test of a round trip; e2e.

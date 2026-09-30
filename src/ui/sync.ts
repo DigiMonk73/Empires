@@ -28,17 +28,11 @@ export function syncHud(world: World, player: number, selected: readonly number[
     hud.age.value = AGE_NAMES[p.stats.age] ?? 'Stone Age';
   }
   const e = world.ents;
-  let pop = 0;
-  let cap = 0;
-  for (let s = 0; s < e.top; s++) {
-    if (!e.alive[s] || e.owner[s] !== player) continue;
-    const t = TYPES[e.type[s]!]!;
-    if (e.kind[s] === EKind.unit) pop += t.unit?.pop ?? 1;
-    else if (e.build[s]! >= 1) cap += t.building?.popProvided ?? 0;
-  }
-  hud.pop.value = pop;
+  // The sim's own count: it knows Logistics (half-pop barracks units), the game's population limit and the units
+  // aboard transports — recounting here missed all three.
+  hud.pop.value = p?.pop ?? 0;
   hud.idleVillagers.value = idleVillagers(world, player).length;
-  hud.popCap.value = Math.min(cap, POPULATION.default);
+  hud.popCap.value = p?.popCap ?? 0;
   hud.clock.value = fmtClock(world.tick);
   hud.playerColor.value = `#${playerColor(player).toString(16).padStart(6, '0')}`;
   const sel: SelInfo[] = [];
@@ -66,8 +60,11 @@ export function syncHud(world: World, player: number, selected: readonly number[
   // Single-selection extras: a villager's load, a farm's food left, a building's queue.
   const one = selected.length === 1 ? e.slotOf(selected[0]!) : -1;
   const field = one >= 0 && e.kind[one] === EKind.building && TYPES[e.type[one]!]!.building?.kind === 'farm' && e.build[one]! >= 1;
+  const transport = one >= 0 && e.kind[one] === EKind.unit && TYPES[e.type[one]!]!.unit?.cls === 'transport';
   hud.carry.value = field
     ? `Food ${Math.ceil(e.stock[one]!)}`
+    : transport
+      ? `Aboard ${world.cargo[one]?.length ?? 0} / ${world.stats(e.owner[one]!, e.type[one]!).capacity}`
     : one >= 0 && e.carryAmt[one]! > 0
       ? `Carrying ${Math.floor(e.carryAmt[one]!)} ${CARRY_NAMES[e.carryJob[one]! - 1] ?? ''}`
       : '';

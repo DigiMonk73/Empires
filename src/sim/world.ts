@@ -1,4 +1,5 @@
 import { RESOURCES } from '../data/types.ts';
+import type { CargoUnit } from './systems/transport.ts';
 import { STARTING_RESOURCES, type AiLevel, type StartingResources } from '../data/setup.ts';
 import { terrainIndex } from '../data/terrain.ts';
 import { Act, EKind, EntityStore } from './core/entities.ts';
@@ -134,6 +135,10 @@ export type Order =
   | { k: 'build'; h: number; phase: 0 | 1; retry: number }
   /** Repair own damaged building, ship or siege weapon `h` (phase 0 = walking, 1 = mending). */
   | { k: 'repair'; h: number; phase: 0 | 1; retry: number }
+  /** A land unit walking to the shore beside own transport `h` to step aboard. */
+  | { k: 'board'; h: number; retry: number }
+  /** A transport sailing to the water nearest (x, y) to land its cargo there. */
+  | { k: 'unload'; x: number; y: number; retry: number }
   /** Farm field `h` (phases as gather). */
   | { k: 'farm'; h: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
@@ -188,6 +193,8 @@ export class World {
   /** Per-building production queues and rally points (cold data). */
   prod: (Production | undefined)[] = [];
   rally: (Rally | undefined)[] = [];
+  /** Transports: the units aboard, by transport slot (M8.4). */
+  cargo: (CargoUnit[] | undefined)[] = [];
   events: SimEvent[] = [];
   /** Game population limit (config). */
   readonly popLimit: number;
@@ -326,6 +333,7 @@ export class World {
     this.orders[slot] = undefined;
     this.paths[slot] = undefined;
     this.prod[slot] = undefined;
+    this.cargo[slot] = undefined;
     this.rally[slot] = undefined;
     this.pathing.cancel(slot);
     unstampLos(this, slot);

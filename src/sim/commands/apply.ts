@@ -4,6 +4,7 @@ import type { World } from '../world.ts';
 import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
 import { startRepair } from '../systems/repair.ts';
+import { isTransport, startBoard, startUnload } from '../systems/transport.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
 import { cancelUnit, currentBuilding, queueResearch, queueUnit } from '../systems/production.ts';
@@ -145,6 +146,9 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'repair':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) startRepair(w, slot, cmd.h, !!cmd.queue);
         break;
+      case 'unload':
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) startUnload(w, slot, cmd.x, cmd.y);
+        break;
       case 'act': {
         const t = w.ents.slotOf(cmd.h);
         if (t < 0) break;
@@ -152,6 +156,8 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
           if (isPriest(w, slot)) {
             // Priests: right-click converts an enemy, heals a friend.
             if (!startConvert(w, slot, cmd.h, !!cmd.queue)) startHeal(w, slot, cmd.h, !!cmd.queue);
+          } else if (isTransport(w, t) && w.ents.owner[t] === player) {
+            startBoard(w, slot, cmd.h, !!cmd.queue); // own transport: step aboard
           } else if (w.ents.kind[t] === EKind.building && w.ents.owner[t] === player) {
             if (w.ents.build[t]! < 1) startConstruct(w, slot, cmd.h, !!cmd.queue);
             else startFarm(w, slot, cmd.h, !!cmd.queue);

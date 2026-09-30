@@ -42,6 +42,8 @@ export function hashBreakdown(w: World): Record<string, number> {
     const ra = w.rally[s];
     if (pr) oh.u32(s).str(JSON.stringify(pr));
     if (ra) oh.u32(s).str(JSON.stringify(ra));
+    const ca = w.cargo[s];
+    if (ca) oh.u32(s).str(JSON.stringify(ca));
   }
   for (const pj of w.projectiles) oh.str(JSON.stringify(pj));
   if (w.gameOver) oh.str(JSON.stringify(w.gameOver));

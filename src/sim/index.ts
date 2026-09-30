@@ -7,6 +7,7 @@ import { populationSystem } from './systems/population.ts';
 import { gatherSystem } from './systems/gather.ts';
 import { buildSystem } from './systems/build.ts';
 import { repairSystem } from './systems/repair.ts';
+import { transportSystem } from './systems/transport.ts';
 import { productionSystem } from './systems/production.ts';
 import { victorySystem } from './systems/victory.ts';
 import { farmSystem } from './systems/farm.ts';
@@ -60,6 +61,7 @@ export class Sim {
     farmSystem(w);
     buildSystem(w);
     repairSystem(w);
+    transportSystem(w);
     attackSystem(w);
     priestSystem(w);
     towerSystem(w);

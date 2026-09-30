@@ -11,6 +11,8 @@ import { currentBuilding } from '../sim/systems/production.ts';
 import { wallLine } from './wallLine.ts';
 import { isVillager } from '../sim/systems/gather.ts';
 import { repairable } from '../sim/systems/repair.ts';
+import { isTransport } from '../sim/systems/transport.ts';
+import { MOVE_LAND } from '../data/terrain.ts';
 import type { Action, CommandButton } from '../ui/commands.ts';
 
 const DRAG_THRESHOLD = 5;
@@ -211,6 +213,26 @@ export class InputController {
       this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);
       return;
     }
+    // Land units: right-click an own transport to board it (repair a transport with R).
+    if (ts >= 0 && e.owner[ts] === me && isTransport(this.world, ts)) {
+      const riders = ids.filter((h) => TYPES[e.type[e.slotOf(h)]!]!.moveClass === MOVE_LAND);
+      if (riders.length) {
+        this.session.router.submit(me, { t: 'act', ids: riders, h: target, queue });
+        this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0x7ae07a);
+        return;
+      }
+    }
+    // Loaded transports: right-click land to sail there and set everyone down; the rest of the selection moves.
+    if (w.x >= 0 && w.y >= 0 && w.x < map.w && w.y < map.h && map.passable(Math.floor(w.x), Math.floor(w.y), MOVE_LAND)) {
+      const loaded = ids.filter((h) => isTransport(this.world, e.slotOf(h)) && this.world.cargo[e.slotOf(h)]?.length);
+      if (loaded.length) {
+        this.session.router.submit(me, { t: 'unload', ids: loaded, x: quantize(w.x), y: quantize(w.y) });
+        this.wr.addMarker(w.x, w.y, 0x7ae07a);
+        const rest = ids.filter((h) => !loaded.includes(h));
+        if (rest.length) this.session.router.submit(me, { t: 'move', ids: rest, x: quantize(w.x), y: quantize(w.y), queue });
+        return;
+      }
+    }
     // Villagers: right-click an own damaged building, ship or siege weapon to repair it (foundations and fields are
     // handled below).
     const menders = ids.filter((h) => isVillager(this.world, e.slotOf(h)));
@@ -281,6 +303,15 @@ export class InputController {
       case 'stop':
         this.session.router.submit(me, { t: 'stop', ids: this.ownUnits() });
         break;
+      case 'unload': {
+        // Land here: each loaded transport sets its cargo down on the shore nearest where it is.
+        const e = this.world.ents;
+        for (const h of this.ownUnits()) {
+          const s = e.slotOf(h);
+          if (isTransport(this.world, s) && this.world.cargo[s]?.length) this.session.router.submit(me, { t: 'unload', ids: [h], x: quantize(e.x[s]!), y: quantize(e.y[s]!) });
+        }
+        break;
+      }
     }
     this.onUiChange?.();
   }

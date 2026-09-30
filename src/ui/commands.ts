@@ -19,6 +19,7 @@ export type Action =
   | { kind: 'stance'; stand: boolean }
   | { kind: 'attackMove' }
   | { kind: 'repair' }
+  | { kind: 'unload' }
   | { kind: 'stop' };
 
 export interface CommandButton {
@@ -101,6 +102,10 @@ export function computeCommands(w: World, player: number, selected: readonly num
     out.push({ id: 'repair', label: 'Repair', hotkey: 'R', icon: null, glyph: '⚒', cost: null, disabled: null, action: { kind: 'repair' } });
   }
   if (units.length) out.push({ id: 'stop', label: 'Stop', hotkey: 'S', icon: null, glyph: '✋', cost: null, disabled: null, action: { kind: 'stop' } });
+  // Unload (the original's L): loaded transports set everyone down on the nearest shore.
+  if (units.some((s) => TYPES[e.type[s]!]!.unit?.cls === 'transport' && w.cargo[s]?.length)) {
+    out.push({ id: 'unload', label: 'Unload', hotkey: 'L', icon: null, glyph: '⚓', cost: null, disabled: null, action: { kind: 'unload' } });
+  }
   // Stand Ground (the original's only stance) for fighting units; the button shows whether it is on.
   const fighters = units.filter((s) => !isVillager(w, s) && w.stats(player, e.type[s]!).atk.some((v) => v !== undefined && v > 0));
   if (fighters.length) {

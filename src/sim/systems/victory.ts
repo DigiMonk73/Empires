@@ -17,6 +17,7 @@ export function victorySystem(w: World): void {
   for (let s = 0; s < e.top; s++) {
     if (!e.alive[s]) continue;
     const t = TYPES[e.type[s]!]!;
+    counts[e.owner[s]!]! += w.cargo[s]?.length ?? 0; // an army aboard a transport is still an army
     if (e.kind[s] === EKind.building ? t.building!.kind === 'wall' : EXEMPT.has(t.unit?.cls ?? '')) continue;
     counts[e.owner[s]!]!++;
   }

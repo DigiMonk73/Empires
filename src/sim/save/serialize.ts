@@ -1,4 +1,5 @@
 import { EntityStore } from '../core/entities.ts';
+import type { CargoUnit } from '../systems/transport.ts';
 import { ResourceStore } from '../core/resources.ts';
 import type { RngState } from '../math/rng.ts';
 import type { PathRequest } from '../path/service.ts';
@@ -40,6 +41,7 @@ interface Header {
   paths: [number, number[]][];
   prod: [number, Production][];
   rally: [number, Rally][];
+  cargo: [number, CargoUnit[]][];
   projectiles: Projectile[];
   pathQueue: PathRequest[];
   blobs: BlobRef[];
@@ -73,7 +75,9 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
   const paths: [number, number[]][] = [];
   const prod: [number, Production][] = [];
   const rally: [number, Rally][] = [];
+  const cargo: [number, CargoUnit[]][] = [];
   for (let s = 0; s < e.top; s++) {
+    if (w.cargo[s]) cargo.push([s, w.cargo[s]!.map((c) => ({ ...c }))]);
     if (w.orders[s]) orders.push([s, w.orders[s]!]);
     if (w.paths[s]) paths.push([s, w.paths[s]!]);
     if (w.prod[s]) prod.push([s, w.prod[s]!]);
@@ -98,6 +102,7 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     paths,
     prod,
     rally,
+    cargo,
     projectiles: w.projectiles.map((p) => ({ ...p })),
     pathQueue: w.pathing.queueSnapshot(),
     blobs: refs,
@@ -177,6 +182,8 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
   w.rally = [];
   for (const [s, p] of header.prod) w.prod[s] = p;
   for (const [s, r] of header.rally) w.rally[s] = r;
+  w.cargo = [];
+  for (const [s, c] of header.cargo) w.cargo[s] = c;
   w.projectiles = header.projectiles.map((p) => ({ ...p }));
   w.pathing.restoreQueue(header.pathQueue);
   w.grid.rebuild(w.ents);

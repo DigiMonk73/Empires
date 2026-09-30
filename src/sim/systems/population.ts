@@ -12,7 +12,10 @@ export function populationSystem(w: World): void {
     if (!e.alive[s]) continue;
     const p = w.players[e.owner[s]!]!;
     const st = p.stats.types[e.type[s]!]!;
-    if (e.kind[s] === EKind.unit) p.pop += st.pop;
+    if (e.kind[s] === EKind.unit) {
+      p.pop += st.pop;
+      for (const c of w.cargo[s] ?? []) p.pop += p.stats.types[c.type]!.pop; // aboard a transport (M8.4)
+    }
     else if (e.build[s]! >= 1) p.popCap += st.popProvided;
   }
   for (const p of w.players) p.popCap = Math.min(p.popCap, w.popLimit);

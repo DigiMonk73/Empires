@@ -67,3 +67,41 @@ test('sea battle: select a War Galley, right-click an enemy Scout Ship, it sinks
   expect(left.length).toBe(0);
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('ferry: clubmen board a transport by right-click, and it lands them down the coast', async ({ page }, info) => {
+  await openGame(page, 'scenario=harbor&ferry=1&fog=0&paused=1');
+  await page.evaluate(() => window.__empires!.camera.centerOn(13, 6));
+  await frames(page);
+  // Box-select the three clubmen (a box around where they stand on screen), right-click the transport.
+  const pts = await page.evaluate(() => window.__empires!.query.units(1).filter((u) => u.type === 'clubman').map((u) => window.__empires!.entityScreenPos(u.h)!));
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  await page.mouse.move(Math.min(...xs) - 25, Math.min(...ys) - 40);
+  await page.mouse.down();
+  await page.mouse.move(Math.max(...xs) + 25, Math.max(...ys) + 15, { steps: 4 });
+  await page.mouse.up();
+  expect((await page.evaluate(() => window.__empires!.query.selection())).length).toBe(3);
+  const tr = (await page.evaluate(() => window.__empires!.query.units(1))).find((u) => u.type === 'lightTransport')!;
+  const tp = await page.evaluate((h) => window.__empires!.entityScreenPos(h), tr.h);
+  await page.mouse.click(tp!.x, tp!.y - 6, { button: 'right' });
+  await page.evaluate(() => window.__empires!.step(20 * 10));
+  await frames(page);
+  expect((await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'clubman').length).toBe(0);
+  // Select the transport: it shows who is aboard, then right-click the shore down the coast.
+  const tp2 = await page.evaluate((h) => window.__empires!.entityScreenPos(h), tr.h);
+  await page.mouse.click(tp2!.x, tp2!.y - 6);
+  await frames(page);
+  await page.waitForTimeout(150);
+  await expect(page.getByText('Aboard 3 / 5')).toBeVisible();
+  await expect(page.getByTestId('pop')).toHaveText('6/4'); // riders still count (the HUD used to recount and miss them)
+  await expect(page.getByTestId('cmd-unload')).toBeVisible();
+  await snap(page, info, 'ferry-aboard');
+  const land = await page.evaluate(() => window.__empires!.worldToScreen(12.5, 11.5));
+  await page.mouse.click(land.x, land.y, { button: 'right' });
+  await page.evaluate(() => window.__empires!.step(20 * 20));
+  await frames(page);
+  const clubmen = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'clubman');
+  expect(clubmen.length).toBe(3);
+  for (const c of clubmen) expect(c.y).toBeGreaterThan(8);
+  expect(pageErrors(page)).toEqual([]);
+});

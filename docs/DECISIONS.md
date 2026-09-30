@@ -164,3 +164,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   price pro rata to the HP restored (mil:1b says "a share" — 50% is the later games' rule), and repair pauses
   while the player can't pay. A ship is repaired from the shore: out at sea it is out of reach. R, then
   left-click, or right-click with villagers.
+- **D37 — Transports** (2026-09-30, M8.4). Light Transport 5, Heavy 10 (mil:1b). Any own land unit boards by
+  right-clicking an own transport: it walks to the shore beside it and steps aboard when within reach, leaving
+  the map — its record (type, HP, faith, stance, load) rides in `world.cargo` and population and conquest still
+  count it. Right-click land with a loaded transport (or L: land here): it sails to the water nearest that point
+  and sets everyone down on free land within 2.6 tiles; whoever finds no room stays aboard. A sunk transport's
+  cargo is lost (tallied as losses/kills). Cargo lands as the transport's owner, so a converted transport's
+  riders change sides (the original's behaviour here is unverified). Save format: SIM_VERSION 0.8.0.

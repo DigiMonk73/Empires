@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.4 · ferry-aboard (new)
+- A selected Light Transport: "Aboard 3 / 5" in the panel, Unload (L, ⚓) in the grid; the clubmen are off the
+  map. Must-fix found and fixed: the top bar read 3/4 — it recounted units itself (missing riders, Logistics,
+  pop limit); it now shows the sim's 6/4. Transport art is the shared placeholder (M8.6).
+
 ## 2026-09-30 · M8.3 · repair (new); villager command grids
 - The villager grid gains Repair (R, ⚒) between Build and Stop; a villager walks to a damaged house. Should-fix
   (M10): a house at 20/75 HP looks untouched — damage fire/smoke below 75/50/25% (PLAN art pipeline) isn't
