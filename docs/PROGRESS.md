@@ -3,12 +3,12 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1–M9.4 done: Academy, alligator, architecture kits, Egyptian and Babylonian sets, distinct building shapes). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.4 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion in progress (M9.1–M9.5 done: Academy, alligator, architecture kits, Egyptian, Babylonian and Asian sets, distinct building shapes). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.5 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
-  get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit; Asian and Roman follow in
-  M9.5–M9.6. Review tools:
+  get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit, Choson/Shang/Yamato the Asian kit;
+  Roman follows in M9.6. Review tools:
   `node tools/frames.ts <model> out.png` (contact sheets), `node tools/gallery.ts <civs> <ages>` (every
   building + animals, `?scenario=gallery&civ=…`, after `npx vite build`) → `artifacts/gallery/`.
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9.5 Asian and M9.6 Roman kits (drafted in `arch/asian.ts`, `arch/roman.ts`, not registered yet).
+- **Next up:** M9.6 Roman kit (drafted in `arch/roman.ts`, not registered yet), then the Greek Iron-age variants.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -500,8 +500,12 @@ Macedonian, Palmyran, Roman.
       baked brick with a blue glazed rosette frieze, arched doors, Persian bull-capital columns; Iron: blue glazed
       walls with striding lions and gilded merlons. Stela → lion landmark; a ziggurat temple; a four-terrace
       ziggurat Wonder with hanging gardens and a triple stair.
-- [ ] **M9.5 Asian set.** Timber frames, red lacquer, curved tiled roofs with upturned eaves, stone bases,
-      lanterns; a pagoda Wonder.
+- [x] **M9.5 Asian set** (`arch/asian.ts`: Choson, Shang, Yamato). Stone: pit dwellings whose thatch reaches
+      the ground; Tool: timber halls on raised floors under steep thatched gables with crossed finials and ridge
+      logs, granaries on stilts with rat guards; Bronze: red lacquered columns on stone bases, white walls,
+      grey-tiled roofs that curve up at the corners (`curvedRoof`); Iron: double eaves, painted brackets, gilded
+      ridge jewels. Bird pole → stone lantern → bronze ritual cauldron; a temple hall on a terrace behind a
+      gateway; a five-storey pagoda Wonder with a gilded spire. `arch.test` now checks every registered set.
 - [ ] **M9.6 Roman set.** Terracotta roofs, arcades, brick and concrete, marble porticoes, domes; a domed
       temple Wonder. Then the Greek set's Iron-age variants.
 - [ ] **M9.7 Icons and portraits.** Baked tech icons (every research button: the upgraded unit, the tool, the

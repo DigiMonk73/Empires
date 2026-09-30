@@ -33,8 +33,12 @@ describe('architecture sets', () => {
       expect(r.own, id).toBe(b!.age - 1);
       expect(r.footprint, id).toBe(b!.size);
     }
-    const egyptian = MODELS.filter((m) => m.id.endsWith('_egyptian'));
-    expect(egyptian.map((m) => m.id.replace(/_egyptian$/, '')).sort()).toEqual(Object.keys(RECIPES).sort());
-    for (const m of egyptian) expect(m.variants).toBe(4 - RECIPES[m.id.replace(/_egyptian$/, '')]!.own);
+    const sets = new Set(MODELS.map((m) => /_([a-z]+)$/.exec(m.id)?.[1]).filter((x): x is string => !!x));
+    expect(sets.has('egyptian')).toBe(true);
+    for (const set of sets) {
+      const ms = MODELS.filter((m) => m.id.endsWith(`_${set}`));
+      expect(ms.map((m) => m.id.replace(`_${set}`, '')).sort(), set).toEqual(Object.keys(RECIPES).sort());
+      for (const m of ms) expect(m.variants, m.id).toBe(4 - RECIPES[m.id.replace(`_${set}`, '')]!.own);
+    }
   });
 });

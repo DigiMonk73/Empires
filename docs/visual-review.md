@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.5 · Asian contact sheets (13 buildings × ages); verify shots ≤ 0.15% (re-bake only)
+- Asian set: pit dwellings (Stone); raised timber halls under steep thatch with chigi and ridge logs, stilted
+  granaries (Tool); red lacquer columns, white walls and grey tile roofs sweeping up at the corners (Bronze);
+  double eaves, painted brackets, gilded jewels, bronze cauldrons (Iron). The five-storey pagoda Wonder with its
+  gilded spire, gateway and lanterns is the most legible Wonder so far. Must-fix fixed: the pit house's team band
+  floated on the roof as an outline (now a team mat on the porch); roofs were too flat at the corners.
+
 ## 2026-09-30 · M9.4 · Babylonian contact sheets (13 buildings × ages); verify shots ≤ 0.11% (re-bake only)
 - Babylonian set: mudhif reed vaults and reed ricks (Stone); buttressed mudbrick under stepped merlons (Tool);
   brick with a blue rosette frieze, arched doors and bull-capital porticoes (Bronze); blue glazed walls with
