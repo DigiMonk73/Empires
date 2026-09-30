@@ -303,7 +303,10 @@ export class AiPlayer {
     if (!tc || tc.queue >= 2) return;
     // An island's population goes to boats and warships too: villagers stop at 26 there (26 + 10 fishers + a
     // guard of 4 + a fleet of 8 fits the 50), 22 while an invasion needs the room for its army.
-    const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.villagerCap());
+    // A later starting age: at most 60% of the population limit in villagers — an Iron start filled 50 with 36–44
+    // villagers by 20 min and had no room left for an army (M14.6).
+    const lateCap = s.v.startingAge() !== 'default' ? Math.floor(s.v.popLimit() * 0.6) : Infinity;
+    const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.villagerCap(), lateCap);
     if (s.villagers.length + tc.queue >= target) return;
     if (s.me.pop + tc.queue + this.naval.popReserve(s) >= s.me.popCap) return; // (room for missing transports)
     if (!s.v.canAfford(s.v.cost('villager'))) return;
@@ -469,7 +472,12 @@ export class AiPlayer {
    */
   private shares(s: Snapshot): readonly number[] {
     if (s.me.age === 1 && s.v.researching('toolAge')) return [0.3, 0.7, 0, 0];
-    const sh = [...SHARES[Math.min(4, s.me.age)]!];
+    // A later starting age (M14.3): three villagers in the Iron Age gather as a young town does — by how far the
+    // town has grown, not the age it was handed (an Iron start floated 2,000 gold by 19 min, food and wood dry).
+    const late = s.v.startingAge() !== 'default';
+    const n = s.villagers.length;
+    const stage = late ? Math.min(s.me.age, n < 12 ? 1 : n < 18 ? 2 : n < 22 ? 3 : 4) : s.me.age;
+    const sh = [...SHARES[Math.min(4, stage)]!];
     // Floating a pile nobody is spending while another resource runs dry (2,000 food and no wood for the
     // Archery Range the Bronze Age needs): move a quarter of the villagers from the pile to the shortfall.
     const [food, wood] = s.me.res as [number, number];
@@ -489,7 +497,7 @@ export class AiPlayer {
     // food and wood — the gold only buys soldiers and upgrades, and those wait for food (M13.2 traces).
     const next = NEXT_AGE_TECH[s.me.age];
     const ageGold = next && !s.v.researching(next) ? ((TECH_BY_ID.get(next)!.cost as Partial<Record<string, number>>).gold ?? 0) : 0;
-    if (this.p.thrifty && s.me.res[2]! > ageGold + 500 && (food < 400 || wood < 300) && sh[2]! > 0.05) {
+    if ((this.p.thrifty || late) && s.me.res[2]! > ageGold + 500 && (food < 400 || wood < 300) && sh[2]! > 0.05) {
       const move = sh[2]! - 0.05;
       sh[2] = 0.05;
       if (food < 400) sh[0] = sh[0]! + (wood < 300 ? move * 0.6 : move);

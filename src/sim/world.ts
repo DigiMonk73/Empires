@@ -268,6 +268,8 @@ export class World {
   readonly timeLimitTicks: number;
   /** Full Tech Tree game (config). */
   readonly fullTechTree: boolean;
+  /** Starting age (config; applied by Sim.create). */
+  readonly startingAge: StartingAge;
 
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;
@@ -275,6 +277,7 @@ export class World {
     this.scoreTarget = cfg.victory === 'score' ? (cfg.scoreTarget ?? 1000) : 0;
     this.timeLimitTicks = cfg.victory === 'time' ? (cfg.timeLimit ?? 60) * 60 * TICKS_PER_SECOND : 0;
     this.fullTechTree = !!cfg.fullTechTree;
+    this.startingAge = cfg.startingAge ?? 'default';
     const fill = terrainIndex(cfg.map.terrain ?? 'grass');
     this.map = new TileMap(cfg.map.w, cfg.map.h, fill);
     this.ents = new EntityStore();

@@ -5,6 +5,7 @@ import { buildingAvailable, canAfford, placementValid } from '../systems/build.t
 import { JOBS } from '../systems/gather.ts';
 import { researchBlocker, trainBlocker } from '../systems/production.ts';
 import type { Countdown, VictoryMode, World } from '../world.ts';
+import type { StartingAge } from '../../data/setup.ts';
 import { stanceOf } from '../rules/diplomacy.ts';
 
 /**
@@ -102,6 +103,16 @@ export class PlayerView {
   /** The game's victory condition (econ:7): Standard games have relics and the Wonder/relic countdowns. */
   victory(): VictoryMode {
     return this.w.victory;
+  }
+
+  /** The game's population limit (setup option). */
+  popLimit(): number {
+    return this.w.popLimit;
+  }
+
+  /** The game's starting age (a setup option everyone sees in the lobby, M14.3). */
+  startingAge(): StartingAge {
+    return this.w.startingAge;
   }
 
   /** Standard-victory countdowns running (public: every player sees them at the upper right, M14.2). */

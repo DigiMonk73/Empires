@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-11 predator bug vs the war gate (**user decision**, with KI-9), KI-10 alligators vs the AI gates (placement off until M14.6), KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14.6 rest: AI at later starting ages (Iron start floats gold), Nomad; KI-10/KI-11 wait on the user's war-gate decision.
+- **Next up:** Nomad start (the AI founds its Town Center), then the M14 exit; KI-10/KI-11 wait on the user's war-gate decision.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -838,7 +838,13 @@ of island/Narrows games decided in 2 h (11/12).
       held set; Hard/Hardest lay a Wonder with 6 builders when rich in the Iron Age. View: `victory()`,
       `countdowns()`; `runMatch({ victory: 'standard' })`, results carry `how`. Tests: `ai-relics.test.ts` (4).
       16 AI Standard games (small, Hard vs Moderate): all decided, Hard 13/16; 13 by conquest, 2 Artifacts, 1 Ruins.
-      Open below: KI-10/KI-11 (user), later starting ages, Nomad.
+      _Later starting ages done:_ the view tells the starting age; a late start gathers by how far the town has
+      grown (Stone-age shares under 12 villagers … Iron from 22), moves spare gold to food and wood at every level,
+      keeps villagers to 60% of the population limit, and at a full population sends the army it has as the wave
+      (Iron starts filled 50 with 44 villagers and never had a wave). 32 late-start games (Tool/Bronze/Iron/
+      Post-Iron × 8, Hard vs Moderate): 31 decided in 60 min, idle ≤ 1.1%, Hard 20/31, no crashes (was: Iron
+      starts 3/8 undecided, idle ~30%). Default games unchanged (every rule keys on the starting age).
+      Open: KI-10/KI-11 (user), Nomad.
       **Before that (KI-10):** the tiny-island wood stalemate (both sides out of wood, frozen to 2 h) and a wider
       Hard > Moderate / Moderate > Easy margin (48 and 49 of 64 sat on the gate), then `GATORS_ON` and re-measure.
       - [x] **M14.6a Island wood.** Tiny water maps: forests from 10 tiles (was 14; half a land map's wood) with a
