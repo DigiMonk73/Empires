@@ -130,7 +130,8 @@ export interface VillagerWork {
   carry: Partial<Record<Job, number>>;
 }
 
-export type BuildingKind = 'normal' | 'wall' | 'tower' | 'farm' | 'wonder';
+/** `relic`: the map's Ruins and Artifacts (M14.1) — owned by whoever stands by them, never built or attacked. */
+export type BuildingKind = 'normal' | 'wall' | 'tower' | 'farm' | 'wonder' | 'relic';
 
 export interface BuildingDef extends Sourced {
   id: string;

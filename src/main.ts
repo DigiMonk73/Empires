@@ -480,6 +480,10 @@ async function boot(): Promise<void> {
       const s = world.ents.slotOf(h);
       return s >= 0 ? world.ents.hp[s]! : null;
     },
+    ownerOf: (h) => {
+      const s = world.ents.slotOf(h);
+      return s >= 0 ? world.ents.owner[s]! : null;
+    },
     setHp: (h, hp) => {
       const s = world.ents.slotOf(h);
       if (s >= 0) world.ents.hp[s] = hp;

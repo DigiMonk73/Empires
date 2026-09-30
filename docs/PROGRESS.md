@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14 rules completeness — expand into tasks (Artifacts and Ruins, Wonder/score/time-limit victories, starting age/resources/population options, allied victory, Full Tech Tree, alligators, AI relic/ruin/Wonder play), then M15.
+- **Next up:** M14.2 Standard victory (Wonder / all Artifacts / all Ruins countdowns), then M14.3 setup options.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -789,9 +789,29 @@ of island/Narrows games decided in 2 h (11/12).
   stuck 0.05%; crashes 0. Tag `m13`.
 
 ## M14 — Rules completeness
-- relics, ruins, wonder, score, time-limit victories; starting age/resources/pop options; allied victory;
-  Full Tech Tree.
-- alligators on shallows and beaches of every map (econ §8; the model exists since M9.1).
+- [x] **M14.1 Artifacts and Ruins.** Neutral map objects (econ:7): a unit next to one claims it; it changes hands
+      only while no unit of its owner stands by it. Invulnerable, ignored by conquest. 5 of each on random maps with
+      the Standard victory. Score: 10 each held, +50 for holding them all (econ:7). Baked models; messages.
+      _Done:_ `kind: 'relic'` buildings `ruins` (2×2) and `artifact` (1×1), appended to BUILDINGS (saves keep type
+      indices); `systems/relics.ts` (reach 1.6 tiles, owner/ally guard, one-side claim, once a second, `captured`
+      event); combat, priests and conquest skip them; religion score +10 each, +50 per whole kind (D51). Mapgen
+      `relics` option: 5 + 5 on every map type/size/player count (relaxed distances, islets on crowded island
+      maps), own RNG stream. Models `art/models/relics.ts` (broken colonnade; gold idol on a pedestal; owner banner,
+      off-white when unclaimed). Notices + sounds; views rebuild on an owner change (also fixes converted units
+      keeping their old team colour). `?scenario=relics`, `?scenario=map&relics=1`; `ownerOf` debug hook.
+      Tests: `relics.test.ts` (6) + `relics.spec.ts`. Skirmish games get them with the Standard victory (M14.2/3).
+- [ ] **M14.2 Standard victory.** A completed Wonder, or all Artifacts or all Ruins held by one side, starts a
+      2000-year countdown (1000 s at speed 1.0, econ:7) — upper-right in the owner's colour, announced to all;
+      losing the Wonder or one object stops it. Victory at zero, like conquest.
+- [ ] **M14.3 Setup options.** Victory: Standard / Conquest / Score (target) / Time Limit (minutes); starting age
+      (Default, Tool, Bronze, Iron, Post-Iron); population limit 25–200; Full Tech Tree; reveal map; the lobby and
+      the sim config; score and time-limit endings.
+- [ ] **M14.4 Full Tech Tree.** Every civilization's tree complete, no civ bonuses; no Fire Galley (econ:6.4).
+- [ ] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1).
+- [ ] **M14.6 AI relic, ruin and Wonder play.** Claim and hold the objects near home; race the countdowns (attack
+      an enemy Wonder or the holder of the objects first); Hard+ build a Wonder when rich in the Iron Age.
+- [ ] **M14.7 No unresolved `verify: true`.** A DECISIONS entry for every flagged value (29 at the start of M14);
+      the data rows carry `decision`; a test fails on any flag without one.
 - _Exit:_ no unresolved `verify:true`.
 
 ## M15 — Hardening & release (StartOS checkpoint + user playtest)

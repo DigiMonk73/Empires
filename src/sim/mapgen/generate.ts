@@ -26,6 +26,8 @@ export interface MapGenOptions {
   revealMap?: boolean;
   /** Raise hills even while HILLS_ON is off (tests, the hills review scene). */
   hills?: boolean;
+  /** 5 Artifacts and 5 Ruins (the Standard victory; econ:7 "5 Artifacts and 5 Ruins, or none"). */
+  relics?: boolean;
 }
 
 interface Grid {
@@ -583,6 +585,52 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
         k++;
       }
     }
+  }
+
+  // Ruins and Artifacts (M14.1): on open ground, ≥ 18 tiles from every start and ≥ 8 from each other — nearer
+  // (13, 9, then 6) where the land runs out, as on the island maps, or on an islet of their own — from their own
+  // random stream, so the rest of a seed's map is the same with or without them (bar those islets).
+  if (o.relics) {
+    const rr = new Rng(o.seed ^ 0x7e1c, STREAM.mapgen);
+    const placed: [number, number][] = [];
+    const ground = (ch: string): boolean => ch === '.' || ch === 's' || ch === 'd' || ch === 'b';
+    const marks: [number, string][] = [];
+    for (const [type, size] of [['ruins', 2], ['artifact', 1], ['ruins', 2], ['artifact', 1], ['ruins', 2], ['artifact', 1], ['ruins', 2], ['artifact', 1], ['ruins', 2], ['artifact', 1]] as const) {
+      let done = false;
+      for (const [dMin, apart] of [[18, 8], [13, 7], [9, 6], [6, 5]] as const) {
+        for (let tries = 0; tries < 300 && !done; tries++) {
+          const x = 2 + rr.int(W - 4);
+          const y = 2 + rr.int(W - 4);
+          let open = true;
+          for (let dy = -1; dy <= size && open; dy++) for (let dx = -1; dx <= size && open; dx++) open = ground(at(g, x + dx, y + dy));
+          if (!open || !far(x, y, dMin) || placed.some(([px, py]) => Math.abs(px - x) + Math.abs(py - y) < apart)) continue;
+          buildings.push({ type, owner: 0, tx: x, ty: y });
+          placed.push([x, y]);
+          for (let dy = 0; dy < size; dy++) {
+            for (let dx = 0; dx < size; dx++) {
+              marks.push([(y + dy) * W + x + dx, at(g, x + dx, y + dy)]);
+              set(g, x + dx, y + dy, 'r');
+            }
+          }
+          done = true;
+        }
+        if (done) break;
+      }
+      // No land left (the crowded island maps): raise an islet for it in open water, reached by transport.
+      for (let tries = 0; tries < 600 && !done; tries++) {
+        const x = 3 + rr.int(W - 6);
+        const y = 3 + rr.int(W - 6);
+        let open = true;
+        for (let dy = -2; dy <= size + 1 && open; dy++) for (let dx = -2; dx <= size + 1 && open; dx++) open = at(g, x + dx, y + dy) === 'w' || at(g, x + dx, y + dy) === '~';
+        if (!open || !far(x, y, 14) || placed.some(([px, py]) => Math.abs(px - x) + Math.abs(py - y) < 8)) continue;
+        buildings.push({ type, owner: 0, tx: x, ty: y });
+        placed.push([x, y]);
+        for (let dy = -1; dy <= size; dy++) for (let dx = -1; dx <= size; dx++) set(g, x + dx, y + dy, dx < 0 || dy < 0 || dx >= size || dy >= size ? 'b' : '.');
+        done = true;
+      }
+    }
+    // (The marks only kept them apart; the ground under them is as it was.)
+    for (const [i, ch] of marks) g.c[i] = ch;
   }
 
   const ascii: string[] = [];

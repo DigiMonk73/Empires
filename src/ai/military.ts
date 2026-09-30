@@ -360,7 +360,7 @@ export class MilitaryBrain {
 
   private enemies(s: Snapshot): SeenEntity[] {
     // Stances, not teams (M13.8): a computer never goes for a player it is neutral toward.
-    return s.v.others().filter((o) => o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY);
+    return s.v.others().filter((o) => o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY);
   }
 
   /** Where the enemy probably is: its known buildings, else across the map centre from us. */

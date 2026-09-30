@@ -39,6 +39,7 @@ export function hostile(w: World, a: number, b: number): boolean {
   const oa = w.ents.owner[a]!;
   const ob = w.ents.owner[b]!;
   if (oa === ob) return false;
+  if (w.ents.kind[b] === EKind.building && TYPES[w.ents.type[b]!]!.building!.kind === 'relic') return false; // Ruins and Artifacts (M14.1)
   if (ob === 0) return !!TYPES[w.ents.type[b]!]!.animal;
   if (oa === 0) return true;
   return !allied(w, oa, ob);

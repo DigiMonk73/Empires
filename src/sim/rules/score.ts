@@ -31,6 +31,9 @@ export function computeScores(w: World): ScoreLine[] {
   const military = new Array<number>(n).fill(0);
   const temples = new Array<number>(n).fill(0);
   const wonders = new Array<number>(n).fill(0);
+  // Ruins and Artifacts (M14.1): 10 each held, +50 for a whole set (econ:7; per kind — D51).
+  const held = new Array<number>(n).fill(0);
+  const sets = new Map<string, { total: number; by: number[] }>();
   for (let s = 0; s < e.top; s++) {
     if (!e.alive[s]) continue;
     const p = e.owner[s]!;
@@ -39,6 +42,14 @@ export function computeScores(w: World): ScoreLine[] {
       const cls = t.unit?.cls;
       if (cls === 'villager') villagers[p]!++;
       else if (cls && cls !== 'fishingShip' && cls !== 'tradeShip' && cls !== 'transport') military[p]!++;
+    } else if (t.building!.kind === 'relic') {
+      const set = sets.get(t.id) ?? { total: 0, by: new Array<number>(n).fill(0) };
+      set.total++;
+      if (p > 0) {
+        set.by[p]!++;
+        held[p]!++;
+      }
+      sets.set(t.id, set);
     } else if (e.build[s]! >= 1) {
       if (t.building!.id === 'temple') temples[p]!++;
       if (t.building!.kind === 'wonder') wonders[p]!++;
@@ -79,7 +90,9 @@ export function computeScores(w: World): ScoreLine[] {
     const t = pl.tally;
     const mil = 0.5 * t.kills + t.razed + Math.max(0, t.kills - t.losses) + most(military, p, 25);
     const eco = t.gathered[2]! / 100 + t.tribute / 60 + villagers[p]! + most(villagers, p, 25) + Math.floor(explored[p]! / 3) + most(explored, p, 25);
-    const rel = 2 * t.conversions + most(conv, p, 25) + 3 * temples[p]!;
+    let allOf = 0;
+    for (const set of sets.values()) if (set.total > 0 && set.by[p] === set.total) allOf++;
+    const rel = 2 * t.conversions + most(conv, p, 25) + 3 * temples[p]! + 10 * held[p]! + 50 * allOf;
     const tech = 2 * techCount[p]! + most(techCount, p, 50) + (bronze === p ? 25 : 0) + (iron === p ? 25 : 0);
     const other = (pl.defeated !== null ? -100 : 0) + 100 * wonders[p]!;
     const f = (x: number) => Math.floor(x);

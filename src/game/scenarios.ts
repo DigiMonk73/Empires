@@ -365,6 +365,33 @@ function wonderScene(): SimConfig {
 }
 
 /**
+ * Ruins and Artifacts (M14.1): unclaimed and owned ones, a scout beside the free Artifact and an enemy clubman
+ * beside our unguarded Ruins — a second of play hands both over.
+ */
+function relicsScene(): SimConfig {
+  return {
+    victory: 'none',
+    seed: 29,
+    map: { w: 32, h: 32 },
+    players: [{ civ: 'greek' }, { civ: 'persian' }],
+    scenario: {
+      buildings: [
+        { type: 'ruins', owner: 0, tx: 6, ty: 6 },
+        { type: 'ruins', owner: 1, tx: 12, ty: 6 },
+        { type: 'artifact', owner: 0, tx: 18, ty: 8 },
+        { type: 'artifact', owner: 2, tx: 12, ty: 13 },
+        { type: 'townCenter', owner: 1, tx: 4, ty: 14 },
+      ],
+      units: [
+        { type: 'scout', owner: 1, x: 19.5, y: 10 },
+        { type: 'clubman', owner: 2, x: 14.9, y: 7.5 },
+        { type: 'villager', owner: 2, x: 12.5, y: 14.9 },
+      ],
+    },
+  };
+}
+
+/**
  * Art gallery (M9): every building of one civilization (`civ`, default greek) and the wild animals, laid out for
  * review. The owner's age decides the building variants (grant ages with `__empires.grantTech`).
  */
@@ -458,6 +485,7 @@ function randomMap(p: URLSearchParams): SimConfig {
     size: size in MAP_SIZES ? size : 'small',
     players: Array.from({ length: n }, (_, i) => ({ civ: civs[i % civs.length]! })),
     hills: p.get('hills') === '1',
+    relics: p.get('relics') === '1',
   });
 }
 
@@ -475,6 +503,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   temple: templeScene,
   wonder: wonderScene,
   diplomacy: diplomacyScene,
+  relics: relicsScene,
   gallery,
   hills: hillsScene,
   battle: () => battleConfig(1),

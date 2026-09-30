@@ -51,6 +51,8 @@ export interface EmpiresDebugApi {
   setHp(h: number, hp: number): void;
   /** Hit points of any entity (building or unit), or null if it is gone. */
   hpOf(h: number): number | null;
+  /** Owner of any entity (0 = Gaia), or null if it is gone. */
+  ownerOf(h: number): number | null;
   /** Test/demo only: a computer player takes over the local player. */
   autoplay(level: 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest'): void;
   /** Sounds started so far, by name (counted even before the AudioContext exists). */

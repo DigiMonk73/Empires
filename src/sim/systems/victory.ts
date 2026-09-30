@@ -20,7 +20,7 @@ export function victorySystem(w: World): void {
     if (!e.alive[s]) continue;
     const t = TYPES[e.type[s]!]!;
     counts[e.owner[s]!]! += w.cargo[s]?.length ?? 0; // an army aboard a transport is still an army
-    if (e.kind[s] === EKind.building ? t.building!.kind === 'wall' : EXEMPT.has(t.unit?.cls ?? '')) continue;
+    if (e.kind[s] === EKind.building ? t.building!.kind === 'wall' || t.building!.kind === 'relic' : EXEMPT.has(t.unit?.cls ?? '')) continue;
     counts[e.owner[s]!]!++;
   }
   for (let p = 1; p < n; p++) {

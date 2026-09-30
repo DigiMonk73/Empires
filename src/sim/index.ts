@@ -11,6 +11,7 @@ import { transportSystem } from './systems/transport.ts';
 import { tradeSystem } from './systems/trade.ts';
 import { productionSystem } from './systems/production.ts';
 import { victorySystem } from './systems/victory.ts';
+import { relicSystem } from './systems/relics.ts';
 import { farmSystem } from './systems/farm.ts';
 import { attackSystem, decaySystem, projectileSystem, targetSystem, towerSystem } from './systems/combat.ts';
 import { priestSystem } from './systems/priest.ts';
@@ -77,6 +78,7 @@ export class Sim {
     fogSystem(w);
     targetSystem(w); // after separation (fresh unit grid) and fog (sight)
     populationSystem(w);
+    relicSystem(w);
     victorySystem(w);
     w.tick++;
   }

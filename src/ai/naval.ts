@@ -146,7 +146,7 @@ export class NavalBrain {
       if (l && l !== home) byLand.set(l, [...(byLand.get(l) ?? []), u]);
     }
     if (!byLand.size) return;
-    const foes = s.v.others().filter((o) => o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY);
+    const foes = s.v.others().filter((o) => o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY);
     for (const [land, group] of byLand) {
       for (const u of group) s.busy.add(u.h);
       const ids = group.map((u) => u.h);
@@ -245,7 +245,7 @@ export class NavalBrain {
   private invade(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
     const tc = s.tc!;
     const home = this.homeLand(s);
-    const foes = s.v.others().filter((o) => o.building && o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY);
+    const foes = s.v.others().filter((o) => o.building && o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY);
     // Invade only when every enemy building we know is on other land (one we can't place — hemmed in — counts as
     // reachable: a wrong "across the sea" verdict would stop the land war).
     const across = (o: (typeof foes)[number]) => {
@@ -266,7 +266,7 @@ export class NavalBrain {
       // unless they are here on our land, or this is a land map (the land war hunts them).
       // (Soldiers only: an enemy fishing boat off our coast is not the enemy on our land — M13.7, it cancelled the
       // hunt for a last Market on the enemy's island.)
-      const onOurLand = s.v.others().some((o) => !o.building && LAND_ARMY(o.cls) && o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY && this.landOf(s, o.x, o.y) === home);
+      const onOurLand = s.v.others().some((o) => !o.building && LAND_ARMY(o.cls) && o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY && this.landOf(s, o.x, o.y) === home);
       if (!this.island || onOurLand) this.target = null;
       if (!this.target) return;
     }
@@ -348,7 +348,7 @@ export class NavalBrain {
 
   /** Enemy ships in sight and enemy Docks explored. */
   private enemiesAtSea(s: Snapshot) {
-    return s.v.others().filter((o) => o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY && (o.building ? o.type === 'dock' : SHIP_CLASSES.has(o.cls)));
+    return s.v.others().filter((o) => o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY && (o.building ? o.type === 'dock' : SHIP_CLASSES.has(o.cls)));
   }
 
   private research(s: Snapshot, cmds: Command[]): void {
@@ -473,7 +473,7 @@ export class NavalBrain {
   /** Idle boats: the nearest fish (to the Dock) their sea reaches, at most two boats a school. */
   private assignBoats(s: Snapshot, cmds: Command[], boats: Snapshot['units'], dock: { x: number; y: number }): void {
     // An island that hasn't found the enemy sends one boat to look (the fleet may be a long way off).
-    const enemyKnown = s.v.others().some((o) => o.building && o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY);
+    const enemyKnown = s.v.others().some((o) => o.building && o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY);
     if (this.island && !enemyKnown && boats.length >= 3) {
       const scout = boats.reduce((a, b) => (b.h < a.h ? b : a));
       if (!s.busy.has(scout.h) && (scout.idle || scout.order === 'gather')) {

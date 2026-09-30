@@ -158,8 +158,16 @@ export class Notifier {
           else this.post(`You converted a ${name} from Player ${x.from}.`, { color: this.color(me), x: x.x, y: x.y });
           break;
         }
+        case 'captured': {
+          if (x.from !== me && x.to !== me) break;
+          const name = TYPES[x.type]?.name ?? 'relic';
+          const some = name === 'Ruins' ? 'Ruins' : `an ${name}`;
+          if (x.to === me) this.post(x.from ? `You have taken the ${name} from Player ${x.from}.` : `You have claimed ${some}.`, { color: this.color(me), x: x.x, y: x.y, ping: '#ffe070' });
+          else this.post(`Player ${x.to} has taken your ${name}.`, { color: WARN, x: x.x, y: x.y, ping: '#ff3a2a' });
+          break;
+        }
         case 'defeated':
-          if (x.player !== me) this.post(`Player ${x.player} has been defeated.`, { color: this.color(x.player) });
+          if (x.player !== me)this.post(`Player ${x.player} has been defeated.`, { color: this.color(x.player) });
           break;
         case 'built': {
           const s = e.slotOf(x.h);

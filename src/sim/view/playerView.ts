@@ -54,7 +54,7 @@ export interface SeenEntity {
   h: number;
   owner: number;
   type: string;
-  /** Unit class ('villager', 'infantry', …); '' for buildings. */
+  /** Unit class ('villager', 'infantry', …); '' for buildings, 'relic' for Ruins and Artifacts (M14.1). */
   cls: string;
   building: boolean;
   x: number;
@@ -208,7 +208,7 @@ export class PlayerView {
       const building = e.kind[s] === EKind.building;
       if (building ? !this.w.fog.explored[this.player]![i] : !this.w.fog.vis[this.player]![i]) continue;
       const t = TYPES[e.type[s]!]!;
-      out.push({ h: e.handleOf(s), owner: e.owner[s]!, type: t.id, cls: t.unit?.cls ?? '', building, x: e.x[s]!, y: e.y[s]!, hp: e.hp[s]! });
+      out.push({ h: e.handleOf(s), owner: e.owner[s]!, type: t.id, cls: t.unit?.cls ?? (t.building?.kind === 'relic' ? 'relic' : ''), building, x: e.x[s]!, y: e.y[s]!, hp: e.hp[s]! });
     }
     return out;
   }

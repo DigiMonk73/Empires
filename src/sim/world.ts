@@ -189,6 +189,8 @@ export type SimEvent =
   | { t: 'impact'; type: number; x: number; y: number; hit: boolean }
   /** Player `from` changed its stance toward `to` (M12.3). */
   | { t: 'diplomacy'; from: number; to: number; stance: number }
+  /** A Ruin or an Artifact changed hands (M14.1). */
+  | { t: 'captured'; h: number; type: number; from: number; to: number; x: number; y: number }
   /** `from` gave `to` `amount` of resource `res`, paying `fee` on top. */
   | { t: 'tribute'; from: number; to: number; res: number; amount: number; fee: number };
 

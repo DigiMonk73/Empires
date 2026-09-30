@@ -283,3 +283,15 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   counts hits taken and tribute received per player (`tally.hitsBy`, `tally.tributeFrom`, saved); the AI reads
   them through its PlayerView and answers with ordinary diplomacy commands. Computers now pick targets by stance,
   not team (identical in team games).
+- **D51 — Ruins and Artifacts** (2026-09-30, M14.1; econ:7). The research gives their number ("5 Artifacts and 5
+  Ruins, or none"), their score (10 each held, "+50 for holding all of them") and that conquest ignores them, but
+  not the capture rule. Ours, after the original's play: a unit (not Gaia's) within 1.6 tiles of the footprint
+  claims one; it changes hands only while no unit of its owner or the owner's allies stands in that reach, and
+  only when every claimant there is on one side (the nearest of them takes it). Checked once a second. They
+  cannot be attacked or converted, give 2 tiles of sight to their holder, and a defeated player's are free for
+  the taking. The +50 is per kind — all Ruins, all Artifacts — matching the two Standard-victory countdowns
+  (econ:7 "hold all Artifacts" / "hold all Ruins"); the research's wording could also mean all ten together.
+  Map placement: on open ground (grass, desert, dirt, beach) ≥ 18 tiles from every start and ≥ 8 apart, relaxed
+  to 13 / 9 / 6 where the land runs out, and on the crowded island maps (8 players on Tiny) on a 4×4 islet raised
+  in open water — so there are always 5 + 5. They draw from their own random stream: a seed's map is otherwise
+  the same with or without them. They appear with the Standard victory (M14.2) and `?scenario=map&relics=1`.

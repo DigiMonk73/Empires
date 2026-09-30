@@ -460,3 +460,11 @@ Newest first. Each entry: date · milestone.task · screenshots · scores (check
 - Should-fix (M2.2): the per-tile checkerboard makes the grid obvious — replace with noise-varied chunk meshes.
 - Should-fix (M3): units only flip left/right; 8-direction baked sprites will replace them.
 - Group move keeps formation and stops beside the stone mine without overlapping it. ✔
+
+## M14.1 — Ruins and Artifacts (`relics.png`, both engines)
+- Broken marble colonnade on a cracked 2×2 pavement; gold idol on a stepped pedestal with a team-coloured cloth.
+  Contact sheets read at 1×; the idol's gold needed low metalness (the baker has no environment to reflect).
+- Owner colour reads at a glance (banner on the Ruins, cloth on the Artifact); unclaimed ones are off-white, also
+  on the minimap (the Gaia colour was teal — only relics show it). Notices at the upper left for both captures.
+- Scores: readability 4, scale 4, light 4, anchoring 4, depth 4, team color 4, edges 4, terrain n/a, HUD 4.
+- Should-fix (polish): the Ruins' banner is small at zoom ≤ 1 — a second one or a larger cloth if playtests miss it.

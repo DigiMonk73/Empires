@@ -30,6 +30,8 @@ interface EntityView {
   lastKey: string;
   /** Entity type when the view was made (research can change it: an upgraded unit, wall or tower). */
   type: number;
+  /** Owner when the view was made (a conversion or a relic capture changes it: new team colour and set). */
+  owner?: number;
   /** Wall segments: the level's art id ('mediumWall') and the arm sprites toward joined neighbours. */
   wall?: { level: string; arms: Sprite[]; mask: number };
   /** Drawn with placeholder shapes while its baked art was missing or still loading (KI-6): rebuilt when art arrives. */
@@ -42,7 +44,8 @@ const DIRS8: readonly (readonly [number, number])[] = [[1, 0], [1, 1], [0, 1], [
 /** Construction shows in 10 steps: the building rises out of its site from the bottom of the sprite up. */
 const BUILD_STAGES = 10;
 
-const GAIA_COLOR = 0x00ab93;
+// Unclaimed Ruins and Artifacts fly weathered off-white (the only Gaia entities with team-coloured parts).
+const GAIA_COLOR = 0xd8d0bc;
 
 export function playerColor(owner: number): number {
   return owner === 0 ? GAIA_COLOR : PLAYER_COLORS[(owner - 1) % PLAYER_COLORS.length]!.hex;
@@ -547,14 +550,17 @@ export class WorldRenderer {
     for (let s = 0; s < Math.max(e.top, this.views.length); s++) {
       let v = this.views[s];
       const alive = s < e.top && e.alive[s] === 1;
-      // Rebuild on death, reuse of the slot, research changing the type, or baked art arriving for a placeholder.
+      // Rebuild on death, reuse of the slot, research changing the type, a new owner, or baked art arriving for a placeholder.
       const artArrived = v?.placeholder !== undefined && !!this.art && v.placeholder !== this.art.version;
-      if (v && (!alive || v.handle !== e.handleOf(s) || v.type !== e.type[s] || artArrived)) {
+      if (v && (!alive || v.handle !== e.handleOf(s) || v.type !== e.type[s] || v.owner !== e.owner[s] || artArrived)) {
         v.root.destroy({ children: true });
         this.views[s] = v = undefined;
       }
       if (!alive) continue;
-      if (!v) this.views[s] = v = this.createView(s);
+      if (!v) {
+        this.views[s] = v = this.createView(s);
+        v.owner = e.owner[s]!;
+      }
       const x = e.px[s]! + (e.x[s]! - e.px[s]!) * alpha;
       const y = e.py[s]! + (e.y[s]! - e.py[s]!) * alpha;
       this.ground(x, y, p);

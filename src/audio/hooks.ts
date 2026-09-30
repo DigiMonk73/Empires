@@ -29,6 +29,7 @@ export const EVENT_SOUNDS: Record<SimEvent['t'], string> = {
   stuck: 'silent',
   diplomacy: 'silent (the message says it)',
   tribute: 'coins when we give or receive',
+  captured: 'built chime when we take a Ruin or Artifact, alert when we lose one',
 };
 
 /** A melee blow, by class: clubs, staves and tools thump; blades and spears ring; tusks, rams and wheels crash. */
@@ -298,6 +299,10 @@ export class AudioHooks {
           break;
         case 'tribute':
           if (x.from === me || x.to === me) this.a.play('coins', 0, 0.7);
+          break;
+        case 'captured':
+          if (x.to === me) this.a.play('built', 0, 0.7);
+          else if (x.from === me) this.a.play('alert', 0, 0.6);
           break;
         case 'deposit':
           // A trade load of gold (villagers carry 10–15; a trade boat brings 20 or more).

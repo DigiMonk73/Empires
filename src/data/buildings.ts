@@ -112,4 +112,15 @@ export const BUILDINGS: readonly BuildingDef[] = [
     size: 2, arm: TOWER_ARM(4), atk: { pierce: 20 }, range: 7, reload: 3, projectile: { speed: 4.5 }, startsEnabled: false,
     src: 'mil:1c,econ:4',
   }),
+
+  // ── Map objects (M14.1): claimed by standing beside them, never built or destroyed (econ:7). Appended last so
+  // every earlier type keeps its index (saved games store type indices).
+  b({
+    id: 'ruins', name: 'Ruins', kind: 'relic', age: 1, cost: {}, buildTime: 0, hp: 1, los: 2, size: 2, startsEnabled: false,
+    src: 'econ:7',
+  }),
+  b({
+    id: 'artifact', name: 'Artifact', kind: 'relic', age: 1, cost: {}, buildTime: 0, hp: 1, los: 2, size: 1, startsEnabled: false,
+    src: 'econ:7',
+  }),
 ];
