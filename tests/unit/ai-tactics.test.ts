@@ -37,3 +37,19 @@ describe('AI v2 (M13.2)', () => {
     expect(food[3]).toBe(food[1]);
   });
 });
+
+describe('AI v2 fixes (M13.4)', () => {
+  it('a full population never freezes the Town Center: Hardest reaches the Iron Age (it sat in the Tool Age)', () => {
+    // Seed 101: Hardest vs Hard. Before the fix a villager queued at 50/50 waited for a house forever, the age
+    // could not be queued behind it, and Hardest floated 14,000 resources in the Tool Age at 40 minutes.
+    const r = runMatch({ seed: 101, type: 'inland', size: 'tiny', levels: ['hardest', 'hard'], minutes: 36 });
+    expect(r.ageTick[0]![3]).toBeGreaterThan(0);
+    expect(r.ageTick[0]![4]).toBeGreaterThan(0);
+  });
+
+  it('a won war is finished: the hunt finds a building put up where it had already looked', () => {
+    // Seed 14 (inland): the last Granary stood in an explored corner; the sweep skipped explored ground.
+    const r = runMatch({ seed: 14, type: 'inland', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 45 });
+    expect(r.winner).not.toBeNull();
+  });
+});

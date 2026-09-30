@@ -38,3 +38,6 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   (a) judge "decided" within 60 min — the Done definition's upper bound for a 1v1 (25–60 min) — and turn hills
   on; (b) keep 45 min, hills stay off until M13 (AI v2); (c) hills only on Highland and Hill Country (M10.2),
   the standard maps stay flat.
+  _Re-measured at M13.4_ (AI v2 finishes wars better: 4/4 flat): with hills on, 8 Moderate 1v1s are decided
+  5/8 within 45 min but **7/8 within 60 min**, and the whole 7-pairing ladder still meets the Done gates — so
+  option (a) would now pass. Still the user's call; hills stay off until then.

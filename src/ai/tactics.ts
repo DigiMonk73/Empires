@@ -20,6 +20,12 @@ export function worth(type: string, hp: number): number {
   return price * Math.max(0.1, Math.min(1, hp / Math.max(1, d.hp)));
 }
 
+export interface Danger {
+  x: number;
+  y: number;
+  until: number;
+}
+
 export interface Sighting {
   h: number;
   type: string;
@@ -141,11 +147,39 @@ export class Tactics {
     return true;
   }
 
-  save(): Sighting[] {
-    return [...this.seen.values()];
+  /** Spots raiders were seen among our villagers, and until when to keep clear of them (saved with the game). */
+  dangers: Danger[] = [];
+
+  /**
+   * Villagers raiders would beat (no militia): the ones within 5 tiles of a raider run to the Town Center, and the
+   * spot is marked dangerous for 40 s so the economy doesn't send them straight back.
+   */
+  flee(s: Snapshot, threats: SeenEntity[], cmds: Command[]): void {
+    const tc = s.tc;
+    if (!tc) return;
+    const raiders = threats.filter((o) => !o.building && !CIVILIANS.has(o.cls));
+    if (!raiders.length) return;
+    const ids = s.villagers
+      .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && dist(u.x, u.y, tc.x, tc.y) > 5 && raiders.some((o) => dist(o.x, o.y, u.x, u.y) < 5))
+      .map((u) => u.h);
+    for (const o of raiders) this.dangers.push({ x: o.x, y: o.y, until: s.v.tick + 800 });
+    if (this.dangers.length > 24) this.dangers.splice(0, this.dangers.length - 24);
+    if (!ids.length) return;
+    for (const h of ids) s.busy.add(h);
+    cmds.push({ t: 'move', ids, x: Math.round(tc.x * 4) / 4, y: Math.round((tc.y + 2) * 4) / 4 });
   }
 
-  restore(list: Sighting[] | undefined): void {
-    this.seen = new Map((list ?? []).map((m) => [m.h, { ...m }]));
+  /** Is (x, y) near a spot raiders were seen lately? */
+  danger(tick: number, x: number, y: number): boolean {
+    return this.dangers.some((d) => d.until > tick && dist(d.x, d.y, x, y) < 7);
+  }
+
+  save(): { seen: Sighting[]; dangers: Danger[] } {
+    return { seen: [...this.seen.values()], dangers: this.dangers.map((d) => ({ ...d })) };
+  }
+
+  restore(seen: Sighting[] | undefined, dangers: Danger[] | undefined): void {
+    this.seen = new Map((seen ?? []).map((m) => [m.h, { ...m }]));
+    this.dangers = (dangers ?? []).map((d) => ({ ...d }));
   }
 }

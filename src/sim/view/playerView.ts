@@ -41,6 +41,8 @@ export interface OwnBuilding {
   done: boolean;
   /** Items queued (units + research). */
   queue: number;
+  /** The unit at the head of the queue waits for housing (the population is full). */
+  housed: boolean;
   /** Farm food left (farms). */
   stock: number;
   /** Farmer handle working it (farms), or -1. */
@@ -152,6 +154,7 @@ export class PlayerView {
         size: t.size,
         done: e.build[s]! >= 1,
         queue: this.w.prod[s]?.items.length ?? 0,
+        housed: this.w.prod[s]?.housed ?? false,
         stock: e.stock[s]!,
         farmer: fo?.k === 'farm' && fo.h === e.handleOf(s) ? e.handleOf(farmer) : -1,
       });

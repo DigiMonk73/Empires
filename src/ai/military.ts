@@ -4,7 +4,7 @@ import type { Command } from '../sim/commands/types.ts';
 import type { Rng } from '../sim/math/rng.ts';
 import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
 import { dist, type AiPlayer, type Snapshot } from './ai.ts';
-import { Tactics, type Sighting } from './tactics.ts';
+import { Tactics, type Danger, type Sighting } from './tactics.ts';
 
 /**
  * AI military v1 (M6.5). Two plans, picked once per game: a *rush* (Barracks early, clubmen → axemen and
@@ -45,8 +45,8 @@ const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: number; pat
   easy: { scale: 0.7, firstPush: 14, rush: 0, patience: 1200, siege: 1, tactics: false, towers: 0 },
   moderate: { scale: 1, firstPush: 0, rush: 0.5, patience: 600, siege: 2, tactics: false, towers: 0 },
   // The harder levels rush more often: with their tactics a rush won 77% of M13.2's traces, a boom 52%.
-  hard: { scale: 1.15, firstPush: 0, rush: 0.75, patience: 400, siege: 3, tactics: true, towers: 0 },
-  hardest: { scale: 1.3, firstPush: 0, rush: 0.75, patience: 300, siege: 4, tactics: true, towers: 0 },
+  hard: { scale: 1.15, firstPush: 0, rush: 0.75, patience: 400, siege: 3, tactics: true, towers: 1 },
+  hardest: { scale: 1.3, firstPush: 0, rush: 0.75, patience: 300, siege: 4, tactics: true, towers: 2 },
 };
 // (M13.2: one early tower for Hard cost more than it saved — hard>moderate 41 → 35 of 64 — so `towers` stays 0
 // until the defence task, M13.4, places them where raids actually land.)
@@ -58,6 +58,10 @@ export interface MilitaryState {
   rallySet: number[];
   /** Enemy soldiers remembered by the tactics of the harder levels (M13.2; absent in older saves). */
   seen?: Sighting[];
+  /** Raid spots the harder levels keep villagers away from (M13.4). */
+  dangers?: Danger[];
+  /** When each of the 36 sweep cells was last in sight (M13.4). */
+  cellSeen?: number[];
 }
 
 export class MilitaryBrain {
@@ -66,6 +70,7 @@ export class MilitaryBrain {
   /** Search pattern cursor (6×6 grid of waypoints) for hunting down the last enemies. */
   private sweep = 0;
   private rallySet = new Set<number>();
+  private cellSeen: number[] = new Array<number>(36).fill(0);
   private readonly war: (typeof WAR)[AiLevel];
   private readonly tactics = new Tactics();
 
@@ -86,7 +91,7 @@ export class MilitaryBrain {
   }
 
   save(): MilitaryState {
-    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet], ...(this.war.tactics ? { seen: this.tactics.save() } : {}) };
+    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet], cellSeen: [...this.cellSeen], ...(this.war.tactics ? this.tactics.save() : {}) };
   }
 
   restore(st: MilitaryState): void {
@@ -94,10 +99,12 @@ export class MilitaryBrain {
     this.lastPush = st.lastPush;
     this.sweep = st.sweep;
     this.rallySet = new Set(st.rallySet);
-    this.tactics.restore(st.seen);
+    this.tactics.restore(st.seen, st.dangers);
+    this.cellSeen = st.cellSeen ? [...st.cellSeen] : new Array<number>(36).fill(0);
   }
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
+    this.noteSeen(s);
     const army = s.units.filter((u) => !NON_MILITARY.has(u.cls) && !AT_SEA.has(u.cls));
     const threats = this.threats(s);
     this.buildings(ai, s, cmds, threats.length > 0);
@@ -109,7 +116,7 @@ export class MilitaryBrain {
       this.tactics.observe(s, enemies);
       const home = s.tc ?? s.buildings[0];
       if (home && this.tactics.retreat(s, army, enemies, home.x, home.y, cmds)) this.lastPush = s.v.tick; // regroup first
-      if (threats.length) this.tactics.militia(s, army, threats, cmds);
+      if (threats.length && !this.tactics.militia(s, army, threats, cmds)) this.tactics.flee(s, threats, cmds);
       this.tactics.focus(s, army, enemies, cmds);
     }
     if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army, ai.naval.invading);
@@ -138,9 +145,9 @@ export class MilitaryBrain {
       if (!ai.isPending(s, 'siegeWorkshop')) ai.build(s, cmds, 'siegeWorkshop', tc.x, tc.y, 7, 13, 1);
       return;
     }
-    // Towers (M13.4 early, for the harder levels): the starting stone buys a Watch Tower between the Town Center
-    // and the enemy once the Granary has researched it — a rush then meets arrows at the door.
-    if (this.war.towers && s.me.age >= 2 && this.towers(ai, s, cmds)) return;
+    // Towers (M13.4, the harder levels, from the Bronze Age): the stone in hand (the start's 150 — nobody mines
+    // for them) buys a Watch Tower where the villagers work furthest out, once the Granary has researched it.
+    if (this.war.towers && s.me.age >= 3 && this.towers(ai, s, cmds)) return;
     // A rush wants its Barracks early; anyone attacked without one needs it now.
     if ((this.plan === 'rush' || attacked) && s.villagers.length >= (attacked ? 5 : 9) && !ai.has(s, 'barracks').length && !ai.isPending(s, 'barracks')) {
       ai.build(s, cmds, 'barracks', tc.x, tc.y, 6, 12, 1);
@@ -172,6 +179,15 @@ export class MilitaryBrain {
       return false;
     }
     if (s.me.res[3]! < 150) return false;
+    // Where raids land: the villagers working furthest out (woodline, mines); else towards the enemy.
+    const out = s.villagers.filter((u) => (u.order === 'gather' || u.carry > 0) && dist(u.x, u.y, tc.x, tc.y) > 8);
+    if (out.length >= 3) {
+      out.sort((a, b) => dist(b.x, b.y, tc.x, tc.y) - dist(a.x, a.y, tc.x, tc.y) || a.h - b.h);
+      const far = out.slice(0, 4);
+      const x = far.reduce((a, u) => a + u.x, 0) / far.length;
+      const y = far.reduce((a, u) => a + u.y, 0) / far.length;
+      if (!s.buildings.some((b) => b.kind === 'tower' && dist(b.x, b.y, x, y) < 7)) return ai.build(s, cmds, 'watchTower', x, y, 2, 5, 2);
+    }
     const [gx, gy] = this.enemyGuess(s);
     const len = dist(gx, gy, tc.x, tc.y) || 1;
     const x = tc.x + ((gx - tc.x) / len) * (4 + 3 * have);
@@ -179,11 +195,9 @@ export class MilitaryBrain {
     return ai.build(s, cmds, 'watchTower', x, y, 0, 4, 2);
   }
 
-  /** Stone still needed for the towers this level wants (the economy mines it). */
-  stoneWanted(s: Snapshot): number {
-    if (!this.war.towers || s.me.age < 2) return 0;
-    const have = s.buildings.filter((b) => b.kind === 'tower').length;
-    return Math.max(0, (this.war.towers - have) * 150 - s.me.res[3]!);
+  /** A resource spot raiders were seen at lately (the harder levels don't send villagers back into them). */
+  danger(s: Snapshot, x: number, y: number): boolean {
+    return this.war.tactics && this.tactics.danger(s.v.tick, x, y);
   }
 
   /**
@@ -291,17 +305,34 @@ export class MilitaryBrain {
     const across: [number, number] = tc ? [2 * cx - tc.x, 2 * cy - tc.y] : [cx, cy];
     if (!s.v.explored(Math.floor(across[0]), Math.floor(across[1]))) return across;
     const step = Math.max(8, Math.floor(s.v.mapW / 6));
+    const cell = (i: number): [number, number] => [Math.min(s.v.mapW - 2, step / 2 + (i % 6) * step), Math.min(s.v.mapH - 2, step / 2 + Math.floor(i / 6) * step)];
     for (let k = 0; k < 64; k++) {
       const i = (this.sweep + k) % 36;
-      const x = Math.min(s.v.mapW - 2, step / 2 + (i % 6) * step);
-      const y = Math.min(s.v.mapH - 2, step / 2 + Math.floor(i / 6) * step);
+      const [x, y] = cell(i);
       if (!s.v.explored(Math.floor(x), Math.floor(y))) {
         this.sweep = i;
         return [x, y];
       }
     }
-    this.sweep = (this.sweep + 7) % 36; // all explored: keep patrolling
-    return [step / 2 + (this.sweep % 6) * step, step / 2 + Math.floor(this.sweep / 6) * step];
+    // All explored: the part of the map seen longest ago — a building put up after we last looked is hiding
+    // there (M13.4: a lone Granary in an explored corner kept a won war open past the hour).
+    let best = this.sweep;
+    for (let k = 0; k < 36; k++) {
+      const i = (this.sweep + k) % 36;
+      if ((this.cellSeen[i] ?? 0) < (this.cellSeen[best] ?? 0)) best = i;
+    }
+    this.sweep = best;
+    return cell(best);
+  }
+
+  /** When each sweep cell was last in sight (the hunt goes to the stalest). */
+  private noteSeen(s: Snapshot): void {
+    const step = Math.max(8, Math.floor(s.v.mapW / 6));
+    for (let i = 0; i < 36; i++) {
+      const x = Math.min(s.v.mapW - 2, step / 2 + (i % 6) * step);
+      const y = Math.min(s.v.mapH - 2, step / 2 + Math.floor(i / 6) * step);
+      if (s.v.visible(Math.floor(x), Math.floor(y))) this.cellSeen[i] = s.v.tick;
+    }
   }
 
   /**
@@ -339,6 +370,11 @@ export class MilitaryBrain {
     const buildings = this.enemies(s).filter((o) => o.building);
     const on = new Map<number, number>();
     for (const u of army) if (u.order === 'attack') on.set(u.target, (on.get(u.target) ?? 0) + 1);
+    // Spread over a base (four to a building); the last few buildings of a beaten enemy (none of its soldiers in
+    // sight, past 20 min) get everyone — swords do a fifth of their damage to buildings, and four at a lone
+    // Barracks let a won war run past 45 min (M13.4).
+    const fighters = this.enemies(s).some((o) => !o.building && !NON_MILITARY.has(o.cls) && !AT_SEA.has(o.cls));
+    const perBuilding = buildings.length <= 3 && !fighters && s.v.tick > 20 * 60 * 20 ? 99 : 4;
     const idle: OwnUnit[] = [];
     for (const u of army) {
       if (!u.idle || s.busy.has(u.h)) continue; // (the naval AI may have them boarding)
@@ -346,7 +382,7 @@ export class MilitaryBrain {
       let bd = 12;
       for (const o of buildings) {
         const d = dist(o.x, o.y, u.x, u.y);
-        if ((on.get(o.h) ?? 0) >= 4 || d > bd || (d === bd && best && o.h > best.h)) continue;
+        if ((on.get(o.h) ?? 0) >= perBuilding || d > bd || (d === bd && best && o.h > best.h)) continue;
         best = o;
         bd = d;
       }

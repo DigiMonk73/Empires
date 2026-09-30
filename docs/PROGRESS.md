@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M13 AI v2 in progress (M13.1–3 done; the adjacent ladder meets the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M13 AI v2 in progress (M13.1–4 done; the adjacent ladder meets the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m12 (verify ~135 s); verify:full at the M12 exit 699 s (audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 1.9 ms, s9pk, 452 unit + 119 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-8 water AI gate (M13.7). KI-7 closed (M13.1).
-- **Next up:** M13.4 defence (towers where raids land, the army answering raids anywhere), then M13.5 priests/siege/Iron Age.
+- **Next up:** M13.5 priests, siege, the Iron Age.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -727,8 +727,18 @@ of island/Narrows games decided in 2 h (11/12).
       45 → **56/64**, moderate>easiest 55 → 59. Every adjacent pairing now meets the Done ladder (easy>easiest 56,
       moderate>easy 50, hard>moderate 48, hardest>hard 64 of 64); they stay reported-only until the M13 exit —
       hard>moderate sits exactly on 75%.
-- [ ] **M13.4 Defence.** Towers by the Town Center and woodlines (Hard+), walls rarely (the original's habit),
-      villagers flee or fight raiders by level, the army answers raids anywhere.
+- [x] **M13.4 Defence and finishing.** Hard+ villagers that raiders would beat (no militia) run to the Town
+      Center and the raid spot is avoided for 40 s (`Tactics.flee`/`danger`, saved); from the Bronze Age Hard and
+      Hardest put 1–2 Watch Towers where their villagers work furthest out, from the stone in hand (no mining —
+      mining for a Tool-age tower cost Hard 6 ladder games); walls stay rare, as in the original. Found on the way
+      (`artifacts/age-probe.ts`): at 50/50 population a villager queued before the army filled up waited for a
+      house forever and **the age could not be queued behind it** — a Hardest AI sat in the Tool Age for 30 min on
+      14,000 resources; the AI now cancels it (refunded) and advances at a full population instead of waiting for
+      an unreachable villager target (`OwnBuilding.housed`). Finishing a won war: the last ≤ 3 buildings of a
+      beaten enemy (no soldiers in sight, past 20 min) take the whole army, not four per building; with everything
+      explored the hunt goes to the map cell seen longest ago (a Granary built in an explored corner hid all game).
+      Quick wars **4/4** decided (was 3/4); ladder unchanged or better (hard>moderate 49). KI-9 re-measured (hills
+      on: 7/8 decided within 60 min). Tests: age deadlock (seed 101), hunt (seed 14).
 - [ ] **M13.5 Priests, siege, the Iron Age.** Temples and priests (heal the army, convert elephants and siege,
       Monotheism/Fanaticism), stone throwers → catapults escorted against buildings, Iron Age line upgrades.
 - [ ] **M13.6 Civilization strategies.** Plans weighted by civ bonuses and trees (archer civs, cavalry civs,

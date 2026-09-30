@@ -382,11 +382,18 @@ export class AiPlayer {
 
   private ageUp(s: Snapshot, cmds: Command[]): void {
     const tc = s.tc;
-    if (!tc || tc.queue > 0) return;
     const tech = NEXT_AGE_TECH[s.me.age];
-    if (!tech || s.v.researching(tech)) return;
+    if (!tc || !tech || s.v.researching(tech)) return;
+    // A villager queued before the army filled the population waits for a house forever — and the age shares that
+    // queue (M13.4: a Hardest AI sat in the Tool Age for 30 minutes on 14,000 resources). Take it out (refunded).
+    if (tc.queue > 0 && tc.housed && s.me.popCap >= 50 && !s.v.researchBlocker(tc.h, tech)) {
+      cmds.push({ t: 'cancelTrain', bld: tc.h });
+      return;
+    }
+    if (tc.queue > 0) return;
     // Boom to the villager target first — but under pressure (losses), go anyway once the clock says so.
-    if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !this.overdue(s)) return;
+    // (A full population can't reach the villager target: go.)
+    if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !this.overdue(s) && s.me.pop < s.me.popCap - 1) return;
     if (s.v.researchBlocker(tc.h, tech)) return;
     cmds.push({ t: 'research', bld: tc.h, tech });
   }
@@ -456,11 +463,6 @@ export class AiPlayer {
       sh[1] = sh[1]! - 0.15;
       sh[2] = sh[2]! + 0.15;
     }
-    // Stone for the towers the harder levels want (M13.4): a few miners until it is in.
-    if (this.military.stoneWanted(s) > 0 && sh[1]! > 0.15) {
-      sh[1] = sh[1]! - 0.08;
-      sh[3] = sh[3]! + 0.08;
-    }
     // Gold piling up past what the next age needs (Iron: 800) while food or wood is short: most miners go to
     // food and wood — the gold only buys soldiers and upgrades, and those wait for food (M13.2 traces).
     const next = NEXT_AGE_TECH[s.me.age];
@@ -519,7 +521,7 @@ export class AiPlayer {
       // Near home first, then further out (a new pit follows the gatherers there).
       let node: KnownResource | null = null;
       for (const reach of [30, 60, Infinity]) {
-        const nodes = s.known.filter((r) => r.job === job && dist(r.x, r.y, hx, hy) < reach && (load.get(r.i) ?? 0) < (job === 'wood' ? 2 : 3));
+        const nodes = s.known.filter((r) => r.job === job && dist(r.x, r.y, hx, hy) < reach && (load.get(r.i) ?? 0) < (job === 'wood' ? 2 : 3) && !this.military.danger(s, r.x, r.y));
         node = this.nearest(nodes, hx, hy);
         if (node) break;
       }
