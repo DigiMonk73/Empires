@@ -37,6 +37,58 @@ function tree(variant: number, forest: boolean): THREE.Object3D {
   return build({ children: kids });
 }
 
+/**
+ * A palm (M10.3; drawn for trees on sandy ground): a slim ringed trunk leaning and bending as it rises, a crown
+ * of drooping fronds and a cluster of dates. The sim's trees are all one kind — the renderer picks the look.
+ */
+function palm(variant: number): THREE.Object3D {
+  const r = seeded(variant * 613 + 5);
+  const h = 0.95 + r() * 0.35;
+  const segs = 6;
+  const bend = 0.18 + r() * 0.16;
+  const kids: NodeSpec[] = [];
+  let x = 0;
+  let y = 0;
+  for (let k = 0; k < segs; k++) {
+    const t = (k + 0.5) / segs;
+    const tilt = bend * 2 * t; // the lean grows toward the top
+    const len = h / segs;
+    const dx = Math.sin(tilt) * len;
+    const dy = Math.cos(tilt) * len;
+    kids.push({ geom: cyl(0.032 - k * 0.002, 0.04 - k * 0.002, len * 1.05, 7), mat: PALM_BARK, t: [x + dx / 2, y + dy / 2, 0], r: [0, 0, -tilt] });
+    kids.push({ geom: cyl(0.044 - k * 0.002, 0.044 - k * 0.002, 0.018, 7), mat: 'bark', t: [x + dx, y + dy, 0], r: [0, 0, -tilt] });
+    x += dx;
+    y += dy;
+  }
+  const fronds = 8 + Math.floor(r() * 3);
+  for (let i = 0; i < fronds; i++) {
+    const a = (i / fronds) * Math.PI * 2 + r() * 0.4;
+    const droop = 0.35 + r() * 0.35;
+    kids.push({ t: [x, y, 0], r: [0, a, 0], children: [
+      { geom: box(0.4, 0.012, 0.1), mat: i % 2 ? 'foliage' : 'foliageDark', t: [0.19, -0.06, 0], r: [0, 0, -droop] },
+      { geom: box(0.18, 0.01, 0.06), mat: 'foliage', t: [0.4, -0.2, 0], r: [0, 0, -droop - 0.5] },
+    ] });
+  }
+  for (let i = 0; i < 3; i++) kids.push({ geom: sphere(0.028, 6), mat: DATES, t: [x + Math.cos(i * 2.1) * 0.04, y - 0.05, Math.sin(i * 2.1) * 0.04] });
+  return build({ t: [0, 0, 0], r: [0, r() * Math.PI * 2, 0], children: kids });
+}
+const PALM_BARK = { tex: 'bark', color: 0x8a6e4a, rough: 1, repeat: 3 } as const;
+const DATES = { tex: 'plain', color: 0x7a4a1c, rough: 0.8 } as const;
+
+/** A pine (M10.3; drawn for trees on the heights): a tall trunk under tiers of dark needles. */
+function pine(variant: number): THREE.Object3D {
+  const r = seeded(variant * 389 + 17);
+  const h = 1.0 + r() * 0.35;
+  const tiers = 4;
+  const kids: NodeSpec[] = [{ geom: cyl(0.035, 0.06, h * 0.55, 6), mat: 'bark', t: [0, h * 0.275, 0] }];
+  for (let i = 0; i < tiers; i++) {
+    const t = i / tiers;
+    const rad = 0.3 * (1 - t * 0.7);
+    kids.push({ geom: cone(rad, h * 0.34, 9), mat: i === tiers - 1 ? 'foliage' : 'foliageDark', t: [0, h * (0.36 + t * 0.52), 0], r: [0, r() * 3, 0] });
+  }
+  return build({ children: kids });
+}
+
 function mine(variant: number, ore: 'goldOre' | 'rock'): THREE.Object3D {
   const r = seeded(variant * 131 + (ore === 'rock' ? 3 : 5));
   const kids: NodeSpec[] = [];
@@ -115,6 +167,8 @@ function scaled(o: THREE.Object3D, k: number): THREE.Object3D {
 export const RESOURCE_MODELS: ModelDef[] = [
   { id: 'tree', kind: 'resource', footprint: 1, variants: 6, facings: 1, build: (v) => scaled(tree(v, false), 1.45) },
   { id: 'forestTree', kind: 'resource', footprint: 1, variants: 8, facings: 1, build: (v) => scaled(tree(v, true), 1.45) },
+  { id: 'palm', kind: 'resource', footprint: 1, variants: 6, facings: 1, build: (v) => scaled(palm(v), 1.4) },
+  { id: 'pine', kind: 'resource', footprint: 1, variants: 6, facings: 1, build: (v) => scaled(pine(v), 1.4) },
   { id: 'goldMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, build: (v) => scaled(mine(v, 'goldOre'), 1.3) },
   { id: 'stoneMine', kind: 'resource', footprint: 1, variants: 4, facings: 1, build: (v) => scaled(mine(v, 'rock'), 1.3) },
   { id: 'berryBush', kind: 'resource', footprint: 1, variants: 3, facings: 1, build: (v) => scaled(berryBush(v), 1.2) },

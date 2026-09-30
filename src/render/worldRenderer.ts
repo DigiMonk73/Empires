@@ -1,5 +1,6 @@
 import { Container, Graphics, Point, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
 import { PLAYER_COLORS } from '../data/setup.ts';
+import { TERRAINS } from '../data/terrain.ts';
 import { Act, EKind } from '../sim/core/entities.ts';
 import { ResState } from '../sim/core/resources.ts';
 import { RESOURCE_KINDS, TYPES } from '../sim/rules/registry.ts';
@@ -184,7 +185,8 @@ export class WorldRenderer {
       const cy = r.ty[i]! + def.size / 2;
       const v = hash2(r.tx[i]!, r.ty[i]!);
       let sp: Sprite;
-      const baked = this.art?.meta(def.id);
+      const model = this.treeModel(def.id, r.tx[i]!, r.ty[i]!);
+      const baked = this.art?.meta(model);
       // A carcass is its animal's last death frame, turned the way it fell.
       const animal = def.job === 'hunt' ? this.art?.meta(def.id.slice('carcass:'.length)) : undefined;
       const die = animal?.clips.die;
@@ -193,8 +195,8 @@ export class WorldRenderer {
         sp = new Sprite(cf.tex);
         sp.anchor.set(cf.anchorX, cf.anchorY);
         sp.scale.set(1 / animal!.scale);
-      } else if (baked && this.art!.frame(def.id, `v${Math.floor(v * baked.variants) % baked.variants}`)) {
-        const f = this.art!.frame(def.id, `v${Math.floor(v * baked.variants) % baked.variants}`)!;
+      } else if (baked && this.art!.frame(model, `v${Math.floor(v * baked.variants) % baked.variants}`)) {
+        const f = this.art!.frame(model, `v${Math.floor(v * baked.variants) % baked.variants}`)!;
         sp = new Sprite(f.tex);
         sp.anchor.set(f.anchorX, f.anchorY);
         sp.scale.set(1 / baked.scale);
@@ -214,6 +216,26 @@ export class WorldRenderer {
       this.objectLayer.addChild(sp);
       this.resViews[i] = sp;
     }
+  }
+
+  /**
+   * The look of a tree (M10.3) — the sim's trees are all one kind: palms where the ground around is sandy (desert
+   * and beaches), pines on the heights (level 2 and up), the broadleaf models elsewhere.
+   */
+  private treeModel(id: string, tx: number, ty: number): string {
+    if (id !== 'tree' && id !== 'forestTree') return id;
+    const m = this.world.map;
+    let sand = 0;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        if (!m.inBounds(tx + dx, ty + dy)) continue;
+        const t = TERRAINS[m.terrain[m.idx(tx + dx, ty + dy)]!]!.id;
+        if (t === 'desert' || t === 'beach') sand++;
+      }
+    }
+    if (sand >= 6 && this.art?.meta('palm')) return 'palm';
+    if (m.levelAt(tx + 0.5, ty + 0.5) >= 2 && this.art?.meta('pine')) return 'pine';
+    return id;
   }
 
   private artFor(type: number): SpriteArt {

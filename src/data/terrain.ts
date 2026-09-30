@@ -24,9 +24,9 @@ export interface TerrainDef extends Sourced {
 export const TERRAINS: readonly TerrainDef[] = [
   { id: 'grass', name: 'Grass', pass: MOVE_LAND, buildable: true, priority: 3, color: 0x4f7a2e, src: 'mil:4' },
   { id: 'dirt', name: 'Dirt', pass: MOVE_LAND, buildable: true, priority: 4, color: 0x8a7148, src: 'mil:4' },
-  { id: 'desert', name: 'Desert', pass: MOVE_LAND, buildable: true, priority: 5, color: 0xc9b27a, src: 'mil:4' },
+  { id: 'desert', name: 'Desert', pass: MOVE_LAND, buildable: true, priority: 5, color: 0xc49a5e, src: 'mil:4' },
   { id: 'forest', name: 'Forest Floor', pass: MOVE_LAND, buildable: true, priority: 6, color: 0x3b5a24, src: 'mil:4' },
-  { id: 'beach', name: 'Beach', pass: MOVE_LAND, buildable: true, priority: 2, color: 0xd8c690, src: 'mil:4' },
+  { id: 'beach', name: 'Beach', pass: MOVE_LAND, buildable: true, priority: 2, color: 0xe0d2a2, src: 'mil:4' },
   { id: 'shallows', name: 'Shallows', pass: MOVE_LAND | MOVE_WATER, buildable: false, priority: 1, color: 0x5d9fae, src: 'mil:1b,mil:4', note: 'crossable by land units and ships' },
   { id: 'water', name: 'Water', pass: MOVE_WATER, buildable: false, priority: 0, color: 0x2f6f96, src: 'mil:4' },
   { id: 'deepWater', name: 'Deep Water', pass: MOVE_WATER, buildable: false, priority: 0, color: 0x1f4f78, src: 'mil:4' },

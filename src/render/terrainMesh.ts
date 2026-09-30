@@ -37,8 +37,10 @@ const VERTEX = /* glsl */ `
 in vec2 aPosition;
 in vec3 aColor;
 in vec2 aWorld;
+in vec4 aSurf; // x: slope shade, y: shore sand, z: grassiness, w: sandiness
 out vec3 vColor;
 out vec2 vWorld;
+out vec4 vSurf;
 uniform mat3 uProjectionMatrix;
 uniform mat3 uWorldTransformMatrix;
 uniform mat3 uTransformMatrix;
@@ -47,13 +49,16 @@ void main() {
   gl_Position = vec4((mvp * vec3(aPosition, 1.0)).xy, 0.0, 1.0);
   vColor = aColor;
   vWorld = aWorld;
+  vSurf = aSurf;
 }`;
 
 const FRAGMENT = /* glsl */ `
 precision highp float;
 in vec3 vColor;
 in vec2 vWorld;
+in vec4 vSurf;
 out vec4 finalColor;
+const vec3 SAND = vec3(0.886, 0.835, 0.64);
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
@@ -68,7 +73,15 @@ float vnoise(vec2 p) {
 void main() {
   float n = vnoise(vWorld * 0.7) * 0.45 + vnoise(vWorld * 2.3) * 0.33 + vnoise(vWorld * 7.1) * 0.22;
   float grain = vnoise(vWorld * 23.0);
-  vec3 c = vColor * (0.86 + 0.26 * n) * (0.96 + 0.08 * grain);
+  // Shore sand: a noise-edged band where land meets water, so beaches run irregularly along every coast.
+  float nb = vnoise(vWorld * 1.9) * 0.6 + vnoise(vWorld * 6.3) * 0.4;
+  float band = smoothstep(0.38, 0.62, vSurf.y + (nb - 0.5) * 0.75);
+  vec3 base = mix(vColor, SAND, band);
+  // Surface detail: grass in diagonal streaks, sand in wind ripples.
+  float blades = vnoise(vec2((vWorld.x + vWorld.y) * 3.0, (vWorld.x - vWorld.y) * 26.0));
+  float ripple = sin((vWorld.x * 0.8 + vWorld.y * 1.4) * 8.0 + vnoise(vWorld * 2.1) * 5.0);
+  float detail = 1.0 + vSurf.z * (1.0 - band) * (blades - 0.5) * 0.12 + max(vSurf.w, band) * ripple * 0.035;
+  vec3 c = base * vSurf.x * detail * (0.86 + 0.26 * n) * (0.96 + 0.08 * grain);
   finalColor = vec4(c, 1.0);
 }`;
 
@@ -92,6 +105,23 @@ function tileColor(map: TileMap, tx: number, ty: number, out: [number, number, n
   out[2] = b;
 }
 
+/** Surface class of tile (tx, ty) for the shader's detail and the shore band (clamped to the map). */
+function tileKind(map: TileMap, tx: number, ty: number): 'grass' | 'sand' | 'water' | 'other' {
+  const x = Math.min(map.w - 1, Math.max(0, tx));
+  const y = Math.min(map.h - 1, Math.max(0, ty));
+  const id = TERRAINS[map.terrain[y * map.w + x]!]!.id;
+  if (id === 'grass' || id === 'forest') return 'grass';
+  if (id === 'desert' || id === 'beach') return 'sand';
+  if (id === 'water' || id === 'deepWater' || id === 'shallows') return 'water';
+  return 'other';
+}
+
+/** Is there water within about a tile of world point (x, y)? (The outer half of the shore band.) */
+function waterNear(map: TileMap, x: number, y: number): boolean {
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (tileKind(map, Math.floor(x + dx * 0.9), Math.floor(y + dy * 0.9)) === 'water') return true;
+  return false;
+}
+
 export class TerrainLayer {
   readonly root = new Container();
   readonly chunks: { mesh: Mesh<Geometry, Shader>; x0: number; y0: number; x1: number; y1: number }[] = [];
@@ -112,6 +142,7 @@ export class TerrainLayer {
     const pos = new Float32Array(vw * vh * 2);
     const col = new Float32Array(vw * vh * 3);
     const wld = new Float32Array(vw * vh * 2);
+    const srf = new Float32Array(vw * vh * 4);
     const a: [number, number, number] = [0, 0, 0];
     const acc = [0, 0, 0];
     for (let j = 0; j < vh; j++) {
@@ -129,17 +160,27 @@ export class TerrainLayer {
         const xs = oddX ? [Math.floor(wx)] : [wx - 1, wx];
         const ys = oddY ? [Math.floor(wy)] : [wy - 1, wy];
         acc[0] = acc[1] = acc[2] = 0;
+        let grass = 0;
+        let sand = 0;
+        let wet = 0;
         for (const y of ys) for (const x of xs) {
           tileColor(map, x, y, a);
           acc[0] += a[0];
           acc[1] += a[1];
           acc[2] += a[2];
+          const k = tileKind(map, x, y);
+          if (k === 'grass') grass++;
+          else if (k === 'sand') sand++;
+          else if (k === 'water') wet++;
         }
         const n = xs.length * ys.length;
-        const shade = slopeShade(map, wx, wy);
-        col[v * 3] = (acc[0] / n) * shade;
-        col[v * 3 + 1] = (acc[1] / n) * shade;
-        col[v * 3 + 2] = (acc[2] / n) * shade;
+        col[v * 3] = acc[0] / n;
+        col[v * 3 + 1] = acc[1] / n;
+        col[v * 3 + 2] = acc[2] / n;
+        srf[v * 4] = slopeShade(map, wx, wy);
+        srf[v * 4 + 1] = wet === n ? 0 : wet > 0 ? 0.85 : waterNear(map, wx, wy) ? 0.5 : 0;
+        srf[v * 4 + 2] = grass / n;
+        srf[v * 4 + 3] = sand / n;
       }
     }
     const idx = new Uint32Array((vw - 1) * (vh - 1) * 6);
@@ -160,6 +201,7 @@ export class TerrainLayer {
         aPosition: { buffer: pos, format: 'float32x2' },
         aColor: { buffer: col, format: 'float32x3' },
         aWorld: { buffer: wld, format: 'float32x2' },
+        aSurf: { buffer: srf, format: 'float32x4' },
       },
       indexBuffer: idx,
     });

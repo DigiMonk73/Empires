@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M10.3 terrain transitions (beach band, desert vs beach, palm/pine forests, soft edges).
+- **Next up:** M10.4 water (animated ripples, depth ramp, shore foam, ship waterlines).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -561,8 +561,12 @@ so far.
       AI looks 1–5 tiles past its usual ring for a flat footprint on hilly maps only (`PlayerView.hilly`; flat
       maps unchanged). Moderate AIs age up normally there (Tool 9–15 min); wars run long (KI-9). Slope shading
       raised to ×2.2 off level.
-- [ ] **M10.3 Terrain transitions.** Beaches as a sand band along every shore, desert distinct from beach,
-      palm and pine forests by map type, softer grass/dirt/desert edges.
+- [x] **M10.3 Terrain transitions** (render only; the sim is unchanged). The terrain shader draws a noise-edged
+      sand band wherever land meets water (every coast, lake and pond gets an irregular beach), grass in faint
+      diagonal streaks and sand in wind ripples; slope shade moved into a per-vertex surface attribute. Desert
+      is now a warmer gold (0xc49a5e), beach a paler sand (0xe0d2a2). Trees are drawn as palms where the ground
+      round them is sandy and as pines on level 2 and up (new `palm`/`pine` models; `treeModel` in the
+      renderer).
 - [ ] **M10.4 Water.** Animated water (ripples, depth ramp), shore foam, ships with a waterline shadow.
 - [ ] **M10.5 Particles.** Buildings burn and smoke below 75/50/25% HP; dust from marching feet and
       collapsing buildings; splashes.

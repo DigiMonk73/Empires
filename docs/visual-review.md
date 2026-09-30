@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10.3 · coastal, desert (artifacts/m10), palm/pine sheets
+- Coasts now have real beaches: an irregular sand band follows every shoreline (Coastal, the Continental rim,
+  lakes, ponds) instead of the old green-blue haze; desert patches read warm gold, distinct from pale beach;
+  palms stand on the sand with frond shadows, pines crown the Highland rises. Grass shows faint streaks. Terrain 4.
+- Should-fix: a few grass flecks inside wide beaches where the band's noise dips.
+
 ## 2026-09-30 · M10.2 · highland, hillcountry (artifacts/m10)
 - Highland: ponds with fish among uplands, forests and gold on the rises; Hill Country: a lake in rolling
   ground. Hills read as broad light and dark slopes (×2.2 shading); still softer than the original's — terrain
