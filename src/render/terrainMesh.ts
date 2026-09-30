@@ -29,8 +29,8 @@ function slopeShade(map: TileMap, x: number, y: number): number {
   if (gx === 0 && gy === 0) return 1;
   const n = Math.hypot(gx, 1, gy);
   const lambert = (-gx * SUN[0] + SUN[1] - gy * SUN[2]) / n;
-  // Exaggerated a little (×1.6 off level) so low hills still read at game zoom, as the original's did.
-  return Math.min(1.4, Math.max(0.5, 1 + (lambert / SUN[1] - 1) * 1.6));
+  // Exaggerated (×2.2 off level) so low hills still read at game zoom, as the original's did.
+  return Math.min(1.5, Math.max(0.45, 1 + (lambert / SUN[1] - 1) * 2.2));
 }
 
 const VERTEX = /* glsl */ `

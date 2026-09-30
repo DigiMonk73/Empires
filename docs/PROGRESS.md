@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M10.2 Highland and Hill Country maps (their hills don't touch the gated suite maps), then M10.3 transitions.
+- **Next up:** M10.3 terrain transitions (beach band, desert vs beach, palm/pine forests, soft edges).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -554,7 +554,13 @@ so far.
       `screenToWorld` follow the hills (iterative); the minimap lightens each level. `?scenario=hills` and
       `hills.spec.ts` (select a lifted bowman, move across the plateau, attack downhill — both browsers). Flat
       maps render exactly as before.
-- [ ] **M10.2 Highland and Hill Country** map types (more and higher hills; Highland with lakes).
+- [x] **M10.2 Highland and Hill Country.** New generated types (in the setup list): Highland — dry uplands with
+      3–6 ponds and hills up to 4 levels (one per 260 dry tiles); Hill Country — rolling hills up to 3 levels
+      (one per 190) round a small central lake. Hills are their definition, so they get them whatever `HILLS_ON`
+      says (KI-9 concerns the standard maps). Land-map resource template; fairness tests for 3/4/6 players. The
+      AI looks 1–5 tiles past its usual ring for a flat footprint on hilly maps only (`PlayerView.hilly`; flat
+      maps unchanged). Moderate AIs age up normally there (Tool 9–15 min); wars run long (KI-9). Slope shading
+      raised to ×2.2 off level.
 - [ ] **M10.3 Terrain transitions.** Beaches as a sand band along every shore, desert distinct from beach,
       palm and pine forests by map type, softer grass/dirt/desert edges.
 - [ ] **M10.4 Water.** Animated water (ripples, depth ramp), shore foam, ships with a waterline shadow.

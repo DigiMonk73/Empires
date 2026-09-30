@@ -11,9 +11,9 @@ import type { SimConfig } from '../world.ts';
  * Fairness: each start's resources are drawn once as polar offsets relative to the direction from the player to
  * the map centre, then applied (rotated) to every player and nudged to the nearest valid tiles.
  */
-export type GenMapType = 'continental' | 'inland' | 'coastal' | 'mediterranean' | 'narrows' | 'smallIslands' | 'largeIslands';
+export type GenMapType = 'continental' | 'inland' | 'coastal' | 'mediterranean' | 'narrows' | 'smallIslands' | 'largeIslands' | 'highland' | 'hillCountry';
 /** The generated types in setup-screen order. */
-export const GEN_MAP_TYPES: readonly GenMapType[] = ['continental', 'inland', 'coastal', 'mediterranean', 'narrows', 'smallIslands', 'largeIslands'];
+export const GEN_MAP_TYPES: readonly GenMapType[] = ['continental', 'inland', 'coastal', 'mediterranean', 'narrows', 'smallIslands', 'largeIslands', 'highland', 'hillCountry'];
 /** Water-heavy maps use the water template's resource distances (econ:8, dat maps 4, 0, 8). */
 const WATERY: ReadonlySet<GenMapType> = new Set(['narrows', 'smallIslands', 'largeIslands']);
 
@@ -51,7 +51,11 @@ const HILLS: Record<GenMapType, { per: number; peak: number }> = {
   narrows: { per: 750, peak: 2 },
   smallIslands: { per: 1000, peak: 1 },
   largeIslands: { per: 850, peak: 2 },
+  highland: { per: 260, peak: 4 },
+  hillCountry: { per: 190, peak: 3 },
 };
+/** Map types that are hills by definition: they always get them (HILLS_ON governs the others). */
+const HILL_TYPES: ReadonlySet<GenMapType> = new Set(['highland', 'hillCountry']);
 /**
  * Hills on generated maps — off until the AI war gate is settled (KI-9): on hilly maps AI 1v1 wars run ~5 min
  * longer and the quick suite's 45-min "decided" window fails 2/4. The machinery (heights, D44, flat footprints)
@@ -218,7 +222,32 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   };
   /** Wobble for coastlines: a small hash of the tile, −1.5…1.5. */
   const wob = (x: number, y: number): number => (((x * 7 + y * 13) ^ (x * y)) & 3) - 1.5;
-  if (o.type === 'continental' || o.type === 'inland') {
+  if (o.type === 'highland' || o.type === 'hillCountry') {
+    // Highland: dry uplands dotted with small ponds; Hill Country: rolling hills round one small lake (M10.2).
+    const pond = (cx: number, cy: number, rad: number): void => {
+      for (let y = Math.max(0, Math.floor(cy - rad - 2)); y < Math.min(W, cy + rad + 2); y++) {
+        for (let x = Math.max(0, Math.floor(cx - rad - 2)); x < Math.min(W, cx + rad + 2); x++) {
+          const d = Math.sqrt((x + 0.5 - cx) * (x + 0.5 - cx) + (y + 0.5 - cy) * (y + 0.5 - cy)) + wob(x, y) * 0.4;
+          if (d < rad * 0.55) set(g, x, y, 'w');
+          else if (d < rad) set(g, x, y, '~');
+          else if (d < rad + 1.2 && !isWater(at(g, x, y))) set(g, x, y, 'b');
+        }
+      }
+    };
+    placeStarts(r, W * 0.34);
+    if (o.type === 'hillCountry') pond(mid, mid, W * 0.08);
+    else {
+      const ponds = 3 + Math.round(W / 60);
+      for (let k = 0, tries = 0; k < ponds && tries < ponds * 30; tries++) {
+        const cx = 6 + r.int(W - 12);
+        const cy = 6 + r.int(W - 12);
+        if (starts.some(([sx, sy]) => (cx - sx - 1.5) * (cx - sx - 1.5) + (cy - sy - 1.5) * (cy - sy - 1.5) < 196)) continue;
+        pond(cx, cy, 3 + r.int(3));
+        k++;
+      }
+    }
+    desert();
+  } else if (o.type === 'continental' || o.type === 'inland') {
     if (o.type === 'continental') {
       // A continent: sea around the edges with a wobbly coast and a beach band.
       const coast = Math.max(6, Math.round(W * 0.08));
@@ -559,7 +588,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   const ascii: string[] = [];
   for (let y = 0; y < W; y++) ascii.push(g.c.slice(y * W, (y + 1) * W).join(''));
   const hl = HILLS[o.type];
-  const heights = HILLS_ON || o.hills ? hills(g, o.seed, starts, hl.per, hl.peak) : undefined;
+  const heights = HILLS_ON || o.hills || HILL_TYPES.has(o.type) ? hills(g, o.seed, starts, hl.per, hl.peak) : undefined;
   return {
     seed: o.seed,
     map: { w: W, h: W, ascii, ...(heights ? { heights } : {}) },

@@ -588,7 +588,12 @@ export class AiPlayer {
     const size = type === 'house' || type === 'watchTower' ? 2 : 3;
     // On a cramped island start the usual spot may not exist: anywhere within 18 of the Town Center will do
     // (an island once sat in the Stone Age for two hours, its Tool-age buildings unplaceable).
-    const spot = this.findSpot(s, type, size, x, y, minD, maxD) ?? (this.naval.onIsland && s.tc ? this.findSpot(s, type, size, s.tc.x, s.tc.y, 3, 18) : null);
+    // On hilly maps a ring may hold no flat footprint: look a little further out before giving up (M10.2; flat
+    // maps keep the old search exactly).
+    const spot =
+      this.findSpot(s, type, size, x, y, minD, maxD) ??
+      (s.v.hilly ? this.findSpot(s, type, size, x, y, maxD + 1, maxD + 5) : null) ??
+      (this.naval.onIsland && s.tc ? this.findSpot(s, type, size, s.tc.x, s.tc.y, 3, 18) : null);
     if (!spot) return false;
     const pool = s.villagers.filter((u) => !s.busy.has(u.h) && (this.exploreDone || u.h !== this.explorer) && u.order !== 'build');
     pool.sort((a, b) => rank(a) - rank(b) || dist(a.x, a.y, spot[0], spot[1]) - dist(b.x, b.y, spot[0], spot[1]) || a.h - b.h);

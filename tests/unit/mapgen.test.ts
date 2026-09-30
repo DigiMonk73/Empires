@@ -18,9 +18,13 @@ const CASES: [GenMapType, MapSizeId, number][] = [
   ['smallIslands', 'small', 4],
   ['largeIslands', 'medium', 2],
   ['smallIslands', 'huge', 8],
+  // Hills (M10.2).
+  ['highland', 'small', 3],
+  ['hillCountry', 'medium', 4],
+  ['highland', 'large', 6],
 ];
 /** Types whose players can all walk to each other; on the others they need boats. */
-const WALKABLE = new Set<GenMapType>(['continental', 'inland', 'coastal', 'mediterranean']);
+const WALKABLE = new Set<GenMapType>(['continental', 'inland', 'coastal', 'mediterranean', 'highland', 'hillCountry']);
 
 /** Resources within `r` tiles of each player's Town Center, by kind. */
 function near(sim: Sim, starts: [number, number][], r: number): Record<string, number>[] {
@@ -92,7 +96,7 @@ describe('map generation (econ:8)', () => {
         for (const st of m.starts) expect(shore(st)).toBe(s0);
       }
       // Water maps: everyone has shore fish and a deep-fish school near home, and water for a Dock within 16 tiles.
-      if (type !== 'continental' && type !== 'inland' && type !== 'coastal') {
+      if (!['continental', 'inland', 'coastal', 'highland', 'hillCountry'].includes(type)) {
         const fishZone = near(sim, m.starts, 32);
         for (const z of fishZone) {
           expect(z.shoreFish ?? 0, 'shore fish').toBeGreaterThan(0);

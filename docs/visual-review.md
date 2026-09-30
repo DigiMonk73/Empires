@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10.2 · highland, hillcountry (artifacts/m10)
+- Highland: ponds with fish among uplands, forests and gold on the rises; Hill Country: a lake in rolling
+  ground. Hills read as broad light and dark slopes (×2.2 shading); still softer than the original's — terrain
+  texture and transitions (M10.3) should help them stand out. Maps 3.5.
+
 ## 2026-09-30 · M10.1b · hills (new), hills-map (?scenario=map&hills=1)
 - The stepped review hill reads as a mound: slopes facing away from the sun fall into shade, the crest carries a
   House and three bowmen standing visibly above the clubmen on the plain, the trees on the slope sit on it.

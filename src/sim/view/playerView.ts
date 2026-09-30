@@ -260,6 +260,13 @@ export class PlayerView {
     return buildingAvailable(this.w, this.player, buildingTypeIndex(typeId)).ok;
   }
 
+  private hillyCache: boolean | null = null;
+  /** Does the map have hills (M10.2)? Their slopes can leave no flat footprint where a building is wanted. */
+  get hilly(): boolean {
+    if (this.hillyCache === null) this.hillyCache = this.w.map.height.some((h) => h !== 0);
+    return this.hillyCache;
+  }
+
   canPlace(typeId: string, tx: number, ty: number): boolean {
     return placementValid(this.w, buildingTypeIndex(typeId), tx, ty);
   }
