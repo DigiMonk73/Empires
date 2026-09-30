@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M4 Economy — M4.1–M4.6 done (stats/effects, gather, construction, production + rally, farms/fish/hunting, mouse UI). M3 done (tag `m3`).
-- **Last green commit:** M4.5 (verify ~25 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
+- **Milestone:** M5 Combat — starting M5.1. M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Last green commit:** m4 (verify ~30 s incl. economy benchmark; verify:full ~100 s: Docker 77 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
   sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Baked gazelle/elephant/lion. Placeholders remain for soldiers,
@@ -15,7 +15,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   combat core (`systems/combat.ts`: damage formula, instant hits — projectiles in M5); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M4 exit — verify:full → tag m4 → bump empires-startos submodule; then M5 combat.
+- **Next up:** M5.1 combat core (attack enemies/buildings, deaths → corpses, rubble), then M5.2 projectiles.
 - **Playable now:** `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -164,8 +164,26 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - _Exit:_ mouse e2e builds a house and trains 5 villagers; scripted economy within ±5% of research rates; idle < 3%.
 
 ## M5 — Combat
-- barracks/range/stable/tower; clubman/axeman, bowman, scout; armor classes; projectiles w/ miss; splash
-  framework; deaths/corpses/rubble; fires; HP bars; auto-acquire + 2-tile retaliation; attack-move.
+- [ ] **M5.1 Combat core.** `act` on enemies → attack (units and buildings); damage vs buildings ×0.2, min 0.1
+      (mil:2); melee reach vs ranged range (+ min range); Stand Ground flag; units die into a `dying` state →
+      corpse that decays (render die clip, then corpse frame, then fade); destroyed buildings → rubble decal,
+      footprint freed, queue refunded; `died`/`destroyed` events; right-click enemy = attack.
+- [ ] **M5.2 Projectiles.** Sim projectile list (saved/hashed): arrow/spear/stone/bolt kinds with speed, arc,
+      aim fixed at release (moving targets dodge — mil:2), hit test on arrival radius; hunter 80% accuracy uses
+      the same path; render arcing arrows with shadows.
+- [ ] **M5.3 Research + training.** Generic `research` command on buildings (queue shared with units, cost at
+      queue, effects applied via compilePlayerStats on completion); Tool Age at the TC; Barracks (clubman →
+      axeman via Battle Axe), Archery Range (bowman), Stable (scout); command-grid buttons with techs.
+- [ ] **M5.4 Auto-acquire + retaliation.** Military auto-attacks enemies in LOS (scan staggered via UnitGrid;
+      scouts never auto-attack); 1.0a rule: own/allied units within 2 tiles of an attacked unit respond;
+      villagers fight back when attacked (idle ones only); chase leash (verify); lions attack villagers.
+- [ ] **M5.5 Soldier art.** Humanoid kits: clubman, axeman, bowman (draw/loose clip with arrow socket),
+      slinger; horse rig + scout rider; attack clips with `hit` markers aligned to sim reload; corpse frames;
+      Archery Range, Stable, Watch Tower models.
+- [ ] **M5.6 QoL + splash.** Attack-move (modern QoL; the original has none — toggle), splash framework
+      (radius, falloff, friendly fire for stones), trample for elephants later.
+- [ ] **M5.7 Battle gates.** Duel-matrix unit tests (formula, classes, buildings ×0.2); 20v20 scripted battle
+      (perf p99 ≤ 6 ms, stuck < 1%, deterministic); battle screenshots reviewed.
 - _Exit:_ duel matrix matches formula; 20v20 meets perf + screenshot gates; stuck < 1%.
 
 ## M6 — First playable skirmish (StartOS checkpoint + user playtest)
