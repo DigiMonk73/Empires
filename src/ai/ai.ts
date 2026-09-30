@@ -25,7 +25,7 @@ interface LevelParams {
 }
 
 export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
-  easiest: { think: 40, thrifty: false, villagers: [0, 12, 15, 18, 20], toolBy: 12 },
+  easiest: { think: 40, thrifty: false, villagers: [0, 10, 13, 16, 18], toolBy: 12 },
   easy: { think: 20, thrifty: false, villagers: [0, 16, 20, 24, 28], toolBy: 11 },
   moderate: { think: 10, thrifty: false, villagers: [0, 20, 26, 32, 36], toolBy: 10 }, // clicks Tool at ~20 villagers (econ:9)
   hard: { think: 6, thrifty: true, villagers: [0, 21, 30, 38, 44], toolBy: 9 },
