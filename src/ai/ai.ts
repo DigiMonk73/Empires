@@ -4,6 +4,7 @@ import { Rng, STREAM, type RngState } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
 import { MilitaryBrain, type MilitaryState } from './military.ts';
 import { NavalBrain, type NavalState } from './naval.ts';
+import { RelicBrain, type RelicState } from './relics.ts';
 import { upgrades } from './upgrades.ts';
 import { AiDiplomacy, type DiplomacyState } from './diplomacy.ts';
 import { TECH_BY_ID } from '../data/index.ts';
@@ -87,6 +88,8 @@ export interface AiState {
   military: MilitaryState;
   /** Absent in saves made before the naval AI (M8.8). */
   naval?: NavalState;
+  /** Standard-victory play (M14.6; absent in older saves). */
+  relics?: RelicState;
   /** The computers' diplomacy toward a human (M13.8). */
   diplomacy?: DiplomacyState;
 }
@@ -106,6 +109,7 @@ export class AiPlayer {
   private game = new Map<number, { h: number; type: string; x: number; y: number }>();
   readonly military: MilitaryBrain;
   readonly naval = new NavalBrain();
+  readonly relics = new RelicBrain();
   readonly diplomacy = new AiDiplomacy();
 
   /** No army at all (economy benchmarks and the AI suite's timing runs). */
@@ -131,6 +135,7 @@ export class AiPlayer {
       game: [...this.game.values()].map((g) => ({ ...g })),
       military: this.military.save(),
       naval: this.naval.save(),
+      relics: this.relics.save(),
       diplomacy: this.diplomacy.save(),
     };
   }
@@ -145,6 +150,7 @@ export class AiPlayer {
     this.game = new Map(st.game.map((g) => [g.h, { ...g }]));
     this.military.restore(st.military);
     this.naval.restore(st.naval);
+    this.relics.restore(st.relics);
     this.diplomacy.restore(st.diplomacy);
   }
 
@@ -168,6 +174,7 @@ export class AiPlayer {
     this.farms(s, cmds);
     this.naval.update(this, s, cmds);
     if (!this.peaceful) this.military.update(this, s, cmds);
+    this.relics.update(this, s, cmds);
     this.assignIdle(s, cmds);
     this.rebalance(s, cmds);
     return cmds;
@@ -632,7 +639,7 @@ export class AiPlayer {
    */
   build(s: Snapshot, cmds: Command[], type: string, x: number, y: number, minD: number, maxD: number, nBuilders: number): boolean {
     if (!s.v.canBuild(type) || !afford(s, s.v.cost(type))) return false;
-    const size = type === 'house' || type === 'watchTower' ? 2 : 3;
+    const size = type === 'house' || type === 'watchTower' ? 2 : type === 'wonder' ? 5 : 3;
     // On a cramped island start the usual spot may not exist: anywhere within 18 of the Town Center will do
     // (an island once sat in the Stone Age for two hours, its Tool-age buildings unplaceable).
     // On hilly maps a ring may hold no flat footprint: look a little further out before giving up (M10.2; flat

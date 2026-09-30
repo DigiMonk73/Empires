@@ -4,7 +4,7 @@ import { RESOURCE_KINDS, TYPES, buildingTypeIndex } from '../rules/registry.ts';
 import { buildingAvailable, canAfford, placementValid } from '../systems/build.ts';
 import { JOBS } from '../systems/gather.ts';
 import { researchBlocker, trainBlocker } from '../systems/production.ts';
-import type { World } from '../world.ts';
+import type { Countdown, VictoryMode, World } from '../world.ts';
 import { stanceOf } from '../rules/diplomacy.ts';
 
 /**
@@ -97,6 +97,16 @@ export class PlayerView {
   me() {
     const p = this.w.players[this.player]!;
     return { res: [...p.res], pop: p.pop, popCap: p.popCap, age: p.stats.age, techs: p.techs, team: p.team, defeated: p.defeated !== null, civ: p.civ };
+  }
+
+  /** The game's victory condition (econ:7): Standard games have relics and the Wonder/relic countdowns. */
+  victory(): VictoryMode {
+    return this.w.victory;
+  }
+
+  /** Standard-victory countdowns running (public: every player sees them at the upper right, M14.2). */
+  countdowns(): Countdown[] {
+    return this.w.countdowns.map((c) => ({ ...c }));
   }
 
   /** Setup team of another player (the lobby grouping; who fights whom is `stanceTo`, M12.3). */

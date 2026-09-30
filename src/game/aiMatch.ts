@@ -26,6 +26,8 @@ export interface MatchOptions {
   startingAge?: StartingAge;
   /** Population limit (default 50). */
   popCap?: number;
+  /** Victory condition (default conquest); Standard places the relics (M14.6). */
+  victory?: 'standard' | 'conquest';
   clock?: () => number;
 }
 
@@ -42,6 +44,8 @@ export interface MatchResult {
   /** % of villager-seconds spent with no orders, per player. */
   idlePct: number[];
   winner: number[] | null;
+  /** How it was won (conquest, a Wonder, all Artifacts / Ruins, score, time), or null. */
+  how: string | null;
   /** Final score per player (index = player − 1). */
   scores: number[];
   /** Units ever blocked > 5 s, and all units that ever existed (for the stuck %). */
@@ -63,8 +67,8 @@ const isVillager = (w: Sim['world'], s: number): boolean => TYPES[w.ents.type[s]
 
 export function runMatch(o: MatchOptions): MatchResult {
   const civs = o.civs ?? ['greek', 'egyptian', 'persian', 'babylonian', 'hittite', 'yamato', 'shang', 'roman'];
-  const cfg = generateMap({ seed: o.seed, type: o.type ?? 'continental', size: o.size ?? 'tiny', players: o.levels.map((_, i) => ({ civ: civs[i % civs.length]! })) });
-  const sim = Sim.create({ ...cfg, ...(o.startingAge ? { startingAge: o.startingAge } : {}), ...(o.popCap ? { popCap: o.popCap } : {}), players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
+  const cfg = generateMap({ seed: o.seed, type: o.type ?? 'continental', size: o.size ?? 'tiny', players: o.levels.map((_, i) => ({ civ: civs[i % civs.length]! })), ...(o.victory === 'standard' ? { relics: true } : {}) });
+  const sim = Sim.create({ ...cfg, ...(o.victory ? { victory: o.victory } : {}), ...(o.startingAge ? { startingAge: o.startingAge } : {}), ...(o.popCap ? { popCap: o.popCap } : {}), players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
   const w = sim.world;
   const n = o.levels.length;
   const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful, civ: civs[i % civs.length]! }));
@@ -113,6 +117,7 @@ export function runMatch(o: MatchOptions): MatchResult {
     ageTick: o.levels.map((_, i) => [...w.players[i + 1]!.tally.ageTick]),
     idlePct: idle.map((k, i) => (100 * k) / Math.max(1, vils[i]!)),
     winner: w.gameOver?.winners ?? null,
+    how: w.gameOver?.how ?? null,
     scores: o.levels.map((_, i) => computeScores(w).find((l) => l.player === i + 1)?.total ?? 0),
     stuckUnits: stuck.size,
     unitsSeen: seen.size,
