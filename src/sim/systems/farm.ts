@@ -2,7 +2,7 @@ import { Act, EKind } from '../core/entities.ts';
 import { NO_ENTITY } from '../core/handles.ts';
 import { TYPES } from '../rules/registry.ts';
 import type { Order, World } from '../world.ts';
-import { findDropSite, isVillager, JOBS, REACH } from './gather.ts';
+import { approachRect, findDropSite, isVillager, JOBS, REACH } from './gather.ts';
 
 /**
  * Farms (econ:1.4): a completed farm holds the player's farm food (250 base; +75 per farm tech; Sumerian ×2). One
@@ -159,6 +159,9 @@ export function farmSystem(w: World): void {
       const x0 = Math.round(e.x[ds]! - size / 2);
       const y0 = Math.round(e.y[ds]! - size / 2);
       w.pathing.request(s, { k: 'rect', x0, y0, x1: x0 + size - 1, y1: y0 + size - 1, range: 1 });
-    } else if (w.paths[s] !== undefined && !w.paths[s]!.length) w.paths[s] = undefined;
+    } else if (w.paths[s] !== undefined && !w.paths[s]!.length) {
+      const h2 = TYPES[e.type[ds]!]!.size / 2;
+      if (!approachRect(w, s, e.x[ds]! - h2, e.y[ds]! - h2, e.x[ds]! + h2, e.y[ds]! + h2)) w.paths[s] = undefined;
+    }
   }
 }

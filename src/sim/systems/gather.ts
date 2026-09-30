@@ -37,6 +37,26 @@ function rectDist(px: number, py: number, x0: number, y0: number, x1: number, y1
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+/**
+ * The path service ends a rect goal on any tile adjacent to the rect (diagonals included), but work starts only
+ * within REACH of the rect itself, so a unit standing off-centre on a diagonal tile can "arrive" out of reach
+ * (≈1.03 tiles). When a unit has an empty path and is that close, walk it straight in: the nearest point of the
+ * rect, backed off 0.45 toward the unit, always lies in the unit's own tile. Returns false when it isn't close
+ * enough to be a pure reach problem (then the caller repaths or gives up as before).
+ */
+export function approachRect(w: World, s: number, x0: number, y0: number, x1: number, y1: number): boolean {
+  const ux = w.ents.x[s]!;
+  const uy = w.ents.y[s]!;
+  const d = rectDist(ux, uy, x0, y0, x1, y1);
+  if (d <= REACH || d > 1.5) return false;
+  const qx = ux < x0 ? x0 : ux > x1 ? x1 : ux;
+  const qy = uy < y0 ? y0 : uy > y1 ? y1 : uy;
+  const k = 0.45 / d;
+  w.paths[s] = [qx + (ux - qx) * k, qy + (uy - qy) * k];
+  w.pathing.cancel(s);
+  return true;
+}
+
 function nodeDist(w: World, i: number, x: number, y: number): number {
   const size = RESOURCE_KINDS[w.res.kind[i]!]!.size;
   return rectDist(x, y, w.res.tx[i]!, w.res.ty[i]!, w.res.tx[i]! + size, w.res.ty[i]! + size);
@@ -244,6 +264,8 @@ export function gatherSystem(w: World): void {
       } else if (w.paths[s] === undefined && !w.pathing.pending(s)) {
         w.pathing.request(s, nodeGoal(w, o.res));
       } else if (w.paths[s] !== undefined && w.paths[s]!.length === 0) {
+        const size = def.size;
+        if (approachRect(w, s, r.tx[o.res]!, r.ty[o.res]!, r.tx[o.res]! + size, r.ty[o.res]! + size)) continue;
         // Arrived but not in reach (blocked/unreachable): try another node, then give up.
         if (++o.retry > 3) {
           const next = findNearbyNode(w, s, job, e.x[s]!, e.y[s]!);
@@ -328,7 +350,7 @@ export function gatherSystem(w: World): void {
     } else if (w.paths[s] === undefined && !w.pathing.pending(s)) {
       w.pathing.request(s, buildingGoal(w, ds));
     } else if (w.paths[s] !== undefined && w.paths[s]!.length === 0) {
-      w.paths[s] = undefined; // arrived short of the building: path again
+      if (!approachRect(w, s, x0, y0, x1, y1)) w.paths[s] = undefined; // arrived short of the building: path again
     }
   }
 }

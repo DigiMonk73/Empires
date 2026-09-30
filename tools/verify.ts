@@ -47,6 +47,11 @@ const STEPS: Step[] = [
       return note;
     },
   },
+  {
+    id: 'econ',
+    title: 'Economy benchmark (rates, trip efficiency, idle)',
+    cmd: ['node', 'tools/sim/econ.ts', '--record'],
+  },
   { id: 'build', title: 'Vite build', cmd: ['npx', 'vite', 'build'] },
   {
     id: 'e2e',

@@ -15,7 +15,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   combat core (`systems/combat.ts`: damage formula, instant hits — projectiles in M5); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M4.8 economy benchmark + idle metric (and mouse e2e trains 5 villagers); then verify:full → tag m4.
+- **Next up:** M4 exit — verify:full → tag m4 → bump empires-startos submodule; then M5 combat.
 - **Playable now:** `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -157,8 +157,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M4.7c Animals.** Quadruped rig (`dsl/quad.ts`): gazelle (grazes), elephant (amble, rears to stamp),
       lion (pounce); idle/walk/attack/die × 8 facings; carcass = last death frame in the facing it fell (node
       `variant`). Alligator and baked shore-fish ripples deferred (placeholders) to M8/M9.
-- [ ] **M4.8 e2e + metrics.** Mouse-driven e2e builds a house and trains 5 villagers; scripted economy benchmark
-      and idle metric in the sim stress/verify.
+- [x] **M4.8 e2e + metrics.** Mouse e2e builds a house and trains 5 villagers (since M4.6); scripted economy
+      benchmark (`src/sim/testing/econBench.ts`, `tools/sim/econ.ts`, verify step, `docs/metrics/econ.csv`): work
+      rates exact (±0.3%), trip efficiency 81–97%, idle 0.16%. Found + fixed: diagonal "arrived out of reach"
+      dropped orders (19% woodcutter idle) — `approachRect` (D24).
 - _Exit:_ mouse e2e builds a house and trains 5 villagers; scripted economy within ±5% of research rates; idle < 3%.
 
 ## M5 — Combat

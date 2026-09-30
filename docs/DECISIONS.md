@@ -82,3 +82,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
 - **D23 — Dock placement** (2026-09-29, M4.7b; `verify`). The research gives no exact rule. A Dock's whole
   footprint must be free water (not buildable land, no fish on it) and at least one tile in the ring around it
   must be dry buildable land. Revisit with shallows/beach details in M8.
+- **D24 — Economy gates and the reach fix** (2026-09-29, M4.8). The research gives work rates, not trip rates, so
+  the M4 gate measures (a) each job's rate while working — within ±5% of the research value (econ:1.2), (b) trip
+  efficiency = delivered per villager-second ÷ work rate ≥ 75% with a drop site beside the resource (hunting
+  excepted: chasing and decay), (c) idle < 3% of villager time (hunters excepted: like the original they stop
+  when their carcass is gone). The benchmark exposed rect goals ending on a diagonal tile ≈1.03 tiles from the
+  target (> REACH 0.9): the empty path counted as failure and orders were dropped. `approachRect` now walks the
+  unit straight in (the approach point always lies inside its own tile) — used by gather, drop-off, build, farm.

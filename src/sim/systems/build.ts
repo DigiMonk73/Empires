@@ -7,7 +7,7 @@ import { dir16 } from '../math/trig.ts';
 import { nearestTile } from '../path/service.ts';
 import { TYPES, buildingTypeIndex } from '../rules/registry.ts';
 import type { World } from '../world.ts';
-import { isVillager, REACH } from './gather.ts';
+import { approachRect, isVillager, REACH } from './gather.ts';
 import { sowFarm, startFarm } from './farm.ts';
 
 /**
@@ -208,6 +208,7 @@ export function buildSystem(w: World): void {
       const y0 = Math.round(rect[1]);
       w.pathing.request(s, { k: 'rect', x0, y0, x1: x0 + size - 1, y1: y0 + size - 1, range: 1 });
     } else if (w.paths[s] !== undefined && w.paths[s]!.length === 0) {
+      if (approachRect(w, s, rect[0], rect[1], rect[2], rect[3])) continue;
       if (++o.retry > 4) finish(w, s);
       else w.paths[s] = undefined;
     }
