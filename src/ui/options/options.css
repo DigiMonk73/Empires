@@ -1,0 +1,148 @@
+/* Game options (M12.2): shared by the main menu's Options and the in-game Options dialog. */
+.options-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 36px;
+  align-items: start;
+  text-align: left;
+}
+.options-cols h3,
+.opts h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #f2d27a;
+  margin: 6px 0 8px;
+  border-bottom: 1px solid rgba(176, 138, 74, 0.5);
+  padding-bottom: 3px;
+}
+.opts {
+  display: grid;
+  gap: 7px;
+  min-width: 320px;
+  margin-bottom: 10px;
+}
+.opt-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+.opt-row .vol-name {
+  color: #e8d6a8;
+}
+.opt-row:has(.wide) {
+  grid-template-columns: 1fr auto;
+}
+.opt-choices {
+  display: flex;
+  gap: 4px;
+}
+.opt-row > button,
+.opt-row > .opt-choices {
+  justify-self: start;
+}
+.opt-row:has(.wide) > button {
+  justify-self: end;
+}
+.options-cols button.speed,
+.menu .options-cols button.speed {
+  font: inherit;
+  font-size: 14px;
+  min-width: 0;
+  color: #f4e6c8;
+  background: #3a2d1e;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  padding: 2px 10px;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: none;
+}
+.options-cols button.speed.on,
+.menu .options-cols button.speed.on {
+  background: #8a6a2e;
+  border-color: #e0b45a;
+}
+.options-cols button.toggle {
+  min-width: 48px;
+}
+.options-panel {
+  min-width: 720px;
+}
+
+/* Keys (F1). */
+.keys-panel {
+  max-width: 94vw;
+  max-height: 86vh;
+  overflow: auto;
+  text-align: left;
+}
+.keys-cols {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+.keys-classic {
+  display: flex;
+  gap: 20px;
+}
+.keys-table {
+  border-collapse: collapse;
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 14px;
+}
+.keys-table th {
+  text-align: right;
+  padding: 2px 10px 2px 0;
+  color: #f2d27a;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.keys-table th[colspan] {
+  text-align: left;
+  font-family: 'Cinzel', Georgia, serif;
+  padding-bottom: 6px;
+}
+.keys-panel .keys-table td {
+  text-align: left;
+  padding: 2px 0;
+  color: #efe2c0;
+}
+.keys-panel .keys-grid p {
+  text-align: left;
+}
+.keys-grid p {
+  font-family: 'Alegreya', Georgia, serif;
+  margin: 4px 0 10px;
+  max-width: 260px;
+}
+.keys-grid-cells {
+  display: grid;
+  grid-template-columns: repeat(5, 40px);
+  gap: 5px;
+}
+.keys-grid-cells span {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  border: 1px solid #b08a4a;
+  border-radius: 4px;
+  background: #3a2d1e;
+  color: #f2d27a;
+  font-weight: 700;
+}
+
+/* Status box with the selection grid off: which of the selected units shows. */
+.sel-focus {
+  position: relative;
+  height: 100%;
+}
+.focus-count {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-size: 13px;
+  color: #cdb487;
+}

@@ -38,7 +38,7 @@ export interface CommandButton {
 }
 
 /** Villager build menu hotkeys (B then letter) — mil:5. */
-const BUILD_KEYS: Record<string, string> = {
+export const BUILD_KEYS: Record<string, string> = {
   house: 'E',
   granary: 'G',
   storagePit: 'S',
@@ -59,7 +59,7 @@ const BUILD_KEYS: Record<string, string> = {
 };
 
 /** Unit training hotkeys per building (mil:5). */
-const TRAIN_KEYS: Record<string, string> = {
+export const TRAIN_KEYS: Record<string, string> = {
   villager: 'C',
   clubman: 'T', slinger: 'L', shortSwordsman: 'Z',
   bowman: 'T', improvedBowman: 'A', chariotArcher: 'R', horseArcher: 'C', elephantArcher: 'E',

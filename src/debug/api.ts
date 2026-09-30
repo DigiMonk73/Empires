@@ -40,6 +40,8 @@ export interface EmpiresDebugApi {
     missiles(): { type: string; owner: number }[];
     /** Resource node index at tile (tx, ty), or -1. */
     resourceAt(tx: number, ty: number): number;
+    /** A building's rally point, or null (none set). */
+    rally(h: number): { x: number; y: number } | null;
   };
   /** Handle of the building covering tile (tx, ty), or null. */
   buildingAt(tx: number, ty: number): number | null;

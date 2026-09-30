@@ -238,3 +238,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   within 15 s), rendered in 2 s slices that carry tails and phase so the joins are seamless, limited under
   −1 dBFS; the same generator runs offline in `tools/audio-check.ts` (verify:full). Mixer: master, music,
   effects and voice levels, saved per browser.
+- **D46 — Settings and the Classic preset** (2026-09-30, M12.2). Game settings live per browser
+  (`empires.settings`, repaired field by field when read) and apply live. The seven PLAN conveniences are separate
+  switches; **Classic** turns all seven off, **Modern** all on (the default). Classic removes only what the
+  original lacked (research §5): rally points, the idle-villager button (the "." key stays — RoR 1.0a had it),
+  attack-move, shift-queued orders (Shift-placing several buildings stays — the original's), wheel zoom, the
+  always-on population counter, the selection grid (the status box then shows one unit; Tab cycles, as in the
+  original). Hotkey layouts: **Classic** = the original's letters (mil:5), **Grid** = the button's place in the
+  5 × 3 grid (QWERT / ASDFG / ZXCVB; Escape stays). The sim is untouched — the switches only gate input and HUD,
+  so a Classic player and a Modern player play the same rules.

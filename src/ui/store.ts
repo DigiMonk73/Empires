@@ -40,6 +40,12 @@ export const hud = {
   menuOpen: signal(false),
   speed: signal(1),
   muted: signal(false),
+  /** The game options dialog over the game menu (M12.2). */
+  optionsOpen: signal(false),
+  /** The keyboard reference (F1). */
+  keysOpen: signal(false),
+  /** Which selected unit the status box shows when the selection grid is off (Tab cycles). */
+  focus: signal(0),
   /** Saved-games dialog over the game menu. */
   saveDialog: signal<'save' | 'load' | null>(null),
   /** Suggested name for a new save ("Inland · tiny — 12:30"). */

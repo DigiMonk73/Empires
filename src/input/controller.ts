@@ -15,6 +15,7 @@ import { isTransport } from '../sim/systems/transport.ts';
 import { isTradeBoat } from '../sim/systems/trade.ts';
 import { MOVE_LAND } from '../data/terrain.ts';
 import type { Action, CommandButton } from '../ui/commands.ts';
+import { gameSettings } from '../ui/settings.ts';
 
 const DRAG_THRESHOLD = 5;
 const DOUBLE_CLICK_MS = 350;
@@ -82,8 +83,9 @@ export class InputController {
       return;
     }
     if (this.targeting) {
-      if (e.button === 0 && this.targeting === 'attackMove') this.attackMove(p, e.shiftKey);
-      else if (e.button === 0) this.repairAt(p, e.shiftKey);
+      const queue = e.shiftKey && gameSettings.value.qol.shiftQueue;
+      if (e.button === 0 && this.targeting === 'attackMove') this.attackMove(p, queue);
+      else if (e.button === 0) this.repairAt(p, queue);
       this.setTargeting(null);
       return;
     }
@@ -191,15 +193,16 @@ export class InputController {
    * an own foundation or farm an own field; buildings set their rally point (on a resource: new villagers gather
    * it); otherwise units move.
    */
-  private command(p: { x: number; y: number }, queue: boolean): void {
+  private command(p: { x: number; y: number }, shift: boolean): void {
     const me = this.session.localPlayer;
+    const queue = shift && gameSettings.value.qol.shiftQueue;
     const w = this.camera.screenToWorld(p.x, p.y);
     const map = this.world.map;
     const ids = this.ownUnits();
     const res = this.wr.pickResource(p.x, p.y);
     if (!ids.length) {
       const blds = this.ownBuildings();
-      if (!blds.length || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
+      if (!blds.length || !gameSettings.value.qol.rally || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
       this.session.router.submit(me, { t: 'rally', blds, x: quantize(w.x), y: quantize(w.y), ...(res >= 0 ? { res } : {}) });
       this.wr.addMarker(w.x, w.y, 0xffd84a);
       return;

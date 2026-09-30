@@ -9,6 +9,8 @@ export interface CameraOptions {
   scrollSpeed: number; // logical px per second at zoom 1
   minZoom: number;
   maxZoom: number;
+  /** Mouse-wheel zoom (a QoL option, M12.2); off keeps the scale where it is. */
+  wheelZoom?: boolean;
 }
 
 /** Camera over the iso world container: pan (keys, edge, middle-drag) and zoom (wheel). */
@@ -53,6 +55,7 @@ export class Camera {
       'wheel',
       (e) => {
         e.preventDefault();
+        if (this.options.wheelZoom === false) return;
         const factor = Math.exp(-e.deltaY * 0.0015);
         this.zoomAt(this.zoom * factor, e.clientX, e.clientY);
       },

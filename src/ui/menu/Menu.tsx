@@ -12,6 +12,8 @@ import { loadQuery } from '../../game/saveGame.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import { Emblem } from '../emblems.tsx';
 import { VolumeControls } from '../options/VolumeControls.tsx';
+import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
+import { gameSettings } from '../settings.ts';
 import './menu.css';
 
 /**
@@ -44,7 +46,7 @@ function MainMenu({ onSkirmish, onLoad, onOptions }: { onSkirmish: () => void; o
 }
 
 function Skirmish({ onBack }: { onBack: () => void }) {
-  const [s, setS] = useState<SkirmishSetup>({ ...DEFAULT_SETUP, seed: 1 + Math.floor(Math.random() * 99999) });
+  const [s, setS] = useState<SkirmishSetup>({ ...DEFAULT_SETUP, speed: gameSettings.value.defaultSpeed, seed: 1 + Math.floor(Math.random() * 99999) });
   const upd = (patch: Partial<SkirmishSetup>) => setS({ ...s, ...patch });
   const updP = (i: number, patch: Partial<SkirmishPlayer>) => upd({ players: s.players.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
   const addPlayer = () => {
@@ -188,12 +190,19 @@ function CivInfo({ civ }: { civ: string }) {
   );
 }
 
-/** Options (M11.4): sound for now — mute and the four volumes; more settings join in M12. */
+/** Options: sound (M11.4), controls, hotkeys and the conveniences with the Classic preset (M12.2). */
 function Options({ onBack }: { onBack: () => void }) {
   return (
     <div class="menu-panel" data-testid="options">
       <h2>Options</h2>
-      <VolumeControls />
+      <div class="options-cols">
+        <div>
+          <h3>Sound</h3>
+          <VolumeControls />
+          <ControlOptions />
+        </div>
+        <QolOptions />
+      </div>
       <div class="menu-buttons row">
         <button data-testid="options-back" onClick={onBack}>
           Back

@@ -6,6 +6,9 @@ import type { CommandButton } from '../commands.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { TechTree } from '../techtree/TechTree.tsx';
 import { notes } from '../notify.ts';
+import { gameSettings } from '../settings.ts';
+import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
+import { KeysReference } from '../options/KeysReference.tsx';
 
 const RES = [
   { key: 'food', label: 'Food', color: '#d84a3a' },
@@ -25,12 +28,14 @@ function TopBar() {
             <span class="res-val">{Math.floor(r[i]!)}</span>
           </div>
         ))}
-        <div class="res" data-testid="pop" title="Population">
-          <span class="res-icon pop-icon" />
-          <span class="res-val">
-            {hud.pop.value}/{hud.popCap.value}
-          </span>
-        </div>
+        {gameSettings.value.qol.popCounter && (
+          <div class="res" data-testid="pop" title="Population">
+            <span class="res-icon pop-icon" />
+            <span class="res-val">
+              {hud.pop.value}/{hud.popCap.value}
+            </span>
+          </div>
+        )}
       </div>
       <div class="age">
         <Emblem civ={hud.civ.value} size={24} />
@@ -88,6 +93,19 @@ function Icon({ model, label, size, glyph }: { model: string | null; label: stri
     <span class={glyph ? 'icon-glyph' : 'icon-txt'} style={fit}>
       {glyph ?? label.slice(0, 2)}
     </span>
+  );
+}
+
+/** With the selection grid off (Classic): the status box shows one selected unit at a time; Tab cycles. */
+function FocusPanel({ list }: { list: SelInfo[] }) {
+  const i = hud.focus.value % list.length;
+  return (
+    <div class="sel-focus" data-testid="sel-focus">
+      <SinglePanel s={list[i]!} />
+      <div class="focus-count" title="Tab: next · Shift+Tab: previous">
+        {i + 1} / {list.length}
+      </div>
+    </div>
   );
 }
 
@@ -304,6 +322,23 @@ function Results() {
 function GameMenu() {
   if (!hud.menuOpen.value) return null;
   const dialog = hud.saveDialog.value;
+  if (hud.optionsOpen.value)
+    return (
+      <div class="gameover" data-testid="game-options">
+        <div class="gameover-panel options-panel">
+          <div class="gameover-title small">Options</div>
+          <div class="options-cols">
+            <ControlOptions />
+            <QolOptions />
+          </div>
+          <div class="gameover-buttons">
+            <button data-testid="game-options-back" onClick={() => (hud.optionsOpen.value = false)}>
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   if (dialog)
     return (
       <SaveList
@@ -331,6 +366,8 @@ function GameMenu() {
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
           <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
           <button data-testid="menu-load" onClick={() => (hud.saveDialog.value = 'load')}>Load Game</button>
+          <button data-testid="menu-game-options" onClick={() => (hud.optionsOpen.value = true)}>Options</button>
+          <button data-testid="menu-keys" onClick={() => (hud.keysOpen.value = true)}>Keys (F1)</button>
           <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>
           <button data-testid="menu-resign" onClick={() => hudActions.resign()}>Resign</button>
           <button data-testid="menu-quit" onClick={() => hudActions.quit()}>Quit to main menu</button>
@@ -345,27 +382,30 @@ export function Hud() {
   return (
     <div class="hud">
       <GameMenu />
+      {hud.keysOpen.value && <KeysReference onClose={() => (hud.keysOpen.value = false)} />}
       {hud.techTree.value && <TechTree civ={hud.techTree.value.civ} columns={hud.techTree.value.columns} onClose={() => (hud.techTree.value = null)} />}
       <GameOver />
       <Results />
       <TopBar />
       <Messages />
       <div class="hud-bottom" data-testid="bottom-panel">
-        <div class="panel sel-panel">{sel.length === 0 ? <div class="sel-empty" /> : sel.length === 1 ? <SinglePanel s={sel[0]!} /> : <MultiPanel list={sel} />}</div>
+        <div class="panel sel-panel">{sel.length === 0 ? <div class="sel-empty" /> : sel.length === 1 ? <SinglePanel s={sel[0]!} /> : gameSettings.value.qol.selectionGrid ? <MultiPanel list={sel} /> : <FocusPanel list={sel} />}</div>
         <div class="panel cmd-panel">
           <CommandGrid />
         </div>
         <div class="panel minimap-panel">
           <div id="minimap-slot" data-testid="minimap" />
-          <button
-            class={`idle-btn${hud.idleVillagers.value ? ' has-idle' : ''}`}
-            data-testid="idle-villagers"
-            title="Next idle villager (.)"
-            onClick={() => hudActions.nextIdle()}
-          >
-            <Icon model="villager" label="Vi" size={28} />
-            <span class="idle-count">{hud.idleVillagers.value}</span>
-          </button>
+          {gameSettings.value.qol.idleButton && (
+            <button
+              class={`idle-btn${hud.idleVillagers.value ? ' has-idle' : ''}`}
+              data-testid="idle-villagers"
+              title="Next idle villager (.)"
+              onClick={() => hudActions.nextIdle()}
+            >
+              <Icon model="villager" label="Vi" size={28} />
+              <span class="idle-count">{hud.idleVillagers.value}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

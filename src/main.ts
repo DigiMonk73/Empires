@@ -16,6 +16,7 @@ import { quantize } from './sim/commands/types.ts';
 import { BakedArt } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
 import { Notifier, notes } from './ui/notify.ts';
+import { applyHotkeys, gameSettings, SPEEDS } from './ui/settings.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
@@ -97,6 +98,17 @@ async function boot(): Promise<void> {
     insetTop: 36,
     insetBottom: 170,
   });
+  // Settings (M12.2) apply live; `?edgeScroll=0` (tests) always wins.
+  effect(() => {
+    const st = gameSettings.value;
+    camera.options.edgeScroll = st.edgeScroll && params.get('edgeScroll') !== '0' && !menuMode;
+    camera.options.scrollSpeed = st.scrollSpeed;
+    camera.options.wheelZoom = st.qol.zoom && !menuMode;
+    if (!st.qol.zoom && camera.zoom !== 1 && !menuMode) {
+      camera.setZoom(1);
+      camera.apply();
+    }
+  });
   camera.ground = (x, y) => groundHeight(world.map, x, y);
   const selection = new Selection();
   const audio = wireAudio(session, world, wr, camera, selection, app, menuMode);
@@ -125,7 +137,9 @@ async function boot(): Promise<void> {
   minimap.fogEnabled = !noFog;
   minimap.player = session.localPlayer;
   const refreshCommands = (): void => {
-    const cmds = computeCommands(world, session.localPlayer, selection.list, input.page);
+    const st = gameSettings.value;
+    const all = computeCommands(world, session.localPlayer, selection.list, input.page).filter((c) => st.qol.attackMove || c.id !== 'attackMove');
+    const cmds = applyHotkeys(all, st.hotkeys);
     input.buttons = cmds;
     hud.commands.value = cmds;
     hud.placing.value = input.placing;
@@ -135,6 +149,7 @@ async function boot(): Promise<void> {
   hudActions.setMenu = (open) => {
     hud.menuOpen.value = open;
     hud.saveDialog.value = null;
+    hud.optionsOpen.value = false;
     hud.saveName.value = `${kind} — ${formatClock(world.tick)}`;
     session.paused = open;
   };
@@ -206,8 +221,55 @@ async function boot(): Promise<void> {
         ping: (x, y, color) => minimap.ping(x, y, color),
       });
   if (notifier) session.onEvents((ev) => notifier.onEvents(ev));
+  effect(() => {
+    void gameSettings.value; // hotkey layout, attack-move switch
+    refreshCommands();
+  });
+  // The keys list (F1) pauses the game like the menu does (the first run only reads the signal).
+  let keysSeen = false;
+  effect(() => {
+    const open = hud.keysOpen.value;
+    if (keysSeen && !hud.menuOpen.peek()) session.paused = open;
+    keysSeen = true;
+  });
   window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement) return;
+    if (e.target instanceof HTMLInputElement || menuMode) return;
+    if (e.key === 'F1') {
+      e.preventDefault();
+      hud.keysOpen.value = !hud.keysOpen.value;
+      return;
+    }
+    if (e.key === 'F10') {
+      e.preventDefault();
+      hudActions.setMenu(!hud.menuOpen.value);
+      return;
+    }
+    if (hud.menuOpen.value) return;
+    // Space: go to the selection; H: the Town Center (research §5).
+    if (e.key === ' ') {
+      e.preventDefault();
+      input.centerOnSelection();
+    }
+    if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) {
+      const tcs = ownOfType(world, session.localPlayer, 'townCenter');
+      if (tcs.length) {
+        const h = tcs[tcCursor++ % tcs.length]!;
+        selection.set([h]);
+        input.centerOnSelection();
+      }
+    }
+    // + / −: game speed (research §5).
+    if (e.key === '+' || e.key === '=' || e.key === '-') {
+      const i = SPEEDS.indexOf(session.speed as 1);
+      const next = SPEEDS[Math.max(0, Math.min(SPEEDS.length - 1, (i < 0 ? 0 : i) + (e.key === '-' ? -1 : 1)))]!;
+      hudActions.setSpeed(next);
+    }
+    // Tab / Shift+Tab: which selected unit the status box shows (with the selection grid off).
+    if (e.key === 'Tab' && selection.list.length > 1) {
+      e.preventDefault();
+      const n = selection.list.length;
+      hud.focus.value = (hud.focus.value + (e.shiftKey ? n - 1 : 1)) % n;
+    }
     if (e.key === '.') hudActions.nextIdle();
     if (e.key === 'Home' && notifier) {
       const c = notifier.nextCue();
@@ -217,7 +279,9 @@ async function boot(): Promise<void> {
       }
     }
   });
+  let tcCursor = 0;
   selection.onChange(() => {
+    hud.focus.value = 0;
     if (!input.ownUnits().length) input.cancelPlacement();
     input.page = input.placing ? input.page : 'main';
     refreshCommands();
@@ -348,6 +412,10 @@ async function boot(): Promise<void> {
       projectiles: () => world.projectiles.length,
       missiles: () => world.projectiles.map((p) => ({ type: TYPES[p.type]!.id, owner: p.owner })),
       resourceAt: (tx, ty) => (world.map.inBounds(tx, ty) ? world.map.resAt[world.map.idx(tx, ty)]! - 1 : -1),
+      rally: (h) => {
+        const r = world.rally[world.ents.slotOf(h)];
+        return r ? { x: r.x, y: r.y } : null;
+      },
     },
     buildingAt: (tx, ty) => {
       if (!world.map.inBounds(tx, ty)) return null;
@@ -458,6 +526,14 @@ function gameKind(params: URLSearchParams): string {
   if (sc !== 'skirmish') return sc[0]!.toUpperCase() + sc.slice(1);
   const type = params.get('type') ?? 'continental';
   return `${type[0]!.toUpperCase()}${type.slice(1)} · ${params.get('size') ?? 'small'}`;
+}
+
+/** Handles of a player's finished buildings of one type (H cycles the Town Centers). */
+function ownOfType(world: GameSession['sim']['world'], owner: number, typeId: string): number[] {
+  const e = world.ents;
+  const out: number[] = [];
+  for (let s = 0; s < e.top; s++) if (e.alive[s] && e.owner[s] === owner && e.build[s]! >= 1 && TYPES[e.type[s]!]!.id === typeId) out.push(e.handleOf(s));
+  return out;
 }
 
 function findFirst(world: GameSession['sim']['world'], owner: number, typeId: string): number {

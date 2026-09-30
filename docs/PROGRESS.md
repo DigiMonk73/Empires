@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M12 UI & QoL in progress (M12.1 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M12 UI & QoL in progress (M12.1–2 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m11 (verify ~127 s without a re-bake); verify:full at the M11 exit 1123 s (audio check, Docker both arches 126 MB, Tauri smoke render avg 1.9 ms, s9pk, 428 unit + 103 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M12.2 options, hotkey presets, Classic preset (M12.1 notifications done).
+- **Next up:** M12.3 diplomacy and tribute (M12.1 notifications, M12.2 options/hotkeys/Classic done).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -635,11 +635,16 @@ fog-aware hooks, a mute toggle. No music.
       build.ts: "Not enough wood."; the command tooltips too). Minimap pings (rings, 3 s of game time; red for
       attacks, gold for Wonders). **Home** (RoR "jump to the last sound cue") cycles the camera through the
       last five placed messages; clicking a placed message jumps there. `notify.test.ts` (5), e2e `notify.spec`.
-- [ ] **M12.2 Options, hotkeys, Classic preset.** Options screen (main menu + game menu): scroll speed, edge scroll,
-      default game speed, the QoL toggles (rally points, idle-villager button, attack-move, shift-queue, zoom,
-      always-on pop counter, multi-select grid) with a one-click **Classic** preset (all off) — saved in
-      localStorage and applied live; hotkey presets **Classic** (the original's letters) and **Grid** (QWE/ASD/ZXC
-      by button position); a hotkey reference (F1). Tests: each toggle's effect, preset round-trip, e2e.
+- [x] **M12.2 Options, hotkeys, Classic preset** (D46). `ui/settings.ts`: scroll speed, edge scroll, the speed a
+      new skirmish starts at, hotkey layout, and the seven conveniences (rally points, idle-villager button,
+      attack-move, shift-queued orders, zoom, population in the top bar, selection grid) with **Modern** / **Classic**
+      presets — saved (`empires.settings`, repaired when read), applied live. `ui/options/GameOptions.tsx` on the
+      main menu's Options (two columns with Sound) and in the game menu's new Options dialog. Classic: the status
+      box shows one selected unit, Tab / Shift+Tab cycle; no rally from right-clicks; A/attack-move button gone;
+      Shift+right-click no longer queues; wheel zoom off (zoom back to 1). **Grid** hotkeys letter the command
+      buttons by place (QWERT/ASDFG/ZXCVB). New keys: **F1** keys reference (`KeysReference.tsx`, pauses; lists
+      the chosen layout's letters), **F10** menu, **Space** go to the selection, **H** Town Center (cycles),
+      **+ / −** game speed. `settings.test.ts` (4), e2e `options.spec` (menu → game → back to Modern, both browsers).
 - [ ] **M12.3 Diplomacy and tribute.** Sim: per-player stances Ally / Neutral / Enemy (commands `stance`,
       `tribute`), `hostile()` from stances (Neutral: fight soldiers and buildings, leave villagers — research §5),
       allied vision after Writing, allied victory; tribute needs a Market, 25% fee until Coinage/Palmyran

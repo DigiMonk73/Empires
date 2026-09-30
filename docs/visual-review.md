@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M12.2 · options-classic, keys-grid (new), menu-options (new layout)
+- Options: two columns — Sound and Controls on the left, Conveniences with the Modern/Classic preset on the
+  right; toggles right-aligned, choices as small bronze buttons (first pass stretched Edge scroll across the
+  column → fixed). Keys (F1): general keys as a two-column table with gold key names, the grid layout as a 5 × 3
+  keycap block (first pass centred the descriptions → left-aligned). The command grid behind shows Q/W/E letters
+  in Grid mode. WebKit's sliders draw white thumbs (as since M11.4). UI 4.
+
 ## 2026-09-30 · M12.1 · notify-attack (new), priest-converted, siege-volley, village-bronze (+ age/defeat texts elsewhere)
 - Messages sit at the upper left under the top bar in Alegreya with a black halo: legible on grass and on the black
   of unexplored ground; each in its player's colour lightened a third (ours blue, Player 2 red), warnings coral.
