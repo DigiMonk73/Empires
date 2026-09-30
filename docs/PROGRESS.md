@@ -16,10 +16,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
   combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, windup, dodgeable
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
-- **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
+- **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M13 AI v2 ladder — expand into tasks (Hard > Easy ≥ 75%, water maps ≥ 90% decided, 5 levels, civ strategies, defense, micro, priests, siege; AI answers diplomacy/tribute, D47). 0.12.0 on the StartOS VM (user asked, 2026-09-30).
+- **Next up:** M13 AI v2 ladder — expand into tasks (Hard > Easy ≥ 75%, water maps ≥ 90% decided, 5 levels, civ strategies, defense, micro, priests, siege; AI answers diplomacy/tribute, D47).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -695,6 +695,11 @@ fog-aware hooks, a mute toggle. No music.
       real bug — the Load dialog opening on the remembered Server tab could show the device's (empty) list, because
       the slower IndexedDB answer landed after the server's. Fixed (only the showing tab's answer is used); e2e
       regression slows IndexedDB on purpose (fails without the fix in both browsers). The package pins the fix.
+      Re-run on the fixed build (`artifacts/vm-e2e-m12.ts`, headless Chromium + WebKit against the box): 20/20 —
+      fonts load from the box, Help, Diplomacy, save on the server → load (tick and hash equal), Achievements
+      timeline, autosave; server saves survived the reinstall; after `package restart empires` a fresh browser
+      profile loads each server save (tick and hash equal); logs clean (`saves in /data/saves`). Test saves
+      deleted, VM stopped. Backup → restore still unverified (KI-3: no backup target on the VM).
 
 ## M13 — AI v2 ladder
 - 5 levels; civ strategies; defense/walls/towers; micro; priests; siege; relic/ruin/wonder play.
