@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.10 done (mapgen, victory, menus, AI + ladder, AI suite, age art, audio, save/load, menu→victory e2e). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
-- **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
+- **Milestone:** M6 First playable skirmish **done** (tag `m6`, s9pk 0.6.0 80 MB, verified on the StartOS VM). Next: M7 full land tech tree. M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Last green commit:** m6 (verify ~70 s incl. AI suite + ladder; verify:full ~255 s: Docker 89.5 MB, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
   sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Baked gazelle/elephant/lion, clubman/axeman/slinger/bowman, scout (horse rig), Archery Range, Stable,
@@ -14,10 +14,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
   combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, windup, dodgeable
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
-- **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
+- **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M6 exit: verify:full, tag m6, submodule bump (commit before make), StartOS VM checkpoint (install, play, save/load, restart, stop VM), playtest invite.
+- **Next up:** M7 — split the full land tech tree into tasks (temple/priests, academy, siege, walls/towers, Iron Age, Wonder, 16 civs, tech-tree screen) and start with siege (it also speeds AI conquest).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -276,8 +276,18 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       Bronze-Age building. AI-suite ladder gate (D33) on held-out seeds 101–108: Hardest>Easiest 14/16,
       Hard>Easy 13/16, Moderate>Easiest 14/16. e2e: main menu → skirmish vs Easiest (autoplay Hardest, seed
       101) → Victory at 35:20 (= the Node match, tick for tick) → results.
-- [ ] **M6 exit.** verify:full, tag m6, submodule bump, StartOS VM checkpoint (install, play, save/load,
-      restart); user playtest.
+- [x] **M6 exit.** verify:full green (254 s: Docker 89.5 MB both arches, Tauri smoke on Apple GPU, full AI
+      suite incl. ladder); tag `m6` (480774f); empires-startos: submodule → m6 (12f7d5b), package 0.6.0:0 with
+      skirmish/save-load docs (db217c2); `empires_aarch64.s9pk` 80 MB.
+      **StartOS VM checkpoint (2026-09-29, muscular-privacy.local):** updated 0.1.0:0 → 0.6.0:0 in place
+      (log: "Migrating 0.1.0:0 -> 0.6.0:0", clean); health "The game is ready to play" and still green minutes
+      later; `tools/remote-play.ts` on the served build in Chromium *and* WebKit: main menu → skirmish vs
+      Easiest (seed 101) → save at 5:00 → load (same tick + hash) → Victory → results; a save made before
+      `package restart` loads after it with the same tick + hash; uninstall (gone from the list) → reinstall
+      from the same s9pk → starts stopped as StartOS does → start → health green → UI renders with no page
+      errors (new port 61015). Logs read end to end: no warnings. **Not verified:** backup/restore — the box
+      still has no backup target (KI-3); the `main` volume holds no data yet. VM stopped afterwards.
+      Playtest invite sent.
 - _Exit:_ e2e menu→victory; AI suite no crashes; Moderate Tool ≤ 12:00, Bronze ≤ 24:00; idle ≤ 5%; stuck ≤ 1%.
 
 ## M7 — Full land tech tree
