@@ -691,6 +691,10 @@ fog-aware hooks, a mute toggle. No music.
 - _Exit:_ ≥ 40 e2e scenarios green in both browsers. **Met**: 60 scenarios × 2 browsers (119 runs + 1 skipped by
   design) at verify:full (699 s: audio check, Docker both arches 126 MB with a server-save round trip, Tauri smoke
   render 1.9 ms, s9pk; ladder unchanged — hard>easy 53/64 stays with M13). Tag `m12`, package 0.12.0.
+- [x] **M12 VM check** (the user asked, 2026-09-30): 0.12.0 on the StartOS test VM (update from 0.9.0) caught a
+      real bug — the Load dialog opening on the remembered Server tab could show the device's (empty) list, because
+      the slower IndexedDB answer landed after the server's. Fixed (only the showing tab's answer is used); e2e
+      regression slows IndexedDB on purpose (fails without the fix in both browsers). The package pins the fix.
 
 ## M13 — AI v2 ladder
 - 5 levels; civ strategies; defense/walls/towers; micro; priests; siege; relic/ruin/wonder play.

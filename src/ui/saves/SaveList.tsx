@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { SaveMeta } from '../../game/saveGame.ts';
 import { saves } from '../../platform/saves.ts';
 import { serverSaves, type SaveWhere } from '../../platform/serverSaves.ts';
@@ -45,15 +45,30 @@ export function SaveList(props: {
       /* not remembered */
     }
   };
-  const refresh = () =>
-    store.list().then(setList, (e: Error) => {
-      setNote(e.message);
-      setList([]);
-    });
+  // Only the answer for the tab now showing is used: when the server tab opens by itself, the device's list may
+  // still be on its way and must not land on top of the server's (seen on the StartOS VM, M12 exit).
+  const showing = useRef<SaveWhere>(where);
+  showing.current = where;
+  const refresh = () => {
+    const w = where;
+    return store.list().then(
+      (l) => {
+        if (showing.current === w) setList(l);
+      },
+      (e: Error) => {
+        if (showing.current !== w) return;
+        setNote(e.message);
+        setList([]);
+      },
+    );
+  };
   useEffect(() => {
     void serverSaves.available().then((ok) => {
       setServer(ok);
-      if (ok && lastWhere() === 'server') setWhereState('server');
+      if (ok && lastWhere() === 'server') {
+        setList(null);
+        setWhereState('server');
+      }
     });
   }, []);
   useEffect(() => void refresh(), [where]);
