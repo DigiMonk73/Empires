@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-10 alligators vs the AI gates (placement off; Hard > Moderate 44/64 with hills), KI-9/KI-11 closed (D58: 60-min 1v1s, hills on, predator fix), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** widen Hard > Moderate (44/64 with hills + the predator fix; gate 48), then alligators on (KI-10), Nomad, the M14 exit.
+- **Next up:** Hard > Moderate 47/64 (48) and 1v1 wars ending (19/24; with alligators 49/64 but 16/24) — then alligators on (KI-10), Nomad, the M14 exit.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -849,6 +849,13 @@ of island/Narrows games decided in 2 h (11/12).
       predator fix applied; the AI's population logic reads the game's limit (50 was hard-coded — a 25 limit
       re-opened the M13.4 age deadlock). Full suite: wars 21/24; ladder all pass but Hard > Moderate 44/64 (48);
       water held out 39/48 (44). Next: Hard's margin over Moderate.
+      _Hard > Moderate:_ traced a loss — lions ate a Hard village (176 strikes, 11 villagers dead by minute 8): with
+      two lions about the predator response pulled the villagers fighting one to the other and back every think
+      (2,788 orders). Now no villager already fighting is pulled. Four villagers kill a lion in ~4 s. Tried and
+      reverted (no effect beyond noise, on ladder + held-out seeds): Bronze at 26 villagers, rush odds 50%, push
+      at 1.2×; tactics off cost 4–5 games (they help). Full suite: alligators off — Hard > Moderate 47/64 (48),
+      wars 19/24; alligators on — 49/64, wars 16/24. Both margins sit on their gates: next, make wars end (the
+      mirrors) and widen Hard's edge.
       **Before that (KI-10):** the tiny-island wood stalemate (both sides out of wood, frozen to 2 h) and a wider
       Hard > Moderate / Moderate > Easy margin (48 and 49 of 64 sat on the gate), then `GATORS_ON` and re-measure.
       - [x] **M14.6a Island wood.** Tiny water maps: forests from 10 tiles (was 14; half a land map's wood) with a
