@@ -48,7 +48,9 @@ const DEFERRED = new Set<string>();
 const LADDER_MIN = (pair: string): number => (pair === 'hardest>hard' ? 0.65 : 0.75);
 const WATER_TYPES = ['smallIslands', 'largeIslands', 'narrows'] as const;
 const water: Case[] = [];
-if (FULL) for (let k = 0; k < 12; k++) water.push({ seed: 301 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
+// 48 games on seeds nobody tuned against (D55): the 12 of M8–M13 (301–312) had been fixed one by one and read
+// 11/12 while fresh seeds were decided 65% of the time.
+if (FULL) for (let k = 0; k < 48; k++) water.push({ seed: 401 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
 
 const fails: string[] = [];
 let crashes = 0;

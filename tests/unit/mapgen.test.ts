@@ -129,4 +129,21 @@ describe('map generation (econ:8)', () => {
       expect(generateMap({ seed: 5, type, size: 'medium', players: [{ civ: 'greek' }, { civ: 'egyptian' }] }).scenario!.units!.some((u) => u.type === 'alligator'), type).toBe(false);
     }
   });
+
+  it('Tiny water maps: forest near enough to last, never over a start (KI-10)', () => {
+    for (const type of ['smallIslands', 'largeIslands', 'narrows'] as const) {
+      for (const seed of [301, 305, 307, 311]) {
+        const m = generateMap({ seed, type, size: 'tiny', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
+        const rows = m.map.ascii!;
+        let trees = 0;
+        for (const row of rows) for (const ch of row) if (ch === 'F' || ch === 'T') trees++;
+        // Wood per player: ~40 per forest tile; a Tiny land map holds ~10,000 a player.
+        expect((trees * 40) / 2, `${type} ${seed}`).toBeGreaterThan(6500);
+        // No forest under a Town Center (one grew over it: seed 301; the woodline may reach its edge, as always).
+        for (const [sx, sy] of m.starts) {
+          for (let y = sy; y < sy + 3; y++) for (let x = sx; x < sx + 3; x++) expect(rows[y]?.[x], `${type} ${seed} forest at ${x},${y}`).not.toBe('F');
+        }
+      }
+    }
+  });
 });

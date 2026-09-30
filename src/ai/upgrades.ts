@@ -98,6 +98,7 @@ export function upgrades(s: Snapshot, level: AiLevel, reserveFood: number, cmds:
     const cost = def.cost as Partial<Record<string, number>>;
     if (res[0]! - (cost.food ?? 0) < reserveFood + 100) continue;
     if (res[1]! - (cost.wood ?? 0) < 75 || res[2]! - (cost.gold ?? 0) < 0 || res[3]! - (cost.stone ?? 0) < 0) continue;
+    if ((cost.wood ?? 0) > 0 && res[1]! - cost.wood! < s.woodReserve) continue; // an island's last wood: the transport's
     cmds.push({ t: 'research', bld: b.h, tech: step.tech });
     return;
   }

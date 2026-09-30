@@ -441,6 +441,19 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     if (d < x.d && d > 17 && d < 23) d = 17;
     return { ...x, d };
   };
+  // On the water maps each Town Center's own 3×3 stays ground: an island's woodline, pulled in, grew over it on ~2%
+  // of island starts (KI-10; the trees under a Town Center were cut off from everyone). Held as 'o' until the map is
+  // written out. (Land maps never showed it and keep their layouts exactly.)
+  const tcTiles: [number, string][] = [];
+  for (const [sx, sy] of WATERY.has(o.type) ? starts : []) {
+    for (let y = sy; y < sy + 3; y++) {
+      for (let x = sx; x < sx + 3; x++) {
+        if (!isOpen(at(g, x, y))) continue;
+        tcTiles.push([y * W + x, at(g, x, y)]);
+        set(g, x, y, 'o');
+      }
+    }
+  }
   const layout: Offset[] = (WATERY.has(o.type)
     ? [
         // Water template (econ:8): stone 2×7 at 10–35, gold 9 at 14–18 and 9 at 20–40, berries 7 ± 1 at 7–16 and
@@ -534,14 +547,29 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
       k++;
     }
   };
-  // Forests (~7% of the map) — blobs well away from the starts.
+  // Forests (~7% of the map) — blobs well away from the starts. On a Tiny water map an island is ~13 tiles across
+  // from its Town Center, so 14 left it half the wood of a land map and both sides ran dry by 30 min (KI-10): there
+  // they may start 10 tiles out. (Small islands already hold ~19,000 wood a player.)
   const forestGoal = Math.round(W * W * 0.07);
+  const tinyIslands = WATERY.has(o.type) && W < 90;
+  const forestMin = tinyIslands ? 10 : 14;
+  // …and a clearing of 9 tiles around each Town Center stays open (a blob seeded 10 out grew over one: seed 301).
+  const clearing: [number, string][] = [];
+  if (tinyIslands) {
+    for (let i = 0; i < g.c.length; i++) {
+      if (isOpen(g.c[i]!) && !far(i % W, Math.floor(i / W), 9)) {
+        clearing.push([i, g.c[i]!]);
+        g.c[i] = 'o';
+      }
+    }
+  }
   for (let placed = 0, tries = 0; placed < forestGoal && tries < 500; tries++) {
     const x = r.int(W);
     const y = r.int(W);
-    if (!far(x, y, 14)) continue;
+    if (!far(x, y, forestMin)) continue;
     placed += blob(g, r, x, y, 25 + r.int(70), isOpen, 'F').length;
   }
+  for (const [i, ch] of clearing) g.c[i] = ch;
   const dMin = Math.min(40, W * 0.3);
   scatter(Math.max(1, Math.round(scale)), dMin, (x, y) => blob(g, r, x, y, 7, isOpen, 'S'));
   scatter(Math.max(1, Math.round(2 * scale)), dMin, (x, y) => blob(g, r, x, y, 6, isOpen, 'G'));
@@ -658,6 +686,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     }
   }
 
+  for (const [i, ch] of tcTiles) g.c[i] = ch;
   const ascii: string[] = [];
   for (let y = 0; y < W; y++) ascii.push(g.c.slice(y * W, (y + 1) * W).join(''));
   const hl = HILLS[o.type];

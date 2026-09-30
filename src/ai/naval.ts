@@ -1,6 +1,6 @@
 import type { Command } from '../sim/commands/types.ts';
 import type { AiPlayer, Snapshot } from './ai.ts';
-import { dist } from './ai.ts';
+import { afford, dist } from './ai.ts';
 import { TECH_BY_ID } from '../data/index.ts';
 import { ENEMY } from '../sim/rules/diplomacy.ts';
 
@@ -285,7 +285,9 @@ export class NavalBrain {
       } else if (dock && unit && s.v.canAfford(s.v.cost(unit)) && s.me.pop >= s.me.popCap) {
         // A full population with the army waiting at the shore and no transport (M13.7: a Narrows game stood
         // still from minute 50 to the end, 9,900 wood in the bank): make room — a fishing boat goes.
-        const boat = s.units.find((u) => u.cls === 'fishingShip' && !s.busy.has(u.h));
+        // (Any boat: they are usually all busy by now — given this think's fishing orders — and that kept this from
+        // ever firing: seed 312 stood at 56/50 without a transport from minute 45, KI-10.)
+        const boat = s.units.find((u) => u.cls === 'fishingShip' && !s.busy.has(u.h)) ?? s.units.find((u) => u.cls === 'fishingShip');
         if (boat) {
           cmds.push({ t: 'delete', ids: [boat.h] });
           s.busy.add(boat.h);
@@ -385,7 +387,7 @@ export class NavalBrain {
     const dock = docks.find((d) => d.queue < 2);
     if (dock && fleet.length < want && s.me.pop + this.popReserve(s) < s.me.popCap) {
       const unit = ['trireme', 'warGalley', 'scoutShip'].find((u) => !s.v.trainBlocker(dock.h, u));
-      if (unit && s.v.canAfford(s.v.cost(unit)) && (near.length || s.me.res[1]! >= s.v.cost(unit)[1]! + 75)) cmds.push({ t: 'train', bld: dock.h, unit });
+      if (unit && afford(s, s.v.cost(unit)) && (near.length || s.me.res[1]! >= s.v.cost(unit)[1]! + 75)) cmds.push({ t: 'train', bld: dock.h, unit });
     }
     const idle = fleet.filter((u) => u.idle && !s.busy.has(u.h));
     if (!idle.length) return;
@@ -429,6 +431,20 @@ export class NavalBrain {
     return this.island ? 22 : Infinity;
   }
 
+  /**
+   * Wood to keep for a transport (KI-10): on an island with an invasion to make and no transport afloat, once the
+   * trees we can reach at home hold under 1500 — or the last of them go to farms, houses and boats, the fleet sinks,
+   * and both sides sit out the game across the water with thousands of gold (tiny-island seeds 305, 311).
+   */
+  woodReserve(s: Snapshot): number {
+    if (!this.island || !this.target || s.units.some((u) => u.cls === 'transport')) return 0;
+    let wood = 0;
+    for (const r of s.known) if (r.job === 'wood') wood += r.amount;
+    if (wood >= 1500) return 0;
+    const dock = s.buildings.some((b) => b.type === 'dock' && b.done) ? 0 : s.v.cost('dock')[1]!;
+    return s.v.cost('lightTransport')[1]! + dock;
+  }
+
   /** Population to keep free: room for the transports an invasion still lacks. */
   popReserve(s: Snapshot): number {
     if (!this.target) return 0;
@@ -465,7 +481,7 @@ export class NavalBrain {
     if (this.fleetShort && boats.length >= want / 2) return this.assignBoats(s, cmds, boats, dock);
     if (boats.length + dock.queue < want && dock.queue < 2 && s.me.pop + dock.queue + this.popReserve(s) < s.me.popCap) {
       const unit = ['fishingShip', 'fishingBoat'].find((u) => !s.v.trainBlocker(dock.h, u));
-      if (unit && s.v.canAfford(s.v.cost(unit))) cmds.push({ t: 'train', bld: dock.h, unit });
+      if (unit && afford(s, s.v.cost(unit))) cmds.push({ t: 'train', bld: dock.h, unit });
     }
     this.assignBoats(s, cmds, boats, dock);
   }

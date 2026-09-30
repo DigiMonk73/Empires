@@ -3,7 +3,7 @@ import { TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
 import type { Command } from '../sim/commands/types.ts';
 import type { Rng } from '../sim/math/rng.ts';
 import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
-import { dist, type AiPlayer, type Snapshot } from './ai.ts';
+import { afford, dist, type AiPlayer, type Snapshot } from './ai.ts';
 import { Tactics, worth, type Danger, type Sighting } from './tactics.ts';
 import { styleOf } from './civStyle.ts';
 import { ENEMY } from '../sim/rules/diplomacy.ts';
@@ -299,7 +299,7 @@ export class MilitaryBrain {
       // Siege is counted on its own: a few engines per level, on top of the army.
       if (workshop ? siege >= this.war.siege + (this.war.siege ? (styleOf(s.me.civ).siege ?? 0) : 0) : have >= want) continue;
       const unit = this.pick(s, b.type, b.h, workshop ? siege : have);
-      if (!unit || s.v.trainBlocker(b.h, unit) || !s.v.canAfford(s.v.cost(unit))) continue;
+      if (!unit || s.v.trainBlocker(b.h, unit) || !afford(s, s.v.cost(unit))) continue;
       // Keep food for the next age / villagers while booming.
       if (!threats && this.plan === 'boom' && s.me.age < 3 && s.me.res[0]! < 150) continue;
       // The next age is overdue: soldiers only from food beyond its price (unless we're under attack).

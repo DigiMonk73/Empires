@@ -66,6 +66,13 @@ export interface Snapshot {
   load: Map<number, number>;
   /** Wild animals seen (remembered while their spot is out of sight). */
   game: { h: number; type: string; x: number; y: number }[];
+  /** Wood kept back from everything but a transport (an island running out of trees, KI-10). */
+  woodReserve: number;
+}
+
+/** Can we pay `cost` and still keep the wood reserve? (The transport itself spends it: `s.v.canAfford`.) */
+export function afford(s: Snapshot, cost: readonly number[]): boolean {
+  return s.v.canAfford(cost) && ((cost[1] ?? 0) === 0 || s.me.res[1]! - cost[1]! >= s.woodReserve);
 }
 
 /** Everything an AiPlayer remembers, as plain JSON (saved games): restoring it resumes the same decisions. */
@@ -148,6 +155,7 @@ export class AiPlayer {
     if (me.defeated) return [];
     const s = this.snapshot(v, me);
     const cmds: Command[] = [];
+    s.woodReserve = this.naval.woodReserve(s);
     this.diplomacy.update(s, this.player, cmds);
     this.explore(s, cmds);
     this.predators(s, cmds);
@@ -191,7 +199,7 @@ export class AiPlayer {
       this.game.set(o.h, { h: o.h, type: o.type, x: o.x, y: o.y });
     }
     for (const [h, g] of this.game) if (!visible.has(h) && v.visible(Math.floor(g.x), Math.floor(g.y))) this.game.delete(h);
-    return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set(), load, game: [...this.game.values()] };
+    return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set(), load, game: [...this.game.values()], woodReserve: 0 };
   }
 
   has(s: Snapshot, type: string, doneOnly = false): OwnBuilding[] {
@@ -623,7 +631,7 @@ export class AiPlayer {
    * and send `nBuilders` villagers (wood/idle first). Returns true if ordered.
    */
   build(s: Snapshot, cmds: Command[], type: string, x: number, y: number, minD: number, maxD: number, nBuilders: number): boolean {
-    if (!s.v.canBuild(type) || !s.v.canAfford(s.v.cost(type))) return false;
+    if (!s.v.canBuild(type) || !afford(s, s.v.cost(type))) return false;
     const size = type === 'house' || type === 'watchTower' ? 2 : 3;
     // On a cramped island start the usual spot may not exist: anywhere within 18 of the Town Center will do
     // (an island once sat in the Stone Age for two hours, its Tool-age buildings unplaceable).

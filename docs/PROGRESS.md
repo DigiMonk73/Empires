@@ -834,6 +834,12 @@ of island/Narrows games decided in 2 h (11/12).
       an enemy Wonder or the holder of the objects first); Hard+ build a Wonder when rich in the Iron Age.
       **Before that (KI-10):** the tiny-island wood stalemate (both sides out of wood, frozen to 2 h) and a wider
       Hard > Moderate / Moderate > Easy margin (48 and 49 of 64 sat on the gate), then `GATORS_ON` and re-measure.
+      - [x] **M14.6a Island wood.** Tiny water maps: forests from 10 tiles (was 14; half a land map's wood) with a
+        9-tile clearing; no woodline over a Town Center (~2% of island starts); a transport's wood kept back once
+        the home island's trees run low (`woodReserve`, `afford`); the boat scrapped for a transport at full
+        population may be a busy one (the rule never fired). The water gate now counts 48 fresh seeds (D55):
+        31/48 → 40/48. Land maps byte-identical; ladder unchanged.
+      - [ ] **M14.6b Water to 44/48** (the 8 left: diagnose by cause, not by seed), then Hard > Moderate margin.
       Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army

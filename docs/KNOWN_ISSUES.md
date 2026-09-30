@@ -40,3 +40,9 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   Moderate > Easy 49 → 47/64 (both were at or near the 48 gate; ~1.5σ of seed noise). Alligators hit few units
   (≤ 15 strikes in a 40-min game). So `GATORS_ON` is off (`?scenario=map&gators=1` shows them); M14.6 fixes the
   stalemate (wood on islands) and widens the ladder margins, then turns them on and re-measures.
+  _M14.6a:_ the stalemate had three causes — Tiny island maps held half a land map's wood (forests had to start 14
+  tiles from a start; a Tiny island is ~13 across), the computers spent their last wood and could never replace a
+  sunk transport, and the "scrap a fishing boat for a transport at full population" rule never fired (every boat
+  was already busy); a woodline could also grow over a Town Center on ~2% of island starts. Fixed; the water gate
+  now counts 48 fresh seeds (D55): 31/48 → 40/48 (83%). Still under 90%,
+  and Hard > Moderate still sits on 48/64 — alligators stay off.

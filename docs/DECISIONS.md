@@ -325,3 +325,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   the look (architecture set, emblem, voices) and the computer's style (`civStyle.ts`). One helper,
   `civRules(civ, fullTechTree)` in `data/index.ts`, is the only way the sim and the tech-tree screen read a
   civilization's bonuses and missing items. With Post-Iron it researches every technology in the data.
+- **D55 — The water gate on 48 fresh seeds** (2026-09-30, M14.6; the Done definition's "wins island maps via
+  transports", M8's "≥ 90% of AI island games decided"). The suite measured it on 12 seeds (301–312) that M8–M13
+  fixed one by one; they read 11/12 while 48 fresh seeds (401–448, same map/size/level pattern) were decided only
+  31/48 (65%) by the same code. The gate keeps its 90% bar and now counts the 48 fresh seeds — stricter, not
+  relaxed — and they are not to be tuned against one by one (diagnose, fix the cause, re-measure all 48). After
+  the M14.6a island fixes: 40/48 (83%); the gate fails honestly until the water AI clears 44/48.
