@@ -18,7 +18,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-10 alligators vs the AI gates (placement off until M14.6), KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
+- **Open issues:** KI-11 predator bug vs the war gate (**user decision**, with KI-9), KI-10 alligators vs the AI gates (placement off until M14.6), KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
 - **Next up:** M14.6 AI: first KI-10 (island wood stalemate, ladder margins → turn alligators on), then relic/ruin/Wonder play, later starting ages, Nomad.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
@@ -859,6 +859,9 @@ of island/Narrows games decided in 2 h (11/12).
         Alligators on (same code): held-out water 41/48, but Hard > Moderate 41/64 and 1v1 wars 1/4 — three
         measurements at 41–43 against 48 off: a real land effect, not noise. Next: find it (Hard's villagers vs
         alligators? hunting by the shore?).
+        Found (KI-11): the lion/alligator response re-sent the villagers already fighting every think — the fix lifts
+        Hard > Moderate with alligators 41 → 46, but the bug was what ended many Moderate mirrors early, so the
+        45-min war gate fails with it (2/4). Parked as a patch pending the user's decision (KI-11 / KI-9 (a)).
       Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army

@@ -50,3 +50,15 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   is 41/48 but Hard > Moderate drops to 41/64 (three runs at 41–43 vs 48 off) — a land effect to find.
   Still under 90%,
   and Hard > Moderate still sits on 48/64 — alligators stay off.
+- **KI-11 · must · a predator bug props up the war gates — awaiting the user** (M14.6b, 2026-09-30). The AI's
+  lion/alligator response re-sends the villagers already fighting the animal every think, restarting their swing:
+  one lion can tie down villagers for minutes (seed 601: 550 villager orders; seed 109: an alligator, 259). The
+  side that happens to have a lion near its base cripples itself, so Moderate mirrors end early. The fix (one
+  filter, `docs/patches/predator-resend-fix.patch`) is plainly right — with alligators on it lifts Hard > Moderate
+  from 41 to 46/64 — but the fair mirrors it leaves last longer: on 24 fresh Moderate 1v1s (601–624) decided within
+  45 min falls 15 → 13 (62% → 54%) and within 60 min 24 → 19; the quick suite's 4 wars fall 4/4 → 2/4 (the verify
+  gate is ≥ 3/4 within 45 min), and Hard > Moderate is 47/64 (gate 48). Note the 45-min gate was already not met on
+  fresh seeds without the fix (62% vs 75%) — the 4 gated seeds were lucky, like the water set (D55). Not applied:
+  it fails verify, and moving a gate is the user's call. Options: (a) KI-9's (a) — judge a 1v1 decided within
+  60 min (the Done range is 25–60) and measure it on 24 held-out seeds; apply the fix; (b) keep 45 min and the bug
+  until M14.6 makes wars end sooner; (c) apply the fix and accept the failing gate until then.

@@ -1,0 +1,16 @@
+diff --git a/src/ai/ai.ts b/src/ai/ai.ts
+index 7407e8d..f909d64 100644
+--- a/src/ai/ai.ts
++++ b/src/ai/ai.ts
+@@ -266,8 +266,10 @@ export class AiPlayer {
+       if (!near) continue;
+       const on = s.villagers.filter((u) => u.order === 'attack' && u.target === lion.h).length;
+       if (on >= 4) continue;
++      // (Not those already at it: re-sending them every think restarted their swing, and a lone alligator held
++      // four villagers for minutes — M14.6b.)
+       const group = s.villagers
+-        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && dist(u.x, u.y, lion.x, lion.y) < 16)
++        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && !(u.order === 'attack' && u.target === lion.h) && dist(u.x, u.y, lion.x, lion.y) < 16)
+         .sort((a, b) => dist(a.x, a.y, lion.x, lion.y) - dist(b.x, b.y, lion.x, lion.y) || a.h - b.h)
+         .slice(0, 4 - on)
+         .map((u) => u.h);
