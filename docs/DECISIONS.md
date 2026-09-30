@@ -336,3 +336,22 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   38/48. So the gate counts only 501–548 — never traced, never dissected — and 401–448 are the development set
   (reported beside it). A fix is kept when the held-out count doesn't fall. The bar stays 90%; it fails honestly
   at 38/48 (79%) until the water AI earns it.
+- **D57 — The unconfirmed data values** (2026-09-30, M14.7). Every row the research could not confirm
+  (`verify: true`) now names the decision that settles it (`decision:` in the data; a test fails on a flag
+  without one, or one naming a decision that doesn't exist). Settled elsewhere: the Hardest head start (D48),
+  tribute's 25% fee (D47), the 2000-year countdown (D52), starting ages / Post-Iron (D53), the priest's chant
+  (D34). The rest, by one rule — **the 1.0 data file (dat) or the 1.0 manual over later-edition figures; where
+  neither speaks, the plainest reading, as modelled** — row by row:
+  Wonder 500 HP (dat; with buildings taking ⅕ of damage it is not low) · Small Wall 5 stone / 7 s / 200 HP /
+  pierce 3, enabled by the Small Wall research (econ:4 table) · Assyrian faster reload for every archer, the
+  Elephant Archer included ("archers") · Palmyran "+1 armor" as +1 melee and +1 pierce · Yamato ships ×1.3 HP,
+  fishing boats too (not ×1.33) · wild elephant reload 1.5 s (the melee default) · alligator spit range 2,
+  reload 1.5 s · starting resources in menu order Default/Low/Medium/High/Death Match · map sizes Tiny 72 …
+  Gigantic 250 in the exe's order · Woodworking's range and sight for every archer, mounted ones too · Wheel
+  villagers +0.7 speed (dat; not Return of Rome's +0.33) · Jihad +0.3 speed, −8 carry (dat) · Nobility on
+  cavalry, chariots and horse archers as modelled · Alchemy +1 missile attack (Ballista line +2, Fire Galley +6)
+  · Slinger stone speed 7 · Elephant Archer attack 5, sight 8 (manual, not fandom's 6 / 9) · Scythe Chariot
+  and elephants trample 1 tile · Priest sight 12 (PC figures; the Mac manual's 15 aside) · Catapult Trireme /
+  Juggernaught attack 35 against every armour class but buildings, "ignores armour" approximated · hunters'
+  spears attack 4, range 4, 80% accuracy · buildings take ⅕ of summed damage (min 0.1) and a missed missile that
+  strikes another unit deals half (the DE analysis, unrefuted for 1.0).

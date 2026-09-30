@@ -5,6 +5,9 @@ import {
 } from '../../src/data/index.ts';
 import { CIV_ORDER, TECH_TREE_MATRIX } from '../../src/data/civs.ts';
 import { ARMOR_CLASS } from '../../src/data/types.ts';
+import { readFileSync, readdirSync } from 'node:fs';
+import { COMBAT_RULES, HUNTER_ATTACK, PRIEST_RULES } from '../../src/data/units.ts';
+import { HARDEST_BONUS_SRC, MAP_SIZES_SRC, STARTING_AGES_SRC, STARTING_SRC, TRIBUTE, VICTORY } from '../../src/data/setup.ts';
 
 const ALL_SOURCED: Sourced[] = [...UNITS, ...BUILDINGS, ...TECHS, ...CIVS, ...RESOURCE_OBJECTS, ...ANIMALS];
 const CLASSES = new Set(UNITS.map((u) => u.cls));
@@ -47,6 +50,21 @@ describe('game data integrity', () => {
   it('every definition cites a research source', () => {
     const bad = ALL_SOURCED.filter((d) => !/^(econ|mil):[0-9]/.test(d.src)).map((d) => (d as { id?: string }).id);
     expect(bad).toEqual([]);
+  });
+
+  it('every unconfirmed value names the DECISIONS entry that settles it (M14.7)', () => {
+    const decisions = new Set([...readFileSync(new URL('../../docs/DECISIONS.md', import.meta.url), 'utf8').matchAll(/\*\*(D\d+) —/g)].map((m) => m[1]!));
+    const consts: Sourced[] = [PRIEST_RULES, COMBAT_RULES, HUNTER_ATTACK, STARTING_SRC, HARDEST_BONUS_SRC, MAP_SIZES_SRC, VICTORY, STARTING_AGES_SRC, TRIBUTE];
+    const rows = [...ALL_SOURCED, ...consts];
+    const bad = rows.filter((r) => r.verify && !(r.decision && decisions.has(r.decision))).map((r) => (r as { id?: string }).id ?? r.src);
+    expect(bad).toEqual([]);
+    // Any other constant flagged in the data sources names its decision beside the flag (the Woodworking line's
+    // three techs share one flag in a helper, so rows and flags don't pair one to one).
+    const dir = new URL('../../src/data/', import.meta.url);
+    const lines = readdirSync(dir).filter((f) => f.endsWith('.ts') && f !== 'types.ts').flatMap((f) => readFileSync(new URL(f, dir), 'utf8').split('\n'));
+    const unnamed = lines.filter((l) => /verify: true/.test(l) && !/decision: 'D\d+'/.test(l));
+    expect(unnamed).toEqual([]);
+    for (const l of lines) for (const m of l.matchAll(/decision: '(D\d+)'/g)) expect(decisions.has(m[1]!), m[1]).toBe(true);
   });
 
   it('reports unresolved (verify) values — must stay ≤ 25% of rows at M0', () => {

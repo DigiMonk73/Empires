@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-11 predator bug vs the war gate (**user decision**, with KI-9), KI-10 alligators vs the AI gates (placement off until M14.6), KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14.6 AI: first KI-10 (island wood stalemate, ladder margins → turn alligators on), then relic/ruin/Wonder play, later starting ages, Nomad.
+- **Next up:** M14.6 AI relic/ruin/Wonder play (Standard games only — the suite plays conquest, so the ladder can't move); KI-10/KI-11 wait on the user's war-gate decision.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -866,8 +866,11 @@ of island/Narrows games decided in 2 h (11/12).
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army
       size by starting age; and Nomad (found a Town Center first), then offer it in the lobby (D53).
-- [ ] **M14.7 No unresolved `verify: true`.** A DECISIONS entry for every flagged value (29 at the start of M14);
+- [x] **M14.7 No unresolved `verify: true`.** A DECISIONS entry for every flagged value (29 at the start of M14);
       the data rows carry `decision`; a test fails on any flag without one.
+      _Done:_ D57 settles 24 by one rule (the 1.0 dat / manual over later figures; else the plainest reading, as
+      modelled), D34/D47/D48/D52/D53 the rest. `Sourced.decision`; `data.test.ts` fails on a flagged row or
+      constant without a decision, or one naming a D-number DECISIONS lacks (checked by removing one).
 - _Exit:_ no unresolved `verify:true`.
 
 ## M15 — Hardening & release (StartOS checkpoint + user playtest)

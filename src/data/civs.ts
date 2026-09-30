@@ -113,7 +113,7 @@ const civ = (id: CivId, name: string, arch: ArchSet, bonusText: string[], bonuse
 export const CIVS: readonly CivDef[] = [
   civ('assyrian', 'Assyrian', 'egyptian', ['Archers fire faster (reload 1.1)', 'Villagers move faster (+0.2)'], [
     attr(ARCHERS, 'reload', 1.1, 'set'), attr(VILLAGERS, 'speed', 0.2),
-  ], { verify: true, note: 'whether the Elephant Archer shares the reload bonus is unverified' }),
+  ], { verify: true, decision: 'D57', note: 'whether the Elephant Archer shares the reload bonus is unverified' }),
   civ('babylonian', 'Babylonian', 'babylonian', ['Priests recharge faster (+0.75/s)', 'Stone miners work faster and carry more', 'Walls and towers ×2 HP'], [
     player('faithRegen', 0.75), attr(VILLAGERS, 'work.stone', 0.2), attr(VILLAGERS, 'carry.stone', 3), attr(WALLS_TOWERS, 'hp', 2, 'mul'),
   ]),
@@ -151,7 +151,7 @@ export const CIVS: readonly CivDef[] = [
     attr(VILLAGERS, 'cost.food', 75, 'set'), attr(VILLAGERS, 'arm.melee', 1), attr(VILLAGERS, 'arm.pierce', 1),
     ...(['forage', 'fish', 'hunt', 'wood', 'gold', 'stone'] as const).map((j) => attr(VILLAGERS, `work.${j}`, 0.2)),
     attr({ classes: ['camel'] }, 'speed', 1.25, 'mul'), player('tributeFee', 0, 'set'),
-  ], { ror: true, verify: true, note: '"+1 base armor" split across melee and pierce is inferred' }),
+  ], { ror: true, verify: true, decision: 'D57', note: '"+1 base armor" split across melee and pierce is inferred' }),
   civ('persian', 'Persian', 'babylonian', ['Hunters work faster and carry more', 'Elephants move faster (+0.5)', 'Triremes fire faster (reload 1.3)'], [
     attr(VILLAGERS, 'work.hunt', 0.3), attr(VILLAGERS, 'carry.hunt', 3), attr(ELEPHANTS, 'speed', 0.5),
     attr({ units: ['trireme'] }, 'reload', 1.3, 'set'),
@@ -173,5 +173,5 @@ export const CIVS: readonly CivDef[] = [
   civ('yamato', 'Yamato', 'asian', ['Mounted units cost 25% less', 'Ships +30% HP', 'Villagers move faster (+0.2)'], [
     attr({ classes: ['scout', 'cavalry'], units: ['horseArcher', 'heavyHorseArcher'] }, 'cost.all', 0.75, 'mul'),
     attr(SHIPS, 'hp', 1.3, 'mul'), attr(VILLAGERS, 'speed', 0.2),
-  ], { verify: true, note: 'fishing boats ×1.33 (vs 1.3) not modelled separately' }),
+  ], { verify: true, decision: 'D57', note: 'fishing boats ×1.33 (vs 1.3) not modelled separately' }),
 ];

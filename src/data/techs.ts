@@ -39,7 +39,7 @@ const woodTech = (id: string, name: string, age: 2 | 3 | 4, food: number, wood: 
   id, name, at: 'market', age, cost: { food, wood }, researchTime: time, ...(requires ? { requires: [requires] } : {}),
   effects: [attr(VILLAGERS, 'work.wood', 0.2), attr(VILLAGERS, 'carry.wood', 2), attr(WOOD_RANGE, 'range', 1), attr(WOOD_RANGE, 'los', 1)],
   desc: 'Woodcutters +0.2 rate, +2 carry; archers, towers and galleys +1 range and LOS', src: 'econ:5',
-  verify: true, note: 'whether mounted archers are included is inferred from "archers"',
+  verify: true, decision: 'D57', note: 'whether mounted archers are included is inferred from "archers"',
 });
 
 const stoneTech = (id: string, name: string, age: 2 | 4, food: number, stone: number, time: number, requires?: string): TechDef => ({
@@ -121,7 +121,7 @@ export const TECHS: readonly TechDef[] = [
   {
     id: 'wheel', name: 'Wheel', at: 'market', age: 3, cost: { food: 175, wood: 75 }, researchTime: 75,
     effects: [attr(VILLAGERS, 'speed', 0.7)], desc: 'Villagers move faster; enables chariots', src: 'econ:5',
-    verify: true, note: 'dat +0.7 vs fandom "TRoR" +0.33',
+    verify: true, decision: 'D57', note: 'dat +0.7 vs fandom "TRoR" +0.33',
   },
 
   // ── Temple ─────────────────────────────────────────────────────────────────────
@@ -137,13 +137,13 @@ export const TECHS: readonly TechDef[] = [
       attr(VILLAGERS, 'atk.melee', 7), attr(VILLAGERS, 'hp', 40), attr(VILLAGERS, 'speed', 0.3),
       ...(['forage', 'farm', 'hunt', 'fish', 'wood', 'gold', 'stone'] as const).map((j) => attr(VILLAGERS, `carry.${j}`, -8)),
     ],
-    desc: 'Villagers +7 attack, +40 HP, faster; carry −8', src: 'econ:5', verify: true, note: 'dat +0.3 speed / −8 carry vs fandom +0.11 / −7',
+    desc: 'Villagers +7 attack, +40 HP, faster; carry −8', src: 'econ:5', verify: true, decision: 'D57', note: 'dat +0.3 speed / −8 carry vs fandom +0.11 / −7',
   },
   { id: 'medicine', name: 'Medicine', at: 'temple', age: 4, cost: { gold: 150 }, researchTime: 50, effects: [{ op: 'player', attr: 'healRate', mode: 'mul', v: 3 }], desc: 'Priests heal three times as fast', ror: true, src: 'econ:5' },
   { id: 'martyrdom', name: 'Martyrdom', at: 'temple', age: 4, cost: { gold: 600 }, researchTime: 100, effects: [{ op: 'flag', flag: 'martyrdom' }], desc: 'Sacrifice a priest (Delete) to convert instantly', ror: true, src: 'econ:5,mil:3' },
 
   // ── Government Center ──────────────────────────────────────────────────────────
-  { id: 'nobility', name: 'Nobility', at: 'governmentCenter', age: 3, cost: { food: 175, gold: 120 }, researchTime: 70, effects: [attr(NOBLE, 'hp', 1.15, 'mul')], desc: '+15% HP for cavalry, chariots and horse archers', src: 'econ:5', verify: true, note: 'scout/camel inclusion inferred' },
+  { id: 'nobility', name: 'Nobility', at: 'governmentCenter', age: 3, cost: { food: 175, gold: 120 }, researchTime: 70, effects: [attr(NOBLE, 'hp', 1.15, 'mul')], desc: '+15% HP for cavalry, chariots and horse archers', src: 'econ:5', verify: true, decision: 'D57', note: 'scout/camel inclusion inferred' },
   { id: 'writing', name: 'Writing', at: 'governmentCenter', age: 3, cost: { food: 200, gold: 75 }, researchTime: 60, effects: [{ op: 'flag', flag: 'writing' }], desc: 'Share exploration with allies', src: 'econ:5' },
   {
     id: 'architecture', name: 'Architecture', at: 'governmentCenter', age: 3, cost: { food: 150, wood: 175 }, researchTime: 50,
@@ -162,7 +162,7 @@ export const TECHS: readonly TechDef[] = [
       attr({ units: ['fireGalley'] }, 'atk.melee', 6),
       { op: 'flag', flag: 'flamingProjectiles' },
     ],
-    desc: 'Missile units, towers and siege +1 attack (Ballista line +2, Fire Galley +6)', src: 'econ:5,mil:1c', verify: true,
+    desc: 'Missile units, towers and siege +1 attack (Ballista line +2, Fire Galley +6)', src: 'econ:5,mil:1c', verify: true, decision: 'D57',
     note: 'mil:1c says Alchemy did not raise tower attack in the original; econ:5 says it did',
   },
   { id: 'engineering', name: 'Engineering', at: 'governmentCenter', age: 4, cost: { food: 200, wood: 100 }, researchTime: 70, effects: [attr(SIEGE_RANGE, 'range', 2), attr(SIEGE_RANGE, 'los', 2)], desc: 'Siege weapons and siege ships +2 range and LOS', src: 'econ:5' },

@@ -73,13 +73,13 @@ export const BUILDINGS: readonly BuildingDef[] = [
   }),
   b({
     id: 'wonder', name: 'Wonder', kind: 'wonder', age: 4, cost: { wood: 1000, stone: 1000, gold: 1000 }, buildTime: 8000,
-    hp: 500, los: 4, size: 5, src: 'econ:4', verify: true, note: 'HP 500 from the dat table — seems low; confirm',
+    hp: 500, los: 4, size: 5, src: 'econ:4', verify: true, decision: 'D57', note: 'HP 500 from the dat table — seems low; confirm',
   }),
 
   // ── Walls (per 1×1 segment) ──────────────────────────────────────────────────
   b({
     id: 'smallWall', name: 'Small Wall', kind: 'wall', age: 2, cost: { stone: 5 }, buildTime: 7, hp: 200, los: 3, size: 1,
-    arm: WALL_ARM(3), startsEnabled: false, requires: ['smallWall'], src: 'econ:4', verify: true,
+    arm: WALL_ARM(3), startsEnabled: false, requires: ['smallWall'], src: 'econ:4', verify: true, decision: 'D57',
     note: 'class-6/10/1 wall armor values partly inferred',
   }),
   b({

@@ -18,6 +18,8 @@ export interface Sourced {
   src: string;
   /** True when the value could not be confirmed from a reliable source. */
   verify?: boolean;
+  /** The DECISIONS entry (e.g. 'D57') that settles an unconfirmed value (M14.7: required with `verify`). */
+  decision?: string;
   note?: string;
 }
 

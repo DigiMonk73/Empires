@@ -10,14 +10,14 @@ export const STARTING_RESOURCES: Readonly<Record<StartingResources, Required<Cos
   high: { food: 1000, wood: 1000, gold: 0, stone: 750 },
   deathmatch: { food: 20000, wood: 20000, gold: 10000, stone: 5000 },
 };
-export const STARTING_SRC = { src: 'econ:1.5', verify: true, note: 'menu-order → switch-index mapping inferred' } as const;
+export const STARTING_SRC = { src: 'econ:1.5', verify: true, decision: 'D57', note: 'menu-order → switch-index mapping inferred' } as const;
 
 /**
  * The Hardest computer's head start (D48): the original's only resource cheat (mil:7 "extra resources on Hardest",
  * commonly +2000 of each; econ:7 "extra food, e.g. +2000"). The amount is unverified; we take the smaller reading.
  */
 export const HARDEST_BONUS: Readonly<Required<Cost>> = { food: 2000, wood: 0, gold: 0, stone: 0 };
-export const HARDEST_BONUS_SRC = { src: 'mil:7,econ:7', verify: true } as const;
+export const HARDEST_BONUS_SRC = { src: 'mil:7,econ:7', verify: true, decision: 'D48' } as const;
 
 export const START_UNITS = { townCenters: 1, villagers: 3, villagerRing: [2, 4] as const, src: 'econ:1.5,econ:8' } as const;
 
@@ -25,7 +25,7 @@ export const POPULATION = { default: 50, min: 25, max: 200, house: 4, townCenter
 
 export type MapSizeId = 'tiny' | 'small' | 'medium' | 'large' | 'huge' | 'gigantic';
 export const MAP_SIZES: Readonly<Record<MapSizeId, number>> = { tiny: 72, small: 96, medium: 120, large: 144, huge: 200, gigantic: 250 };
-export const MAP_SIZES_SRC = { src: 'econ:7,mil:8', verify: true, note: 'size names inferred from exe switch order' } as const;
+export const MAP_SIZES_SRC = { src: 'econ:7,mil:8', verify: true, decision: 'D57', note: 'size names inferred from exe switch order' } as const;
 
 export type MapTypeId =
   | 'smallIslands' | 'largeIslands' | 'coastal' | 'inland' | 'highland'
@@ -45,7 +45,7 @@ export const MAP_TYPES: readonly { id: MapTypeId; name: string; ror?: boolean; w
 export const GAME_SPEEDS = [1.0, 1.5, 2.0] as const;
 
 /** Wonder / relic / ruin countdown: 2000 game-years ≈ 1000 s at speed 1.0 (mil:5, econ:7). */
-export const VICTORY = { countdownYears: 2000, secondsPerYear: 0.5, artifacts: 5, ruins: 5, src: 'econ:7,mil:5', verify: true } as const;
+export const VICTORY = { countdownYears: 2000, secondsPerYear: 0.5, artifacts: 5, ruins: 5, src: 'econ:7,mil:5', verify: true, decision: 'D52' } as const;
 
 /**
  * Starting ages (econ:7 "Default/Stone, Tool, Bronze, Iron, plus Nomad"; Post-Iron from the Death Match preset,
@@ -60,7 +60,7 @@ export const STARTING_AGES: readonly { id: StartingAge; name: string; techs: rea
   { id: 'iron', name: 'Iron Age', techs: ['toolAge', 'bronzeAge', 'ironAge'] },
   { id: 'postIron', name: 'Post-Iron Age', techs: ['toolAge', 'bronzeAge', 'ironAge'] },
 ];
-export const STARTING_AGES_SRC = { src: 'econ:7', note: 'Post-Iron = Iron Age with every tech researched (FAN)', verify: true } as const;
+export const STARTING_AGES_SRC = { src: 'econ:7', note: 'Post-Iron = Iron Age with every tech researched (FAN)', verify: true, decision: 'D53' } as const;
 
 /** Score and Time Limit victories (econ:7): the lobby's choices are ours (D53) — the research gives none. */
 export const SCORE_TARGETS: readonly number[] = [250, 500, 750, 1000, 1500];
@@ -81,7 +81,7 @@ export const PLAYER_COLORS: readonly { name: string; hex: number }[] = [
 export const PLAYER_COLORS_SRC = { src: 'mil:6' } as const;
 
 /** Tribute (econ:1.5): needs a Market; 25% fee until Coinage. mil:5 says 30% — econ's dat value wins. */
-export const TRIBUTE = { fee: 0.25, requiresBuilding: 'market', src: 'econ:1.5', verify: true } as const;
+export const TRIBUTE = { fee: 0.25, requiresBuilding: 'market', src: 'econ:1.5', verify: true, decision: 'D47' } as const;
 
 /** Score formula (econ:7). */
 export const SCORE = {

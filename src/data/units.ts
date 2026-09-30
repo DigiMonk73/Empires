@@ -64,7 +64,7 @@ export const UNITS: readonly UnitDef[] = [
     id: 'slinger', name: 'Slinger', cls: 'slinger', tags: ['barracks', 'missile'], trainedAt: 'barracks', age: 2,
     cost: { food: 40, stone: 10 }, trainTime: 24, hp: 25, speed: 1.2, los: 5,
     atk: { pierce: 2, archerWallTower: 0 }, arm: { melee: 0, pierce: 2 }, range: 4, reload: 1.5,
-    projectile: { speed: 7 }, ror: true, src: 'mil:1a', verify: true, note: 'projectile speed unverified',
+    projectile: { speed: 7 }, ror: true, src: 'mil:1a', verify: true, decision: 'D57', note: 'projectile speed unverified',
   }),
 
   // ── Archery Range ───────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ export const UNITS: readonly UnitDef[] = [
     id: 'elephantArcher', name: 'Elephant Archer', cls: 'mountedArcher', tags: ['archery', 'missile', 'mounted', 'elephantBody'],
     trainedAt: 'archeryRange', age: 4, cost: { food: 180, gold: 60 }, trainTime: 50, hp: 600, speed: 0.9, los: 8,
     atk: { pierce: 5 }, arm: ARCHER_ARM, range: 7, reload: 1.5, projectile: ARROW, radius: 0.55, src: 'mil:1a',
-    verify: true, note: 'attack 5 (manual) vs 6 (fandom); LOS 8 vs 9',
+    verify: true, decision: 'D57', note: 'attack 5 (manual) vs 6 (fandom); LOS 8 vs 9',
   }),
 
   // ── Stable ──────────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ export const UNITS: readonly UnitDef[] = [
     id: 'scytheChariot', name: 'Scythe Chariot', cls: 'chariot', tags: ['stable', 'mounted'], trainedAt: 'stable', age: 4,
     cost: { food: 40, wood: 60 }, trainTime: 40, hp: 120, speed: 2.0, los: 4, atk: { melee: 9, priest: 7 },
     arm: { ...CHARIOT_ARM, melee: 2 }, range: 0, reload: 1.5, convResist: 8, trample: 1, radius: 0.4,
-    upgradeOf: 'chariot', ror: true, src: 'mil:1a', verify: true, note: 'trample radius unverified',
+    upgradeOf: 'chariot', ror: true, src: 'mil:1a', verify: true, decision: 'D57', note: 'trample radius unverified',
   }),
   u({
     id: 'cavalry', name: 'Cavalry', cls: 'cavalry', tags: ['stable', 'mounted'], trainedAt: 'stable', age: 3,
@@ -151,14 +151,14 @@ export const UNITS: readonly UnitDef[] = [
   u({
     id: 'warElephant', name: 'War Elephant', cls: 'elephant', tags: ['stable', 'mounted', 'elephantBody'], trainedAt: 'stable',
     age: 4, cost: { food: 170, gold: 40 }, trainTime: 50, hp: 600, speed: 0.9, los: 5, atk: { melee: 15, tower: -55 },
-    range: 0, reload: 1.5, trample: 1, radius: 0.55, src: 'mil:1a,mil:2', verify: true,
+    range: 0, reload: 1.5, trample: 1, radius: 0.55, src: 'mil:1a,mil:2', verify: true, decision: 'D57',
     note: 'class-10 −55 reproduces "+25 vs walls only" (walls −80, towers −40); trample radius unverified',
   }),
   u({
     id: 'armoredElephant', name: 'Armored Elephant', cls: 'elephant', tags: ['stable', 'mounted', 'elephantBody'],
     trainedAt: 'stable', age: 4, cost: { food: 170, gold: 40 }, trainTime: 50, hp: 600, speed: 0.9, los: 5,
     atk: { melee: 18, building: -100, tower: -40 }, arm: { melee: 2, pierce: 1 }, range: 0, reload: 1.5, trample: 1,
-    radius: 0.55, upgradeOf: 'warElephant', ror: true, src: 'mil:1a,econ:4', verify: true,
+    radius: 0.55, upgradeOf: 'warElephant', ror: true, src: 'mil:1a,econ:4', verify: true, decision: 'D57',
     note: 'class-6 −100 → +40 vs buildings (econ:4); tower class value inferred',
   }),
 
@@ -183,7 +183,7 @@ export const UNITS: readonly UnitDef[] = [
   u({
     id: 'priest', name: 'Priest', cls: 'priest', tags: ['temple', 'civilian'], trainedAt: 'temple', age: 3,
     cost: { gold: 125 }, trainTime: 50, hp: 25, speed: 0.8, los: 12, atk: {}, arm: { ...BASE_ARM, priest: 0 },
-    range: 10, reload: 0, src: 'mil:1a,mil:3', verify: true, note: 'LOS 12 (fandom) vs 15 (Mac manual); range = conversion range',
+    range: 10, reload: 0, src: 'mil:1a,mil:3', verify: true, decision: 'D57', note: 'LOS 12 (fandom) vs 15 (Mac manual); range = conversion range',
   }),
 
   // ── Siege Workshop ──────────────────────────────────────────────────────────
@@ -265,13 +265,13 @@ export const UNITS: readonly UnitDef[] = [
     id: 'catapultTrireme', name: 'Catapult Trireme', cls: 'warship', tags: ['ship', 'warship', 'siegeShip'], trainedAt: 'dock',
     age: 4, cost: { wood: 135, gold: 75 }, trainTime: 90, hp: 120, speed: 1.35, los: 12, atk: { melee: 35, building: 0 },
     range: 9, reload: 5, projectile: STONE, blastRadius: 1, convResist: 2, radius: 0.7, requires: ['catapultTrireme'],
-    src: 'mil:1b,econ:4', verify: true, note: '"ignores armor" / class-6 attack 35 (econ:4) not modelled exactly',
+    src: 'mil:1b,econ:4', verify: true, decision: 'D57', note: '"ignores armor" / class-6 attack 35 (econ:4) not modelled exactly',
   }),
   u({
     id: 'juggernaught', name: 'Juggernaught', cls: 'warship', tags: ['ship', 'warship', 'siegeShip', 'fellsTrees'],
     trainedAt: 'dock', age: 4, cost: { wood: 135, gold: 75 }, trainTime: 90, hp: 200, speed: 1.35, los: 13,
     atk: { melee: 35, building: 0 }, range: 10, reload: 5, projectile: STONE, blastRadius: 1.5, convResist: 2, radius: 0.7,
-    upgradeOf: 'catapultTrireme', src: 'mil:1b', verify: true,
+    upgradeOf: 'catapultTrireme', src: 'mil:1b', verify: true, decision: 'D57',
   }),
   u({
     id: 'fireGalley', name: 'Fire Galley', cls: 'warship', tags: ['ship', 'warship'], trainedAt: 'dock', age: 4,
@@ -288,7 +288,7 @@ export const VILLAGER_WORK: VillagerWork = {
 };
 
 /** Hunters throw spears: attack 4 at range ~4 with 80% accuracy (mil:1a, mil:2). */
-export const HUNTER_ATTACK = { atk: { pierce: 4 } as ClassValues, range: 4, accuracy: 0.8, src: 'mil:1a', verify: true };
+export const HUNTER_ATTACK = { atk: { pierce: 4 } as ClassValues, range: 4, accuracy: 0.8, src: 'mil:1a', verify: true, decision: 'D57' };
 
 /** Priest conversion and healing (mil:3, econ:5). */
 export const PRIEST_RULES = {
@@ -298,7 +298,7 @@ export const PRIEST_RULES = {
   faithMax: 100,
   faithRegenPerSecond: 2, // full recharge 50 s; Fanaticism → 3.5/s
   healPerSecond: 3,
-  verify: true,
+  verify: true, decision: 'D34',
 } as const;
 
 /** Combat constants (mil:2). */
@@ -312,5 +312,5 @@ export const COMBAT_RULES = {
   retaliationRadius: 2,
   /** Missed projectiles that hit another unit deal this fraction (engine-level; unverified for AoE1). */
   strayHitFactor: 0.5,
-  verify: true,
+  verify: true, decision: 'D57',
 } as const;
