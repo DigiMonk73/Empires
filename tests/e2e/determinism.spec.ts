@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { runTrace } from '../../src/sim/testing/trace.ts';
 import { stressConfig } from '../../src/sim/testing/fuzz.ts';
+import { runBattle } from '../../src/sim/testing/battle.ts';
 import type {} from '../../src/debug/simHarness.ts';
 
 /**
@@ -27,3 +28,13 @@ for (const sc of SCENARIOS) {
     expect(browser.final).toBe(node.final);
   });
 }
+
+test('20v20 battle: identical hash trace and outcome in Node and the browser', async ({ page }) => {
+  const node = runBattle(2, 20 * 300);
+  await page.goto('./sim-harness.html');
+  await page.waitForFunction(() => !!window.__simHarness);
+  const browser = await page.evaluate(() => window.__simHarness!.battle(2));
+  expect(browser.trace).toEqual(node.trace);
+  expect(browser.final).toBe(node.final);
+  expect(browser.survivors).toEqual(node.survivors);
+});

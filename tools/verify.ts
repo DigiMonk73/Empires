@@ -52,6 +52,11 @@ const STEPS: Step[] = [
     title: 'Economy benchmark (rates, trip efficiency, idle)',
     cmd: ['node', 'tools/sim/econ.ts', '--record'],
   },
+  {
+    id: 'battle',
+    title: 'Battle benchmark (20v20 × 3 seeds)',
+    cmd: ['node', 'tools/sim/battle.ts', '--record'],
+  },
   { id: 'build', title: 'Vite build', cmd: ['npx', 'vite', 'build'] },
   {
     id: 'e2e',

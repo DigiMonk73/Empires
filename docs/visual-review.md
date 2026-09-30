@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M5.7 · battle (new)
+- 20v20 mid-fight: clubmen trading blows in knots, bowmen and slingers shooting from behind, arrows in the air,
+  the fallen on the ground; trees break up the line. Reads like the original's skirmishes. Composition 4.
+- Should-fix (M10/M11): no hit sparks/dust or sounds yet; HP bars show only on selection.
+
 ## 2026-09-29 · M5.5b · raid-base (new), raid (rubble), scout / building contact sheets
 - A readable Tool-age base: barracks, archery range (shed, straw targets), stable (stalls, paddock, hay), watch
   tower (legs, platform, ladder); scouts read as horse + rider at game scale. Rubble now reads as a burnt ruin.

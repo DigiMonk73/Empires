@@ -1,4 +1,5 @@
 import type { SimConfig } from '../sim/index.ts';
+import { battleConfig } from '../sim/testing/battle.ts';
 
 /**
  * Hand-made scenarios for development and tests (`?scenario=<name>`). Random maps replace these for real games
@@ -183,5 +184,6 @@ export const SCENARIOS: Record<string, () => SimConfig> = {
   start,
   village,
   raid,
+  battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

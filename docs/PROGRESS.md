@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M5 Combat — M5.1–M5.6 done (core, projectiles, research, auto-acquire, soldier art, attack-move/splash). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M5 Combat — all tasks done (M5.1–M5.7); milestone exit: verify:full → tag m5. M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m4 (verify ~30 s incl. economy benchmark; verify:full ~100 s: Docker 77 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,10 +16,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M5.7 battle gates (duel matrix, 20v20 perf/stuck/determinism, screenshots) → verify:full → tag m5.
-- **Playable now:** `?scenario=raid` (right-click enemies with clubmen); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
+- **Next up:** M5 exit (verify:full, tag m5, bump s9pk), then M6 first playable skirmish (mapgen, AI v1, victory).
+- **Playable now:** `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
-- **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
+- **Notes:** metrics `docs/metrics/{history,econ,battle}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
 ---
 
@@ -198,8 +198,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       (stones: everyone within blastRadius of the impact, own units too, tapering to ½ at the rim; trample:
       hostiles near the target at full damage); siege min range. Melee scrum fixes: step straight at a target
       in the same tile; self-given attacks blocked 2 s retarget — stress stuck 0.6% → 0.0% (KI-4 closed).
-- [ ] **M5.7 Battle gates.** Duel-matrix unit tests (formula, classes, buildings ×0.2); 20v20 scripted battle
-      (perf p99 ≤ 6 ms, stuck < 1%, deterministic); battle screenshots reviewed.
+- [x] **M5.7 Battle gates.** `tests/unit/duel.test.ts`: 13 damage anchors from the research (slinger → bowman
+      4, cavalry → clubman 13, camel → scout 14, stone thrower → house 38 …) and 8 simulated melee duels whose
+      winner and remaining HP match the closed form (windup + reload + 1.0a retaliation timing). 20v20 battle
+      (`src/sim/testing/battle.ts`, `tools/sim/battle.ts`, verify step, `docs/metrics/battle.csv`): 3 seeds
+      decided in 68–77 s, stuck 0, p99 ≤ 0.2 ms; identical hash trace in Node, Chromium and WebKit; `battle`
+      scenario + screenshot.
 - _Exit:_ duel matrix matches formula; 20v20 meets perf + screenshot gates; stuck < 1%.
 
 ## M6 — First playable skirmish (StartOS checkpoint + user playtest)

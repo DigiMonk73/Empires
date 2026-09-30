@@ -103,3 +103,25 @@ test('attack-move by mouse: box-select clubmen, A, click beyond the enemy camp',
   expect(after).toBeLessThan(before); // they fought their way through the villagers
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('battle: two armies clash (20v20 mid-fight)', async ({ page }, info) => {
+  await openGame(page, 'scenario=battle&fog=0');
+  await page.evaluate(() => window.__empires!.pause(true));
+  const a = (await page.evaluate(() => window.__empires!.query.units(1))).map((u) => u.h);
+  const b = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
+  await page.evaluate(
+    ([x, y]) => {
+      window.__empires!.issue(1, { t: 'move', ids: x!, x: 40.5, y: 24.5, am: true });
+      window.__empires!.issue(2, { t: 'move', ids: y!, x: 7.5, y: 24.5, am: true });
+    },
+    [a, b] as const,
+  );
+  await page.evaluate(() => window.__empires!.step(20 * 22));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1.25);
+    window.__empires!.camera.centerOn(24, 24);
+  });
+  await frames(page);
+  await snap(page, info, 'battle');
+  expect(pageErrors(page)).toEqual([]);
+});
