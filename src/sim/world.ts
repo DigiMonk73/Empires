@@ -74,6 +74,30 @@ export interface PlayerState {
  * A queued unit order. More kinds arrive with gathering, building and combat. A group move names a `leader`
  * (handle): followers reuse the leader's path instead of searching their own.
  */
+/**
+ * A missile in flight. The aim point is fixed at release (mil:2: moving targets can dodge); damage comes from the
+ * shooter's type and owner at impact, so it lands even if the shooter died meanwhile.
+ */
+export interface Projectile {
+  /** Shooter type index and owner; `src` its handle (for retaliation). */
+  type: number;
+  owner: number;
+  src: number;
+  target: number;
+  /** Launch point and aim point (tiles). */
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  /** Launch tick and flight time (ticks). */
+  t0: number;
+  dur: number;
+  /** A hunter's spear (villager attack vs animals). */
+  hunt: boolean;
+  /** Arcing stone (splash in M5.6) vs flat arrow. */
+  arc: boolean;
+}
+
 export type Order =
   | { k: 'move'; x: number; y: number; leader?: number }
   /**
@@ -86,7 +110,7 @@ export type Order =
   /** Farm field `h` (phases as gather). */
   | { k: 'farm'; h: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
-  | { k: 'attack'; h: number; hunt: boolean; retarget: number };
+  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }
@@ -116,6 +140,8 @@ export class World {
   paths: (number[] | undefined)[] = [];
   /** Resource-node indices of carcasses that are still rotting. */
   carcasses: number[] = [];
+  /** Arrows, spears and stones in flight (cold data, launch order). */
+  projectiles: Projectile[] = [];
   /** Per-building production queues and rally points (cold data). */
   prod: (Production | undefined)[] = [];
   rally: (Rally | undefined)[] = [];

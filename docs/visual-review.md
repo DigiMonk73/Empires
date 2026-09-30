@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M5.2 · volley (new), raid*
+- Arrows read at zoom 2: dark shaft, pale fletching, steel tip, a faint ground shadow tracking the flight;
+  slight arc for arrows, high arc for stones. Readability 3 at zoom 1 (arrows are ~11 px) — acceptable, as in
+  the original. Bowmen are placeholders (M5.5).
+
 ## 2026-09-29 · M5.1 · raid-corpses, raid (chromium + webkit)
 - Villagers killed by clubmen fall and lie in the grass (baked die clip, last frame held, 20 s then fade); a razed
   house leaves a dark trampled plot. Clubmen are still placeholders (M5.5). Readability 3 (placeholders), depth 4.

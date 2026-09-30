@@ -3,7 +3,7 @@ import { ResourceStore } from '../core/resources.ts';
 import type { RngState } from '../math/rng.ts';
 import type { PathRequest } from '../path/service.ts';
 import { SIM_VERSION } from '../version.ts';
-import { World, type Order, type SimConfig } from '../world.ts';
+import { World, type Order, type Projectile, type SimConfig } from '../world.ts';
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { populationSystem } from '../systems/population.ts';
 import type { Production, Rally } from '../systems/production.ts';
@@ -37,6 +37,7 @@ interface Header {
   paths: [number, number[]][];
   prod: [number, Production][];
   rally: [number, Rally][];
+  projectiles: Projectile[];
   pathQueue: PathRequest[];
   blobs: BlobRef[];
 }
@@ -93,6 +94,7 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     paths,
     prod,
     rally,
+    projectiles: w.projectiles.map((p) => ({ ...p })),
     pathQueue: w.pathing.queueSnapshot(),
     blobs: refs,
   };
@@ -168,6 +170,7 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
   w.rally = [];
   for (const [s, p] of header.prod) w.prod[s] = p;
   for (const [s, r] of header.rally) w.rally[s] = r;
+  w.projectiles = header.projectiles.map((p) => ({ ...p }));
   w.pathing.restoreQueue(header.pathQueue);
   w.grid.rebuild(w.ents);
   populationSystem(w);

@@ -151,6 +151,7 @@ function raid(): SimConfig {
       ],
       units: [
         ...[0, 1, 2, 3, 4, 5].map((i) => ({ type: 'clubman', owner: 1, x: 9.5 + (i % 3) * 0.8, y: 10.5 + Math.floor(i / 3) * 0.8 })),
+        ...[0, 1, 2].map((i) => ({ type: 'bowman', owner: 1, x: 13.5 + i * 0.8, y: 22.5 })),
         ...[0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 2, x: 15.5 + i * 0.9, y: 17.5 })),
       ],
     },

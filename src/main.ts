@@ -214,6 +214,7 @@ async function boot(): Promise<void> {
       },
       selection: () => [...selection.list],
       player: (p) => ({ res: [...(world.players[p]?.res ?? [])] }),
+      projectiles: () => world.projectiles.length,
       resourceAt: (tx, ty) => (world.map.inBounds(tx, ty) ? world.map.resAt[world.map.idx(tx, ty)]! - 1 : -1),
     },
     buildingAt: (tx, ty) => {

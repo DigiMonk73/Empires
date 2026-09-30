@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Sim } from '../../src/sim/index.ts';
-import { damageBetween } from '../../src/sim/systems/combat.ts';
+import { damageBetween, WINDUP_TICKS } from '../../src/sim/systems/combat.ts';
 import { buildingTypeIndex, unitTypeIndex } from '../../src/sim/rules/registry.ts';
 import { compilePlayerStats } from '../../src/sim/rules/playerStats.ts';
 
@@ -62,9 +62,9 @@ describe('fighting', () => {
     step(400, [{ player: 1, cmd: { t: 'act', ids: [c!], h: v! } }]);
     const died = events.find((ev) => ev.t === 'died' && ev.h === v);
     expect(died).toBeDefined();
-    // First blow lands at once (in reach, timer 0); 8 more reloads of 30 ticks.
-    expect(died!.tick).toBeLessThanOrEqual(2 + 8 * 30);
-    expect(died!.tick).toBeGreaterThanOrEqual(8 * 30);
+    // The first swing starts at once (in reach, timer 0) and lands WINDUP_TICKS later; 8 more reloads of 30 ticks.
+    expect(died!.tick).toBeLessThanOrEqual(2 + 8 * 30 + WINDUP_TICKS);
+    expect(died!.tick).toBeGreaterThanOrEqual(8 * 30 + WINDUP_TICKS);
     expect(e.slotOf(v!)).toBe(-1);
     expect(e.act[e.slotOf(c!)]).toBe(0); // back to idle
   });
@@ -119,5 +119,59 @@ describe('fighting', () => {
     p2.stats = compilePlayerStats(p2.civ, p2.techs);
     step(1, [{ player: 1, cmd: { t: 'act', ids: [a!], h: c! } }]);
     expect(w.orders[e.slotOf(a!)]?.[0]).toMatchObject({ k: 'attack', hunt: false });
+  });
+});
+
+describe('projectiles (mil:2)', () => {
+  it('arrows fly for distance ÷ speed and hit a standing target', () => {
+    const { of, step, events, w, e } = setup([
+      { type: 'bowman', owner: 1, x: 8.5, y: 10.5 },
+      { type: 'villager', owner: 2, x: 12.5, y: 10.5 },
+    ]);
+    const [b] = of('bowman', 1);
+    const [v] = of('villager', 2);
+    step(1, [{ player: 1, cmd: { t: 'act', ids: [b!], h: v! } }]);
+    for (let i = 0; i < WINDUP_TICKS; i++) step(1);
+    expect(w.projectiles.length).toBe(1);
+    const p = w.projectiles[0]!;
+    // 4 tiles at 8 tiles/s = 0.5 s = 10 ticks.
+    expect(p.dur).toBe(10);
+    step(p.dur + 1);
+    expect(e.hp[e.slotOf(v!)]).toBe(25 - 3);
+    // 25 HP / 3 per arrow → 9 arrows; the villager dies well inside 20 s.
+    step(20 * 20);
+    expect(events.some((ev) => ev.t === 'died' && ev.h === v)).toBe(true);
+  });
+
+  it('a target that walks out of the aim point dodges', () => {
+    const { of, step, w, e } = setup([
+      { type: 'bowman', owner: 1, x: 6.5, y: 10.5 },
+      { type: 'villager', owner: 2, x: 11.5, y: 10.5 },
+    ]);
+    const [b] = of('bowman', 1);
+    const [v] = of('villager', 2);
+    step(1, [{ player: 1, cmd: { t: 'act', ids: [b!], h: v! } }]);
+    for (let i = 0; i < WINDUP_TICKS; i++) step(1);
+    expect(w.projectiles.length).toBe(1);
+    // Sidestep at once: 1.1 tiles/s × 0.6 s ≈ 0.6 tiles off the aim point > radius + 0.15.
+    step(w.projectiles[0]!.dur + 1, [{ player: 2, cmd: { t: 'move', ids: [v!], x: 11.5, y: 16.5 } }]);
+    expect(e.hp[e.slotOf(v!)]).toBe(25);
+  });
+
+  it('projectiles in flight survive save/load', () => {
+    const { of, step, w, sim } = setup([
+      { type: 'bowman', owner: 1, x: 6.5, y: 10.5 },
+      { type: 'villager', owner: 2, x: 11.5, y: 10.5 },
+    ]);
+    step(1, [{ player: 1, cmd: { t: 'act', ids: of('bowman', 1), h: of('villager', 2)[0]! } }]);
+    step(WINDUP_TICKS + 2);
+    expect(w.projectiles.length).toBe(1);
+    const b = Sim.deserialize(sim.serialize());
+    expect(b.hashBreakdown()).toEqual(sim.hashBreakdown());
+    for (let i = 0; i < 200; i++) {
+      sim.step();
+      b.step();
+    }
+    expect(b.hash()).toBe(sim.hash());
   });
 });

@@ -4,7 +4,7 @@ import { frames, openGame, pageErrors, snap } from './helpers.ts';
 test('raid: clubmen kill villagers (corpses) and raze a house (rubble)', async ({ page }, info) => {
   await openGame(page, 'scenario=raid&fog=0');
   await page.evaluate(() => window.__empires!.pause(true));
-  const club = (await page.evaluate(() => window.__empires!.query.units(1))).map((u) => u.h);
+  const club = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'clubman').map((u) => u.h);
   const vills = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
   const house = await page.evaluate(() => window.__empires!.buildingAt(15, 15));
   expect(house).not.toBeNull();
@@ -36,5 +36,28 @@ test('raid: clubmen kill villagers (corpses) and raze a house (rubble)', async (
   });
   await frames(page);
   await snap(page, info, 'raid');
+  expect(pageErrors(page)).toEqual([]);
+});
+
+test('volley: bowmen shoot arrows that arc to their target', async ({ page }, info) => {
+  await openGame(page, 'scenario=raid&fog=0');
+  await page.evaluate(() => window.__empires!.pause(true));
+  const bows = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'bowman').map((u) => u.h);
+  const vills = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
+  await page.evaluate(([b, v]) => window.__empires!.issue(1, { t: 'act', ids: b!, h: v![3]! }), [bows, vills] as const);
+  // Walk into range, then catch a volley in the air.
+  let inFlight = 0;
+  for (let i = 0; i < 400 && inFlight < 2; i++) {
+    await page.evaluate(() => window.__empires!.step(1));
+    inFlight = await page.evaluate(() => window.__empires!.query.projectiles());
+  }
+  expect(inFlight).toBeGreaterThanOrEqual(2);
+  await page.evaluate(() => window.__empires!.step(3));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(2);
+    window.__empires!.camera.centerOn(16.5, 19.5);
+  });
+  await frames(page);
+  await snap(page, info, 'volley');
   expect(pageErrors(page)).toEqual([]);
 });

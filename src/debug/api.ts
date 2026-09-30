@@ -34,6 +34,8 @@ export interface EmpiresDebugApi {
     units(owner?: number): UnitInfo[];
     selection(): number[];
     player(p: number): { res: number[] };
+    /** Missiles in flight. */
+    projectiles(): number;
     /** Resource node index at tile (tx, ty), or -1. */
     resourceAt(tx: number, ty: number): number;
   };

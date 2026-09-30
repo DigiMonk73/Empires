@@ -95,3 +95,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   rubble 60 s where buildings fell (corpses show only in sight, rubble once explored). A destroyed building
   refunds its production queue (`verify`: unconfirmed for 1.0). Buildings take ×0.2 damage with a 0.1 floor
   (mil:2); ranged range is measured to the target's edge; melee on buildings uses the villager work reach.
+- **D26 — Windup and projectiles** (2026-09-29, M5.2). A swing starts when the reload timer is ready; the blow
+  lands (melee) or the missile leaves (ranged) 7 ticks (0.35 s) later — attack clips put their `hit` marker at
+  0.35 s. Reload counts from the start of the swing; leaving reach abandons the swing. Missiles aim at the
+  target's position at release (no leading until Ballistics, M7), fly distance ÷ speed, and hit if the target
+  is within radius + 0.15 of the aim point (buildings: aim inside the footprint + 0.1). Stray hits on other units
+  (½ damage in some sources) are not modelled — unverified for 1.0. Hunter spears: speed 6 (unverified), 80%.

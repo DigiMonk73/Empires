@@ -1,8 +1,9 @@
 import { ARMOR_CLASS } from '../../data/types.ts';
 import { HUNTER_ATTACK } from '../../data/units.ts';
+import type { ProjectileDef } from '../../data/types.ts';
 import { Act, EKind } from '../core/entities.ts';
 import { ResState } from '../core/resources.ts';
-import { dir16 } from '../math/trig.ts';
+import { DIR16_X, DIR16_Y, dir16 } from '../math/trig.ts';
 import { nearestTile } from '../path/service.ts';
 import { RESOURCE_KINDS, TYPES, resourceKindIndex } from '../rules/registry.ts';
 import type { TypeStats } from '../rules/playerStats.ts';
@@ -44,11 +45,31 @@ export function hostile(w: World, a: number, b: number): boolean {
 const HUNT_ATK: (number | undefined)[] = [];
 HUNT_ATK[ARMOR_CLASS.pierce] = HUNTER_ATTACK.atk.pierce!;
 
-function attackStats(w: World, s: number, hunting: boolean): { atk: readonly (number | undefined)[]; range: number; reload: number; accuracy: number } {
-  const st: TypeStats = w.stats(w.ents.owner[s]!, w.ents.type[s]!);
-  if (hunting && isVillager(w, s)) return { atk: HUNT_ATK, range: HUNTER_ATTACK.range, reload: st.reloadTicks, accuracy: HUNTER_ATTACK.accuracy };
-  return { atk: st.atk, range: st.range, reload: st.reloadTicks, accuracy: 1 };
+/** Hunters' spears fly like light javelins (speed unverified). */
+const SPEAR: ProjectileDef = { speed: 6, accuracy: HUNTER_ATTACK.accuracy };
+
+interface AttackStats {
+  atk: readonly (number | undefined)[];
+  range: number;
+  minRange: number;
+  reload: number;
+  /** Missile weapons fire projectiles; melee strikes directly. */
+  missile: ProjectileDef | null;
 }
+
+function attackStats(w: World, owner: number, type: number, villager: boolean, hunting: boolean): AttackStats {
+  const st: TypeStats = w.stats(owner, type);
+  if (hunting && villager) return { atk: HUNT_ATK, range: HUNTER_ATTACK.range, minRange: 0, reload: st.reloadTicks, missile: SPEAR };
+  const t = TYPES[type]!;
+  const missile = st.range > 0 ? (t.unit?.projectile ?? t.building?.projectile ?? { speed: 8 }) : null;
+  return { atk: st.atk, range: st.range, minRange: st.minRange, reload: st.reloadTicks, missile };
+}
+
+/**
+ * Ticks from the start of an attack to the blow landing or the missile leaving — the art's `hit` marker sits at the
+ * same moment (0.35 s). The reload timer runs from the start of the swing.
+ */
+export const WINDUP_TICKS = 7;
 
 /**
  * Kill an entity. Animals leave a carcass (food) where they fall; buildings free their footprint and refund their
@@ -83,7 +104,7 @@ export function kill(w: World, s: number): number {
 }
 
 /** Apply damage from `attacker` to `target`; handles death and animal reactions. */
-export function hit(w: World, attacker: number, target: number, amount: number): void {
+export function hit(w: World, attacker: number, target: number, amount: number, fromX = attacker >= 0 ? w.ents.x[attacker]! : w.ents.x[target]!, fromY = attacker >= 0 ? w.ents.y[attacker]! : w.ents.y[target]!): void {
   const e = w.ents;
   e.hp[target] = e.hp[target]! - amount;
   const t = TYPES[e.type[target]!]!;
@@ -99,24 +120,24 @@ export function hit(w: World, attacker: number, target: number, amount: number):
     }
     return;
   }
-  if (t.animal) reactToAttack(w, target, attacker);
+  if (t.animal) reactToAttack(w, target, attacker, fromX, fromY);
 }
 
 /** Animals: gazelles flee from attackers; elephants and predators fight back (econ:1.1). */
-function reactToAttack(w: World, s: number, attacker: number): void {
+function reactToAttack(w: World, s: number, attacker: number, fromX: number, fromY: number): void {
   const e = w.ents;
   const a = TYPES[e.type[s]!]!.animal!;
   if (a.behavior === 'flee') {
-    const dx = e.x[s]! - e.x[attacker]!;
-    const dy = e.y[s]! - e.y[attacker]!;
+    const dx = e.x[s]! - fromX;
+    const dy = e.y[s]! - fromY;
     const d = Math.sqrt(dx * dx + dy * dy) || 1;
     const x = Math.min(w.map.w - 0.5, Math.max(0.5, e.x[s]! + (dx / d) * 5));
     const y = Math.min(w.map.h - 0.5, Math.max(0.5, e.y[s]! + (dy / d) * 5));
     w.orders[s] = [{ k: 'move', x: Math.round(x * 256) / 256, y: Math.round(y * 256) / 256 }];
     w.paths[s] = undefined;
     w.pathing.cancel(s);
-  } else if (w.orders[s]?.[0]?.k !== 'attack') {
-    w.orders[s] = [{ k: 'attack', h: e.handleOf(attacker), hunt: false, retarget: 0 }];
+  } else if (attacker >= 0 && w.orders[s]?.[0]?.k !== 'attack') {
+    w.orders[s] = [{ k: 'attack', h: e.handleOf(attacker), hunt: false, retarget: 0, windup: 0 }];
     w.paths[s] = undefined;
   }
 }
@@ -128,7 +149,7 @@ export function startAttack(w: World, s: number, targetHandle: number, queue: bo
   if (t < 0 || t === s || e.kind[s] !== EKind.unit || !hostile(w, s, t)) return false;
   if (!canAttack(w, s)) return false;
   const hunting = !!TYPES[e.type[t]!]!.animal && isVillager(w, s);
-  const order = { k: 'attack' as const, h: targetHandle, hunt: hunting, retarget: 0 };
+  const order = { k: 'attack' as const, h: targetHandle, hunt: hunting, retarget: 0, windup: 0 };
   const q = w.orders[s];
   if (queue && q && q.length) q.push(order);
   else {
@@ -185,7 +206,7 @@ export function attackSystem(w: World): void {
       finish(w, s);
       continue;
     }
-    const st = attackStats(w, s, o.hunt);
+    const st = attackStats(w, e.owner[s]!, e.type[s]!, isVillager(w, s), o.hunt);
     const dx = e.x[t]! - e.x[s]!;
     const dy = e.y[t]! - e.y[s]!;
     const building = e.kind[t] === EKind.building;
@@ -201,15 +222,19 @@ export function attackSystem(w: World): void {
         e.act[s] = Act.attack;
         e.actStart[s] = w.tick;
       }
-      if (e.timer[s]! <= 0) {
-        e.timer[s] = st.reload;
-        e.actStart[s] = w.tick; // restart the attack animation on each strike
-        if (st.accuracy >= 1 || w.rng.combat.chance(st.accuracy)) {
-          hit(w, s, t, damageBetween(st.atk, w.stats(e.owner[t]!, e.type[t]!).arm, building));
+      if (o.windup > 0) {
+        if (--o.windup === 0) {
+          if (st.missile) launch(w, s, t, st.missile, o.hunt);
+          else hit(w, s, t, damageBetween(st.atk, w.stats(e.owner[t]!, e.type[t]!).arm, building));
         }
+      } else if (e.timer[s]! <= 0) {
+        e.timer[s] = st.reload;
+        e.actStart[s] = w.tick; // restart the attack animation on each swing
+        o.windup = WINDUP_TICKS;
       }
       continue;
     }
+    o.windup = 0; // out of reach: the swing is abandoned
     if (building) {
       // Buildings don't move: path once to the footprint (ranged units stop as soon as they are in range).
       if (w.paths[s] === undefined && !w.pathing.pending(s)) {
@@ -234,6 +259,69 @@ export function attackSystem(w: World): void {
       w.pathing.request(s, { k: 'point', tx: Math.floor(e.x[t]!), ty: Math.floor(e.y[t]!), x: e.x[t]!, y: e.y[t]! });
     }
   }
+}
+
+/** Release a missile from `s` at `t`: aim at where the target is now; a failed accuracy roll lands it nearby. */
+function launch(w: World, s: number, t: number, def: ProjectileDef, hunt: boolean): void {
+  const e = w.ents;
+  let x1 = e.x[t]!;
+  let y1 = e.y[t]!;
+  if ((def.accuracy ?? 1) < 1 && !w.rng.combat.chance(def.accuracy!)) {
+    // A miss lands 0.6–1.2 tiles off, in a random direction (sector of 16 via the trig table).
+    const d = 0.6 + w.rng.combat.float() * 0.6;
+    const dir = w.rng.combat.int(16);
+    x1 += DIR16_X[dir]! * d;
+    y1 += DIR16_Y[dir]! * d;
+  }
+  const dx = x1 - e.x[s]!;
+  const dy = y1 - e.y[s]!;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  w.projectiles.push({
+    type: e.type[s]!,
+    owner: e.owner[s]!,
+    src: e.handleOf(s),
+    target: e.handleOf(t),
+    x0: e.x[s]!,
+    y0: e.y[s]!,
+    x1: Math.round(x1 * 256) / 256,
+    y1: Math.round(y1 * 256) / 256,
+    t0: w.tick,
+    dur: Math.max(1, Math.round((dist / def.speed) * 20)),
+    hunt,
+    arc: !!def.arc,
+  });
+}
+
+/** Missiles land: the target takes the blow if it is still where the missile was aimed (buildings always are). */
+export function projectileSystem(w: World): void {
+  const e = w.ents;
+  let k = 0;
+  const list = w.projectiles;
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i]!;
+    if (w.tick < p.t0 + p.dur) {
+      list[k++] = p;
+      continue;
+    }
+    const t = e.slotOf(p.target);
+    if (t < 0) continue;
+    const tt = TYPES[e.type[t]!]!;
+    let on: boolean;
+    if (e.kind[t] === EKind.building) {
+      const h = tt.size / 2 + 0.1;
+      on = Math.abs(p.x1 - e.x[t]!) <= h && Math.abs(p.y1 - e.y[t]!) <= h;
+    } else {
+      const dx = p.x1 - e.x[t]!;
+      const dy = p.y1 - e.y[t]!;
+      const r = tt.radius + 0.15;
+      on = dx * dx + dy * dy <= r * r;
+    }
+    if (!on) continue;
+    const atk = p.hunt ? HUNT_ATK : w.stats(p.owner, p.type).atk;
+    const src = e.slotOf(p.src);
+    hit(w, src, t, damageBetween(atk, w.stats(e.owner[t]!, e.type[t]!).arm, e.kind[t] === EKind.building), p.x0, p.y0);
+  }
+  list.length = k;
 }
 
 /** Carcasses rot away (econ:1.1: gazelle 0.3 food/s, elephant 0.2/s, …). */

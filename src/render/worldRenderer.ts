@@ -99,7 +99,7 @@ export class WorldRenderer {
     this.art = art;
     this.objectLayer.sortableChildren = true;
     this.fog = new FogLayer(world);
-    this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.fog.mesh, this.overlayLayer);
+    this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.missileGfx, this.fog.mesh, this.overlayLayer);
     this.decalLayer.addChild(this.selGfx, this.markerGfx, this.ghostGfx);
     this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
@@ -273,6 +273,45 @@ export class WorldRenderer {
     }
   }
 
+  /** Arrows, spears and stones in flight, redrawn every frame (a few dozen at most). */
+  private readonly missileGfx = new Graphics();
+
+  private drawMissiles(alpha: number, player: number): void {
+    const g = this.missileGfx.clear();
+    const now = this.world.tick + alpha;
+    const a = { x: 0, y: 0 };
+    const b = { x: 0, y: 0 };
+    for (const p of this.world.projectiles) {
+      const u = Math.min(1, Math.max(0, (now - p.t0) / p.dur));
+      const x = p.x0 + (p.x1 - p.x0) * u;
+      const y = p.y0 + (p.y1 - p.y0) * u;
+      if (!this.fog.isVisible(player, Math.floor(x), Math.floor(y))) continue;
+      const dist = Math.hypot(p.x1 - p.x0, p.y1 - p.y0);
+      // Height in elevation levels: from shoulder (≈1.4) down to chest (≈0.8), plus a parabolic arc.
+      const peak = p.arc ? 0.9 * dist : 0.12 * dist;
+      const hAt = (k: number): number => 1.4 + (0.8 - 1.4) * k + peak * 4 * k * (1 - k);
+      worldToIso(x, y, hAt(u), a);
+      const u2 = Math.min(1, u + 0.04);
+      worldToIso(p.x0 + (p.x1 - p.x0) * u2, p.y0 + (p.y1 - p.y0) * u2, hAt(u2), b);
+      let dx = b.x - a.x;
+      let dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
+      // Faint ground shadow keeps height readable.
+      const gp = worldToIso(x, y);
+      g.ellipse(gp.x, gp.y, 3, 1.5).fill({ color: 0x000000, alpha: 0.25 });
+      if (p.arc) {
+        g.circle(a.x, a.y, 2.6).fill(0x8a8274);
+        continue;
+      }
+      const L = p.hunt ? 15 : 11;
+      g.moveTo(a.x - dx * L, a.y - dy * L).lineTo(a.x, a.y).stroke({ width: 1.3, color: 0x4a3420 });
+      g.moveTo(a.x, a.y).lineTo(a.x - dx * 2.5, a.y - dy * 2.5).stroke({ width: 2, color: 0x9aa0a8 });
+      if (!p.hunt) g.moveTo(a.x - dx * L, a.y - dy * L).lineTo(a.x - dx * (L - 3), a.y - dy * (L - 3)).stroke({ width: 2.2, color: 0xe8e0d0 });
+    }
+  }
+
   /** Cropped (bottom `k` of the height) sub-textures for construction stages, cached per frame texture. */
   private cropCache = new Map<string, Texture>();
 
@@ -376,6 +415,7 @@ export class WorldRenderer {
       }
     }
     this.fx.update(alpha, (tx, ty) => this.fog.isVisible(player, tx, ty), (tx, ty) => this.fog.isExplored(player, tx, ty));
+    this.drawMissiles(alpha, player);
     const r = this.world.res;
     if (this.resViews.length < r.count) this.buildResources(player);
     for (let i = 0; i < r.count; i++) {
