@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.6a · harbor-fishing, trade, ferry-aboard (baked ships); contact sheets
+- Baked fishing boats (net boom out, team-striped braced sail), trade boats and transports replace the shared
+  placeholder. Fixed in review: a thick white foam ring read as a lifebuoy (now a thin pale waterline); square
+  sails vanished side-on (braced 26°); ships were a third of a Dock long (drawn 1.5×). Ships 3/5.
+  Should-fix: the end-on facing hides most of the hull under the sail; no wake yet (M8.6c).
+
 ## 2026-09-30 · M8.5 · trade (new)
 - A Trade Boat on its second run to the red Dock: "Carrying 20 Stone", 40 stone out and 6 gold in by 0:12
   (a 13-tile route — below the 40-tile par, so a loss, as intended for a short route). Should-fix (M12): the

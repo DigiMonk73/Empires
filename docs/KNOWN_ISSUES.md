@@ -15,7 +15,7 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   whose licence covers personal, non-commercial projects only (see `assets/LICENSES.md`). Fine for this build;
   before any public or commercial release, re-record them (the user's own voice, or a CC0/CC-BY TTS voice such
   as a permissively licensed Piper model) with `tools/voices.ts`.
-- **KI-6 · should · baked art size** — `public/baked` is 115 MB after M7.4 (72 models, ~11,000 frames; the
+- **KI-6 · must (next: M8.6b) · baked art size** — 145 MB after M8.6a (civilian ships +28 MB); was 115 MB after M7.4 (72 models, ~11,000 frames; the
   elephants, chariots and villager are 5–6 MB each) against the M9 budget of 150 MB, and every atlas loads at
   boot. Plan (PLAN risk list): WebP atlases from the baker (Chromium canvas encode; WKWebView and WebKit decode
   WebP), load only the models a match can use (its civs' trees), and a size line in the verify summary.
