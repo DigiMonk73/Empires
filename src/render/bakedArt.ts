@@ -35,6 +35,17 @@ export class BakedArt {
   /** Load every model's metadata, and the textures of the models `preload` picks (awaited). */
   static async load(base = './baked/', preload: (id: string, meta: AtlasMeta) => boolean = () => false): Promise<BakedArt> {
     const art = new BakedArt(base);
+    // One request for every model's metadata (metas.json, written by the bake); per-model files as a fallback.
+    try {
+      const r = await fetch(`${base}metas.json`);
+      if (r.ok) {
+        for (const [id, meta] of Object.entries((await r.json()) as Record<string, AtlasMeta>)) art.metas.set(id, meta);
+        await Promise.all([...art.metas].filter(([id, meta]) => preload(id, meta)).map(([id]) => art.request(id)));
+        return art;
+      }
+    } catch {
+      // fall through to the manifest
+    }
     let manifest: { models: Record<string, { json: string }> };
     try {
       const r = await fetch(`${base}manifest.json`);

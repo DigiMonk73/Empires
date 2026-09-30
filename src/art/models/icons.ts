@@ -73,10 +73,21 @@ function cuirass(mat: MatSpec, t: Vec3): NodeSpec {
 function armor(v: number): NodeSpec[] {
   const mat = [LEATHER, SCALE, MAIL][Math.floor(v / 3)]!;
   const cls = v % 3;
-  const out: NodeSpec[] = [{ geom: box(0.08, 0.08, 0.26), mat: DARKWOOD, t: [-0.05, 0.04, 0] }, { ...cuirass(mat, [-0.04, 0.02, -0.04]), s: 1.25 }];
-  if (cls === 0) out.push(facing([{ geom: box(0.04, 0.4, 0.015), mat: STEEL, t: [0, 0.2, 0] }, { geom: box(0.14, 0.03, 0.03), mat: BRONZE, t: [0, 0.0, 0] }, { geom: cyl(0.015, 0.015, 0.09, 5), mat: LEATHER, t: [0, -0.05, 0] }], [0.2, 0.12, 0.2], 0.2));
-  else if (cls === 1) out.push(facing([{ geom: new THREE.TorusGeometry(0.2, 0.012, 4, 14, Math.PI * 0.9), mat: WOOD, r: [0, 0, Math.PI / 2 + 0.15] }, { geom: box(0.005, 0.38, 0.005), mat: CLOTH, t: [0.0, 0.0, 0] }], [0.22, 0.28, 0.2], 0.25));
-  else out.push(facing([{ geom: new THREE.TorusGeometry(0.1, 0.022, 5, 12, Math.PI * 1.35), mat: IRON, r: [0, 0, -Math.PI * 0.175 + Math.PI / 2] }], [0.24, 0.16, 0.22], 0.3));
+  // An armour stand: the cuirass on a post with a crested helmet above it (reads as "armour" at 26 px), and the
+  // class it protects as a large badge in front — a sword (infantry), a bow (archers), a horseshoe (cavalry).
+  const out: NodeSpec[] = [
+    { geom: box(0.3, 0.05, 0.3), mat: DARKWOOD, t: [-0.08, 0.025, -0.08] },
+    { geom: cyl(0.025, 0.025, 0.72, 6), mat: DARKWOOD, t: [-0.08, 0.36, -0.08] },
+    { ...cuirass(mat, [-0.08, 0.06, -0.08]), s: 1.3 },
+    { t: [-0.08, 0.78, -0.08], children: [
+      { geom: sphere(0.1, 12), mat: mat === LEATHER ? LEATHER : mat === SCALE ? BRONZE : IRON, s: [1, 1.1, 1] },
+      { geom: box(0.22, 0.05, 0.04), mat: RED, t: [0, 0.1, 0], r: [0, 0, 0] },
+      { geom: box(0.03, 0.08, 0.1), mat: mat === LEATHER ? LEATHER : mat === SCALE ? BRONZE : IRON, t: [0.07, -0.06, 0] },
+    ] },
+  ];
+  if (cls === 0) out.push(facing([{ r: [0, 0, 0.6], children: [{ geom: box(0.06, 0.52, 0.02), mat: STEEL, t: [0, 0.26, 0] }, { geom: box(0.2, 0.04, 0.04), mat: GOLD, t: [0, 0, 0] }, { geom: cyl(0.02, 0.02, 0.12, 5), mat: LEATHER, t: [0, -0.07, 0] }] }], [0.24, 0.18, 0.22], 0.2));
+  else if (cls === 1) out.push(facing([{ geom: new THREE.TorusGeometry(0.26, 0.02, 4, 16, Math.PI * 0.9), mat: WOOD, r: [0, 0, Math.PI / 2 + 0.15] }, { geom: box(0.008, 0.5, 0.008), mat: CLOTH, t: [0.03, 0.0, 0] }], [0.26, 0.3, 0.22], 0.25));
+  else out.push(facing([{ geom: new THREE.TorusGeometry(0.15, 0.035, 6, 14, Math.PI * 1.35), mat: STEEL, r: [0, 0, -Math.PI * 0.175 + Math.PI / 2] }], [0.26, 0.2, 0.24], 0.3));
   return out;
 }
 

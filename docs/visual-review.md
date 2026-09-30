@@ -2,6 +2,21 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.9 · gallery (5 sets × Stone/Iron × 8 views) and contact sheets — the M9 scorecard
+| Group | Score | Notes |
+|---|---|---|
+| Units (villager, 40 soldiers, cavalry, siege, priest, ships) | 4 | unchanged since their milestones (M3–M8 reviews) |
+| Animals | 4 | alligator 4 after the ×1.35 scale (M9.1) |
+| Greek set, 4 ages | 4 | Iron TC was 3.5 → propylon + two statues |
+| Egyptian / Babylonian / Asian / Roman sets, 4 ages | 4 | fixes logged under M9.2–M9.6 |
+| Towers | 4 | were one grey Greek set for all → each kit builds its own four towers |
+| Walls, docks, farms, sites, rubble | 4 | shared by all sets (D43) — neutral materials read fine everywhere |
+| Wonders (temple, pyramid, ziggurat, pagoda, amphitheatre) | 4–5 | the pagoda and amphitheatre the strongest |
+| Tech icons | 4 | armour was 3.5 → an armour stand (helmet + cuirass) with a large class badge |
+| UI (stone/bronze/parchment, emblems, loading screen) | 4 | Roman eagle the weakest emblem |
+- In game (gallery): every set anchored on its footprint, team colours on bands and banners, age variants
+  switch with the owner's age, no z-order faults. Budget 62 MB atlases + 1.9 MB metadata.
+
 ## 2026-09-30 · M9.8 · menu-skirmish, village-tool, victory-results, tech-tree + 100 more (UI restyle), emblems grid
 - Panels now read as carved stone (block courses, mortar, grain) under the old tints; buttons are hammered
   bronze with a bevel; the civ box is parchment with dark-red heading and ink text. The top bar shows the

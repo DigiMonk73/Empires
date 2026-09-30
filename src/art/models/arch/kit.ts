@@ -292,7 +292,40 @@ export const RECIPES: Record<string, Recipe> = {
     ].filter((n): n is NodeSpec => !!n),
   },
   wonder: { own: 3, footprint: 5, build: (k) => k.wonder() },
+  // Towers (M9.9): the set's tower block, taller and better founded at each step of the line.
+  watchTower: {
+    own: 1,
+    footprint: 2,
+    build: (k, a) => [k.tower(0.8, 1.05 + 0.05 * a, a, [-0.05, 0, -0.05]), banner(0.72, 0.72, 0.55)],
+  },
+  sentryTower: {
+    own: 2,
+    footprint: 2,
+    build: (k, a) => [k.podium(1.5, 1.5, a), k.tower(0.95, 1.3, a, [-0.05, g(a, k), -0.05]), banner(0.74, 0.74, 0.62)].filter((n): n is NodeSpec => !!n),
+  },
+  guardTower: { own: 3, footprint: 2, build: (k, a) => guardTower(k, a, false) },
+  ballistaTower: { own: 3, footprint: 2, build: (k, a) => guardTower(k, a, true) },
 };
+
+/** Guard Tower: a tall tower on a platform behind a low wall; the Ballista Tower adds a bolt thrower on a balcony. */
+function guardTower(k: Kit, a: Age, ballista: boolean): NodeSpec[] {
+  const y = k.lift(a);
+  const out: NodeSpec[] = [k.podium(1.7, 1.7, a), k.tower(1.05, 1.55, a, [-0.1, y, -0.1]), k.fence(0.25, 0.8, 1.2, true, a, 0.12), k.fence(0.8, 0.25, 1.2, false, a, 0.12), banner(-0.78, 0.78, 0.7)].filter((n): n is NodeSpec => !!n);
+  if (ballista) {
+    out.push({ t: [0.6, y + 1.0, -0.1], children: [
+      { geom: box(0.34, 0.05, 0.56), mat: 'planks', t: [0, 0, 0] },
+      { geom: box(0.04, 0.3, 0.04), mat: 'wood', t: [0.12, -0.16, 0.22], r: [0, 0, 0.5] },
+      { geom: box(0.04, 0.3, 0.04), mat: 'wood', t: [0.12, -0.16, -0.22], r: [0, 0, 0.5] },
+      { t: [0.02, 0.05, 0], r: [0, 0.5, 0], children: [
+        { geom: box(0.42, 0.05, 0.1), mat: 'wood', t: [0, 0.1, 0] },
+        { geom: box(0.05, 0.04, 0.6), mat: 'wood', t: [0.15, 0.14, 0], r: [0, 0, 0.1] },
+        { geom: cyl(0.03, 0.03, 0.14, 6), mat: 'wood', t: [0, 0.04, 0] },
+        { geom: box(0.34, 0.02, 0.02), mat: 'bronze', t: [0.05, 0.15, 0] },
+      ] },
+    ] });
+  }
+  return out;
+}
 
 /** The models of one architecture set: every recipe, one variant per age from the building's own age. */
 export function setModels(k: Kit): ModelDef[] {

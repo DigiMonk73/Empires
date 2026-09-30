@@ -4,6 +4,7 @@
 // Env: PORT, HOST, DIST_DIR, DATA_DIR (reserved for saves / multiplayer relay).
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
+import { createGzip } from 'node:zlib';
 import { stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +17,9 @@ const root = resolve(args.get('dir') ?? process.env.DIST_DIR ?? join(here, '..',
 const port = Number(args.get('port') ?? process.env.PORT ?? 80);
 const host = args.get('host') ?? process.env.HOST ?? '0.0.0.0';
 const prefix = (args.get('prefix') ?? '').replace(/\/+$/, '');
+
+/** Text types worth compressing on the fly (the baked metadata is ~2 MB of JSON). */
+const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.txt', '.map']);
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -70,16 +74,31 @@ const server = createServer(async (req, res) => {
       res.writeHead(301, { Location: (prefix + path).replace(/\/?$/, '/') }).end();
       return;
     }
-    const type = MIME[extname(file).toLowerCase()] ?? 'application/octet-stream';
-    const immutable = path.startsWith('/assets/') || path.startsWith('/baked/');
+    const ext = extname(file).toLowerCase();
+    const type = MIME[ext] ?? 'application/octet-stream';
+    // Only Vite's content-hashed bundles are immutable. Everything else — the baked atlases keep their names
+    // from one version to the next — is revalidated (Last-Modified → 304), so an update never mixes old sprite
+    // pages with new metadata.
+    const immutable = path.startsWith('/assets/');
+    const modified = Math.floor(info.mtimeMs / 1000) * 1000;
+    const lastModified = new Date(modified).toUTCString();
+    const since = Date.parse(req.headers['if-modified-since'] ?? '');
+    if (!immutable && since >= modified) {
+      res.writeHead(304, { 'Cache-Control': 'no-cache', 'Last-Modified': lastModified }).end();
+      return;
+    }
+    const gzip = COMPRESSIBLE.has(ext) && /\bgzip\b/.test(req.headers['accept-encoding'] ?? '');
     res.writeHead(200, {
       'Content-Type': type,
-      'Content-Length': info.size,
+      ...(gzip ? { 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' } : { 'Content-Length': info.size }),
       'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
+      'Last-Modified': lastModified,
       'X-Content-Type-Options': 'nosniff',
     });
     if (req.method === 'HEAD') return res.end();
-    createReadStream(file).pipe(res);
+    const stream = createReadStream(file);
+    if (gzip) stream.pipe(createGzip({ level: 6 })).pipe(res);
+    else stream.pipe(res);
   } catch (err) {
     console.error('[serve] error', err);
     if (!res.headersSent) send(res, 500, 'internal error');

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { box, build, cone, cyl, gable, lumpy, material, pyramid, seeded, sphere, type MatName, type MatSpec, type NodeSpec, type Vec3 } from '../dsl/model.ts';
-import { archeryRange, banner, barracks, bin, firePit, granary, heap, house, logPile, post, sack, stable, storagePit, townCenter } from './buildings.ts';
+import { archeryRange, banner, barracks, bin, firePit, granary, heap, house, logPile, pediment, post, sack, stable, storagePit, townCenter } from './buildings.ts';
 
 /**
  * The Greek-style set through the ages (the other four sets are kits in arch/, D43). Variant v0 is the look of the
@@ -349,7 +349,23 @@ function iron(bronze: () => THREE.Object3D, extras: NodeSpec[]): () => THREE.Obj
 }
 
 const houseIron = iron(houseBronze, [finial(-0.12, 0.84, -0.12), ...frieze(-0.12, 0.386, 1.2, 0.35, true), ...frieze(0.486, -0.12, 1.0, 0.35, false), torchStatue(0.8, 0.8, 0, 0.55)]);
-const townCenterIron = iron(townCenterBronze, [finial(-0.3, 1.37, -0.35, 1.3), finial(0.95, 1.39, -0.95), ...frieze(0.605, -0.35, 1.4, 0.68, false), ...frieze(-0.3, 0.355, 1.8, 0.68, true), torchStatue(0.85, 0.85, 0, 0.9)]);
+/** A marble gateway (propylon): two columns, an architrave and a gilded pediment, spanning along X at z. */
+function propylon(x: number, z: number): NodeSpec {
+  const H = 0.6;
+  return {
+    t: [x, 0, z],
+    children: [
+      { geom: box(0.7, 0.05, 0.3), mat: MARBLE, t: [0, 0.025, 0] },
+      ...[-0.25, 0.25].map((cx): NodeSpec => ({ geom: cyl(0.045, 0.05, H, 10), mat: IRON_MARBLE, t: [cx, 0.05 + H / 2, 0] })),
+      { geom: box(0.66, 0.08, 0.22), mat: IRON_MARBLE, t: [0, 0.05 + H + 0.04, 0] },
+      ...frieze(0, 0.115, 0.64, 0.05 + H + 0.04, true),
+      { t: [0, 0.05 + H + 0.08, 0], r: [0, Math.PI / 2, 0], children: [pediment(0.66, 0.18, 0.2, IRON_MARBLE)] },
+      finial(0, 0.05 + H + 0.26, 0, 0.8),
+    ],
+  };
+}
+
+const townCenterIron = iron(townCenterBronze, [finial(-0.3, 1.37, -0.35, 1.3), finial(0.95, 1.39, -0.95), ...frieze(0.605, -0.35, 1.4, 0.68, false), ...frieze(-0.3, 0.355, 1.8, 0.68, true), torchStatue(1.1, 0.75, 0, 0.9), torchStatue(0.75, 1.1, 0, 0.9), propylon(-0.1, 1.28)]);
 const barracksIron = iron(barracksBronze, [finial(-0.2, 1.06, -0.35), ...frieze(0.806, -0.35, 1.1, 0.47, false), hopliteStatue(-0.7, 0.95)]);
 const granaryIron = iron(granaryBronze, [finial(-0.55, 1.15, -0.5), finial(0.55, 1.0, -0.6), finial(-0.6, 0.94, 0.6), torchStatue(1.0, 0.25, 0.08, 0.7)]);
 const storageIron = iron(storageBronze, [finial(-0.3, 0.84, -0.35), ...frieze(-0.3, 0.206, 1.7, 0.35, true), ...frieze(0.556, -0.35, 1.1, 0.35, false)]);

@@ -69,7 +69,11 @@ try {
   // Drop models that no longer exist and files no model uses (e.g. the PNG pages before KI-6).
   for (const id of Object.keys(manifest.models)) if (!ids.includes(id)) delete manifest.models[id];
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-  const keep = new Set(['manifest.json', ...Object.values(manifest.models).flatMap((m) => [m.json, ...m.pages])]);
+  // Every model's metadata in one file, so the game boots with one request instead of one per model (M9.9).
+  const metas: Record<string, unknown> = {};
+  for (const [id, m] of Object.entries(manifest.models)) metas[id] = JSON.parse(readFileSync(join(OUT, m.json), 'utf8'));
+  writeFileSync(join(OUT, 'metas.json'), JSON.stringify(metas));
+  const keep = new Set(['manifest.json', 'metas.json', ...Object.values(manifest.models).flatMap((m) => [m.json, ...m.pages])]);
   let bytes = 0;
   for (const f of readdirSync(OUT)) {
     if (!keep.has(f)) rmSync(join(OUT, f));

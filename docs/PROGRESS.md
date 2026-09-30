@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1–M9.8 done: Academy, alligator, all five architecture sets through all four ages, tech icons, UI dress). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.8 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion in progress (M9.1–M9.9 done; exit next: verify:full, tag m9). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.9 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
   get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit, Choson/Shang/Yamato the Asian kit,
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9.9 gallery review (every model × age × set ≥ 4/5, budget), then the M9 exit (verify:full, tag m9).
+- **Next up:** the M9 exit — verify:full, tag m9, submodule bump + s9pk 0.9.0; then M10 world polish.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -529,8 +529,13 @@ Macedonian, Palmyran, Roman.
       `ui/emblems.tsx`: 16 SVG civ emblems in their set's colours — in the setup rows and civ box, the tech-tree
       title, the top bar beside the age and the results table. `index.html` shows a loading screen until the
       menu or game mounts. (KI-2: AI paintings stay optional.)
-- [ ] **M9.9 Gallery and review.** Every model × facing/age/set in the gallery; score each ≥ 4/5, fix what
-      falls short; budget check (atlases, boot metadata fetches).
+- [x] **M9.9 Gallery and review.** `tools/gallery.ts` for all five sets at Stone and Iron plus every contact
+      sheet; scores in visual-review.md, all ≥ 4 after the fixes: each kit set gets its own Watch, Sentry, Guard
+      and Ballista Towers (tower recipes in kit.ts), the Greek Iron Town Center a marble propylon and statues,
+      the armour icons an armour stand with a large class badge. Budget: atlases 62 MB (≤ 150); boot metadata
+      is one `metas.json` (1.9 MB, 273 KB gzipped) instead of 155 requests. `serve.mjs` now gzips text and
+      revalidates `/baked/` (Last-Modified → 304) instead of caching it immutably — atlas names don't change
+      between versions, so an updated package could have mixed old pages with new metadata.
 - _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB.
 
 ## M10 — World polish
