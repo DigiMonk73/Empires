@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — starting M6.1 mapgen. M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1 mapgen done. M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,8 +16,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M6.1 map generation (Continental + Inland, econ:8 placement, fairness), then M6.2 victory/game flow.
-- **Playable now:** `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
+- **Next up:** M6.2 victory + game flow (conquest, defeat, post-game), then M6.3 menus.
+- **Playable now:** `?scenario=map&type=continental|inland&size=small&seed=N` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
@@ -207,11 +207,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - _Exit:_ duel matrix matches formula; 20v20 meets perf + screenshot gates; stuck < 1%.
 
 ## M6 — First playable skirmish (StartOS checkpoint + user playtest)
-- [ ] **M6.1 Map generation.** Deterministic `mapgen` (sim, own RNG stream): Continental + Inland land maps,
-      sizes Tiny–Giant (setup.ts), fair start positions; land template from econ:8 (TC + 3 villagers at 2–4;
-      near stone 7 @10–18, near gold 8 @12–18, far stone/gold @20–35, berries 7±1 @7–16, gazelles 6±2 @10–22,
-      scattered clusters, elephant pairs, lions ≥18 away, 10–15 trees @8–22), forests + lakes (Inland) +
-      desert patches; fairness test (per-player resource totals within ±15%); minimap/screenshot review.
+- [x] **M6.1 Map generation.** `src/sim/mapgen/generate.ts` → SimConfig (ASCII + scenario): Continental (sea
+      ring, beach) and Inland (central lake), ~18% desert, forests ~7% + a woodline per player, starts on a
+      circle (teams together); per-player layout drawn once in polar offsets relative to each start's facing
+      (fair by construction): berries, near/far stone + gold, gazelles, 10–15 trees; map-wide extra clusters,
+      elephant pairs, gazelle herds, lions, shore fish. Tests: 5 size/player combos — 1 TC + 3 villagers,
+      zone resources within ±15%, wood nearby, one land region; deterministic. `?scenario=map&type=…&size=…`.
 - [ ] **M6.2 Victory + game flow.** Conquest (a player with no units/buildings left — walls excepted — is
       defeated; last team standing wins), `defeated`/`victory` events, pause, game-over overlay, post-game
       screen (score, units killed/lost, resources gathered, age times).

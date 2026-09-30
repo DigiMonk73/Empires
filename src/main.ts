@@ -33,7 +33,7 @@ async function boot(): Promise<void> {
   host.appendChild(app.canvas);
 
   const scenario = SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!;
-  const session = new GameSession(scenario());
+  const session = new GameSession(scenario(params));
   const world = session.sim.world;
 
   const cameraRoot = new Container();

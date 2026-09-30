@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.1 · map-continental, map-inland (new)
+- Generated starts read like the original's: TC + 3 villagers in a clearing, berries/gold/stone at a walk, a
+  woodline, scattered trees, gazelle herds, elephants and lions further out; coastline + beach (Continental),
+  central lake on the minimap (Inland); desert patches. Terrain 4, composition 4.
+- Should-fix (M10): beach and desert share one tan; add palm/pine forests and elevation.
+
 ## 2026-09-29 · M5.7 · battle (new)
 - 20v20 mid-fight: clubmen trading blows in knots, bowmen and slingers shooting from behind, arrows in the air,
   the fallen on the ground; trees break up the line. Reads like the original's skirmishes. Composition 4.
