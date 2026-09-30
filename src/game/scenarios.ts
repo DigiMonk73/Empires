@@ -336,6 +336,36 @@ function wonderScene(): SimConfig {
   };
 }
 
+/**
+ * Art gallery (M9): every building of one civilization (`civ`, default greek) and the wild animals, laid out for
+ * review. The owner's age decides the building variants (grant ages with `__empires.grantTech`).
+ */
+function gallery(p: URLSearchParams): SimConfig {
+  const W = 40;
+  const H = 34;
+  const rows: string[] = [];
+  for (let y = 0; y < H; y++) rows.push('.'.repeat(36) + '~~~~');
+  const row = (ty: number, types: string[], step = 5) => types.map((type, i) => ({ type, owner: 1, tx: 2 + i * step, ty }));
+  return {
+    victory: 'none',
+    seed: 21,
+    map: { w: W, h: H, ascii: rows },
+    players: [{ civ: p.get('civ') ?? 'greek' }, { civ: 'egyptian' }],
+    startingResources: 'deathmatch',
+    scenario: {
+      buildings: [
+        ...row(2, ['townCenter', 'house', 'granary', 'storagePit', 'barracks', 'market', 'archeryRange']),
+        { type: 'dock', owner: 1, tx: 36, ty: 3 },
+        ...row(8, ['stable', 'farm', 'governmentCenter', 'temple', 'siegeWorkshop', 'academy']),
+        { type: 'wonder', owner: 1, tx: 2, ty: 14 },
+        ...row(15, ['watchTower', 'sentryTower', 'guardTower', 'ballistaTower'], 4).map((b) => ({ ...b, tx: b.tx + 7 })),
+        ...[0, 1, 2, 3, 4, 5].map((i) => ({ type: i < 3 ? 'smallWall' : 'mediumWall', owner: 1, tx: 26 + i, ty: 16 })),
+      ],
+      units: ['gazelle', 'elephant', 'lion', 'alligator'].map((type, i) => ({ type, owner: 0, x: 4.5 + i * 3, y: 23.5 })),
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -376,6 +406,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   army,
   temple: templeScene,
   wonder: wonderScene,
+  gallery,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

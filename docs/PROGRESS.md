@@ -3,12 +3,12 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M8 Water **done** (tag `m8`, s9pk 0.8.0 installed and checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41). M6 done (tag `m6`, s9pk 0.6.0 verified on the StartOS VM).
-- **Last green commit:** M8.8b (verify ~100 s); verify:full at the M7 exit ~515 s (Docker both arches 183 MB, Tauri, s9pk; full ladder now 32 maps, ~280 s).
-- **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
-  trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
-  sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Baked gazelle/elephant/lion, clubman/axeman/slinger/bowman, scout (horse rig), Archery Range, Stable,
-  Watch Tower, rubble. Placeholders remain for later cavalry, siege, priests, ships, alligators, fish. `?scenario=village` shows the whole Stone-age economy. Review sheets: `node tools/frames.ts <model> out.png`.
+- **Milestone:** M9 Art completion in progress (M9.1 done). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.1 (verify ~100 s); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
+  building set with age variants (`buildingAges.ts`) shared by all 16 civs until M9.2–M9.6. Review tools:
+  `node tools/frames.ts <model> out.png` (contact sheets), `node tools/gallery.ts <civs> <ages>` (every
+  building + animals, `?scenario=gallery&civ=…`, after `npx vite build`) → `artifacts/gallery/`.
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
   retarget, construction with (n+2)/3 builders, pop/housing, farms (one farmer, 250 food, vanish when empty),
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9 art completion — expand into tasks (architecture sets × ages, remaining units/animals, icons and portraits, UI textures).; then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
+- **Next up:** M9.2 architecture framework (per-civ building sets), then the Egyptian, Babylonian, Asian and Roman sets.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -475,8 +475,30 @@ Ships already train at the Dock and path on water (their own move class and regi
 - _Exit:_ ≥ 90% AI island games decided; naval screenshots reviewed.
 
 ## M9 — Art completion
-- all units/animals; 5 sets × 4 ages; icons/portraits/tech icons; construction/rubble; UI textures; AI menu
-  art/loading screens/emblems.
+Every unit has baked art; the Academy and the alligator don't; all 16 civilizations share one (Greek-style)
+building set. Architecture sets (civs.ts `arch`): Egyptian — Assyrian, Egyptian, Sumerian; Greek — Greek, Minoan,
+Phoenician; Babylonian — Babylonian, Hittite, Persian; Asian — Choson, Shang, Yamato; Roman — Carthaginian,
+Macedonian, Palmyran, Roman.
+- [x] **M9.1 Missing models.** The Academy (Greek set: an L of stoas round a drill yard, a bronze hoplite, a
+      shield rack) and the alligator (sprawling walk, jaw snap, dies belly-up; new `scales` texture); a
+      `?scenario=gallery` review scene and `tools/gallery.ts`. Contact sheets 3.5/5. The Academy's HUD icon now
+      comes from its sprite. Alligators are not yet placed on maps → M14.
+- [ ] **M9.2 Architecture framework.** Building models per set (`<building>@<set>`, Greek the default): the baker
+      takes a set parameter, the renderer picks the owner's civ set (falls back to Greek), icons follow. Then one
+      building per set as a proof. _Accept:_ unit test of the lookup; a 5-civ screenshot.
+- [ ] **M9.3 Egyptian set.** Mud brick and limestone, flat roofs, battered walls, papyrus columns, obelisks — every
+      building by age.
+- [ ] **M9.4 Babylonian set.** Glazed brick, stepped terraces, crenellations, lion reliefs.
+- [ ] **M9.5 Asian set.** Timber frames, red lacquer, curved tiled roofs, stone bases.
+- [ ] **M9.6 Roman set.** Terracotta roofs, arches, marble porticoes, concrete domes.
+- [ ] **M9.7 A Wonder per set.** Pyramid (Egyptian), ziggurat (Babylonian), pagoda-temple (Asian), a domed
+      temple (Roman); the Greek temple stays.
+- [ ] **M9.8 Icons and portraits.** Baked tech icons (every research button: the upgraded unit, the tool, the
+      building, the armour piece), portraits for every unit and building in the selection panel.
+- [ ] **M9.9 UI dress.** Stone panel, bronze frame and parchment textures from the material library; civ
+      emblems and a loading screen drawn in code (AI images are blocked — KI-2).
+- [ ] **M9.10 Gallery and review.** A gallery scene of every model × facing/age/set; score each ≥ 4/5, fix what
+      falls short; budget check.
 - _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB.
 
 ## M10 — World polish
@@ -503,6 +525,7 @@ Ships already train at the Dock and path on water (their own move class and regi
 ## M14 — Rules completeness
 - relics, ruins, wonder, score, time-limit victories; starting age/resources/pop options; allied victory;
   Full Tech Tree.
+- alligators on shallows and beaches of every map (econ §8; the model exists since M9.1).
 - _Exit:_ no unresolved `verify:true`.
 
 ## M15 — Hardening & release (StartOS checkpoint + user playtest)

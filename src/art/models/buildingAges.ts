@@ -191,6 +191,67 @@ const governmentCenter = (): THREE.Object3D =>
     ],
   });
 
+// ── Academy (Bronze) ──────────────────────────────────────────────────────────────────────────────────────
+// A gymnasium: an L of stoas (colonnaded halls under tiled roofs) around a sanded drill yard, a bronze hoplite
+// on a plinth, a rack of team-painted round shields and a practice post.
+const BRONZE_STATUE: MatSpec = { tex: 'metal', color: 0x6a8a6a, rough: 0.5, metal: 0.6, repeat: 2 }; // verdigris
+const SAND: MatSpec = { tex: 'plain', color: 0xd8c49a, rough: 1 };
+const MARBLE: MatSpec = { tex: 'plaster', color: 0xeee8da, rough: 0.6, repeat: 2 };
+
+/** A bronze hoplite: legs, cuirass, crested helmet, a round shield on the left arm and a raised spear. */
+function hopliteStatue(x: number, z: number): NodeSpec {
+  return {
+    t: [x, 0, z],
+    r: [0, Math.PI / 4, 0],
+    s: 1.35,
+    children: [
+      { geom: box(0.26, 0.28, 0.26), mat: MARBLE, t: [0, 0.14, 0] },
+      { geom: box(0.3, 0.04, 0.3), mat: LIMEWASH, t: [0, 0.3, 0] },
+      { t: [0, 0.32, 0], children: [
+        { geom: cyl(0.025, 0.02, 0.22, 6), mat: BRONZE_STATUE, t: [0, 0.11, 0.035], r: [0.08, 0, 0] },
+        { geom: cyl(0.025, 0.02, 0.22, 6), mat: BRONZE_STATUE, t: [0, 0.11, -0.035], r: [-0.08, 0, 0] },
+        { geom: cyl(0.06, 0.05, 0.2, 8), mat: BRONZE_STATUE, t: [0, 0.31, 0] },
+        { geom: sphere(0.045, 8), mat: BRONZE_STATUE, t: [0, 0.46, 0] },
+        { geom: box(0.12, 0.05, 0.015), mat: BRONZE_STATUE, t: [-0.01, 0.52, 0], r: [0, 0, 0] }, // crest
+        { geom: cyl(0.1, 0.1, 0.02, 14), mat: BRONZE_STATUE, t: [0.02, 0.3, -0.09], r: [Math.PI / 2, 0, 0] }, // shield
+        { geom: cyl(0.01, 0.01, 0.62, 5), mat: BRONZE_STATUE, t: [0.03, 0.42, 0.08], r: [0, 0, -0.12] }, // spear
+      ] },
+    ],
+  };
+}
+
+/** A rack of round shields (hoplons) painted in the team colour. */
+function shieldRack(t: Vec3, rot: number): NodeSpec {
+  const kids: NodeSpec[] = [post(-0.24, 0, 0.36), post(0.24, 0, 0.36), { geom: box(0.54, 0.03, 0.03), mat: 'wood', t: [0, 0.3, 0] }];
+  for (let i = 0; i < 3; i++) {
+    const x = -0.16 + i * 0.16;
+    kids.push({ geom: cyl(0.075, 0.075, 0.02, 14), mat: 'team', t: [x, 0.22, 0.03], r: [Math.PI / 2 - 0.15, 0, 0] });
+    kids.push({ geom: cyl(0.082, 0.082, 0.012, 14), mat: 'bronze', t: [x, 0.22, 0.02], r: [Math.PI / 2 - 0.15, 0, 0] });
+  }
+  return { t, r: [0, rot, 0], children: kids };
+}
+
+const academy = (): THREE.Object3D =>
+  build({
+    children: [
+      { geom: box(2.7, 0.06, 2.7), mat: 'stone', t: [0, 0.03, 0] },
+      { geom: box(1.6, 0.012, 1.5), mat: SAND, t: [0.35, 0.066, 0.4] },
+      // The back stoa (along X) and the side stoa (along Z), each fronted by columns under a lean-to roof.
+      hall({ w: 2.3, d: 0.7, h: 0.72, wall: LIMEWASH, roof: 'hip', roofMat: TILE, roofH: 0.3, doors: ['z'], windows: 0, t: [-0.15, 0.06, -1.0] }),
+      ...colonnade(-1.1, 0.95, -0.45, 0.6, 7).map((c) => ({ ...c, t: [c.t![0], c.t![1] + 0.06, c.t![2]] as Vec3 })),
+      { geom: box(2.2, 0.04, 0.42), mat: TILE, t: [-0.08, 0.76, -0.5], r: [0.28, 0, 0] },
+      hall({ w: 0.62, d: 1.5, h: 0.62, wall: LIMEWASH, roof: 'hip', roofMat: TILE, roofH: 0.28, doors: ['x'], windows: 0, t: [-1.02, 0.06, 0.2] }),
+      ...colonnade(-0.1, 1.05, 0.5, 0.52, 4).map((c): NodeSpec => ({ t: [0, 0.06, 0], r: [0, -Math.PI / 2, 0], children: [c] })),
+      { geom: box(0.4, 0.04, 1.3), mat: TILE, t: [-0.54, 0.64, 0.45], r: [0, 0, -0.28] },
+      hopliteStatue(0.55, 0.5),
+      shieldRack([1.1, 0.06, -0.15], Math.PI / 2 - 0.2),
+      // A practice post wrapped in straw with a wooden cross-arm.
+      { t: [-0.1, 0.06, 1.05], children: [post(0, 0, 0.55), { geom: cyl(0.06, 0.06, 0.24, 8), mat: 'thatch', t: [0, 0.38, 0] }, { geom: box(0.3, 0.03, 0.03), mat: 'wood', t: [0, 0.44, 0] }] },
+      banner(1.3, 0.75, 0.9),
+      banner(-1.3, 1.3, 0.8),
+    ],
+  });
+
 /** Variant builders by age step from the building's own age (0 = its age, 1 = next …). */
 export const AGED: Record<string, (() => THREE.Object3D)[]> = {
   house: [house, houseTool, houseBronze],
@@ -202,6 +263,7 @@ export const AGED: Record<string, (() => THREE.Object3D)[]> = {
   stable: [stable, stableBronze],
   market: [marketTool, marketBronze],
   governmentCenter: [governmentCenter],
+  academy: [academy],
 };
 
 void bin;

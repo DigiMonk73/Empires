@@ -456,6 +456,7 @@ export const BUILDING_MODELS: ModelDef[] = [
   ...aged('barracks', 3),
   ...aged('market', 3),
   ...aged('governmentCenter', 3),
+  ...aged('academy', 3),
   { id: 'dock', kind: 'building', footprint: 3, facings: 1, build: dock },
   { id: 'farm', kind: 'building', footprint: 3, facings: 1, variants: 4, build: farm },
   ...aged('archeryRange', 3),

@@ -53,6 +53,7 @@ export type TexKind =
   | 'rock'
   | 'goldOre'
   | 'metal'
+  | 'scales'
   | 'plain';
 
 export function makeTexture(kind: TexKind, base: number, seed = 1): THREE.CanvasTexture {
@@ -193,6 +194,29 @@ export function makeTexture(kind: TexKind, base: number, seed = 1): THREE.Canvas
     case 'metal':
       grain(ctx, size, r, 0.2);
       break;
+    case 'scales': {
+      // Rows of rounded scutes, each lit on top and shadowed below, offset every other row (reptile hide).
+      const n = 10;
+      const w = size / n;
+      for (let y = 0; y < n; y++) {
+        for (let x = -1; x <= n; x++) {
+          const cx = (x + (y % 2) * 0.5 + 0.5) * w;
+          const cy = (y + 0.5) * w;
+          ctx.fillStyle = hex(base, 0.62);
+          ctx.fillRect(cx - w / 2, cy - w / 2, w, w);
+          ctx.fillStyle = hex(base, 0.85 + r() * 0.3);
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, w * 0.44, w * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = hex(base, 1.25);
+          ctx.beginPath();
+          ctx.ellipse(cx - w * 0.08, cy - w * 0.12, w * 0.18, w * 0.1, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      grain(ctx, size, r, 0.15);
+      break;
+    }
     default:
       grain(ctx, size, r, 0.1);
   }

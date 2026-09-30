@@ -2,6 +2,16 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.1 · contact-academy, alligator sheets, gallery (greek, Bronze)
+- Academy: an L of limewashed stoas under red tiles round a sanded yard, a verdigris hoplite on a marble plinth,
+  a rack of team-blue shields and a straw practice post — reads as the Greek set's drill school. Building 4.
+- Alligator: long, low and olive with a dark ridge, yellow eyes and a pale tooth line; the jaw gapes on attack
+  and it dies belly-up. Side views read as a crocodile; legs sprawl only in front views. Unit 3.5. Small next
+  to a lion at first → scaled ×1.35.
+- Gallery (new): every Greek building in the Bronze Age on one map; nothing missing, no placeholders.
+- Verify: 23 shots change by 0.06–0.5% (a full re-bake; the victory game's timing shifts slightly); the tech
+  tree's Academy column now shows its building icon (the M7.9 should-fix).
+
 ## 2026-09-30 · M8 exit · on the StartOS VM (artifacts/vm-e2e, Chromium + WebKit)
 - The game served by StartOS 0.8.0 looks as in the local builds: setup (Small Islands, Greek bonuses, Tech Tree),
   the island start under fog with woodlines, berries and gazelles, the tech tree, and the harbor sea battle.
