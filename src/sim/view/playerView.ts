@@ -105,6 +105,11 @@ export class PlayerView {
     return this.w.victory;
   }
 
+  /** Bumped whenever passability changes — region labels (`region()`) are renumbered then (M14.6b). */
+  passVersion(): number {
+    return this.w.map.passVersion;
+  }
+
   /** The game's population limit (setup option). */
   popLimit(): number {
     return this.w.popLimit;

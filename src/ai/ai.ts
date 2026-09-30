@@ -737,7 +737,14 @@ export class AiPlayer {
 
   /** Which land a resource node stands on (cached: trees and mines don't move; a forest's inner trees look outward). */
   private readonly nodeLands = new Map<number, number>();
+  private nodeLandsAt = -1;
   nodeLand(s: Snapshot, r: KnownResource): number {
+    // Region labels are renumbered whenever passability changes (a building up or down): a label kept from before
+    // matched no villager's land, and a whole village stood idle beside 3,000 wood (M14.6b).
+    if (this.nodeLandsAt !== s.v.passVersion()) {
+      this.nodeLands.clear();
+      this.nodeLandsAt = s.v.passVersion();
+    }
     let l = this.nodeLands.get(r.i);
     if (l === undefined) {
       l = this.landAt(s, r.x, r.y);

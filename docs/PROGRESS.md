@@ -18,8 +18,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** water AI 39/48 held out (gate 44, D56); KI-9/KI-10/KI-11 closed (D58, D59), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** the water AI (42/48 held out, gate 44) — the one gate before the M14 exit (verify:full, tag, package 0.14.0).
+- **Open issues:** none gating (water 46/48 held out); KI-9/KI-10/KI-11 closed (D58, D59), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
+- **Next up:** the M14 exit — verify:full, tag `m14`, bump empires-startos, package 0.14.0.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -850,6 +850,11 @@ of island/Narrows games decided in 2 h (11/12).
       target's (was: the biggest body, which on a Narrows map can be the ocean behind our own coast); a Dock on two
       waters is rallied into it before a transport is trained; a third Dock when none touches it; transports on the
       wrong water don't count. Held out 39 → 42/48, dev 38 → 41/48; ladder unchanged.
+      _Stale land labels:_ region labels are renumbered whenever passability changes; the AI cached each resource
+      node's land forever, so after enough building no tree matched any villager's land and whole villages stood
+      idle beside thousands of wood (seed 432: 15 idle villagers, 2,978 reachable wood). The cache now clears on
+      each passability change. **Full suite: every gate passes** — water 46/48 held out (44), dev 45/48; 1v1 wars
+      24/24; Hard > Moderate 49/64, ladder all pass; idle 0.1%; crashes 0.
       _D58 (the user's choice on KI-9/KI-11):_ 1v1s judged decided within 60 min on 24 held-out seeds; hills on; the
       predator fix applied; the AI's population logic reads the game's limit (50 was hard-coded — a 25 limit
       re-opened the M13.4 age deadlock). Full suite: wars 21/24; ladder all pass but Hard > Moderate 44/64 (48);
