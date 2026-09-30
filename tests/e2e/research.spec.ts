@@ -20,3 +20,26 @@ test('research by mouse: select the Town Center, advance to the Tool Age', async
   await expect(page.getByTestId('age')).toHaveText('Tool Age');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('tech tree: from the top bar in game (live progress) and from skirmish setup (a civilization)', async ({ page }, info) => {
+  await openGame(page, 'scenario=village&fog=0&paused=1');
+  await page.evaluate(() => {
+    window.__empires!.grantTech(1, 'toolAge');
+    window.__empires!.grantTech(1, 'battleAxe');
+  });
+  await page.getByTestId('tech-tree-btn').click();
+  await expect(page.getByTestId('tech-tree')).toBeVisible();
+  await expect(page.getByTestId('tt-tech-battleAxe')).toHaveAttribute('data-state', 'done');
+  await expect(page.getByTestId('tt-axeman')).toHaveAttribute('data-state', 'done');
+  await expect(page.getByTestId('tt-centurion')).toHaveAttribute('data-state', 'later');
+  await expect(page.getByTestId('tt-longSwordsman')).toHaveAttribute('data-state', 'missing'); // Greeks lack Long Sword
+  await snap(page, info, 'tech-tree');
+  await page.getByTestId('tech-tree-close').click();
+  await expect(page.getByTestId('tech-tree')).toHaveCount(0);
+  // From setup: the civilization's tree (Greeks lack chariots).
+  await page.goto('./?edgeScroll=0&paused=1');
+  await page.getByTestId('menu-skirmish').click();
+  await page.getByTestId('setup-tech-tree').click();
+  await expect(page.getByTestId('tt-chariot')).toHaveAttribute('data-state', 'missing');
+  expect(pageErrors(page)).toEqual([]);
+});

@@ -2,6 +2,7 @@ import { hud, hudActions, type SelInfo } from '../store.ts';
 import { iconStyle } from '../icons.ts';
 import type { CommandButton } from '../commands.ts';
 import { SaveList } from '../saves/SaveList.tsx';
+import { TechTree } from '../techtree/TechTree.tsx';
 
 const RES = [
   { key: 'food', label: 'Food', color: '#d84a3a' },
@@ -35,6 +36,9 @@ function TopBar() {
         <span class="clock" data-testid="clock">
           {hud.clock.value}
         </span>
+        <button class="hud-btn" title="Tech tree" data-testid="tech-tree-btn" onClick={() => hudActions.showTechTree()}>
+          Tech Tree
+        </button>
         <button class="hud-btn" disabled title="Diplomacy (coming soon)">
           Diplomacy
         </button>
@@ -320,6 +324,7 @@ export function Hud() {
   return (
     <div class="hud">
       <GameMenu />
+      {hud.techTree.value && <TechTree civ={hud.techTree.value.civ} columns={hud.techTree.value.columns} onClose={() => (hud.techTree.value = null)} />}
       <GameOver />
       <Results />
       <TopBar />

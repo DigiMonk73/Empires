@@ -1,3 +1,4 @@
+import type { TreeColumn } from './techTree.ts';
 import { signal } from '@preact/signals';
 import type { Action, CommandButton } from './commands.ts';
 import type { ScoreLine } from '../sim/rules/score.ts';
@@ -42,6 +43,8 @@ export const hud = {
   saveDialog: signal<'save' | 'load' | null>(null),
   /** Suggested name for a new save ("Inland · tiny — 12:30"). */
   saveName: signal(''),
+  /** The tech tree overlay (civ + columns), null when closed. */
+  techTree: signal<{ civ: string; columns: TreeColumn[] } | null>(null),
   /** Post-game results (null = screen closed). */
   results: signal<ResultRow[] | null>(null),
   res: signal<[number, number, number, number]>([0, 0, 0, 0]),
@@ -71,6 +74,7 @@ export const hudActions: {
   setMuted(m: boolean): void;
   saveGame(name: string, overwrite: string | null): Promise<void>;
   loadGame(id: string): void;
+  showTechTree(): void;
   resign(): void;
   restart(): void;
   quit(): void;
@@ -81,6 +85,7 @@ export const hudActions: {
   setMuted: () => {},
   saveGame: async () => {},
   loadGame: () => {},
+  showTechTree: () => {},
   resign: () => {},
   restart: () => {},
   quit: () => {},

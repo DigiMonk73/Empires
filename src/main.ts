@@ -24,6 +24,7 @@ import { AudioEngine } from './audio/engine.ts';
 import { AudioHooks } from './audio/hooks.ts';
 import { loadQuery, loadSession, saveSession, type SavedGame } from './game/saveGame.ts';
 import { saves } from './platform/saves.ts';
+import { techTree } from './ui/techTree.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -128,6 +129,11 @@ async function boot(): Promise<void> {
       camera: { x: at.x, y: at.y, zoom: camera.zoom },
     });
     await saves.put(save);
+  };
+  hudActions.showTechTree = () => {
+    const me = session.localPlayer;
+    const civ = world.players[me]?.civ ?? 'greek';
+    hud.techTree.value = { civ, columns: techTree(civ, world, me) };
   };
   hudActions.loadGame = (id) => {
     location.search = loadQuery(id, params);

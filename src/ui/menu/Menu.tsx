@@ -5,6 +5,8 @@ import { MAP_SIZES, type MapSizeId, type StartingResources } from '../../data/se
 import { AI_LEVELS, DEFAULT_SETUP, setupToQuery, type SkirmishPlayer, type SkirmishSetup } from '../../game/skirmish.ts';
 import { playerColor } from '../../render/worldRenderer.ts';
 import { SaveList } from '../saves/SaveList.tsx';
+import { TechTree } from '../techtree/TechTree.tsx';
+import { techTree } from '../techTree.ts';
 import { loadQuery } from '../../game/saveGame.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import './menu.css';
@@ -156,6 +158,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
 /** Your civilization's bonuses (and what its tree lacks), as the original's civ screen summarised them. */
 function CivInfo({ civ }: { civ: string }) {
   const c = CIVS.find((x) => x.id === civ);
+  const [tree, setTree] = useState(false);
   if (!c) return null;
   const missing = c.disabled.units.length + c.disabled.buildings.length + c.disabled.techs.length;
   return (
@@ -166,7 +169,13 @@ function CivInfo({ civ }: { civ: string }) {
           <li>{b}</li>
         ))}
       </ul>
-      <div class="civ-missing">{missing ? `${missing} items missing from its tech tree (see the tech tree in game).` : 'Full tech tree.'}</div>
+      <div class="civ-missing">
+        {missing ? `${missing} items missing from its tech tree. ` : 'Full tech tree. '}
+        <button class="small" data-testid="setup-tech-tree" onClick={() => setTree(true)}>
+          Tech Tree
+        </button>
+      </div>
+      {tree && <TechTree civ={civ} columns={techTree(civ)} onClose={() => setTree(false)} />}
     </div>
   );
 }

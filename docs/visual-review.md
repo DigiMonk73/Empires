@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M7.9 · tech-tree (new); top bar in every shot
+- Greek tree: buildings across with baked icons, ages down; done items gold with ✓, later dimmed, missing
+  struck through on red. Reads well. UI 4. The ~0.12% change in every other shot is the new Tech Tree button.
+- Should-fix (M9): the Academy has no baked icon ("Ac"); "Government Center" is clipped at 1280 px and the
+  Granary/Dock columns need a horizontal scroll — tighten column widths or wrap long names (M12).
+
 ## 2026-09-30 · M7.8 · menu-skirmish
 - Setup shows the chosen civilization's bonuses and how many items its tree lacks, in the panel's style.
 

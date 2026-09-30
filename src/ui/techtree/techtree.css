@@ -1,0 +1,143 @@
+.tt {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 8, 6, 0.55);
+  pointer-events: auto;
+  z-index: 30;
+  font-family: 'Alegreya', Georgia, serif;
+  color: #efe2c4;
+}
+.tt-panel {
+  background: linear-gradient(#3a2f24, #241c15);
+  border: 2px solid #b08a4a;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 14px 18px;
+  width: min(1600px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+.tt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.tt-head h2 {
+  font-family: 'Cinzel', Georgia, serif;
+  color: #f2d27a;
+  margin: 0;
+  font-size: 22px;
+}
+.tt-head button {
+  font: inherit;
+  color: #f4e6c8;
+  background: linear-gradient(#5e4a32, #43341f);
+  border: 1px solid #b08a4a;
+  border-radius: 4px;
+  padding: 5px 14px;
+  cursor: pointer;
+}
+.tt-scroll {
+  overflow: auto;
+  flex: 1;
+}
+.tt table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.tt thead th {
+  position: sticky;
+  top: 0;
+  background: #2e251c;
+  color: #cdb487;
+  font-weight: normal;
+  padding: 4px 3px;
+  min-width: 108px;
+  z-index: 1;
+}
+.tt-bicon {
+  display: inline-block;
+}
+.tt th.tt-age {
+  position: sticky;
+  left: 0;
+  background: #2e251c;
+  color: #f2d27a;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: normal;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 6px 4px;
+  z-index: 1;
+}
+.tt td {
+  vertical-align: top;
+  padding: 3px;
+  border-top: 1px solid rgba(176, 138, 74, 0.3);
+  border-left: 1px solid rgba(176, 138, 74, 0.15);
+}
+.tt-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0;
+  padding: 1px 4px 1px 1px;
+  border: 1px solid rgba(176, 138, 74, 0.35);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+  line-height: 1.1;
+}
+.tt-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tt-glyph {
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+  color: #cdb487;
+}
+.tt-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 88px;
+}
+.tt-item.done {
+  border-color: #e0b45a;
+  background: rgba(224, 180, 90, 0.18);
+}
+.tt-item.done .tt-name::after {
+  content: ' ✓';
+  color: #f2d27a;
+}
+.tt-item.later {
+  opacity: 0.5;
+}
+.tt-item.missing {
+  opacity: 0.45;
+  border-color: rgba(200, 80, 60, 0.6);
+  background: rgba(120, 30, 20, 0.25);
+}
+.tt-item.missing .tt-name {
+  text-decoration: line-through;
+}
+.tt-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.tt-legend .tt-item {
+  padding: 2px 8px;
+}
+.tt-legend .tt-name {
+  max-width: none;
+}
