@@ -1,0 +1,130 @@
+.menu {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: radial-gradient(ellipse at center, rgba(12, 9, 6, 0.25) 0%, rgba(12, 9, 6, 0.7) 100%);
+  font-family: 'Alegreya', Georgia, serif;
+  color: #efe2c4;
+}
+.menu-main {
+  text-align: center;
+}
+.menu-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 96px;
+  letter-spacing: 10px;
+  margin: 0;
+  color: #f2d27a;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), 0 0 2px #000;
+}
+.menu-sub {
+  margin: 6px 0 36px;
+  font-size: 20px;
+  opacity: 0.9;
+  text-shadow: 0 2px 6px #000;
+}
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.menu-buttons.row {
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.menu button {
+  font: inherit;
+  font-size: 18px;
+  min-width: 220px;
+  color: #f4e6c8;
+  background: linear-gradient(#5e4a32, #43341f);
+  border: 1px solid #b08a4a;
+  border-radius: 4px;
+  padding: 10px 22px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+.menu-buttons.row button {
+  min-width: 0;
+}
+.menu button:hover:not(:disabled) {
+  background: linear-gradient(#6e573c, #4f3d26);
+}
+.menu button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.menu button.primary {
+  background: linear-gradient(#8a6a2e, #5e4618);
+  border-color: #e0b45a;
+}
+.menu button.small {
+  min-width: 0;
+  padding: 2px 8px;
+  font-size: 14px;
+}
+.menu-panel {
+  background: linear-gradient(#3a2f24, #241c15);
+  border: 2px solid #b08a4a;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 24px 32px;
+  min-width: 640px;
+}
+.menu-panel h2 {
+  font-family: 'Cinzel', Georgia, serif;
+  margin: 0 0 16px;
+  color: #f2d27a;
+}
+.menu-row {
+  display: flex;
+  gap: 18px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.menu-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #cdb487;
+}
+.menu-row label.check {
+  flex-direction: row;
+  align-items: center;
+}
+.menu select {
+  font: inherit;
+  font-size: 15px;
+  color: #f4e6c8;
+  background: #2a2119;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  padding: 4px 6px;
+}
+.menu-players {
+  width: 100%;
+  border-collapse: collapse;
+}
+.menu-players th {
+  text-align: left;
+  font-weight: normal;
+  color: #cdb487;
+  padding: 4px 8px;
+}
+.menu-players td {
+  padding: 4px 8px;
+  border-top: 1px solid rgba(176, 138, 74, 0.25);
+}
+.menu .swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}

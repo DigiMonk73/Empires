@@ -15,6 +15,8 @@ export type Command =
   | { t: 'construct'; ids: number[]; h: number; queue?: boolean }
   /** Context action on entity `h`: villagers farm own fields / hunt animals; soldiers attack. */
   | { t: 'act'; ids: number[]; h: number; queue?: boolean }
+  /** The issuing player gives up (defeated at once; their units stay where they are, idle). */
+  | { t: 'resign' }
   /** Stand Ground on/off for units `ids`. */
   | { t: 'stance'; ids: number[]; stand: boolean }
   /** Queue `n` of base unit `unit` at building `bld`. */

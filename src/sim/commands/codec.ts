@@ -16,6 +16,7 @@ const CMD_RALLY = 8;
 const CMD_ACT = 9;
 const CMD_RESEARCH = 10;
 const CMD_STANCE = 11;
+const CMD_RESIGN = 12;
 
 class Writer {
   bytes: number[] = [];
@@ -123,6 +124,9 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(c.h);
       w.uv(c.queue ? 1 : 0);
       return;
+    case 'resign':
+      w.uv(CMD_RESIGN);
+      return;
     case 'stance':
       w.uv(CMD_STANCE);
       w.ids(c.ids);
@@ -186,6 +190,8 @@ function readCommand(r: Reader): Command {
       const queue = r.uv() === 1;
       return queue ? { t: 'act', ids, h, queue } : { t: 'act', ids, h };
     }
+    case CMD_RESIGN:
+      return { t: 'resign' };
     case CMD_STANCE: {
       const ids = r.ids();
       return { t: 'stance', ids, stand: r.uv() === 1 };

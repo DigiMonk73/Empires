@@ -153,6 +153,14 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'research':
         queueResearch(w, player, cmd.bld, cmd.tech);
         break;
+      case 'resign': {
+        const pl = w.players[player];
+        if (pl && pl.defeated === null) {
+          pl.defeated = w.tick;
+          w.events.push({ t: 'defeated', player });
+        }
+        break;
+      }
       case 'stance':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) w.ents.stance[slot] = cmd.stand ? 1 : 0;
         break;

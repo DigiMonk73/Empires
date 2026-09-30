@@ -37,7 +37,7 @@ function TopBar() {
         <button class="hud-btn" disabled title="Diplomacy (coming soon)">
           Diplomacy
         </button>
-        <button class="hud-btn" title="Menu">
+        <button class="hud-btn" title="Menu (F10)" data-testid="menu-btn" onClick={() => hudActions.setMenu(true)}>
           Menu
         </button>
       </div>
@@ -264,10 +264,37 @@ function Results() {
   );
 }
 
+/** In-game menu (pauses the game): resume, game speed, restart, resign, quit to the main menu. */
+function GameMenu() {
+  if (!hud.menuOpen.value) return null;
+  return (
+    <div class="gameover" data-testid="game-menu">
+      <div class="gameover-panel">
+        <div class="gameover-title small">Menu</div>
+        <div class="gameover-sub">
+          Game speed:{' '}
+          {[1, 1.5, 2].map((v) => (
+            <button class={`speed${hud.speed.value === v ? ' on' : ''}`} onClick={() => hudActions.setSpeed(v)}>
+              {v.toFixed(1)}
+            </button>
+          ))}
+        </div>
+        <div class="gameover-buttons column">
+          <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
+          <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>
+          <button data-testid="menu-resign" onClick={() => hudActions.resign()}>Resign</button>
+          <button data-testid="menu-quit" onClick={() => hudActions.quit()}>Quit to main menu</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Hud() {
   const sel = hud.selection.value;
   return (
     <div class="hud">
+      <GameMenu />
       <GameOver />
       <Results />
       <TopBar />

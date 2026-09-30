@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.3 · menu-main, menu-skirmish (new)
+- "Empires" in Cinzel over the living village (farmers hoeing, woodcutters), dimmed at the edges; bronze-framed
+  buttons. Skirmish panel matches the HUD style; player colour swatches. Menus 4.
+- Fixed: the backdrop showed unexplored fog (black blobs) — menu mode now renders without fog.
+- Should-fix (M9/KI-2): a painted title image would beat plain text; add civ emblems in the setup rows.
+
 ## 2026-09-29 · M6.2 · gameover, results (new)
 - Victory/Defeat banner in Cinzel over the dimmed map; Results panel in the HUD's bronze-on-stone style with the
   score by category (winner starred) and a tallies table. HUD 4.

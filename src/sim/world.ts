@@ -16,9 +16,13 @@ import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.t
 import { populationSystem } from './systems/population.ts';
 import type { Production, Rally } from './systems/production.ts';
 
+export type AiLevel = 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest';
+
 export interface PlayerSetup {
   civ: string;
   team?: number;
+  /** Computer player at this difficulty (the sim ignores it; the session starts an AI controller). */
+  ai?: AiLevel;
 }
 
 export interface MapSpec {

@@ -1,6 +1,6 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import { EKind } from './sim/core/entities.ts';
-import { TYPES } from './sim/rules/registry.ts';
+import { RESOURCE_KINDS, TYPES } from './sim/rules/registry.ts';
 import { GameSession } from './game/session.ts';
 import { SCENARIOS } from './game/scenarios.ts';
 import { Camera } from './render/camera.ts';
@@ -10,6 +10,7 @@ import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
 import { InputController } from './input/controller.ts';
 import { Selection } from './input/selection.ts';
 import { mountHud } from './ui/mount.tsx';
+import { mountMenu } from './ui/menu/Menu.tsx';
 import { Minimap } from './render/minimap.ts';
 import { quantize } from './sim/commands/types.ts';
 import { BakedArt } from './render/bakedArt.ts';
@@ -33,8 +34,11 @@ async function boot(): Promise<void> {
   });
   host.appendChild(app.canvas);
 
-  const scenario = SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!;
+  // No scenario in the URL (and not a test/smoke run): the main menu, over a live village backdrop.
+  const menuMode = !params.has('scenario') && !params.has('smoke') && !params.has('debug');
+  const scenario = menuMode ? SCENARIOS.village! : (SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!);
   const session = new GameSession(scenario(params));
+  if (params.get('scenario') === 'skirmish') session.speed = Number(params.get('speed') ?? 1) || 1;
   const world = session.sim.world;
 
   const cameraRoot = new Container();
@@ -70,10 +74,14 @@ async function boot(): Promise<void> {
   else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
   camera.apply();
 
-  mountHud(document.getElementById('hud')!);
+  if (menuMode) {
+    mountMenu(document.getElementById('hud')!);
+    animateBackdrop(session, world);
+  } else mountHud(document.getElementById('hud')!);
   const input = new InputController(app.canvas, camera, session, wr, selection, screenLayer);
-  const minimap = new Minimap(document.getElementById('minimap-slot')!, world, camera, () => ({ w: app.canvas.clientWidth, h: app.canvas.clientHeight }));
-  const noFog = params.get('fog') === '0';
+  // (The menu backdrop has no HUD: the minimap draws into a detached element there.)
+  const minimap = new Minimap(document.getElementById('minimap-slot') ?? document.createElement('div'), world, camera, () => ({ w: app.canvas.clientWidth, h: app.canvas.clientHeight }));
+  const noFog = params.get('fog') === '0' || menuMode; // the menu backdrop shows the whole village
   wr.fog.enabled = !noFog;
   minimap.fogEnabled = !noFog;
   minimap.player = session.localPlayer;
@@ -85,6 +93,23 @@ async function boot(): Promise<void> {
   };
   input.onUiChange = refreshCommands;
   hudActions.perform = (a) => input.perform(a);
+  hudActions.setMenu = (open) => {
+    hud.menuOpen.value = open;
+    session.paused = open;
+  };
+  hudActions.setSpeed = (v) => {
+    session.speed = v;
+    hud.speed.value = v;
+  };
+  hudActions.resign = () => {
+    session.router.submit(session.localPlayer, { t: 'resign' });
+    hudActions.setMenu(false);
+  };
+  hudActions.restart = () => location.reload();
+  hudActions.quit = () => {
+    location.search = '';
+  };
+  hud.speed.value = session.speed;
   hudActions.showResults = () => {
     hud.results.value = buildResults(world);
   };
@@ -131,6 +156,8 @@ async function boot(): Promise<void> {
     const dt = Math.min(0.25, t.deltaMS / 1000);
     if (!frozen) alpha = session.update(dt);
     camera.update(frozen ? 0 : dt);
+    // A slow drift across the village behind the menu.
+    if (menuMode && !frozen) camera.centerOnWorld(18 + Math.sin(performance.now() / 20000) * 5, 18 + Math.cos(performance.now() / 26000) * 4);
     const tl = camera.screenToIso(0, 0);
     const br = camera.screenToIso(app.canvas.clientWidth, app.canvas.clientHeight);
     wr.cull(tl.x, tl.y, br.x, br.y);
@@ -279,3 +306,22 @@ boot().catch((err) => {
   console.error('[empires] boot failed', err);
   document.body.innerHTML = `<pre style="color:#f88;padding:16px">Empires failed to start:\n${String(err)}</pre>`;
 });
+
+/** Menu backdrop: put the village's villagers to work so the scene behind the menu is alive. */
+function animateBackdrop(session: GameSession, world: GameSession['sim']['world']): void {
+  const e = world.ents;
+  const vills: number[] = [];
+  const farms: number[] = [];
+  const trees: number[] = [];
+  for (let s = 0; s < e.top; s++) {
+    if (!e.alive[s] || e.owner[s] !== 1) continue;
+    const t = TYPES[e.type[s]!]!;
+    if (t.unit?.cls === 'villager') vills.push(e.handleOf(s));
+    else if (t.building?.kind === 'farm' && e.build[s]! >= 1) farms.push(e.handleOf(s));
+  }
+  for (let i = 0; i < world.res.count && trees.length < 4; i++) if (RESOURCE_KINDS[world.res.kind[i]!]!.job === 'wood') trees.push(i);
+  vills.forEach((h, i) => {
+    if (i < farms.length) session.router.submit(1, { t: 'act', ids: [h], h: farms[i]! });
+    else if (trees.length) session.router.submit(1, { t: 'gather', ids: [h], res: trees[i % trees.length]! });
+  });
+}

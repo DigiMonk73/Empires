@@ -32,6 +32,9 @@ export interface ResultRow extends ScoreLine {
 export const hud = {
   /** Game over from the local player's point of view (null while playing). */
   outcome: signal<{ kind: 'victory' | 'defeat'; at: string } | null>(null),
+  /** In-game menu open (pauses the game). */
+  menuOpen: signal(false),
+  speed: signal(1),
   /** Post-game results (null = screen closed). */
   results: signal<ResultRow[] | null>(null),
   res: signal<[number, number, number, number]>([0, 0, 0, 0]),
@@ -51,8 +54,23 @@ export const hud = {
 };
 
 /** Wired by main: what HUD buttons do. */
-export const hudActions: { perform(a: Action): void; cancelQueue(index: number): void; nextIdle(): void; showResults(): void } = {
+export const hudActions: {
+  perform(a: Action): void;
+  cancelQueue(index: number): void;
+  nextIdle(): void;
+  showResults(): void;
+  setMenu(open: boolean): void;
+  setSpeed(v: number): void;
+  resign(): void;
+  restart(): void;
+  quit(): void;
+} = {
   showResults: () => {},
+  setMenu: () => {},
+  setSpeed: () => {},
+  resign: () => {},
+  restart: () => {},
+  quit: () => {},
   perform: () => {},
   cancelQueue: () => {},
   nextIdle: () => {},

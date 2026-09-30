@@ -434,3 +434,26 @@
   border: 1px solid rgba(0, 0, 0, 0.5);
   vertical-align: -1px;
 }
+
+.gameover-title.small {
+  font-size: 34px;
+}
+.gameover-buttons.column {
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 260px;
+}
+.gameover-sub button.speed {
+  font: inherit;
+  color: #f4e6c8;
+  background: #3a2d1e;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  padding: 2px 8px;
+  margin: 0 2px;
+  cursor: pointer;
+}
+.gameover-sub button.speed.on {
+  background: #8a6a2e;
+  border-color: #e0b45a;
+}

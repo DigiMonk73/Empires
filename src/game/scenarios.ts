@@ -2,6 +2,7 @@ import type { SimConfig } from '../sim/index.ts';
 import { battleConfig } from '../sim/testing/battle.ts';
 import { generateMap, type LandMapType } from '../sim/mapgen/generate.ts';
 import { MAP_SIZES, type MapSizeId } from '../data/setup.ts';
+import { setupFromQuery, skirmishConfig } from './skirmish.ts';
 
 /**
  * Hand-made scenarios for development and tests (`?scenario=<name>`). Random maps replace these for real games
@@ -200,6 +201,7 @@ function randomMap(p: URLSearchParams): SimConfig {
 
 export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   map: randomMap,
+  skirmish: (p) => skirmishConfig(setupFromQuery(p)),
   demo,
   start,
   village,
