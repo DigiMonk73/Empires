@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.6 done (mapgen, victory, menus, AI economy + military, AI suite). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.7 done (mapgen, victory, menus, AI, AI suite, age art). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,7 +16,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M6.7 Tool/Bronze building art, M6.8 audio basics, M6.9 save/load + menu→victory e2e + StartOS checkpoint.
+- **Next up:** M6.8 audio basics (synth SFX + `say` voice acks), M6.9 save/load + menu→victory e2e + StartOS checkpoint.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -245,9 +245,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       sea/forest), villagers chasing unreachable animals forever (attack gives up after 20 failed approaches),
       the AI re-sending villagers to unreachable carcasses (PlayerView.reachable), forgotten game (AI remembers
       animals it has seen), lions picking off villagers (the AI gangs up on them), one-node crowding.
-- [ ] **M6.7 Tool/Bronze art (one set).** Age-dependent building looks (Stone huts → Tool mudbrick → Bronze
-      stone) for TC, house, barracks, granary, storage pit, range, stable, market; Market + Government
-      Center models; age-up swaps building frames.
+- [x] **M6.7 Tool/Bronze art (one set).** `art/models/buildingAges.ts`: parametric `hall` (walls, doors, windows,
+      team band, gable/hip/flat roofs), `colonnade`, silos; house, TC, barracks, granary, storage pit rebuilt in
+      Tool (mudbrick + thatch) and Bronze (limewash/stone + red tile, columns); range, stable in Bronze;
+      new Market (stalls with awnings → stone colonnade) and Government Center. Renderer picks the variant
+      from the owner's age minus the building's age (farms keep crop stages; placement ghost matches);
+      debug `grantTech`; village-tool / village-bronze screenshots.
 - [ ] **M6.8 Audio basics.** WebAudio synth SFX (chop, mine, hammer, clash, bow, death, collapse, UI clicks),
       voice acknowledgements baked from macOS `say` (D12) per civ culture, mixer + mute.
 - [ ] **M6.9 Save/load UI + e2e.** Save/load from the in-game menu (IndexedDB; server `/data` on StartOS

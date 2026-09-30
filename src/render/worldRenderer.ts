@@ -339,6 +339,12 @@ export class WorldRenderer {
     sp.scale.set(1 / scale);
   }
 
+  /** Buildings are rebuilt in each later age (v0 = the building's own age). */
+  private ageVariant(owner: number, buildingAge: number, variants: number): number {
+    const age = this.world.players[owner]?.stats.age ?? 1;
+    return Math.min(variants - 1, Math.max(0, age - buildingAge));
+  }
+
   /** Baked buildings: construction reveal over a site pad; farms show their crop stage by food left. */
   private updateBuilding(v: EntityView, s: number): void {
     const e = this.world.ents;
@@ -346,11 +352,13 @@ export class WorldRenderer {
     const meta = this.art!.meta(id)!;
     const t = TYPES[e.type[s]!]!;
     let variant = 0;
-    if (meta.variants > 1 && t.building!.kind === 'farm' && e.build[s]! >= 1) {
-      const full = this.world.players[e.owner[s]!]!.stats.farmFood;
-      const used = full > 0 ? 1 - e.stock[s]! / full : 0;
-      variant = Math.min(meta.variants - 1, Math.max(0, Math.floor(used * meta.variants)));
-    }
+    if (meta.variants > 1 && t.building!.kind === 'farm') {
+      if (e.build[s]! >= 1) {
+        const full = this.world.players[e.owner[s]!]!.stats.farmFood;
+        const used = full > 0 ? 1 - e.stock[s]! / full : 0;
+        variant = Math.min(meta.variants - 1, Math.max(0, Math.floor(used * meta.variants)));
+      }
+    } else if (meta.variants > 1) variant = this.ageVariant(e.owner[s]!, t.building!.age, meta.variants);
     const stage = e.build[s]! >= 1 ? BUILD_STAGES : Math.floor(e.build[s]! * BUILD_STAGES);
     const key = `v${variant}:${stage}`;
     if (key === v.lastKey) return;
@@ -532,7 +540,7 @@ export class WorldRenderer {
    * Building placement ghost at tile (tx, ty): the building drawn translucent plus a green/red diamond per
    * footprint tile. Pass typeId null to hide.
    */
-  drawGhost(typeId: string | null, size: number, tx: number, ty: number, tileOk: readonly boolean[]): void {
+  drawGhost(typeId: string | null, size: number, tx: number, ty: number, tileOk: readonly boolean[], owner = 1): void {
     const g = this.ghostGfx.clear();
     if (!typeId) {
       if (this.ghostSprite) this.ghostSprite.visible = false;
@@ -547,7 +555,10 @@ export class WorldRenderer {
         g.poly([p.x, p.y, p.x + 32, p.y + 16, p.x, p.y + 32, p.x - 32, p.y + 16]).fill({ color: ok ? 0x40ff60 : 0xff3030, alpha: 0.28 });
       }
     }
-    const f = this.art?.frame(typeId, 'v0');
+    const meta = this.art?.meta(typeId);
+    const bi = TYPES.findIndex((t) => t.id === typeId);
+    const variant = meta && meta.variants > 1 && TYPES[bi]?.building && TYPES[bi]!.building!.kind !== 'farm' ? this.ageVariant(owner, TYPES[bi]!.building!.age, meta.variants) : 0;
+    const f = this.art?.frame(typeId, `v${variant}`);
     if (!this.ghostSprite) {
       this.ghostSprite = new Sprite();
       this.ghostSprite.alpha = 0.6;

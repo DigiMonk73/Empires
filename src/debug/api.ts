@@ -41,6 +41,8 @@ export interface EmpiresDebugApi {
   };
   /** Handle of the building covering tile (tx, ty), or null. */
   buildingAt(tx: number, ty: number): number | null;
+  /** Test/review only: give a player a technology instantly (e.g. an age), applying its effects. */
+  grantTech(player: number, tech: string): void;
   /** Submit a command as a player (test setup; normal play goes through input). */
   issue(player: number, cmd: Command): void;
   pause(on: boolean): void;

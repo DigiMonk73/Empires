@@ -19,6 +19,7 @@ import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
 import { setIconArt } from './ui/icons.ts';
 import { buildResults, formatClock } from './ui/results.ts';
+import { completeResearch } from './sim/systems/production.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -261,6 +262,7 @@ async function boot(): Promise<void> {
       const h = world.map.bldAt[world.map.idx(tx, ty)]! - 1;
       return h >= 0 && world.ents.slotOf(h) >= 0 ? h : null;
     },
+    grantTech: (player, tech) => completeResearch(world, player, tech),
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {
       session.paused = on;

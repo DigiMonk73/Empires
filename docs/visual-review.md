@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.7 · village-tool, village-bronze (new), aged contact sheets
+- Ages read at a glance: Stone huts → Tool mudbrick halls under thatch → Bronze limewash and stone under red tile
+  with colonnades and domed silos; foundations rise in the current age's style. Buildings 4, style coherence 4.
+- Fixed during review: the Government Center's pediment floated as a grey slab — removed.
+- Should-fix (M9): one architecture set only (four more), dock/tower/walls have no age variants yet; Iron Age.
+
 ## 2026-09-29 · M6.4 · ai-base (new)
 - The computer's base at 8:00 reads like the original's AI: TC ringed by houses, granary, storage pit at the
   woodline, barracks, villagers spread over wood/food. Composition 4.

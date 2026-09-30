@@ -33,3 +33,22 @@ test('village: economy buildings, farm stages, foundations rising', async ({ pag
   expect(farmer?.sprite ?? '').toMatch(/^(farm|carryFood|walk)\//);
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('village through the ages: Tool mudbrick, Bronze stone and tile', async ({ page }, info) => {
+  await openGame(page, 'scenario=village&fog=0');
+  await page.evaluate(() => window.__empires!.pause(true));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1);
+    window.__empires!.camera.centerOn(16, 18);
+  });
+  await page.evaluate(() => window.__empires!.grantTech(1, 'toolAge'));
+  await page.evaluate(() => window.__empires!.step(2));
+  await frames(page);
+  await snap(page, info, 'village-tool');
+  await page.evaluate(() => window.__empires!.grantTech(1, 'bronzeAge'));
+  await page.evaluate(() => window.__empires!.step(2));
+  await frames(page);
+  await snap(page, info, 'village-bronze');
+  await expect(page.getByTestId('age')).toHaveText('Bronze Age');
+  expect(pageErrors(page)).toEqual([]);
+});

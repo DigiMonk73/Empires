@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { box, build, cone, cyl, gable, lumpy, seeded, sphere, type MatSpec, type NodeSpec } from '../dsl/model.ts';
 import type { ModelDef } from './types.ts';
+import { AGED } from './buildingAges.ts';
 
 /**
  * Buildings. Each type is a parametric recipe; the footprint square spans [−s/2, s/2] on X and Z (world tiles)
@@ -9,7 +10,7 @@ import type { ModelDef } from './types.ts';
  */
 
 /** A round hut: mud/plaster wall ring, thatch cone roof, a team band under the eaves, and a door toward the viewer. */
-function hut(r: number, wallH: number, roofH: number, seed: number): NodeSpec[] {
+export function hut(r: number, wallH: number, roofH: number, seed: number): NodeSpec[] {
   const rnd = seeded(seed);
   const doorA = Math.PI / 4 + (rnd() - 0.5) * 0.4; // toward the viewer (+x+z)
   const kids: NodeSpec[] = [
@@ -28,11 +29,11 @@ function hut(r: number, wallH: number, roofH: number, seed: number): NodeSpec[] 
   return kids;
 }
 
-function post(x: number, z: number, h: number): NodeSpec {
+export function post(x: number, z: number, h: number): NodeSpec {
   return { geom: cyl(0.025, 0.03, h, 6), mat: 'wood', t: [x, h / 2, z] };
 }
 
-function banner(x: number, z: number, h: number): NodeSpec {
+export function banner(x: number, z: number, h: number): NodeSpec {
   return {
     t: [x, 0, z],
     children: [
@@ -42,7 +43,7 @@ function banner(x: number, z: number, h: number): NodeSpec {
   };
 }
 
-function firePit(x: number, z: number): NodeSpec {
+export function firePit(x: number, z: number): NodeSpec {
   const stones: NodeSpec[] = [];
   for (let i = 0; i < 7; i++) {
     const a = (i / 7) * Math.PI * 2;
@@ -51,7 +52,7 @@ function firePit(x: number, z: number): NodeSpec {
   return { t: [x, 0, z], children: [...stones, { geom: sphere(0.05, 6), mat: 'bark', t: [0, 0.02, 0], s: [1, 0.4, 1] }] };
 }
 
-function house(): THREE.Object3D {
+export function house(): THREE.Object3D {
   return build({
     children: [
       ...hut(0.6, 0.4, 0.55, 3),
@@ -63,7 +64,7 @@ function house(): THREE.Object3D {
   });
 }
 
-function townCenter(): THREE.Object3D {
+export function townCenter(): THREE.Object3D {
   const kids: NodeSpec[] = [
     // Great hut, set back from the front corner.
     { t: [-0.15, 0, -0.15], children: hut(0.92, 0.55, 0.85, 11) },
@@ -102,7 +103,7 @@ const SOIL_DARK: MatSpec = { tex: 'plain', color: 0x5e3e24, rough: 1 };
 const GRAIN: MatSpec = { tex: 'cloth', color: 0xd8c898, rough: 0.95, repeat: 4 };
 
 /** A pile of logs lying along X. */
-function logPile(x: number, z: number, n: number, seed: number): NodeSpec {
+export function logPile(x: number, z: number, n: number, seed: number): NodeSpec {
   const r = seeded(seed);
   const kids: NodeSpec[] = [];
   let k = 0;
@@ -115,7 +116,7 @@ function logPile(x: number, z: number, n: number, seed: number): NodeSpec {
 }
 
 /** A heap of rocks (stone) or ore (gold). */
-function heap(x: number, z: number, mat: 'rock' | 'goldOre', n: number, seed: number): NodeSpec {
+export function heap(x: number, z: number, mat: 'rock' | 'goldOre', n: number, seed: number): NodeSpec {
   const r = seeded(seed);
   const kids: NodeSpec[] = [];
   for (let i = 0; i < n; i++) {
@@ -126,12 +127,12 @@ function heap(x: number, z: number, mat: 'rock' | 'goldOre', n: number, seed: nu
   return { t: [x, 0, z], children: kids };
 }
 
-function sack(x: number, z: number, s = 1): NodeSpec {
+export function sack(x: number, z: number, s = 1): NodeSpec {
   return { t: [x, 0, z], children: [{ geom: sphere(0.07 * s, 8), mat: GRAIN, t: [0, 0.06 * s, 0], s: [1, 1.15, 1] }, { geom: cyl(0.02 * s, 0.03 * s, 0.04 * s, 6), mat: GRAIN, t: [0, 0.14 * s, 0] }] };
 }
 
 /** A raised round grain bin: stilts, a mud drum, a thatch cap. */
-function bin(x: number, z: number, r: number, h: number): NodeSpec {
+export function bin(x: number, z: number, r: number, h: number): NodeSpec {
   return {
     t: [x, 0, z],
     children: [
@@ -148,7 +149,7 @@ function bin(x: number, z: number, r: number, h: number): NodeSpec {
 }
 
 /** Granary (Stone age): raised grain bins on stilts, sacks and baskets, a low fence at the back. */
-function granary(): THREE.Object3D {
+export function granary(): THREE.Object3D {
   const kids: NodeSpec[] = [
     bin(-0.55, -0.45, 0.42, 0.5),
     bin(0.55, -0.6, 0.36, 0.42),
@@ -172,7 +173,7 @@ function granary(): THREE.Object3D {
 }
 
 /** Storage Pit (Stone age): a dug pit under a thatched roof on posts, with wood, stone and gold stacked beside it. */
-function storagePit(): THREE.Object3D {
+export function storagePit(): THREE.Object3D {
   const roof: NodeSpec = {
     t: [-0.2, 0, -0.25],
     children: [
@@ -198,7 +199,7 @@ function storagePit(): THREE.Object3D {
 }
 
 /** Barracks (Stone age): a thatched longhouse with a spear rack, a practice post and team banners. */
-function barracks(): THREE.Object3D {
+export function barracks(): THREE.Object3D {
   const L = 1.75;
   const D = 0.95;
   const longhouse: NodeSpec = {
@@ -290,7 +291,7 @@ function farm(stage: number): THREE.Object3D {
 }
 
 /** Archery Range (Tool age): an open-fronted shed, a yard of straw targets, a bow rack. */
-function archeryRange(): THREE.Object3D {
+export function archeryRange(): THREE.Object3D {
   const shed: NodeSpec = {
     t: [-0.55, 0, -0.7],
     children: [
@@ -331,7 +332,7 @@ function archeryRange(): THREE.Object3D {
 }
 
 /** Stable (Tool age): a long barn with open stalls, a fenced paddock, hay and a trough. */
-function stable(): THREE.Object3D {
+export function stable(): THREE.Object3D {
   const L = 2.3;
   const D = 1.0;
   const barn: NodeSpec = {
@@ -432,16 +433,24 @@ function site(size: number): () => THREE.Object3D {
   };
 }
 
+/** A building whose look changes with the owner's age (variants from buildingAges.ts). */
+function aged(id: string, footprint: number): ModelDef[] {
+  const builders = AGED[id]!;
+  return [{ id, kind: 'building', footprint, facings: 1, variants: builders.length, build: (v: number) => builders[Math.min(v, builders.length - 1)]!() }];
+}
+
 export const BUILDING_MODELS: ModelDef[] = [
-  { id: 'house', kind: 'building', footprint: 2, facings: 1, build: house },
-  { id: 'townCenter', kind: 'building', footprint: 3, facings: 1, build: townCenter },
-  { id: 'granary', kind: 'building', footprint: 3, facings: 1, build: granary },
-  { id: 'storagePit', kind: 'building', footprint: 3, facings: 1, build: storagePit },
-  { id: 'barracks', kind: 'building', footprint: 3, facings: 1, build: barracks },
+  ...aged('house', 2),
+  ...aged('townCenter', 3),
+  ...aged('granary', 3),
+  ...aged('storagePit', 3),
+  ...aged('barracks', 3),
+  ...aged('market', 3),
+  ...aged('governmentCenter', 3),
   { id: 'dock', kind: 'building', footprint: 3, facings: 1, build: dock },
   { id: 'farm', kind: 'building', footprint: 3, facings: 1, variants: 4, build: farm },
-  { id: 'archeryRange', kind: 'building', footprint: 3, facings: 1, build: archeryRange },
-  { id: 'stable', kind: 'building', footprint: 3, facings: 1, build: stable },
+  ...aged('archeryRange', 3),
+  ...aged('stable', 3),
   { id: 'watchTower', kind: 'building', footprint: 2, facings: 1, build: watchTower },
   { id: 'rubble1', kind: 'building', footprint: 1, facings: 1, build: rubble(1) },
   { id: 'rubble2', kind: 'building', footprint: 2, facings: 1, build: rubble(2) },

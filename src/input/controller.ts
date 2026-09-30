@@ -266,7 +266,7 @@ export class InputController {
     const { tx, ty } = this.ghostTile(size);
     const ok: boolean[] = [];
     placementValid(this.world, ti, tx, ty, ok);
-    this.wr.drawGhost(this.placing, size, tx, ty, ok);
+    this.wr.drawGhost(this.placing, size, tx, ty, ok, this.session.localPlayer);
   }
 
   private place(p: { x: number; y: number }, keep: boolean): void {
