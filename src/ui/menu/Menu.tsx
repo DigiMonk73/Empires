@@ -10,6 +10,7 @@ import { TechTree } from '../techtree/TechTree.tsx';
 import { techTree } from '../techTree.ts';
 import { loadQuery } from '../../game/saveGame.ts';
 import { withFlags } from '../../game/urlFlags.ts';
+import { Emblem } from '../emblems.tsx';
 import './menu.css';
 
 /**
@@ -125,11 +126,14 @@ function Skirmish({ onBack }: { onBack: () => void }) {
                 )}
               </td>
               <td>
-                <select value={p.civ} onChange={(e) => updP(i, { civ: (e.target as HTMLSelectElement).value })}>
-                  {CIVS.map((c) => (
-                    <option value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                <span class="civ-cell">
+                  <Emblem civ={p.civ} size={28} />
+                  <select value={p.civ} onChange={(e) => updP(i, { civ: (e.target as HTMLSelectElement).value })}>
+                    {CIVS.map((c) => (
+                      <option value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </span>
               </td>
               <td>
                 <select value={String(p.team)} onChange={(e) => updP(i, { team: Number((e.target as HTMLSelectElement).value) })}>
@@ -165,6 +169,7 @@ function CivInfo({ civ }: { civ: string }) {
   const missing = c.disabled.units.length + c.disabled.buildings.length + c.disabled.techs.length;
   return (
     <div class="civ-info" data-testid="civ-info">
+      <Emblem civ={civ} size={64} class="emblem civ-emblem" />
       <div class="civ-name">{c.name}</div>
       <ul>
         {c.bonusText.map((b) => (

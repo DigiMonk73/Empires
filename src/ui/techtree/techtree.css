@@ -11,7 +11,7 @@
   color: #efe2c4;
 }
 .tt-panel {
-  background: linear-gradient(#3a2f24, #241c15);
+  background: linear-gradient(rgba(58, 47, 36, 0.55), rgba(30, 23, 17, 0.9)), var(--tex-stone, linear-gradient(#3a2f24, #241c15));
   border: 2px solid #b08a4a;
   border-radius: 6px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
@@ -140,4 +140,9 @@
 }
 .tt-legend .tt-name {
   max-width: none;
+}
+
+.tt-panel h2 .emblem {
+  vertical-align: -8px;
+  margin-right: 10px;
 }

@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.8 · menu-skirmish, village-tool, victory-results, tech-tree + 100 more (UI restyle), emblems grid
+- Panels now read as carved stone (block courses, mortar, grain) under the old tints; buttons are hammered
+  bronze with a bevel; the civ box is parchment with dark-red heading and ink text. The top bar shows the
+  player's emblem beside the age, the setup rows and results table carry each civ's roundel, the tech tree its
+  title emblem. All 16 emblems distinct and legible at 24–64 px (the Roman eagle is the weakest). UI 4.
+- Every shot with HUD chrome changed (104/106) — the restyle, reviewed on the four above.
+
 ## 2026-09-30 · M9.7 · tech-tree (0.55%), icon contact sheets
 - Every chip in the tech tree has a picture: ages show the Town Center they build (Tool Age a thatched hall,
   Bronze and Iron tiled halls), the Market's axe/pick/sheaves/wheel, the Temple's astrolabe, orb, gods, ankh,

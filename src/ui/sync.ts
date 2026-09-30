@@ -28,6 +28,7 @@ export function syncHud(world: World, player: number, selected: readonly number[
   if (p) {
     hud.res.value = [p.res[0]!, p.res[1]!, p.res[2]!, p.res[3]!];
     hud.age.value = AGE_NAMES[p.stats.age] ?? 'Stone Age';
+    hud.civ.value = p.civ;
   }
   const e = world.ents;
   // The sim's own count: it knows Logistics (half-pop barracks units), the game's population limit and the units

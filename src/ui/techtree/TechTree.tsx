@@ -1,4 +1,5 @@
 import { CIV_BY_ID } from '../../data/index.ts';
+import { Emblem } from '../emblems.tsx';
 import { iconStyle } from '../icons.ts';
 import { techIcon } from '../techIcons.ts';
 import type { ItemState, TreeColumn } from '../techTree.ts';
@@ -32,7 +33,10 @@ export function TechTree({ civ, columns, onClose }: { civ: string; columns: Tree
     <div class="tt" data-testid="tech-tree" onKeyDown={(e) => e.key === 'Escape' && onClose()}>
       <div class="tt-panel">
         <div class="tt-head">
-          <h2>Tech Tree — {c?.name ?? civ}</h2>
+          <h2>
+            <Emblem civ={civ} size={36} />
+            Tech Tree — {c?.name ?? civ}
+          </h2>
           <button data-testid="tech-tree-close" onClick={onClose}>
             Close
           </button>

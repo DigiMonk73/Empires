@@ -18,6 +18,7 @@ import { idleVillagers, syncHud } from './ui/sync.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
+import { installUiTextures } from './ui/textures.ts';
 import { archOf } from './render/arch.ts';
 import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
@@ -103,10 +104,12 @@ async function boot(): Promise<void> {
   else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
   camera.apply();
 
+  installUiTextures();
   if (menuMode) {
     mountMenu(document.getElementById('hud')!);
     animateBackdrop(session, world);
   } else mountHud(document.getElementById('hud')!);
+  document.getElementById('boot')?.remove(); // the loading screen (index.html) gives way to the menu or the game
   const input = new InputController(app.canvas, camera, session, wr, selection, screenLayer);
   // (The menu backdrop has no HUD: the minimap draws into a detached element there.)
   const minimap = new Minimap(document.getElementById('minimap-slot') ?? document.createElement('div'), world, camera, () => ({ w: app.canvas.clientWidth, h: app.canvas.clientHeight }));

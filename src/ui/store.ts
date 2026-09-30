@@ -26,6 +26,7 @@ export interface SelInfo {
 export interface ResultRow extends ScoreLine {
   name: string;
   civ: string;
+  civId: string;
   color: string;
   gathered: number[];
   ages: string[];
@@ -51,6 +52,8 @@ export const hud = {
   pop: signal(0),
   popCap: signal(0),
   age: signal('Stone Age'),
+  /** The local player's civilization (its emblem sits by the age in the top bar). */
+  civ: signal('greek'),
   clock: signal('00:00'),
   playerColor: signal('#3f5f9f'),
   selection: signal<SelInfo[]>([]),

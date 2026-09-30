@@ -1,5 +1,6 @@
 import { hud, hudActions, type SelInfo } from '../store.ts';
 import { iconStyle } from '../icons.ts';
+import { Emblem } from '../emblems.tsx';
 import type { CommandButton } from '../commands.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { TechTree } from '../techtree/TechTree.tsx';
@@ -29,8 +30,9 @@ function TopBar() {
           </span>
         </div>
       </div>
-      <div class="age" data-testid="age">
-        {hud.age.value}
+      <div class="age">
+        <Emblem civ={hud.civ.value} size={24} />
+        <span data-testid="age">{hud.age.value}</span>
       </div>
       <div class="top-right">
         <span class="clock" data-testid="clock">
@@ -220,6 +222,7 @@ function Results() {
             {rows.map((r) => (
               <tr class={r.winner ? 'winner' : ''} data-testid={`result-${r.player}`}>
                 <td>
+                  <Emblem civ={r.civId} size={22} />
                   <span class="swatch" style={{ background: r.color }} /> {r.name} <span class="civ">{r.civ}</span>
                 </td>
                 <td>{r.military}</td>

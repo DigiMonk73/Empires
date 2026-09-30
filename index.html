@@ -9,11 +9,23 @@
       html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
       #game { position: fixed; inset: 0; }
       #hud { position: fixed; inset: 0; pointer-events: none; }
+      /* Loading screen until the art metadata and the opening scene's sprites are in (main.ts removes it). */
+      #boot {
+        position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; gap: 14px; text-align: center;
+        background: radial-gradient(ellipse at center, #3a2f24 0%, #16110c 75%);
+        color: #e8d6a8; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif;
+      }
+      #boot h1 { margin: 0; font-size: 56px; letter-spacing: 6px; color: #e8c878; text-shadow: 0 2px 8px #000; }
+      #boot .sub { font-size: 16px; letter-spacing: 2px; opacity: 0.8; }
+      #boot .bar { width: 260px; height: 4px; margin: 6px auto 0; background: #2a2119; border: 1px solid #8a6a3a; overflow: hidden; }
+      #boot .bar i { display: block; width: 40%; height: 100%; background: linear-gradient(90deg, #8a6a2e, #e8c878); animation: boot 1.4s ease-in-out infinite alternate; }
+      @keyframes boot { from { margin-left: 0; } to { margin-left: 60%; } }
     </style>
   </head>
   <body>
     <div id="game"></div>
     <div id="hud"></div>
+    <div id="boot"><h1>EMPIRES</h1><div class="sub">From the Stone Age to the Iron Age</div><div class="bar"><i></i></div></div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1–M9.7 done: Academy, alligator, all five architecture sets through all four ages, tech icons). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.7 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion in progress (M9.1–M9.8 done: Academy, alligator, all five architecture sets through all four ages, tech icons, UI dress). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.8 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
   get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit, Choson/Shang/Yamato the Asian kit,
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9.8 UI dress (panel textures, emblems, loading screen), then M9.9 gallery review.
+- **Next up:** M9.9 gallery review (every model × age × set ≥ 4/5, budget), then the M9 exit (verify:full, tag m9).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -523,8 +523,12 @@ Macedonian, Palmyran, Roman.
       and the tech tree use them; `tech-icons.test.ts` checks all 72 techs. A `glow` material flag makes flames
       self-lit (icons, temple altar, Wonder torch). Portraits: the selection panel already shows every unit's and
       building's own sprite (all baked since M9.1), so no separate portrait bake.
-- [ ] **M9.8 UI dress.** Stone panel, bronze frame and parchment textures from the material library; civ
-      emblems and a loading screen drawn in code (AI images are blocked — KI-2).
+- [x] **M9.8 UI dress.** `ui/textures.ts` draws seeded canvas textures at startup (carved stone, hammered
+      bronze, parchment) into CSS variables; the top bar, bottom panel, menus, tech tree and results sit on stone,
+      buttons on bronze, the civ box on parchment with ink text (plain gradients remain as fallbacks).
+      `ui/emblems.tsx`: 16 SVG civ emblems in their set's colours — in the setup rows and civ box, the tech-tree
+      title, the top bar beside the age and the results table. `index.html` shows a loading screen until the
+      menu or game mounts. (KI-2: AI paintings stay optional.)
 - [ ] **M9.9 Gallery and review.** Every model × facing/age/set in the gallery; score each ≥ 4/5, fix what
       falls short; budget check (atlases, boot metadata fetches).
 - _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB.

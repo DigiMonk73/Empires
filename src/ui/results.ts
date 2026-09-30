@@ -17,6 +17,7 @@ export function buildResults(w: World): ResultRow[] {
       ...sc,
       name: `Player ${sc.player}`,
       civ: CIV_BY_ID.get(p.civ)?.name ?? p.civ,
+      civId: p.civ,
       color: `#${playerColor(sc.player).toString(16).padStart(6, '0')}`,
       gathered: p.tally.gathered.map((v) => Math.floor(v)),
       ages: [2, 3, 4].map((a) => (p.tally.ageTick[a] ? clock(p.tally.ageTick[a]!) : '—')),

@@ -42,25 +42,25 @@
   font-size: 18px;
   min-width: 220px;
   color: #f4e6c8;
-  background: linear-gradient(#5e4a32, #43341f);
+  background: linear-gradient(rgba(94, 74, 50, 0.45), rgba(52, 40, 24, 0.8)), var(--tex-bronze, linear-gradient(#5e4a32, #43341f));
   border: 1px solid #b08a4a;
   border-radius: 4px;
   padding: 10px 22px;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 230, 170, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.4);
 }
 .menu-buttons.row button {
   min-width: 0;
 }
 .menu button:hover:not(:disabled) {
-  background: linear-gradient(#6e573c, #4f3d26);
+  background: linear-gradient(rgba(130, 104, 70, 0.4), rgba(70, 54, 34, 0.75)), var(--tex-bronze, linear-gradient(#6e573c, #4f3d26));
 }
 .menu button:disabled {
   opacity: 0.45;
   cursor: default;
 }
 .menu button.primary {
-  background: linear-gradient(#8a6a2e, #5e4618);
+  background: linear-gradient(rgba(170, 130, 50, 0.45), rgba(94, 70, 24, 0.75)), var(--tex-bronze, linear-gradient(#8a6a2e, #5e4618));
   border-color: #e0b45a;
 }
 .menu button.small {
@@ -69,7 +69,7 @@
   font-size: 14px;
 }
 .menu-panel {
-  background: linear-gradient(#3a2f24, #241c15);
+  background: linear-gradient(rgba(58, 47, 36, 0.5), rgba(30, 23, 17, 0.88)), var(--tex-stone, linear-gradient(#3a2f24, #241c15));
   border: 2px solid #b08a4a;
   border-radius: 6px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
@@ -148,14 +148,22 @@
 .civ-info {
   margin-top: 14px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(176, 138, 74, 0.35);
+  display: flow-root;
+  background: linear-gradient(rgba(255, 245, 220, 0.12), rgba(160, 120, 70, 0.2)), var(--tex-parch, #e2cfa2);
+  color: #2a1c10;
+  border: 1px solid #8a6a3a;
   border-radius: 4px;
+  box-shadow: inset 0 0 18px rgba(90, 60, 20, 0.35);
   font-size: 15px;
+}
+.civ-info .civ-emblem {
+  float: left;
+  margin: 2px 14px 4px 0;
 }
 .civ-info .civ-name {
   font-family: 'Cinzel', Georgia, serif;
-  color: #f2d27a;
+  font-weight: 700;
+  color: #6a2a14;
   margin-bottom: 4px;
 }
 .civ-info ul {
@@ -167,6 +175,12 @@
 }
 .civ-info .civ-missing {
   margin-top: 4px;
-  color: #cdb487;
+  color: #5a4228;
   font-size: 13px;
+}
+
+.civ-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

@@ -9,6 +9,8 @@ what · next step. Remove entries when fixed (the commit log keeps history).
 - **KI-2 · should · AI images blocked** — the Hugging Face connector refuses Space invocations
   (`gradio=none` header), so Qwen-Image/FLUX can't be called through it. Ask the user whether to enable Space
   invocation in the connector settings before M9 (menu/loading art, emblems); until then use code-made art.
+  _M9.8:_ covered by code-made art — 16 SVG civ emblems, canvas UI textures, a CSS loading screen. AI paintings
+  (menu backdrop, loading screens per set) remain optional polish if the user enables Space invocation.
 - **KI-3 · should · StartOS backup/restore unverified** — the test VM has no backup target, so the
   backup → restore round-trip (verify-on-startos §7) has not run. Needs a target on the box (user) before M6/M15.
 - **KI-5 · should · public/audio/voices licence** — the voice lines are rendered with macOS built-in voices,
