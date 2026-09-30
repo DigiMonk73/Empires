@@ -1,0 +1,125 @@
+/* Diplomacy (M12.3). */
+.gameover-panel.diplo-panel {
+  min-width: 640px;
+  text-align: left;
+}
+.gameover-panel.diplo-panel .gameover-title,
+.gameover-panel.diplo-panel .gameover-buttons {
+  text-align: center;
+  justify-content: center;
+}
+.diplo-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 15px;
+  margin: 6px 0 12px;
+}
+.diplo-table th {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #f2d27a;
+  text-align: left;
+  border-bottom: 1px solid rgba(176, 138, 74, 0.5);
+  padding: 4px 8px;
+}
+.diplo-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(176, 138, 74, 0.18);
+  color: #efe2c0;
+  white-space: nowrap;
+}
+.diplo-table tr.defeated td {
+  color: #8c7c60;
+}
+.diplo-table .emblem {
+  vertical-align: -4px;
+}
+.diplo-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  margin-right: 7px;
+  vertical-align: -1px;
+}
+.diplo-stances {
+  display: flex;
+  gap: 4px;
+}
+.diplo-panel button.speed,
+.diplo-panel select,
+.diplo-panel input[type='number'] {
+  font: inherit;
+  font-size: 14px;
+  color: #f4e6c8;
+  background: #3a2d1e;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  padding: 2px 9px;
+  margin: 0;
+  cursor: pointer;
+}
+.diplo-panel button.speed.on.st-ally {
+  background: #2f6a3a;
+  border-color: #7ad08a;
+}
+.diplo-panel button.speed.on.st-neutral {
+  background: #7a6a2e;
+  border-color: #e0c45a;
+}
+.diplo-panel button.speed.on.st-enemy {
+  background: #7a2a22;
+  border-color: #e0705a;
+}
+.diplo-panel button.speed:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.diplo-theirs.st-ally {
+  color: #8ee09a;
+}
+.diplo-theirs.st-neutral {
+  color: #e8d27a;
+}
+.diplo-theirs.st-enemy {
+  color: #f08a72;
+}
+.diplo-av {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 15px;
+  color: #e8d6a8;
+  pointer-events: auto;
+}
+.diplo-av input {
+  accent-color: #c8a04a;
+}
+.diplo-tribute h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #f2d27a;
+  margin: 14px 0 8px;
+  border-bottom: 1px solid rgba(176, 138, 74, 0.5);
+  padding-bottom: 3px;
+}
+.diplo-tribute-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.diplo-panel input[type='number'] {
+  width: 90px;
+  cursor: text;
+}
+.diplo-note {
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 14px;
+  color: #cdb487;
+  margin-top: 6px;
+  min-height: 18px;
+}

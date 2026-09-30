@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M12 UI & QoL in progress (M12.1–2 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M12 UI & QoL in progress (M12.1–3 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m11 (verify ~127 s without a re-bake); verify:full at the M11 exit 1123 s (audio check, Docker both arches 126 MB, Tauri smoke render avg 1.9 ms, s9pk, 428 unit + 103 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M12.3 diplomacy and tribute (M12.1 notifications, M12.2 options/hotkeys/Classic done).
+- **Next up:** M12.4 post-game graphs (M12.1 notifications, M12.2 options/hotkeys/Classic, M12.3 diplomacy/tribute done).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -645,11 +645,16 @@ fog-aware hooks, a mute toggle. No music.
       buttons by place (QWERT/ASDFG/ZXCVB). New keys: **F1** keys reference (`KeysReference.tsx`, pauses; lists
       the chosen layout's letters), **F10** menu, **Space** go to the selection, **H** Town Center (cycles),
       **+ / −** game speed. `settings.test.ts` (4), e2e `options.spec` (menu → game → back to Modern, both browsers).
-- [ ] **M12.3 Diplomacy and tribute.** Sim: per-player stances Ally / Neutral / Enemy (commands `stance`,
-      `tribute`), `hostile()` from stances (Neutral: fight soldiers and buildings, leave villagers — research §5),
-      allied vision after Writing, allied victory; tribute needs a Market, 25% fee until Coinage/Palmyran
-      (`TRIBUTE`, econ:1.5), tribute counts in the score (econ ÷ 60). AI keeps its team play; accepts nothing.
-      Diplomacy dialog (top bar) with the tribute sliders; message on tribute received. Sim + e2e tests.
+- [x] **M12.3 Diplomacy and tribute** (D47). Sim: `rules/diplomacy.ts` — per-player stances (Ally 0 / Neutral 1 /
+      Enemy 2) from the teams; commands `diplomacy`, `alliedVictory`, `tribute` (`systems/tribute.ts`); `hostile()`
+      reads stances, `autoHostile()` spares a Neutral's villagers and working boats (auto-acquire, towers);
+      retaliation, splash, Writing's shared sight and victory follow stances; Ally cancels attacks under way;
+      tribute needs a finished Market, fee 25% on top (0 after Coinage/Palmyran), `tally.tribute` → economy ÷ 60.
+      Saves carry stances (older saves derive them); hashed. UI: the top bar's Diplomacy button opens
+      `ui/diplomacy/Diplomacy.tsx` — each player with civ emblem, your stance (Ally/Neutral/Enemy buttons) and
+      theirs, Allied Victory, tribute (player, resource, amount, the cost with the fee, why not). Messages for
+      stance changes and tribute; coins sound. Scenario `?scenario=diplomacy`. `diplomacy.test.ts` (7), e2e
+      `diplomacy.spec` (stances, tribute 125→100, Neutral clubmen leave villagers alone, Enemy doesn't).
 - [ ] **M12.4 Post-game graphs.** Sample each player's score parts, population, military and gathered
       resources every 30 s of game time (UI side, from the sim's tallies) → SVG line graphs on the results
       screen (tabs: Score, Population, Military, Economy) and a timeline of ages. e2e + screenshot.

@@ -34,7 +34,13 @@ export type Command =
   /** Cancel a queued unit or research (default: the last one) at building `bld`, refunding it. */
   | { t: 'cancelTrain'; bld: number; index?: number }
   /** Set the rally point of buildings `blds`: a point, or a resource node (`res`) to gather. */
-  | { t: 'rally'; blds: number[]; x: number; y: number; res?: number };
+  | { t: 'rally'; blds: number[]; x: number; y: number; res?: number }
+  /** Diplomacy (M12.3): the issuing player's stance toward player `to` (0 Ally, 1 Neutral, 2 Enemy). */
+  | { t: 'diplomacy'; to: number; stance: number }
+  /** The Allied Victory checkbox. */
+  | { t: 'alliedVictory'; on: boolean }
+  /** Give player `to` `amount` of resource `res` (needs a Market; the fee is paid on top). */
+  | { t: 'tribute'; to: number; res: number; amount: number };
 
 export interface PlayerCommand {
   /** Issuing player slot (1..8); stamped by the router, never trusted from the payload. */

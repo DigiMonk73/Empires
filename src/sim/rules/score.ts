@@ -78,7 +78,7 @@ export function computeScores(w: World): ScoreLine[] {
     const p = pl.id;
     const t = pl.tally;
     const mil = 0.5 * t.kills + t.razed + Math.max(0, t.kills - t.losses) + most(military, p, 25);
-    const eco = t.gathered[2]! / 100 + villagers[p]! + most(villagers, p, 25) + Math.floor(explored[p]! / 3) + most(explored, p, 25);
+    const eco = t.gathered[2]! / 100 + t.tribute / 60 + villagers[p]! + most(villagers, p, 25) + Math.floor(explored[p]! / 3) + most(explored, p, 25);
     const rel = 2 * t.conversions + most(conv, p, 25) + 3 * temples[p]!;
     const tech = 2 * techCount[p]! + most(techCount, p, 50) + (bronze === p ? 25 : 0) + (iron === p ? 25 : 0);
     const other = (pl.defeated !== null ? -100 : 0) + 100 * wonders[p]!;

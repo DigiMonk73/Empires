@@ -12,6 +12,7 @@ import type { World } from '../world.ts';
 import { approachRect, depleteNode, isVillager, REACH, startGather } from './gather.ts';
 import { refundQueue } from './production.ts';
 import { FAITH_MAX, isPriest, startConvert } from './priest.ts';
+import { ENEMY, allied, stanceOf } from '../rules/diplomacy.ts';
 
 /**
  * Combat core (mil:2). Damage = max(1, Σ over armor classes the target has: max(0, attack − armor)); against
@@ -33,14 +34,29 @@ export function damageBetween(atk: readonly (number | undefined)[], arm: readonl
   return sum < 1 ? 1 : sum;
 }
 
-/** Can `a`'s owner attack `b`? Gaia animals are fair game; players attack anyone not on their team. */
+/** Can `a`'s owner attack `b`? Gaia animals are fair game; players attack anyone they don't call Ally (M12.3). */
 export function hostile(w: World, a: number, b: number): boolean {
   const oa = w.ents.owner[a]!;
   const ob = w.ents.owner[b]!;
   if (oa === ob) return false;
   if (ob === 0) return !!TYPES[w.ents.type[b]!]!.animal;
   if (oa === 0) return true;
-  return w.players[oa]!.team !== w.players[ob]!.team;
+  return !allied(w, oa, ob);
+}
+
+/** Villagers and boats that don't fight: left alone by units acting on their own against a Neutral player. */
+const CIVILIAN = new Set(['villager', 'fishingShip', 'tradeShip']);
+
+/**
+ * Would `a` attack `b` on its own (auto-acquire, towers)? Enemies: anything. Neutrals: soldiers, not villagers or
+ * working boats (research §4).
+ */
+export function autoHostile(w: World, a: number, b: number): boolean {
+  if (!hostile(w, a, b)) return false;
+  const oa = w.ents.owner[a]!;
+  const ob = w.ents.owner[b]!;
+  if (oa === 0 || ob === 0 || stanceOf(w, oa, ob) === ENEMY) return true;
+  return !CIVILIAN.has(TYPES[w.ents.type[b]!]!.unit?.cls ?? '');
 }
 
 /** Hunters throw spears: the villager's attack against animals (mil:1a, mil:2). */
@@ -181,14 +197,14 @@ function mayReact(w: World, s: number): boolean {
 function retaliate(w: World, target: number, attacker: number): void {
   const e = w.ents;
   if (!hostile(w, target, attacker)) return;
-  const team = w.players[e.owner[target]!]!.team;
+  const victim = e.owner[target]!;
   const ah = e.handleOf(attacker);
   const x = e.x[target]!;
   const y = e.y[target]!;
   const r2 = RESPONSE_RADIUS * RESPONSE_RADIUS;
   w.grid.forEachNear(x, y, RESPONSE_RADIUS, (s) => {
-    if (s !== target && e.owner[s] !== e.owner[target] && w.players[e.owner[s]!]!.team !== team) return;
-    if (e.owner[s] === 0) return;
+    if (s !== target && !allied(w, e.owner[s]!, victim)) return; // own and allied units answer
+    if (e.owner[s] === 0 || !hostile(w, s, attacker)) return;
     const dx = e.x[s]! - x;
     const dy = e.y[s]! - y;
     if (dx * dx + dy * dy > r2 || !mayReact(w, s)) return;
@@ -226,7 +242,7 @@ export function targetSystem(w: World): void {
     let bestD = Infinity;
     w.grid.forEachNear(x, y, look + 0.6, (j) => {
       if (j === s || !e.alive[j] || e.kind[j] !== EKind.unit) return;
-      if (lion ? e.owner[j] === 0 : !hostile(w, s, j) || e.owner[j] === 0) return; // soldiers ignore wildlife
+      if (lion ? e.owner[j] === 0 : !autoHostile(w, s, j) || e.owner[j] === 0) return; // soldiers ignore wildlife
       if (!lion && !w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)]) return;
       const d = edgeDist(w, s, j);
       if (d > look || d > bestD || (d === bestD && j > best)) return;
@@ -461,7 +477,7 @@ export function towerSystem(w: World): void {
       return d < 0 ? 0 : d;
     };
     const fair = (j: number): boolean =>
-      e.alive[j] === 1 && e.kind[j] === EKind.unit && e.owner[j] !== 0 && hostile(w, s, j) && !!w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)];
+      e.alive[j] === 1 && e.kind[j] === EKind.unit && e.owner[j] !== 0 && autoHostile(w, s, j) && !!w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)];
     let t = e.slotOf(e.target[s]!);
     if (t >= 0 && (!fair(t) || gap(t) > st.range)) t = -1;
     if (t < 0) {
@@ -591,7 +607,7 @@ export function splash(w: World, attacker: number, owner: number, type: number, 
   const victims: number[] = [];
   const consider = (j: number): void => {
     if (j === skip || !e.alive[j] || j === attacker) return;
-    if (!friendly && (e.owner[j] === owner || (e.owner[j] !== 0 && w.players[e.owner[j]!]!.team === w.players[owner]!.team))) return;
+    if (!friendly && e.owner[j] !== 0 && allied(w, owner, e.owner[j]!)) return;
     victims.push(j);
   };
   w.grid.forEachNear(x, y, radius + 1, consider);

@@ -16,6 +16,7 @@ import { quantize } from './sim/commands/types.ts';
 import { BakedArt } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
 import { Notifier, notes } from './ui/notify.ts';
+import { diplomacyView } from './ui/diplomacy.ts';
 import { applyHotkeys, gameSettings, SPEEDS } from './ui/settings.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
@@ -204,6 +205,13 @@ async function boot(): Promise<void> {
     camera.centerOnWorld(world.ents.x[s]!, world.ents.y[s]!);
     camera.apply();
   };
+  // Diplomacy (M12.3): the dialog reads a view refreshed with the HUD; its buttons are ordinary commands.
+  hudActions.showDiplomacy = (open) => {
+    hud.diplomacy.value = open ? diplomacyView(world, session.localPlayer) : null;
+  };
+  hudActions.setStance = (to, stance) => session.router.submit(session.localPlayer, { t: 'diplomacy', to, stance });
+  hudActions.setAlliedVictory = (on) => session.router.submit(session.localPlayer, { t: 'alliedVictory', on });
+  hudActions.tribute = (to, res, amount) => session.router.submit(session.localPlayer, { t: 'tribute', to, res, amount });
   hudActions.jumpTo = (x, y) => {
     camera.centerOnWorld(x, y);
     camera.apply();
@@ -325,6 +333,7 @@ async function boot(): Promise<void> {
       lastSelVersion = selection.version;
       syncHud(world, session.localPlayer, selection.list);
       notifier?.update();
+      if (hud.diplomacy.value) hud.diplomacy.value = diplomacyView(world, session.localPlayer);
       refreshCommands();
     }
     frameMs = t.deltaMS;

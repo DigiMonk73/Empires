@@ -6,11 +6,12 @@ import type { PathRequest } from '../path/service.ts';
 import { SIM_VERSION } from '../version.ts';
 import { World, type Order, type Projectile, type SimConfig, type Tally } from '../world.ts';
 
-const structuredCloneTally = (t: Tally): Tally => ({ ...t, gathered: [...t.gathered], ageTick: [...t.ageTick] });
+const structuredCloneTally = (t: Tally): Tally => ({ ...t, gathered: [...t.gathered], ageTick: [...t.ageTick], tribute: t.tribute ?? 0 }); // saves before M12.3 have no tribute
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { populationSystem } from '../systems/population.ts';
 import type { Production, Rally } from '../systems/production.ts';
 import { ARRAY_TYPES, bytesOf, typeTag, utf8Decode, utf8Encode, type TypedArray } from './binary.ts';
+import { stancesFromTeams } from '../rules/diplomacy.ts';
 
 /**
  * Save files: 'EMPS' · u32 format · u32 header length · JSON header · blob section (typed arrays, 8-byte aligned,
@@ -31,7 +32,8 @@ interface Header {
   simVersion: string;
   config: SimConfig;
   tick: number;
-  players: { id: number; civ: string; team: number; res: number[]; techs: string[]; defeated: number | null; tally: Tally }[];
+  /** `stance` / `alliedVictory`: since M12.3 (older saves derive them from the teams). */
+  players: { id: number; civ: string; team: number; res: number[]; techs: string[]; defeated: number | null; tally: Tally; stance?: number[]; alliedVictory?: boolean }[];
   gameOver: World['gameOver'];
   rng: Record<string, RngState>;
   ents: { cap: number; top: number; count: number; free: number[] };
@@ -87,7 +89,7 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     simVersion: SIM_VERSION,
     config,
     tick: w.tick,
-    players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res], techs: [...p.techs], defeated: p.defeated, tally: structuredCloneTally(p.tally) })),
+    players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res], techs: [...p.techs], defeated: p.defeated, tally: structuredCloneTally(p.tally), stance: [...p.stance], alliedVictory: p.alliedVictory })),
     gameOver: w.gameOver ? { ...w.gameOver, winners: [...w.gameOver.winners] } : null,
     rng: {
       combat: w.rng.combat.getState(),
@@ -158,6 +160,10 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
     pl.stats = compilePlayerStats(p.civ, pl.techs);
     pl.defeated = p.defeated;
     pl.tally = structuredCloneTally(p.tally);
+    // Saves before M12.3 carry no stances: the teams give them, as for a new game.
+    if (p.stance) pl.stance = [...p.stance];
+    else pl.stance = stancesFromTeams(pl.id, header.players.map((q) => q.team));
+    pl.alliedVictory = p.alliedVictory ?? true;
   });
   w.gameOver = header.gameOver ? { ...header.gameOver, winners: [...header.gameOver.winners] } : null;
   w.rng.combat.setState(header.rng.combat!);

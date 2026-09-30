@@ -247,3 +247,14 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   original). Hotkey layouts: **Classic** = the original's letters (mil:5), **Grid** = the button's place in the
   5 × 3 grid (QWERT / ASDFG / ZXCVB; Escape stays). The sim is untouched — the switches only gate input and HUD,
   so a Classic player and a Modern player play the same rules.
+- **D47 — Diplomacy is per-player stances** (2026-09-30, M12.3). Each player holds a one-sided stance toward
+  every other player — Ally / Neutral / Enemy (research §5) — seeded from the setup teams; hostility, the 1.0a
+  retaliation, splash, allied sight after Writing and conquest victory all read stances, not teams (teams stay as
+  the lobby grouping and the AI's view of friend and foe). Neutral: attacked when ordered; units acting on their
+  own (auto-acquire, towers) attack its soldiers but not its villagers, fishing or trade boats (research §4).
+  Calling a player Ally cancels attacks already under way on them. Victory: one player left, or every survivor
+  calls every other Ally and all have Allied Victory ticked. Tribute: a finished Market, the fee on top (25%,
+  econ:1.5 over mil:5's 30%), 0 after Coinage / for Palmyrans; counts for the economy score (÷ 60). The AI keeps
+  its team play and does not answer diplomacy or tribute (its reactions — "turns hostile if attacked twice",
+  research §7 — are M13 material). Team games play exactly as before; old saves load with stances from their
+  teams (SIM_VERSION unchanged).

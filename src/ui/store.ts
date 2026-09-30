@@ -2,6 +2,7 @@ import type { TreeColumn } from './techTree.ts';
 import { signal } from '@preact/signals';
 import type { Action, CommandButton } from './commands.ts';
 import type { ScoreLine } from '../sim/rules/score.ts';
+import type { DiploView } from './diplomacy.ts';
 
 /** HUD view-model, refreshed from the simulation ~10×/s (never every frame). */
 export interface SelInfo {
@@ -42,6 +43,8 @@ export const hud = {
   muted: signal(false),
   /** The game options dialog over the game menu (M12.2). */
   optionsOpen: signal(false),
+  /** The Diplomacy dialog's contents while it is open (M12.3; refreshed with the HUD). */
+  diplomacy: signal<DiploView | null>(null),
   /** The keyboard reference (F1). */
   keysOpen: signal(false),
   /** Which selected unit the status box shows when the selection grid is off (Tab cycles). */
@@ -77,6 +80,11 @@ export const hudActions: {
   perform(a: Action): void;
   cancelQueue(index: number): void;
   nextIdle(): void;
+  /** Diplomacy (M12.3). */
+  showDiplomacy(open: boolean): void;
+  setStance(to: number, stance: number): void;
+  setAlliedVictory(on: boolean): void;
+  tribute(to: number, res: number, amount: number): void;
   /** Center the camera on a world point (a message's location). */
   jumpTo(x: number, y: number): void;
   showResults(): void;
@@ -104,4 +112,8 @@ export const hudActions: {
   cancelQueue: () => {},
   nextIdle: () => {},
   jumpTo: () => {},
+  showDiplomacy: () => {},
+  setStance: () => {},
+  setAlliedVictory: () => {},
+  tribute: () => {},
 };

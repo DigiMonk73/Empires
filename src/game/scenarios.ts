@@ -318,6 +318,34 @@ function templeScene(): SimConfig {
 }
 
 /** The Wonder for review (M7.7): one standing, one rising with its builders. */
+/**
+ * Diplomacy (M12.3): us (Greek, with a Market) and an ally (Persian, team 1) against an Egyptian neighbour whose
+ * villagers and soldiers stand close to ours — for the Diplomacy dialog, Neutral behaviour and tribute.
+ */
+function diplomacyScene(): SimConfig {
+  return {
+    victory: 'none',
+    seed: 23,
+    map: { w: 40, h: 40 },
+    players: [{ civ: 'greek', team: 1 }, { civ: 'egyptian', team: 2 }, { civ: 'persian', team: 1 }],
+    scenario: {
+      buildings: [
+        { type: 'townCenter', owner: 1, tx: 6, ty: 6 },
+        { type: 'market', owner: 1, tx: 11, ty: 5 },
+        { type: 'townCenter', owner: 2, tx: 22, ty: 14 },
+        { type: 'townCenter', owner: 3, tx: 30, ty: 30 },
+      ],
+      units: [
+        ...[0, 1, 2].map((i) => ({ type: 'villager', owner: 1, x: 9.5 + i, y: 11.5 })),
+        ...[0, 1].map((i) => ({ type: 'clubman', owner: 1, x: 16.5 + i * 0.8, y: 12.2 })),
+        ...[0, 1].map((i) => ({ type: 'villager', owner: 2, x: 19.5 + i, y: 13.2 })),
+        { type: 'clubman', owner: 2, x: 20.5, y: 18.5 },
+        ...[0, 1].map((i) => ({ type: 'villager', owner: 3, x: 29.5 + i, y: 28.5 })),
+      ],
+    },
+  };
+}
+
 function wonderScene(): SimConfig {
   return {
     victory: 'none',
@@ -446,6 +474,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   army,
   temple: templeScene,
   wonder: wonderScene,
+  diplomacy: diplomacyScene,
   gallery,
   hills: hillsScene,
   battle: () => battleConfig(1),

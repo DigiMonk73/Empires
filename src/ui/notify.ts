@@ -4,6 +4,8 @@ import { TYPES } from '../sim/rules/registry.ts';
 import type { SimEvent, World } from '../sim/world.ts';
 import { PLAYER_COLORS } from '../data/setup.ts';
 import { TECH_BY_ID } from '../data/index.ts';
+import { RESOURCES } from '../data/types.ts';
+import { allied } from '../sim/rules/diplomacy.ts';
 
 /**
  * Notifications (M12.1): the messages at the upper left (research §5 "Messages appear at upper-left") and the
@@ -134,7 +136,7 @@ export class Notifier {
           if (ts < 0 || e.owner[ts] !== me) break;
           const as = e.slotOf(x.h);
           const ao = as >= 0 ? e.owner[as]! : 0;
-          if (ao === me || (ao !== 0 && w.players[ao]?.team === w.players[me]?.team)) break;
+          if (ao === me || (ao !== 0 && allied(w, me, ao))) break;
           const tx = e.x[ts]!;
           const ty = e.y[ts]!;
           if (this.c.onScreen(tx, ty)) break;
@@ -169,6 +171,18 @@ export class Notifier {
           if (x.player !== me) break;
           const p = w.players[me]!;
           this.post(p.popCap >= w.popLimit ? 'Population limit reached.' : 'You need to build more houses.', { key: 'housed', gap: 400 });
+          break;
+        }
+        case 'tribute': {
+          const what = `${x.amount} ${RESOURCES[x.res]}`;
+          if (x.to === me) this.post(`Player ${x.from} sent you ${what}.`, { color: this.color(x.from) });
+          else if (x.from === me) this.post(`You sent ${what} to Player ${x.to}${x.fee > 0 ? ` (fee ${Math.round(x.fee)})` : ''}.`, { color: this.color(me) });
+          break;
+        }
+        case 'diplomacy': {
+          const how = ['allied with', 'neutral toward', 'at war with'][x.stance] ?? 'neutral toward';
+          if (x.from === me) this.post(`You are now ${how} Player ${x.to}.`, { color: this.color(me) });
+          else if (x.to === me) this.post(`Player ${x.from} is now ${how} you.`, { color: this.color(x.from) });
           break;
         }
         case 'rejected':

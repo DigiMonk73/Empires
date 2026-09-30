@@ -16,6 +16,7 @@ import { isTradeBoat } from '../sim/systems/trade.ts';
 import { MOVE_LAND } from '../data/terrain.ts';
 import type { Action, CommandButton } from '../ui/commands.ts';
 import { gameSettings } from '../ui/settings.ts';
+import { allied } from '../sim/rules/diplomacy.ts';
 
 const DRAG_THRESHOLD = 5;
 const DOUBLE_CLICK_MS = 350;
@@ -211,7 +212,7 @@ export class InputController {
     const e = this.world.ents;
     const ts = e.slotOf(target);
     // Animals and enemies: attack (villagers attacking animals hunt). The sim filters who can attack what.
-    const enemy = ts >= 0 && e.owner[ts] !== me && e.owner[ts] !== 0 && this.world.players[e.owner[ts]!]!.team !== this.world.players[me]!.team;
+    const enemy = ts >= 0 && e.owner[ts] !== me && e.owner[ts] !== 0 && !allied(this.world, me, e.owner[ts]!); // Neutral or Enemy (M12.3)
     if (ts >= 0 && ((e.kind[ts] === EKind.unit && TYPES[e.type[ts]!]!.animal) || enemy)) {
       this.session.router.submit(me, { t: 'act', ids, h: target, queue });
       this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);

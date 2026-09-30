@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M12.3 · diplomacy (new)
+- Diplomacy dialog on the stone panel: player swatch and name, civ emblem and name, three stance buttons with the
+  chosen one lit in its colour (Ally green, Neutral gold, Enemy red), their stance in the same colours; Allied
+  Victory checkbox; tribute row (player, resource with the amount held, amount, Send) and a note with the cost
+  and fee or why it can't be sent. First pass centred the first column, tribute heading and note (the panel's
+  base style) → left-aligned. UI 4.
+
 ## 2026-09-30 · M12.2 · options-classic, keys-grid (new), menu-options (new layout)
 - Options: two columns — Sound and Controls on the left, Conveniences with the Modern/Classic preset on the
   right; toggles right-aligned, choices as small bronze buttons (first pass stretched Edge scroll across the

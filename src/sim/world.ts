@@ -16,6 +16,7 @@ import { POPULATION } from '../data/setup.ts';
 import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.ts';
 import { populationSystem } from './systems/population.ts';
 import type { Production, Rally } from './systems/production.ts';
+import { stancesFromTeams } from './rules/diplomacy.ts';
 
 export type { AiLevel };
 
@@ -81,6 +82,10 @@ export interface PlayerState {
   defeated: number | null;
   /** Running tallies for the score and the post-game screen. */
   tally: Tally;
+  /** Diplomacy (M12.3): this player's stance toward each player id (ALLY 0 / NEUTRAL 1 / ENEMY 2). */
+  stance: number[];
+  /** Win together with allies (the Allied Victory checkbox); off: only the last one standing wins. */
+  alliedVictory: boolean;
 }
 
 export interface Tally {
@@ -93,9 +98,11 @@ export interface Tally {
   conversions: number;
   /** Tick each age was reached (index = age; 0 = not yet). */
   ageTick: number[];
+  /** Resources given as tribute (after the fee) — score: economy ÷ 60. */
+  tribute: number;
 }
 
-export const newTally = (): Tally => ({ kills: 0, losses: 0, razed: 0, buildingsLost: 0, gathered: [0, 0, 0, 0], conversions: 0, ageTick: [0, 0, 0, 0, 0] });
+export const newTally = (): Tally => ({ kills: 0, losses: 0, razed: 0, buildingsLost: 0, gathered: [0, 0, 0, 0], conversions: 0, ageTick: [0, 0, 0, 0, 0], tribute: 0 });
 
 /**
  * A queued unit order. More kinds arrive with gathering, building and combat. A group move names a `leader`
@@ -173,7 +180,11 @@ export type SimEvent =
   /** A swing lands or a missile is released (render/audio only). */
   | { t: 'strike'; h: number; tgt: number; type: number; x: number; y: number; missile: boolean; building: boolean }
   /** A missile comes down (hit or not). */
-  | { t: 'impact'; type: number; x: number; y: number; hit: boolean };
+  | { t: 'impact'; type: number; x: number; y: number; hit: boolean }
+  /** Player `from` changed its stance toward `to` (M12.3). */
+  | { t: 'diplomacy'; from: number; to: number; stance: number }
+  /** `from` gave `to` `amount` of resource `res`, paying `fee` on top. */
+  | { t: 'tribute'; from: number; to: number; res: number; amount: number; fee: number };
 
 /** All simulation state. Systems mutate it; nothing else does (see sim/index.ts). */
 export class World {
@@ -222,7 +233,7 @@ export class World {
     this.ents = new EntityStore();
     this.res = new ResourceStore(cfg.map.w, cfg.map.h);
     this.popLimit = cfg.popCap ?? POPULATION.default;
-    const gaia: PlayerState = { id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length), techs: [], stats: compilePlayerStats('gaia'), pop: 0, popCap: 0, defeated: null, tally: newTally() };
+    const gaia: PlayerState = { id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length), techs: [], stats: compilePlayerStats('gaia'), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true };
     this.players = [gaia];
     const start = STARTING_RESOURCES[cfg.startingResources ?? 'default'];
     cfg.players.forEach((p, i) => {
@@ -234,8 +245,10 @@ export class World {
           res[k] = e.mode === 'add' ? res[k]! + e.v : e.mode === 'mul' ? res[k]! * e.v : e.v;
         }
       }
-      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally() });
+      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true });
     });
+    const teams = this.players.map((p) => p.team);
+    for (const p of this.players) p.stance = stancesFromTeams(p.id, teams);
     this.rng = {
       combat: new Rng(this.seed, STREAM.combat),
       conversion: new Rng(this.seed, STREAM.conversion),

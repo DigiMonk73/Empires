@@ -20,7 +20,7 @@ export function hashBreakdown(w: World): Record<string, number> {
   const map = new Hasher().array(m.terrain).array(m.height).array(m.occ).array(m.pass).array(m.bldAt).array(m.resAt).digest();
   const ph = new Hasher();
   for (const p of w.players) {
-    ph.u32(p.id).str(p.civ).u32(p.team).array(p.res).u32(p.techs.length).u32(p.defeated ?? 0xffffffff).str(JSON.stringify(p.tally));
+    ph.u32(p.id).str(p.civ).u32(p.team).array(p.res).u32(p.techs.length).u32(p.defeated ?? 0xffffffff).str(JSON.stringify(p.tally)).str(p.stance.join(',')).u32(p.alliedVictory ? 1 : 0);
     for (const t of p.techs) ph.str(t);
   }
   const rh = new Hasher();

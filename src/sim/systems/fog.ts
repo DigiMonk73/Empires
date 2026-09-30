@@ -1,4 +1,5 @@
 import type { World } from '../world.ts';
+import { allied } from '../rules/diplomacy.ts';
 
 /**
  * Fog of war (mil:6): per player, a visibility count per tile (how many of the player's entities see it) and an
@@ -67,14 +68,14 @@ export function unstampLos(w: World, slot: number): void {
 }
 
 /**
- * Who sees what `owner`'s entities see: the owner, plus its allies once it has researched Writing ("allies share
- * your line of sight", econ:5).
+ * Who sees what `owner`'s entities see: the owner, plus the players it calls Ally once it has researched Writing
+ * ("allies share your line of sight", econ:5).
  */
 function sightMask(w: World, owner: number): number {
   let m = 1 << owner;
   const p = w.players[owner]!;
   if (p.stats.flags.has('writing')) {
-    for (let q = 1; q < w.players.length; q++) if (q !== owner && w.players[q]!.team === p.team) m |= 1 << q;
+    for (let q = 1; q < w.players.length; q++) if (q !== owner && allied(w, owner, q)) m |= 1 << q;
   }
   return m;
 }

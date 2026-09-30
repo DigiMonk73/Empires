@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { Sim } from '../../src/sim/index.ts';
 import { damageBetween, LEASH, WINDUP_TICKS } from '../../src/sim/systems/combat.ts';
 import { buildingTypeIndex, unitTypeIndex } from '../../src/sim/rules/registry.ts';
-import { compilePlayerStats } from '../../src/sim/rules/playerStats.ts';
 import { decodeCommands, encodeCommands } from '../../src/sim/commands/codec.ts';
 
 type U = { type: string; owner: number; x: number; y: number };
@@ -115,9 +114,7 @@ describe('fighting', () => {
     expect(w.orders[e.slotOf(a!)]).toBeUndefined();
     step(1, [{ player: 1, cmd: { t: 'act', ids: [a!], h: c! } }]); // same team
     expect(w.orders[e.slotOf(a!)]).toBeUndefined();
-    const p2 = w.players[2]!;
-    p2.team = 2;
-    p2.stats = compilePlayerStats(p2.civ, p2.techs);
+    step(1, [{ player: 1, cmd: { t: 'diplomacy', to: 2, stance: 2 } }]); // declare Player 2 an enemy (M12.3)
     step(1, [{ player: 1, cmd: { t: 'act', ids: [a!], h: c! } }]);
     expect(w.orders[e.slotOf(a!)]?.[0]).toMatchObject({ k: 'attack', hunt: false });
   });

@@ -9,6 +9,7 @@ import { notes } from '../notify.ts';
 import { gameSettings } from '../settings.ts';
 import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
 import { KeysReference } from '../options/KeysReference.tsx';
+import { Diplomacy } from '../diplomacy/Diplomacy.tsx';
 
 const RES = [
   { key: 'food', label: 'Food', color: '#d84a3a' },
@@ -48,7 +49,7 @@ function TopBar() {
         <button class="hud-btn" title="Tech tree" data-testid="tech-tree-btn" onClick={() => hudActions.showTechTree()}>
           Tech Tree
         </button>
-        <button class="hud-btn" disabled title="Diplomacy (coming soon)">
+        <button class="hud-btn" title="Diplomacy and tribute" data-testid="diplomacy-btn" onClick={() => hudActions.showDiplomacy(true)}>
           Diplomacy
         </button>
         <button class="hud-btn" title="Menu (F10)" data-testid="menu-btn" onClick={() => hudActions.setMenu(true)}>
@@ -383,6 +384,15 @@ export function Hud() {
     <div class="hud">
       <GameMenu />
       {hud.keysOpen.value && <KeysReference onClose={() => (hud.keysOpen.value = false)} />}
+      {hud.diplomacy.value && (
+        <Diplomacy
+          view={hud.diplomacy.value}
+          onStance={(to, st) => hudActions.setStance(to, st)}
+          onAlliedVictory={(on) => hudActions.setAlliedVictory(on)}
+          onTribute={(to, r, n) => hudActions.tribute(to, r, n)}
+          onClose={() => hudActions.showDiplomacy(false)}
+        />
+      )}
       {hud.techTree.value && <TechTree civ={hud.techTree.value.civ} columns={hud.techTree.value.columns} onClose={() => (hud.techTree.value = null)} />}
       <GameOver />
       <Results />

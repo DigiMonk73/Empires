@@ -12,6 +12,7 @@ import { cancelUnit, currentBuilding, queueResearch, queueUnit } from '../system
 import { startFarm } from '../systems/farm.ts';
 import { startAttack } from '../systems/combat.ts';
 import { deleteOwn, isPriest, startConvert, startHeal } from '../systems/priest.ts';
+import { payTribute, setStance } from '../systems/tribute.ts';
 
 /** Slots of the command's ids that are live units owned by the issuing player (others are ignored). */
 function ownedUnitSlots(w: World, player: number, ids: readonly number[]): number[] {
@@ -210,6 +211,15 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
           w.orders[slot] = undefined;
           clearMovement(w, slot);
         }
+        break;
+      case 'diplomacy':
+        setStance(w, player, cmd.to, cmd.stance);
+        break;
+      case 'alliedVictory':
+        w.players[player]!.alliedVictory = cmd.on === true;
+        break;
+      case 'tribute':
+        payTribute(w, player, cmd.to, cmd.res, cmd.amount);
         break;
     }
   }

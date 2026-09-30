@@ -1,5 +1,6 @@
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';
+import { allied } from '../sim/rules/diplomacy.ts';
 import type { SimEvent, World } from '../sim/world.ts';
 import type { UnitClass } from '../data/types.ts';
 import { MOVE_WATER, TERRAINS } from '../data/terrain.ts';
@@ -26,6 +27,8 @@ export const EVENT_SOUNDS: Record<SimEvent['t'], string> = {
   farmDepleted: 'silent (the original was too)',
   arrived: 'silent',
   stuck: 'silent',
+  diplomacy: 'silent (the message says it)',
+  tribute: 'coins when we give or receive',
 };
 
 /** A melee blow, by class: clubs, staves and tools thump; blades and spears ring; tusks, rams and wheels crash. */
@@ -201,7 +204,7 @@ export class AudioHooks {
       for (let s = 0; s < e.top; s++) {
         if (!e.alive[s] || e.kind[s] !== EKind.unit) continue;
         const o = e.owner[s]!;
-        if (o === 0 || o === me || w.players[o]?.team === w.players[me]?.team) continue;
+        if (o === 0 || allied(w, me, o)) continue;
         const cls = TYPES[e.type[s]!]!.unit?.cls;
         if (cls === 'villager' || cls === 'fishingShip' || cls === 'tradeShip') continue;
         if (!this.c.visible(Math.floor(e.x[s]!), Math.floor(e.y[s]!))) continue;
@@ -292,6 +295,9 @@ export class AudioHooks {
             this.lastDeny = performance.now();
             this.a.play('deny', 0, 0.5);
           }
+          break;
+        case 'tribute':
+          if (x.from === me || x.to === me) this.a.play('coins', 0, 0.7);
           break;
         case 'deposit':
           // A trade load of gold (villagers carry 10–15; a trade boat brings 20 or more).
