@@ -68,6 +68,12 @@ const STEPS: Step[] = [
     cmd: ['node', 'tools/sim/ai-suite.ts', '--full'],
     full: true,
   },
+  {
+    id: 'audio',
+    title: 'Audio check (peaks, music gaps, spectrograms)',
+    cmd: ['node', 'tools/audio-check.ts'],
+    full: true,
+  },
   { id: 'build', title: 'Vite build', cmd: ['npx', 'vite', 'build'] },
   {
     id: 'e2e',

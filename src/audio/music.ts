@@ -134,7 +134,7 @@ export class MusicGen {
         v += amp[k]! * (Math.sin(TAU * ph) + 0.25 * Math.sin(TAU * 2 * ph));
       }
       const breath = 0.8 + 0.2 * Math.sin(TAU * 0.07 * (i / this.rate + this.time));
-      v *= this.droneGain * 0.22 * breath;
+      v *= this.droneGain * 0.155 * breath; // ≈3 dB under the first mix: the melody leads (M11.5 spectrogram review)
       L[i] = L[i]! + v;
       R[i] = R[i]! + v;
     }

@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M11.5 audio review (offline render, peaks, gaps, spectrograms), then the M11 exit.
+- **Next up:** the M11 exit — verify:full, tag m11, submodule bump + s9pk 0.11.0; then M12 UI & QoL completeness.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -615,8 +615,12 @@ fog-aware hooks, a mute toggle. No music.
       saved to localStorage (`empires.audio`; the old mute key migrates); the engine applies it live through its
       buses (defaults = the old mix). `ui/options/VolumeControls.tsx` in the game menu (replacing the on/off
       switch) and in the main menu's Options, now enabled. e2e: set in Options → persists into the game menu.
-- [ ] **M11.5 Audio review.** `tools/audio-check.ts`: every effect, voice and 10 min of music per culture and
-      mood rendered offline — peaks ≤ −1 dBFS, no music gap > 10 s, spectrogram PNGs reviewed.
+- [x] **M11.5 Audio review** (D45). `tools/audio-check.ts` (a verify:full step): 36 effects (loudest −3 dBFS),
+      78 voice lines (−1.0), 10 min of music for each of 5 cultures × 3 moods (peaks −1.4 … −7.7 dBFS, longest
+      gap 0 s — the drone never stops); log-frequency spectrograms in `artifacts/audio/spec/`. Review: the
+      effects have the intended shapes (whinny sweep, trumpet harmonics, chime and coin partials, noise
+      crashes); the music reads sparse in peace and dense in battle; the drone was the loudest band → 3 dB
+      down so the melody leads.
 - _Exit:_ 100% event coverage; peaks ≤ −1 dBFS; no music gaps > 10 s; spectrograms reviewed.
 
 ## M12 — UI & QoL completeness

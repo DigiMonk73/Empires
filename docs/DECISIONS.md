@@ -229,3 +229,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   7 tiles of every Town Center. The combat stream is only drawn from when the attacker is higher, so flat
   scenarios and old saves (all heights 0) play exactly as before — SIM_VERSION stays 0.8.0. _Hill generation
   is switched off pending KI-9 (the AI war gate); the rule and flat footprints are live._
+- **D45 — Audio completed** (2026-09-30, M11). Sounds are chosen by type from typed tables (melee by unit class,
+  missiles and impacts by weapon, deaths by kind; every sim event listed in `EVENT_SOUNDS` with its sound or why
+  it is silent). Voices: one set per architecture set and role (villager/soldier/priest), culture-flavoured
+  short words in the nearest macOS voice — the player's own set answers (KI-5: personal-use licence). Music is
+  generated, not recorded: a pure-JS ensemble (lyre, reed, frame drum, drone) in each culture's mode, three
+  moods chosen from what the player sees (battle: our units fought within 10 s; tension: enemy soldiers seen
+  within 15 s), rendered in 2 s slices that carry tails and phase so the joins are seamless, limited under
+  −1 dBFS; the same generator runs offline in `tools/audio-check.ts` (verify:full). Mixer: master, music,
+  effects and voice levels, saved per browser.
