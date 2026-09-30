@@ -305,6 +305,10 @@ export class WorldRenderer {
         g.circle(a.x, a.y, 2.6).fill(0x8a8274);
         continue;
       }
+      if (TYPES[p.type]?.unit?.cls === 'slinger') {
+        g.circle(a.x, a.y, 1.6).fill(0x9a948a); // sling stone
+        continue;
+      }
       const L = p.hunt ? 15 : 11;
       g.moveTo(a.x - dx * L, a.y - dy * L).lineTo(a.x, a.y).stroke({ width: 1.3, color: 0x4a3420 });
       g.moveTo(a.x, a.y).lineTo(a.x - dx * 2.5, a.y - dy * 2.5).stroke({ width: 2, color: 0x9aa0a8 });

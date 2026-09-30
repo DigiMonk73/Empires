@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M5.5a · clubman/axeman/slinger/bowman frame sheets, raid*, volley
+- Four readable infantry silhouettes: pelt + club, cap + stone axe, headband + sling, cap + bow + quiver.
+  Overhead blows read as blows; the bow stands upright through the draw. Readability 4, anchoring 4, team 4.
+- Fixed during review: club/axe pointed straight along the arm like lances (now 0.9 rad off the forearm);
+  the bow lay flat along the arm (quarter turn so it stands up) and across the hips at rest (bow-hand hold pose).
+- Should-fix (M9): the sling cord is a rigid rod; bodies share one build — vary proportions per unit.
+
 ## 2026-09-29 · M5.3 · research-queued (new)
 - Town Center grid: villager + age advances labelled ⬆II / ⬆III (identical ⬆ arrows were ambiguous); the queue
   shows the same glyph with its progress bar. HUD 3/5 — tech icons are text glyphs until M9's baked icons.
