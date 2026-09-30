@@ -355,3 +355,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   Juggernaught attack 35 against every armour class but buildings, "ignores armour" approximated · hunters'
   spears attack 4, range 4, 80% accuracy · buildings take ⅕ of summed damage (min 0.1) and a missed missile that
   strikes another unit deals half (the DE analysis, unrefuted for 1.0).
+- **D58 — A 1v1 is decided within 60 minutes; hills on; the predator fix** (2026-09-30, M14.6; the user's choice
+  (a) on KI-9 and KI-11). The Done definition's range for a 1v1 is 25–60 min, so the war gate counts a Moderate
+  mirror decided within 60 min (was 45), on 24 held-out seeds (1001–1024, never dissected; was 4 seeds that passed
+  by luck — 62% of fresh ones in 45 min), bar 75%. With it: hills on on every generated map (`HILLS_ON`, D44) and
+  the AI's lion/alligator response no longer re-sends the villagers already fighting (the bug that crippled
+  whichever side had a lion near home, and so ended mirrors early). Measured together: 1v1 wars 21/24 in 60 min;
+  Hard > Moderate 44/64 — under its 48 — the next AI task, not a gate to move.

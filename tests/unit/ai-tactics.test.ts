@@ -42,12 +42,17 @@ describe('AI v2 (M13.2)', () => {
 });
 
 describe('AI v2 fixes (M13.4)', () => {
-  it('a full population never freezes the Town Center: Hardest reaches the Iron Age (it sat in the Tool Age)', () => {
-    // Seed 101: Hardest vs Hard. Before the fix a villager queued at 50/50 waited for a house forever, the age
-    // could not be queued behind it, and Hardest floated 14,000 resources in the Tool Age at 40 minutes.
-    const r = runMatch({ seed: 101, type: 'inland', size: 'tiny', levels: ['hardest', 'hard'], minutes: 36 });
-    expect(r.ageTick[0]![3]).toBeGreaterThan(0);
-    expect(r.ageTick[0]![4]).toBeGreaterThan(0);
+  it('a full population never freezes the Town Center: the computers still age up at the game\'s limit', () => {
+    // M13.4: a villager queued at a full population waited for a house forever, the age could not be queued behind
+    // it, and Hardest floated 14,000 resources in the Tool Age. A peaceful game with a 25 limit puts both computers
+    // at the limit early (M14: the fix had 50 hard-coded — a 25 limit brought the deadlock back on seed 103).
+    for (const seed of [101, 103]) {
+      const r = runMatch({ seed, type: 'inland', size: 'tiny', levels: ['hardest', 'hard'], minutes: 30, peaceful: true, popCap: 25 });
+      for (const p of [0, 1]) {
+        expect(Math.max(...r.samples.map((x) => x.players[p]!.pop)), `seed ${seed} P${p + 1} at the limit`).toBe(25);
+        expect(r.ageTick[p]![4], `seed ${seed} P${p + 1} Iron Age`).toBeGreaterThan(0);
+      }
+    }
   });
 
   it('a won war is finished: the hunt finds a building put up where it had already looked', () => {

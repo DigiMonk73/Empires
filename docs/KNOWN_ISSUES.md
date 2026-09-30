@@ -19,19 +19,6 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   as a permissively licensed Piper model) with `tools/voices.ts`.
 - **KI-6 · closed (M8.6b, D39)** — baked art was 145 MB and all of it loaded at boot (1.33 GB decoded): now WebP
   (45.5 MB) with textures loaded on first use.
-- **KI-9 · must · hills vs the AI war gate — awaiting the user** (M10.1a, 2026-09-30). With hills on generated
-  maps (D44), AI 1v1 wars run ~5 min longer (the side on the hills holds; fights and building spots move), and
-  the quick suite's gate — ≥ 75% of 4 Moderate 1v1s decided within 45 min — drops to 2/4. It was already
-  borderline flat: 3/4, median 38:57, one win at 44:54. Three fixes (AI mop-up of the last buildings, a wider
-  flat base, a wider building-spot search) each reshuffled which games ended (2/4 every time) and were reverted
-  except the wider flat base. Hill generation is off (`HILLS_ON` in mapgen) so maps and AI play exactly as at
-  m9; the elevation machinery stays (`?scenario=map&hills=1` shows hilly maps). Options for the user:
-  (a) judge "decided" within 60 min — the Done definition's upper bound for a 1v1 (25–60 min) — and turn hills
-  on; (b) keep 45 min, hills stay off until M13 (AI v2); (c) hills only on Highland and Hill Country (M10.2),
-  the standard maps stay flat.
-  _Re-measured at M13.4_ (AI v2 finishes wars better: 4/4 flat): with hills on, 8 Moderate 1v1s are decided
-  5/8 within 45 min but **7/8 within 60 min**, and the whole 7-pairing ladder still meets the Done gates — so
-  option (a) would now pass. Still the user's call; hills stay off until then.
 - **KI-10 · must · alligators vs the AI gates** (M14.5, 2026-09-30). Alligators on beaches (econ:8) are built —
   data, art, spit, hunting, the computers gang up on them like lions, predators ignore ships — but placing them
   on generated maps reshuffles AI games enough to fail three Done gates on the full suite (`--full --adjacent`):
@@ -50,15 +37,5 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   is 41/48 but Hard > Moderate drops to 41/64 (three runs at 41–43 vs 48 off) — a land effect to find.
   Still under 90%,
   and Hard > Moderate still sits on 48/64 — alligators stay off.
-- **KI-11 · must · a predator bug props up the war gates — awaiting the user** (M14.6b, 2026-09-30). The AI's
-  lion/alligator response re-sends the villagers already fighting the animal every think, restarting their swing:
-  one lion can tie down villagers for minutes (seed 601: 550 villager orders; seed 109: an alligator, 259). The
-  side that happens to have a lion near its base cripples itself, so Moderate mirrors end early. The fix (one
-  filter, `docs/patches/predator-resend-fix.patch`) is plainly right — with alligators on it lifts Hard > Moderate
-  from 41 to 46/64 — but the fair mirrors it leaves last longer: on 24 fresh Moderate 1v1s (601–624) decided within
-  45 min falls 15 → 13 (62% → 54%) and within 60 min 24 → 19; the quick suite's 4 wars fall 4/4 → 2/4 (the verify
-  gate is ≥ 3/4 within 45 min), and Hard > Moderate is 47/64 (gate 48). Note the 45-min gate was already not met on
-  fresh seeds without the fix (62% vs 75%) — the 4 gated seeds were lucky, like the water set (D55). Not applied:
-  it fails verify, and moving a gate is the user's call. Options: (a) KI-9's (a) — judge a 1v1 decided within
-  60 min (the Done range is 25–60) and measure it on 24 held-out seeds; apply the fix; (b) keep 45 min and the bug
-  until M14.6 makes wars end sooner; (c) apply the fix and accept the failing gate until then.
+- _KI-9 (hills vs the war gate) and KI-11 (the predator bug) closed by D58: 1v1s judged within 60 min, hills on,
+  the fix applied._

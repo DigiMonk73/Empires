@@ -67,11 +67,10 @@ const HILLS: Record<GenMapType, { per: number; peak: number }> = {
 /** Map types that are hills by definition: they always get them (HILLS_ON governs the others). */
 const HILL_TYPES: ReadonlySet<GenMapType> = new Set(['highland', 'hillCountry']);
 /**
- * Hills on generated maps — off until the AI war gate is settled (KI-9): on hilly maps AI 1v1 wars run ~5 min
- * longer and the quick suite's 45-min "decided" window fails 2/4. The machinery (heights, D44, flat footprints)
- * stays; scenarios can still pass heights.
+ * Hills on generated maps (D44). Off from M10.1a until the user settled the AI war gate (KI-9, D58: a 1v1 is
+ * judged decided within 60 min, not 45); on since M14.
  */
-export const HILLS_ON = false;
+export const HILLS_ON = true;
 /** Radius (tiles) of level ground kept round every Town Center. */
 const FLAT_BASE = 10;
 

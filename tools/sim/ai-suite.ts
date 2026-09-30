@@ -23,7 +23,10 @@ const want = (section: string): boolean => !ONLY || ONLY.has(section);
 const fmt = (t: number): string => (t ? `${Math.floor(t / 1200)}:${String(Math.floor((t % 1200) / 20)).padStart(2, '0')}` : '—');
 type Case = { seed: number; type: 'continental' | 'inland'; size: MapSizeId; levels: AiLevel[] };
 const timing: Case[] = [1, 2, 3, 4].map((seed) => ({ seed, type: seed % 2 ? 'continental' : 'inland', size: seed > 2 ? 'small' : 'tiny', levels: ['moderate', 'moderate'] }));
-const war: Case[] = [1, 2, 3, 4].map((seed) => ({ seed: 10 + seed, type: seed % 2 ? 'continental' : 'inland', size: 'tiny', levels: ['moderate', 'moderate'] }));
+// 1v1 wars (D58, the user's choice on KI-9/KI-11): Moderate mirrors on 24 held-out seeds (1001–1024, never
+// dissected), decided within 60 min — the Done definition's upper bound — in ≥ 75%. (Before: 4 seeds within 45 min,
+// which passed by luck of the seeds — 62% on fresh ones — and with a villager-wasting predator bug's help.)
+const war: Case[] = Array.from({ length: 24 }, (_, k) => ({ seed: 1001 + k, type: k % 2 ? 'inland' : 'continental', size: 'tiny', levels: ['moderate', 'moderate'] }));
 if (FULL) {
   for (let k = 0; k < 8; k++) timing.push({ seed: 100 + k, type: k % 2 ? 'inland' : 'continental', size: (['tiny', 'small', 'medium'] as const)[k % 3]!, levels: ['moderate', 'moderate'] });
   for (let k = 0; k < 8; k++) war.push({ seed: 200 + k, type: k % 2 ? 'inland' : 'continental', size: k < 4 ? 'small' : 'medium', levels: k < 4 ? ['moderate', 'moderate', 'moderate'] : ['moderate', 'hard', 'easy', 'moderate'] });
@@ -62,7 +65,7 @@ const t0 = performance.now();
 const jobs: MatchJob[] = [];
 const slot = (c: Case, minutes: number, peaceful: boolean): number => jobs.push({ ...c, minutes, peaceful }) - 1;
 const timingJobs = want('timing') ? timing.map((c) => slot(c, 25, true)) : [];
-const warJobs = want('war') ? war.map((c) => slot(c, 45, false)) : [];
+const warJobs = want('war') ? war.map((c) => slot(c, 60, false)) : [];
 const ladderJobs = want('ladder')
   ? ladderPairs.map(([strong, weak]) => ladderSeeds.flatMap((seed) => [0, 1].map((seat) => slot({ seed, type: seed % 2 ? 'inland' : 'continental', size: 'tiny', levels: seat ? [weak, strong] : [strong, weak] }, 60, false))))
   : ladderPairs.map(() => []);

@@ -59,7 +59,7 @@ const STEPS: Step[] = [
   },
   {
     id: 'ai',
-    title: 'AI suite (4 timing + 4 war matches)',
+    title: 'AI suite (4 timing + 24 war matches)',
     cmd: ['node', 'tools/sim/ai-suite.ts', '--record'],
   },
   {

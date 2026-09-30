@@ -273,8 +273,10 @@ export class AiPlayer {
       if (!near) continue;
       const on = s.villagers.filter((u) => u.order === 'attack' && u.target === lion.h).length;
       if (on >= 4) continue;
+      // (Not those already at it: re-sending them every think restarted their swing, and a lone alligator held
+      // four villagers for minutes — M14.6b.)
       const group = s.villagers
-        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && dist(u.x, u.y, lion.x, lion.y) < 16)
+        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && !(u.order === 'attack' && u.target === lion.h) && dist(u.x, u.y, lion.x, lion.y) < 16)
         .sort((a, b) => dist(a.x, a.y, lion.x, lion.y) - dist(b.x, b.y, lion.x, lion.y) || a.h - b.h)
         .slice(0, 4 - on)
         .map((u) => u.h);
@@ -340,7 +342,7 @@ export class AiPlayer {
 
   private houses(s: Snapshot, cmds: Command[]): void {
     const building = s.buildings.some((b) => b.type === 'house' && !b.done);
-    if (building || s.me.popCap >= 50 || this.isPending(s, 'house')) return;
+    if (building || s.me.popCap >= s.v.popLimit() || this.isPending(s, 'house')) return; // (the game's limit, M14.3)
     const queued = s.tc?.queue ?? 0;
     if (s.me.popCap - s.me.pop - queued > 2) return;
     // Near the Town Center; on a cramped island start, anywhere within 16.
@@ -411,7 +413,8 @@ export class AiPlayer {
     if (!tc || !tech || s.v.researching(tech)) return;
     // A villager queued before the army filled the population waits for a house forever — and the age shares that
     // queue (M13.4: a Hardest AI sat in the Tool Age for 30 minutes on 14,000 resources). Take it out (refunded).
-    if (tc.queue > 0 && tc.housed && s.me.popCap >= 50 && !s.v.researchBlocker(tc.h, tech)) {
+    // (At the game's population limit — 50 was hard-coded, and a 25 limit brought the deadlock back.)
+    if (tc.queue > 0 && tc.housed && s.me.popCap >= s.v.popLimit() && !s.v.researchBlocker(tc.h, tech)) {
       cmds.push({ t: 'cancelTrain', bld: tc.h });
       return;
     }

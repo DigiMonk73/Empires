@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M14 (D58) · hills on: map-*, ai-base, victory* re-shot
+- Generated maps now rise and fall (D44 shading): soft slopes, level ground round each Town Center, the raised edge
+  reading as terrain, not a seam; forests, mines and water unchanged in layout. Skirmish shots changed with the
+  games they show (hills + the predator fix). Terrain 4.
+
 ## 2026-09-30 · M14.4 · menu-skirmish (Full Tech Tree checkbox)
 - "Full Tech Tree" beside "Reveal map" on the first row; the panel widens a little (still inside 1280 CSS px) and
   everything stays aligned. With it ticked the civ panel lists "No civilization bonuses (Full Tech Tree)" and
