@@ -1,5 +1,5 @@
 import type { MapSizeId, StartingResources } from '../data/setup.ts';
-import { generateMap, type LandMapType } from '../sim/mapgen/generate.ts';
+import { GEN_MAP_TYPES, generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import type { AiLevel, SimConfig } from '../sim/world.ts';
 
 /**
@@ -13,7 +13,7 @@ export interface SkirmishPlayer {
 }
 
 export interface SkirmishSetup {
-  type: LandMapType;
+  type: GenMapType;
   size: MapSizeId;
   seed: number;
   players: SkirmishPlayer[];
@@ -61,7 +61,7 @@ export function setupFromQuery(q: URLSearchParams): SkirmishSetup {
       return { civ: civ || 'greek', team: Number(team) || 1, controller: c };
     });
   return {
-    type: q.get('type') === 'inland' ? 'inland' : 'continental',
+    type: (GEN_MAP_TYPES as readonly string[]).includes(q.get('type') ?? '') ? (q.get('type') as GenMapType) : 'continental',
     size: (q.get('size') as MapSizeId) ?? DEFAULT_SETUP.size,
     seed: Number(q.get('seed') ?? 1) || 1,
     players: players.length >= 2 ? players.slice(0, 8) : DEFAULT_SETUP.players,

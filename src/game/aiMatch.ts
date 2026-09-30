@@ -2,7 +2,7 @@ import type { AiLevel, MapSizeId } from '../data/setup.ts';
 import { AiPlayer } from '../ai/ai.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { Sim } from '../sim/index.ts';
-import { generateMap, type LandMapType } from '../sim/mapgen/generate.ts';
+import { generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import { TYPES } from '../sim/rules/registry.ts';
 import { PlayerView } from '../sim/view/playerView.ts';
 import { computeScores } from '../sim/rules/score.ts';
@@ -13,7 +13,7 @@ import { computeScores } from '../sim/rules/score.ts';
  */
 export interface MatchOptions {
   seed: number;
-  type?: LandMapType;
+  type?: GenMapType;
   size?: MapSizeId;
   levels: AiLevel[];
   minutes: number;

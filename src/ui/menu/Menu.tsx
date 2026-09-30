@@ -1,7 +1,8 @@
 import { render } from 'preact';
+import { GEN_MAP_TYPES } from '../../sim/mapgen/generate.ts';
 import { useState } from 'preact/hooks';
 import { CIVS } from '../../data/civs.ts';
-import { MAP_SIZES, type MapSizeId, type StartingResources } from '../../data/setup.ts';
+import { MAP_SIZES, MAP_TYPES, type MapSizeId, type StartingResources } from '../../data/setup.ts';
 import { AI_LEVELS, DEFAULT_SETUP, setupToQuery, type SkirmishPlayer, type SkirmishSetup } from '../../game/skirmish.ts';
 import { playerColor } from '../../render/worldRenderer.ts';
 import { SaveList } from '../saves/SaveList.tsx';
@@ -59,8 +60,9 @@ function Skirmish({ onBack }: { onBack: () => void }) {
         <label>
           Map
           <select data-testid="setup-type" value={s.type} onChange={(e) => upd({ type: (e.target as HTMLSelectElement).value as SkirmishSetup['type'] })}>
-            <option value="continental">Continental</option>
-            <option value="inland">Inland</option>
+            {GEN_MAP_TYPES.map((t) => (
+              <option value={t}>{MAP_TYPES.find((m) => m.id === t)?.name ?? t}</option>
+            ))}
           </select>
         </label>
         <label>

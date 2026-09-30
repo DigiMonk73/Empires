@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.7 · map-smallIslands, map-mediterranean (new)
+- Small Islands: a whole island per player — berries, gold, stone, woodline, gazelles, shore fish round it and a
+  deep-fish school offshore; the minimap shows the other islands and islets. Mediterranean: the sea just south
+  of the Town Center, land all round. Maps 4/5. Should-fix (M10): sandy flecks where the coast noise was
+  cleaned up; shallows are one flat colour.
+
 ## 2026-09-30 · M8.6c · harbor-battle (baked warships, fish); contact sheets
 - A blue War Galley and a red Scout Ship trade arrows: shields along the rail carry the team colour, the ram and
   oar banks read; the fishing boat is now clearly a different ship; deep-fish schools are baked (ripple rings,

@@ -11,11 +11,15 @@ import type { SimConfig } from '../world.ts';
  * Fairness: each start's resources are drawn once as polar offsets relative to the direction from the player to
  * the map centre, then applied (rotated) to every player and nudged to the nearest valid tiles.
  */
-export type LandMapType = 'continental' | 'inland';
+export type GenMapType = 'continental' | 'inland' | 'coastal' | 'mediterranean' | 'narrows' | 'smallIslands' | 'largeIslands';
+/** The generated types in setup-screen order. */
+export const GEN_MAP_TYPES: readonly GenMapType[] = ['continental', 'inland', 'coastal', 'mediterranean', 'narrows', 'smallIslands', 'largeIslands'];
+/** Water-heavy maps use the water template's resource distances (econ:8, dat maps 4, 0, 8). */
+const WATERY: ReadonlySet<GenMapType> = new Set(['narrows', 'smallIslands', 'largeIslands']);
 
 export interface MapGenOptions {
   seed: number;
-  type: LandMapType;
+  type: GenMapType;
   size: MapSizeId;
   players: { civ: string; team?: number }[];
   startingResources?: SimConfig['startingResources'];
@@ -81,72 +85,234 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   const units: { type: string; owner: number; x: number; y: number }[] = [];
   const buildings: { type: string; owner: number; tx: number; ty: number }[] = [];
 
-  // ── Terrain ────────────────────────────────────────────────────────────────────────────────────────────
-  if (o.type === 'continental') {
-    // A continent: sea around the edges with a wobbly coast and a beach band.
-    const coast = Math.max(6, Math.round(W * 0.08));
-    for (let y = 0; y < W; y++) {
-      for (let x = 0; x < W; x++) {
-        const edge = Math.min(x, y, W - 1 - x, W - 1 - y);
-        const wob = (((x * 7 + y * 13) ^ (x * y)) & 3) - 1.5;
-        if (edge + wob < coast * 0.55) set(g, x, y, 'w');
-        else if (edge + wob < coast) set(g, x, y, '~');
-        else if (edge + wob < coast + 1.2) set(g, x, y, 'b');
-      }
-    }
-  } else {
-    // Inland: a central lake ringed by beach.
-    const lakeR = W * 0.13;
-    for (let y = 0; y < W; y++) {
-      for (let x = 0; x < W; x++) {
-        const dx = x + 0.5 - mid;
-        const dy = y + 0.5 - mid;
-        const d = Math.sqrt(dx * dx + dy * dy) + ((((x * 5 + y * 11) ^ (x + y)) & 3) - 1.5) * 0.6;
-        if (d < lakeR * 0.6) set(g, x, y, 'w');
-        else if (d < lakeR) set(g, x, y, '~');
-        else if (d < lakeR + 1.2) set(g, x, y, 'b');
-      }
-    }
-  }
-  // Desert patches (~20% of land, econ:8) and dirt tracks.
-  const land = (): number => g.c.filter((ch) => isOpen(ch)).length;
-  const desertGoal = Math.round(land() * 0.18);
-  for (let placed = 0, tries = 0; placed < desertGoal && tries < 400; tries++) {
-    placed += blob(g, r, r.int(W), r.int(W), 30 + r.int(90), (ch) => ch === '.', 's').length;
-  }
-
-  // ── Start positions: evenly on a circle, random rotation; teams sit together. ─────────────────────────
-  const order = o.players.map((p, i) => ({ i, team: p.team ?? i + 1 })).sort((a, b) => a.team - b.team || a.i - b.i);
-  const rot = r.int(TRIG_STEPS);
-  const ringR = W * (o.type === 'inland' ? 0.36 : 0.32);
+  /** Island maps: every start's own island radius (resources are pulled inside it). */
+  let islandR = Infinity;
+  // ── Terrain, desert and start positions ───────────────────────────────────────────────────────────────
+  // The original two types draw terrain first and the starts after it (their seeds' maps stay as they were); the
+  // water types need the starts first — islands and the strait are laid out around them.
   const starts: [number, number][] = new Array(n);
   const facing: number[] = new Array(n); // trig step from start toward the centre
-  order.forEach((p, k) => {
-    const step = (rot + Math.floor((k * TRIG_STEPS) / n)) % TRIG_STEPS;
-    const cx = Math.floor(mid + cosStep(step) * ringR);
-    const cy = Math.floor(mid + sinStep(step) * ringR);
-    starts[p.i] = [cx - 1, cy - 1];
-    facing[p.i] = (step + TRIG_STEPS / 2) % TRIG_STEPS;
-  });
+  let rot = 0;
+  /** Evenly on a circle about (cx, cy), random rotation; teams sit together. */
+  const placeStarts = (rr: Rng, ringR: number, cx = mid, cy = mid): void => {
+    const order = o.players.map((p, i) => ({ i, team: p.team ?? i + 1 })).sort((a, b) => a.team - b.team || a.i - b.i);
+    rot = rr.int(TRIG_STEPS);
+    order.forEach((p, k) => {
+      const step = (rot + Math.floor((k * TRIG_STEPS) / n)) % TRIG_STEPS;
+      starts[p.i] = [Math.floor(cx + cosStep(step) * ringR) - 1, Math.floor(cy + sinStep(step) * ringR) - 1];
+      facing[p.i] = (step + TRIG_STEPS / 2) % TRIG_STEPS;
+    });
+  };
+  const desert = (): void => {
+    // Desert patches (~20% of land, econ:8).
+    const land = (): number => g.c.filter((ch) => isOpen(ch)).length;
+    const desertGoal = Math.round(land() * 0.18);
+    for (let placed = 0, tries = 0; placed < desertGoal && tries < 400; tries++) {
+      placed += blob(g, r, r.int(W), r.int(W), 30 + r.int(90), (ch) => ch === '.', 's').length;
+    }
+  };
+  /** Wobble for coastlines: a small hash of the tile, −1.5…1.5. */
+  const wob = (x: number, y: number): number => (((x * 7 + y * 13) ^ (x * y)) & 3) - 1.5;
+  if (o.type === 'continental' || o.type === 'inland') {
+    if (o.type === 'continental') {
+      // A continent: sea around the edges with a wobbly coast and a beach band.
+      const coast = Math.max(6, Math.round(W * 0.08));
+      for (let y = 0; y < W; y++) {
+        for (let x = 0; x < W; x++) {
+          const edge = Math.min(x, y, W - 1 - x, W - 1 - y);
+          const wb = wob(x, y);
+          if (edge + wb < coast * 0.55) set(g, x, y, 'w');
+          else if (edge + wb < coast) set(g, x, y, '~');
+          else if (edge + wb < coast + 1.2) set(g, x, y, 'b');
+        }
+      }
+    } else {
+      // Inland: a central lake ringed by beach.
+      const lakeR = W * 0.13;
+      for (let y = 0; y < W; y++) {
+        for (let x = 0; x < W; x++) {
+          const dx = x + 0.5 - mid;
+          const dy = y + 0.5 - mid;
+          const d = Math.sqrt(dx * dx + dy * dy) + ((((x * 5 + y * 11) ^ (x + y)) & 3) - 1.5) * 0.6;
+          if (d < lakeR * 0.6) set(g, x, y, 'w');
+          else if (d < lakeR) set(g, x, y, '~');
+          else if (d < lakeR + 1.2) set(g, x, y, 'b');
+        }
+      }
+    }
+    desert();
+    placeStarts(r, W * (o.type === 'inland' ? 0.36 : 0.32));
+  } else {
+    waterTerrain();
+    despeckle();
+    desert();
+  }
   // Clear the start areas (TC + a working ring): open grass.
   for (const [tx, ty] of starts) {
     for (let dy = -6; dy <= 8; dy++) for (let dx = -6; dx <= 8; dx++) if (!isWater(at(g, tx + dx, ty + dy)) && at(g, tx + dx, ty + dy) !== '#') set(g, tx + dx, ty + dy, '.');
   }
 
+  /**
+   * The coast noise leaves one-tile puddles on land and one-tile specks of land at sea: fill water pockets under 12
+   * tiles (beach) and sink land specks under 6 (shallows), so every water tile is the open sea.
+   */
+  function despeckle(): void {
+    const seen = new Uint8Array(W * W);
+    const water = (ch: string) => isWater(ch);
+    for (let i = 0; i < W * W; i++) {
+      if (seen[i]) continue;
+      const wet = water(g.c[i]!);
+      const comp: number[] = [i];
+      seen[i] = 1;
+      for (let k = 0; k < comp.length; k++) {
+        const c = comp[k]!;
+        const x = c % W;
+        const y = Math.floor(c / W);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= W) continue;
+          const j = ny * W + nx;
+          if (!seen[j] && water(g.c[j]!) === wet) {
+            seen[j] = 1;
+            comp.push(j);
+          }
+        }
+      }
+      if (wet && comp.length < 12) for (const c of comp) g.c[c] = 'b';
+      else if (!wet && comp.length < 6) for (const c of comp) g.c[c] = '~';
+    }
+  }
+
+  /**
+   * The water maps (M8.7, D40). Mediterranean: a great sea in the middle, every start on its coast. Coastal: the sea
+   * along one side of the map. Narrows: two landmasses split through the middle by a strait (no land bridge) that
+   * runs between the teams. Small / Large Islands: every player — or, on Large Islands, every team — on its own
+   * island in open sea, with a few islets between.
+   */
+  function waterTerrain(): void {
+    const rr = new Rng(o.seed ^ 0x3a7e5, STREAM.mapgen);
+    if (o.type === 'mediterranean') {
+      const seaR = W * 0.3;
+      placeStarts(rr, W * 0.39);
+      for (let y = 0; y < W; y++) {
+        for (let x = 0; x < W; x++) {
+          const d = seaR - Math.sqrt((x + 0.5 - mid) * (x + 0.5 - mid) + (y + 0.5 - mid) * (y + 0.5 - mid)) + wob(x, y) * 0.8;
+          if (d > 0) set(g, x, y, d > seaR * 0.3 ? 'w' : '~');
+          else if (d > -1.2) set(g, x, y, 'b');
+        }
+      }
+      return;
+    }
+    if (o.type === 'coastal') {
+      // The sea covers the third of the map along one side; the starts ring the middle of the land.
+      const side = rr.int(4);
+      const depth = W * 0.3;
+      const away: [number, number] = [[1, 0], [0, 1], [-1, 0], [0, -1]][side] as [number, number];
+      placeStarts(rr, W * 0.26, mid + away[0] * W * 0.15, mid + away[1] * W * 0.15);
+      for (let i = 0; i < W * W; i++) {
+        const x = i % W;
+        const y = Math.floor(i / W);
+        const e = [x, y, W - 1 - x, W - 1 - y][side]! + wob(x, y);
+        g.c[i] = e < depth * 0.6 ? 'w' : e < depth ? '~' : e < depth + 1.2 ? 'b' : '.';
+      }
+      return;
+    }
+    // Open sea; land is raised below.
+    g.c.fill('w');
+    const islands: { x: number; y: number; r: number }[] = [];
+    if (o.type === 'narrows') {
+      placeStarts(rr, W * 0.32);
+      g.c.fill('.');
+      // A strait through the middle, between the two halves of the seating order (teams sit together).
+      const theta = (rot + Math.floor(TRIG_STEPS / (2 * n))) % TRIG_STEPS;
+      const nx = -sinStep(theta);
+      const ny = cosStep(theta);
+      const half = Math.max(3, W * 0.05);
+      for (let y = 0; y < W; y++) {
+        for (let x = 0; x < W; x++) {
+          const d = half - Math.abs((x + 0.5 - mid) * nx + (y + 0.5 - mid) * ny) + wob(x, y) * 0.6;
+          if (d > half * 0.45) set(g, x, y, 'w');
+          else if (d > 0) set(g, x, y, '~');
+          else if (d > -1.2) set(g, x, y, 'b');
+        }
+      }
+      return;
+    }
+    // Islands: one per player (Small), one per team (Large; one per player when every team is one player).
+    const large = o.type === 'largeIslands';
+    placeStarts(rr, W * (large ? 0.3 : 0.32));
+    const gap = n > 1 ? 2 * W * 0.32 * sinStep(Math.floor(TRIG_STEPS / (2 * n))) : W;
+    // Each start's island is at most 40% of the way to its neighbour, so open water always separates them.
+    const ring = W * (large ? 0.3 : 0.32);
+    // …and keeps 3 tiles of sea to the map's edge (an island touching it would cut the sea in two).
+    const own = Math.min(W * (large ? 0.2 : 0.17), gap * 0.4, W / 2 - ring - 3);
+    for (const [sx, sy] of starts) islands.push({ x: sx + 1.5, y: sy + 1.5, r: own });
+    if (large) {
+      // Large Islands: teammates' islands are joined by a land bridge into one island per team.
+      const teams = new Map<number, number[]>();
+      o.players.forEach((p, i) => teams.set(p.team ?? i + 1, [...(teams.get(p.team ?? i + 1) ?? []), i]));
+      for (const members of teams.values()) {
+        for (let k = 1; k < members.length; k++) {
+          const [ax, ay] = starts[members[k - 1]!]!;
+          const [bx, by] = starts[members[k]!]!;
+          const len = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+          for (let d = 0; d <= len; d += 2) islands.push({ x: ax + 1.5 + ((bx - ax) * d) / len, y: ay + 1.5 + ((by - ay) * d) / len, r: own * 0.75 });
+        }
+      }
+    }
+    // Islets in between — one in the middle, one between each pair of neighbours — where they leave at least 3 tiles
+    // of water to every start's island (an islet must never bridge two players' islands).
+    const clear = (x: number, y: number, r: number): boolean =>
+      starts.every(([sx, sy]) => Math.sqrt((x - sx - 1.5) * (x - sx - 1.5) + (y - sy - 1.5) * (y - sy - 1.5)) > own + r + 3);
+    const islets: { x: number; y: number; r: number }[] = [{ x: mid, y: mid, r: Math.max(3, W * 0.06) }];
+    for (let k = 0; k < n && n > 1; k++) {
+      const step = (rot + Math.floor(((2 * k + 1) * TRIG_STEPS) / (2 * n))) % TRIG_STEPS;
+      islets.push({ x: mid + cosStep(step) * W * 0.36, y: mid + sinStep(step) * W * 0.36, r: Math.max(3, W * 0.045) });
+    }
+    for (const is of islets) if (clear(is.x, is.y, is.r)) islands.push(is);
+    for (let y = 0; y < W; y++) {
+      for (let x = 0; x < W; x++) {
+        let best = -Infinity;
+        for (const is of islands) best = Math.max(best, is.r - Math.sqrt((x + 0.5 - is.x) * (x + 0.5 - is.x) + (y + 0.5 - is.y) * (y + 0.5 - is.y)));
+        const d = best + wob(x, y) * 0.8;
+        if (d > 1.2) set(g, x, y, '.');
+        else if (d > 0) set(g, x, y, 'b');
+        else if (d > -3) set(g, x, y, '~');
+      }
+    }
+    islandR = own;
+  }
+
   // ── Per-player resources: one draw, applied to all (rotated). ─────────────────────────────────────────
   type Offset = { d: number; a: number; kind: string; count: number };
   const rel = (dMin: number, dMax: number, kind: string, count: number): Offset => ({ d: dMin + r.float() * (dMax - dMin), a: r.int(TRIG_STEPS), kind, count });
-  const layout: Offset[] = [
-    rel(7, 13, 'B', 6 + r.int(3)), // berries 7 ± 1 at 7–16
-    rel(10, 16, 'S', 7), // near stone
-    rel(12, 16, 'G', 8), // near gold
-    rel(21, 30, 'S', 7), // far stone
-    rel(22, 30, 'G', 8), // far gold
-    rel(15, 20, 'F', 55), // each player's own woodline (the map's other forests are extra)
-  ];
-  const gazelles = { d: 10 + r.float() * 8, a: r.int(TRIG_STEPS), n: 4 + r.int(5) };
+  // Islands pull everything inside the smallest start island (so every player gets the same).
+  const cap = <T extends { d: number }>(x: T): T => ({ ...x, d: Math.min(x.d, islandR - 3) });
+  const layout: Offset[] = (WATERY.has(o.type)
+    ? [
+        // Water template (econ:8): stone 2×7 at 10–35, gold 9 at 14–18 and 9 at 20–40, berries 7 ± 1 at 7–16 and
+        // 6 ± 1 at 18–40 — pulled in to the island.
+        rel(7, 12, 'B', 6 + r.int(3)),
+        rel(10, 16, 'S', 7),
+        rel(14, 18, 'G', 9),
+        rel(22, 28, 'S', 7), // (22+: outside everyone's 20-tile zone alike)
+        rel(22, 28, 'G', 9),
+        rel(16, 24, 'B', 6),
+        rel(12, 18, 'F', 55),
+      ]
+    : [
+        rel(7, 13, 'B', 6 + r.int(3)), // berries 7 ± 1 at 7–16
+        rel(10, 16, 'S', 7), // near stone
+        rel(12, 16, 'G', 8), // near gold
+        rel(21, 30, 'S', 7), // far stone
+        rel(22, 30, 'G', 8), // far gold
+        rel(15, 20, 'F', 55), // each player's own woodline (the map's other forests are extra)
+      ]
+  ).map(cap);
+  const gazelles = cap({ d: 10 + r.float() * 8, a: r.int(TRIG_STEPS), n: 4 + r.int(5) });
   const trees: { d: number; a: number }[] = [];
-  for (let i = 10 + r.int(6); i > 0; i--) trees.push({ d: 8 + r.float() * 14, a: r.int(TRIG_STEPS) });
+  for (let i = 10 + r.int(6); i > 0; i--) trees.push(cap({ d: 8 + r.float() * 14, a: r.int(TRIG_STEPS) }));
   const clusterOk = (x: number, y: number): boolean => {
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!isOpen(at(g, x + dx, y + dy))) return false;
     return true;
@@ -156,17 +322,30 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     const step = (facing[p]! + off.a) % TRIG_STEPS;
     return [Math.floor(tx + 1.5 + cosStep(step) * off.d), Math.floor(ty + 1.5 + sinStep(step) * off.d)];
   };
+  /**
+   * Where a start's cluster goes. The water maps keep its distance from the start (fairness) and swing it around
+   * the start until it fits on land; the land maps keep their original nudge to the nearest free tile.
+   */
+  const spotFor = (p: number, off: { d: number; a: number }, maxR: number, ok: (x: number, y: number) => boolean): [number, number] | null => {
+    const [x, y] = place(p, off);
+    if (o.type === 'continental' || o.type === 'inland') return nearestFree(g, x, y, maxR, ok);
+    for (let k = 0; k <= TRIG_STEPS / 2; k += Math.max(1, Math.floor(TRIG_STEPS / 128))) {
+      for (const sgn of k ? [1, -1] : [1]) {
+        const [px, py] = place(p, { d: off.d, a: (off.a + sgn * k + TRIG_STEPS) % TRIG_STEPS });
+        if (ok(px, py)) return [px, py];
+      }
+    }
+    return nearestFree(g, x, y, maxR, ok);
+  };
   const clusterSeeds = new Rng(o.seed ^ 0x5eed, STREAM.mapgen); // same cluster shapes for every player
   for (let p = 0; p < n; p++) {
     clusterSeeds.setState(new Rng(o.seed ^ 0x5eed, STREAM.mapgen).getState());
     for (const off of layout) {
-      const [x, y] = place(p, off);
-      const spot = nearestFree(g, x, y, 8, clusterOk);
+      const spot = spotFor(p, off, 8, clusterOk);
       if (spot) blob(g, clusterSeeds, spot[0], spot[1], off.count, isOpen, off.kind);
     }
     for (const t of trees) {
-      const [x, y] = place(p, t);
-      const spot = nearestFree(g, x, y, 4, clusterOk);
+      const spot = spotFor(p, t, 4, clusterOk);
       if (spot) set(g, spot[0], spot[1], 'T');
     }
     // The herd stands on open ground (not in the sea or a forest), like every other start resource.
@@ -175,7 +354,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
       for (let dy = -1; dy <= 3; dy++) for (let dx = -1; dx <= 3; dx++) if (!isOpen(at(g, x + dx, y + dy))) return false;
       return true;
     };
-    const [gx, gy] = nearestFree(g, hx, hy, 10, herdOk) ?? [hx, hy];
+    const [gx, gy] = spotFor(p, gazelles, 10, herdOk) ?? [hx, hy];
     for (let k = 0; k < gazelles.n; k++) units.push({ type: 'gazelle', owner: 0, x: gx + 0.5 + (k % 3) * 0.9, y: gy + 0.5 + Math.floor(k / 3) * 0.9 });
     // Town Center and three villagers at 2–4 tiles.
     const [tx, ty] = starts[p]!;
@@ -232,6 +411,36 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     k++;
   }
 
+  // Water maps (M8.7): each player's own fish — two shore fish and a deep-fish school, the nearest to the start
+  // (found the same way for everyone) — then deep fish and whales out at sea, scaled by map size (econ:8: deep
+  // fish 9–28, whales 6–15).
+  const resources: { kind: string; tx: number; ty: number }[] = [];
+  if (o.type !== 'continental' && o.type !== 'inland') {
+    const deepOk = (x: number, y: number): boolean => {
+      for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) if (at(g, x + dx, y + dy) !== '~' && at(g, x + dx, y + dy) !== 'w') return false;
+      return !resources.some((q) => Math.abs(q.tx - x) < 3 && Math.abs(q.ty - y) < 3);
+    };
+    const shoreOk = (x: number, y: number): boolean => at(g, x, y) === '~' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => isOpen(at(g, x + dx!, y + dy!)) || at(g, x + dx!, y + dy!) === 'b');
+    for (const [sx, sy] of starts) {
+      for (let k = 0; k < 2; k++) {
+        const f = nearestFree(g, sx + 1, sy + 1, 20, shoreOk);
+        if (f) set(g, f[0], f[1], 'f');
+      }
+      const d = nearestFree(g, sx + 1, sy + 1, 40, (x, y) => Math.max(Math.abs(x - sx - 1), Math.abs(y - sy - 1)) >= 8 && deepOk(x, y));
+      if (d) resources.push({ kind: 'deepFish', tx: d[0], ty: d[1] });
+    }
+    const t = (W - 72) / (250 - 72);
+    for (const [kind, count] of [['deepFish', Math.round(9 + 19 * t)], ['whale', Math.round(6 + 9 * t)]] as const) {
+      for (let k = 0, tries = 0; k < count && tries < count * 80; tries++) {
+        const x = r.int(W - 1);
+        const y = r.int(W - 1);
+        if (!deepOk(x, y) || at(g, x, y) !== 'w' || !far(x, y, 14)) continue;
+        resources.push({ kind, tx: x, ty: y });
+        k++;
+      }
+    }
+  }
+
   const ascii: string[] = [];
   for (let y = 0; y < W; y++) ascii.push(g.c.slice(y * W, (y + 1) * W).join(''));
   return {
@@ -240,7 +449,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     players: o.players.map((p) => ({ civ: p.civ, ...(p.team !== undefined ? { team: p.team } : {}) })),
     ...(o.startingResources ? { startingResources: o.startingResources } : {}),
     ...(o.revealMap ? { revealMap: true } : {}),
-    scenario: { buildings, units },
+    scenario: { buildings, units, ...(resources.length ? { resources } : {}) },
     starts,
   };
 }

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
-for (const [type, size, seed] of [['continental', 'small', 3], ['inland', 'medium', 5]] as const) {
+for (const [type, size, seed] of [['continental', 'small', 3], ['inland', 'medium', 5], ['mediterranean', 'small', 4], ['smallIslands', 'small', 6]] as const) {
   test(`random map: ${type} ${size} (seed ${seed})`, async ({ page }, info) => {
     await openGame(page, `scenario=map&type=${type}&size=${size}&seed=${seed}&fog=0`);
     await page.evaluate(() => window.__empires!.pause(true));

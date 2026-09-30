@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 ladder gate (M7 tag).
-- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; M8.6 ship art + WebP/lazy atlases done (59.5 MB); next M8.7 water maps. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
+- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; M8.1–M8.7 done (water gameplay, ship art, WebP atlases, water maps); next M8.8 AI at sea (exit gate). After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -420,9 +420,12 @@ Ships already train at the Dock and path on water (their own move class and regi
       pot that flares on attack); a foam wake astern under way on every ship; baked deep-fish schools and a
       whale. Fixed in review: oars hung like legs side-on (now near level); the wake faced down and was culled.
       Contact sheets 3/5; public/baked 59.5 MB.
-- [ ] **M8.7 Water maps.** Coastal, Mediterranean, Narrows, Small Islands (one island each), Large Islands
-      (teams share) with fair starts (shore and deep fish per player, a dock site) and setup-screen entries.
-      _Accept:_ mapgen fairness tests per type; screenshots.
+- [x] **M8.7 Water maps.** Coastal, Mediterranean, Narrows, Small Islands, Large Islands (D40) in the generator,
+      the setup screen and `?scenario=map&type=`; water template resources on Narrows/Islands; per-player shore
+      and deep fish; deep fish and whales at sea; puddle cleanup. Continental/Inland maps unchanged (AI suite
+      identical). mapgen.test.ts: 12 cases — fairness ±15% in every start's 20-tile zone, separate lands where
+      boats are needed (two on Narrows, one per player/team on Islands) with one sea reaching every shore, fish
+      near every start. Screenshots: Mediterranean, Small Islands.
 - [ ] **M8.8 AI at sea.** Dock + fishing boats where fish are near; warships to guard them and raid; transports
       to reach enemies on another island. _Accept:_ AI suite on water maps: no crashes, ≥ 90% of island games
       decided (exit gate).

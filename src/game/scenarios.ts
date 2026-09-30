@@ -1,6 +1,6 @@
 import type { SimConfig } from '../sim/index.ts';
 import { battleConfig } from '../sim/testing/battle.ts';
-import { generateMap, type LandMapType } from '../sim/mapgen/generate.ts';
+import { GEN_MAP_TYPES, generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import { MAP_SIZES, type MapSizeId } from '../data/setup.ts';
 import { setupFromQuery, skirmishConfig } from './skirmish.ts';
 import { wallLine } from '../input/wallLine.ts';
@@ -349,9 +349,9 @@ function crowd(n: number): SimConfig {
   return { seed: 3, victory: 'none', map: { w: W, h: W }, players: [{ civ: 'greek', team: 1 }, { civ: 'persian', team: 1 }], scenario: { units } };
 }
 
-/** A generated random map: ?scenario=map&type=continental|inland&size=tiny…gigantic&seed=N&players=N. */
+/** A generated random map: ?scenario=map&type=<GEN_MAP_TYPES>&size=tiny…gigantic&seed=N&players=N. */
 function randomMap(p: URLSearchParams): SimConfig {
-  const type = (p.get('type') === 'inland' ? 'inland' : 'continental') as LandMapType;
+  const type = ((GEN_MAP_TYPES as readonly string[]).includes(p.get('type') ?? '') ? p.get('type') : 'continental') as GenMapType;
   const size = (p.get('size') ?? 'small') as MapSizeId;
   const n = Math.max(2, Math.min(8, Number(p.get('players') ?? 2)));
   const civs = ['greek', 'egyptian', 'persian', 'babylonian', 'yamato', 'hittite', 'roman', 'shang'];

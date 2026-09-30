@@ -184,3 +184,15 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   when a frame of it is first drawn (all of them decoded would be 1.33 GB of GPU memory); the opening scene's
   entities, resources, sites and rubble are preloaded, anything else shows its placeholder for the moment it
   takes to load. Tests settle (animation frames until no art is loading) before screenshots.
+- **D40 — Water maps** (2026-09-30, M8.7; layouts `verify:true` — the research names the maps but not their
+  shapes). Coastal: the sea along one side (a third of the map), starts ringing the land's middle — some far
+  from the coast, as in the original. Mediterranean: a sea in the middle (radius 0.3 map), every start on its
+  coast. Narrows: two landmasses split through the middle by a strait with no land bridge, run between the two
+  halves of the seating order (teams together). Small Islands: one island per player; Large Islands: larger, and
+  teammates' islands joined by a land bridge — islands stay ≤ 40% of the way to a neighbour and 3 tiles off the
+  map edge, islets only where they leave 3 tiles of sea to every island. Narrows and the Islands use econ:8's
+  water template (gold 9 + 9, stone 2 × 7, berries 7 + 6), pulled inside the smallest island; every water map
+  gives each start two shore fish and a deep-fish school (nearest to it, found the same way for all) plus deep
+  fish and whales at sea by map size (econ:8). Clusters keep their distance from the start and swing around it
+  when the spot is wet (the land maps keep their old nudge, so their seeds' maps are unchanged). One-tile puddles
+  and specks are cleaned up.
