@@ -99,7 +99,8 @@ export interface Projectile {
 }
 
 export type Order =
-  | { k: 'move'; x: number; y: number; leader?: number }
+  /** `am`: attack-move (modern QoL) — engage enemies met on the way, then carry on. */
+  | { k: 'move'; x: number; y: number; leader?: number; am?: boolean }
   /**
    * Gather from resource node `res` (phase 0 = heading to the node, 1 = working, 2 = heading to drop site
    * `drop`). `retry` throttles searches when no node/drop site is available.

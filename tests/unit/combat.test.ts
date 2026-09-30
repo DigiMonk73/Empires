@@ -244,3 +244,79 @@ describe('auto-acquire and retaliation (mil:2)', () => {
     expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);
   });
 });
+
+describe('attack-move, splash, trample, min range (M5.6)', () => {
+  it('attack-move engages enemies met on the way, then carries on; a plain move walks past', () => {
+    const units = [0, 1, 2].map((i) => ({ type: 'clubman', owner: 1, x: 4.5, y: 10.5 + i * 0.7 }));
+    const run = (am: boolean) => {
+      const t = setup([...units, { type: 'villager', owner: 2, x: 14.5, y: 11.2 }]);
+      const ids = t.of('clubman', 1);
+      t.step(1, [{ player: 1, cmd: { t: 'move', ids, x: 26.5, y: 11.5, ...(am ? { am: true } : {}) } }]);
+      t.step(20 * 45);
+      return t;
+    };
+    const a = run(true);
+    expect(a.events.some((ev) => ev.t === 'died')).toBe(true);
+    for (const h of a.of('clubman', 1)) expect(a.e.x[a.e.slotOf(h)]).toBeGreaterThan(22); // arrived after the fight
+    const b = run(false);
+    expect(b.events.some((ev) => ev.t === 'died')).toBe(false);
+  });
+
+  it('stones splash everyone near the impact point — own units too', () => {
+    // Villagers (they don't start fights) so only the stone does damage.
+    const { of, step, e } = setup([
+      { type: 'stoneThrower', owner: 1, x: 4.5, y: 10.5 },
+      { type: 'villager', owner: 2, x: 12.5, y: 10.5 },
+      { type: 'villager', owner: 2, x: 12.5, y: 11.1 },
+      { type: 'villager', owner: 1, x: 12.9, y: 10.2 },
+      { type: 'villager', owner: 2, x: 16.5, y: 16.5 }, // far away: untouched
+    ]);
+    const [target, near, far] = of('villager', 2);
+    const [own] = of('villager', 1);
+    const hurt = (h: number) => e.slotOf(h) < 0 || e.hp[e.slotOf(h)]! < 25;
+    step(1, [{ player: 1, cmd: { t: 'act', ids: of('stoneThrower', 1), h: target! } }]);
+    step(80); // windup + flight (8 tiles at 2.7/s ≈ 3 s)
+    expect(e.slotOf(target!)).toBe(-1); // 50 melee on a 25-HP villager
+    expect(hurt(near!)).toBe(true);
+    expect(hurt(own!)).toBe(true); // friendly fire
+    expect(e.hp[e.slotOf(far!)]!).toBe(25);
+  });
+
+  it('siege cannot fire inside its minimum range', () => {
+    const { of, step, w } = setup([
+      { type: 'stoneThrower', owner: 1, x: 10.5, y: 10.5 },
+      { type: 'clubman', owner: 2, x: 11.9, y: 10.5 },
+    ]);
+    step(1, [
+      { player: 1, cmd: { t: 'act', ids: of('stoneThrower', 1), h: of('clubman', 2)[0]! } },
+      { player: 2, cmd: { t: 'stance', ids: of('clubman', 2), stand: true } },
+    ]);
+    step(60);
+    expect(w.projectiles.length).toBe(0);
+  });
+
+  it('elephant trample hits enemies beside the target, not own units', () => {
+    const { of, step, e } = setup([
+      { type: 'warElephant', owner: 1, x: 10.5, y: 10.5 },
+      { type: 'clubman', owner: 2, x: 11.4, y: 10.5 },
+      { type: 'clubman', owner: 2, x: 11.6, y: 11.3 },
+      { type: 'clubman', owner: 1, x: 11.4, y: 9.6 },
+    ]);
+    const [t1, t2] = of('clubman', 2);
+    const [own] = of('clubman', 1);
+    step(1, [
+      { player: 1, cmd: { t: 'act', ids: of('warElephant', 1), h: t1! } },
+      { player: 1, cmd: { t: 'stance', ids: [own!], stand: true } },
+      { player: 2, cmd: { t: 'stance', ids: [t1!, t2!], stand: true } },
+    ]);
+    step(12);
+    expect(e.hp[e.slotOf(t1!)]!).toBeLessThan(40);
+    expect(e.hp[e.slotOf(t2!)]!).toBeLessThan(40);
+    expect(e.hp[e.slotOf(own!)]!).toBe(40);
+  });
+
+  it('attack-move flag round-trips through the codec', () => {
+    const cmds = [{ player: 1, cmd: { t: 'move' as const, ids: [4], x: 3.5, y: 7.25, queue: true, am: true } }];
+    expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);
+  });
+});

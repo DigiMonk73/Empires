@@ -73,3 +73,33 @@ test('raid base: stable, range, tower and mounted scouts', async ({ page }, info
   await snap(page, info, 'raid-base');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('attack-move by mouse: box-select clubmen, A, click beyond the enemy camp', async ({ page }) => {
+  await openGame(page, 'scenario=raid&fog=0');
+  await page.evaluate(() => window.__empires!.pause(true));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1);
+    window.__empires!.camera.centerOn(13, 14);
+  });
+  await frames(page);
+  const club = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'clubman');
+  const pts = await Promise.all(club.map((u) => page.evaluate((h) => window.__empires!.entityScreenPos(h)!, u.h)));
+  const x0 = Math.min(...pts.map((p) => p.x)) - 20;
+  const x1 = Math.max(...pts.map((p) => p.x)) + 20;
+  const y0 = Math.min(...pts.map((p) => p.y)) - 45;
+  const y1 = Math.max(...pts.map((p) => p.y)) + 10;
+  await page.mouse.move(x0, y0);
+  await page.mouse.down();
+  await page.mouse.move(x1, y1, { steps: 5 });
+  await page.mouse.up();
+  await page.evaluate(() => window.__empires!.step(2));
+  expect((await page.evaluate(() => window.__empires!.query.selection())).length).toBe(club.length);
+  await page.keyboard.press('a');
+  const dest = await page.evaluate(() => window.__empires!.worldToScreen(22.5, 20.5));
+  await page.mouse.click(dest.x, dest.y);
+  const before = (await page.evaluate(() => window.__empires!.query.units(2))).length;
+  await page.evaluate(() => window.__empires!.step(20 * 40));
+  const after = (await page.evaluate(() => window.__empires!.query.units(2))).length;
+  expect(after).toBeLessThan(before); // they fought their way through the villagers
+  expect(pageErrors(page)).toEqual([]);
+});

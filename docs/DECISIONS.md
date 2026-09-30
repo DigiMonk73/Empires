@@ -110,3 +110,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   tiles (`verify`). A destroyed building refunds queued items but not the one in production (mil:5), replacing
   D25's full refund. The mixed unit/research queue is a modern convenience (RoR: one unit type per building, no
   research queue) — Classic mode (M12) restricts it.
+- **D28 — Attack-move and area damage** (2026-09-29, M5.6). Attack-move is a flag on move orders: the unit scans
+  like an idle one and, on finding an enemy, pushes a self-given attack in front of its march (leash rules
+  apply), then resumes. Stones (projectiles from units with blastRadius) damage every unit and building whose
+  edge lies within the radius of the impact point — own units included (mil:2) — scaled linearly from 100% at
+  the centre to 50% at the rim (`verify`: the original's falloff curve). Trample (`trample` radius) hits hostile
+  units near the melee target at 100% (friendly trample unverified → off). Siege can't fire inside minRange.

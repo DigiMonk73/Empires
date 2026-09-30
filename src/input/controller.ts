@@ -32,6 +32,8 @@ export class InputController {
   /** Command grid page and placement mode (UI state). */
   page: 'main' | 'build' = 'main';
   placing: string | null = null;
+  /** Armed by the Attack Move button (A): the next left-click on the ground issues it. */
+  targeting: 'attackMove' | null = null;
   private pointer = { x: 0, y: 0 };
   /** Buttons currently on the grid (for hotkeys); set by the HUD sync. */
   buttons: CommandButton[] = [];
@@ -65,6 +67,11 @@ export class InputController {
     if (this.placing) {
       if (e.button === 0) this.place(p, e.shiftKey);
       else if (e.button === 2) this.cancelPlacement();
+      return;
+    }
+    if (this.targeting) {
+      if (e.button === 0) this.attackMove(p, e.shiftKey);
+      this.setTargeting(null);
       return;
     }
     if (e.button === 0) {
@@ -230,6 +237,9 @@ export class InputController {
       case 'research':
         this.session.router.submit(me, { t: 'research', bld: a.bld, tech: a.tech });
         break;
+      case 'attackMove':
+        this.setTargeting('attackMove');
+        break;
       case 'stance':
         this.session.router.submit(me, { t: 'stance', ids: this.ownUnits(), stand: a.stand });
         break;
@@ -282,7 +292,8 @@ export class InputController {
   private onKey(e: KeyboardEvent): void {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === 'Escape') {
-      if (this.placing) this.cancelPlacement();
+      if (this.targeting) this.setTargeting(null);
+      else if (this.placing) this.cancelPlacement();
       else if (this.page !== 'main') {
         this.page = 'main';
         this.onUiChange?.();
@@ -312,6 +323,21 @@ export class InputController {
         this.lastGroupTap = { t: now, n };
       }
     }
+  }
+
+  private setTargeting(mode: 'attackMove' | null): void {
+    this.targeting = mode;
+    this.canvas.style.cursor = mode ? 'crosshair' : '';
+  }
+
+  /** Attack-move the selected units to the clicked ground point (they fight whatever they meet on the way). */
+  private attackMove(p: { x: number; y: number }, queue: boolean): void {
+    const w = this.camera.screenToWorld(p.x, p.y);
+    const map = this.world.map;
+    const ids = this.ownUnits();
+    if (!ids.length || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
+    this.session.router.submit(this.session.localPlayer, { t: 'move', ids, x: quantize(w.x), y: quantize(w.y), queue, am: true });
+    this.wr.addMarker(w.x, w.y, 0xff5a4a);
   }
 
   centerOnSelection(): void {

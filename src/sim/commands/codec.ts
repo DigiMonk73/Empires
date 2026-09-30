@@ -91,7 +91,7 @@ function writeCommand(w: Writer, c: Command): void {
       w.ids(c.ids);
       w.pos(c.x);
       w.pos(c.y);
-      w.uv(c.queue ? 1 : 0);
+      w.uv((c.queue ? 1 : 0) | (c.am ? 2 : 0));
       return;
     case 'stop':
       w.uv(CMD_STOP);
@@ -161,8 +161,8 @@ function readCommand(r: Reader): Command {
       const ids = r.ids();
       const x = r.pos();
       const y = r.pos();
-      const queue = r.uv() === 1;
-      return queue ? { t: 'move', ids, x, y, queue } : { t: 'move', ids, x, y };
+      const flags = r.uv();
+      return { t: 'move', ids, x, y, ...(flags & 1 ? { queue: true } : {}), ...(flags & 2 ? { am: true } : {}) };
     }
     case CMD_STOP:
       return { t: 'stop', ids: r.ids() };

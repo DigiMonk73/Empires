@@ -11,7 +11,3 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   invocation in the connector settings before M9 (menu/loading art, emblems); until then use code-made art.
 - **KI-3 · should · StartOS backup/restore unverified** — the test VM has no backup target, so the
   backup → restore round-trip (verify-on-startos §7) has not run. Needs a target on the box (user) before M6/M15.
-- **KI-4 · should · crowd jams for large units** — in the 500-unit stress run a War Elephant (radius 0.55) can sit
-  in a dense crowd against a forest edge for >5 s (0.2%, 1 unit; gate < 1%) before separation frees it. Revisit
-  with the M5.7 20v20 battle stuck gate (bigger-radius yielding / sidestep priority).
-

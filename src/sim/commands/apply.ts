@@ -97,8 +97,8 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         const leaderHandle = g ? w.ents.handleOf(g.leader) : undefined;
         slots.forEach((slot, i) => {
           const order = g
-            ? { k: 'move' as const, x: g.tx[i]!, y: g.ty[i]!, leader: leaderHandle }
-            : { k: 'move' as const, x: cmd.x, y: cmd.y };
+            ? { k: 'move' as const, x: g.tx[i]!, y: g.ty[i]!, leader: leaderHandle, ...(cmd.am ? { am: true } : {}) }
+            : { k: 'move' as const, x: cmd.x, y: cmd.y, ...(cmd.am ? { am: true } : {}) };
           const q = w.orders[slot];
           if (cmd.queue && q && q.length) q.push(order);
           else {

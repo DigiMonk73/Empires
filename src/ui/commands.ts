@@ -17,6 +17,7 @@ export type Action =
   | { kind: 'train'; bld: number; unit: string }
   | { kind: 'research'; bld: number; tech: string }
   | { kind: 'stance'; stand: boolean }
+  | { kind: 'attackMove' }
   | { kind: 'stop' };
 
 export interface CommandButton {
@@ -90,6 +91,8 @@ export function computeCommands(w: World, player: number, selected: readonly num
   // Stand Ground (the original's only stance) for fighting units; the button shows whether it is on.
   const fighters = units.filter((s) => !isVillager(w, s) && w.stats(player, e.type[s]!).atk.some((v) => v !== undefined && v > 0));
   if (fighters.length) {
+    // Attack-move (modern QoL; the original has none): A, then left-click the ground.
+    out.push({ id: 'attackMove', label: 'Attack Move', hotkey: 'A', icon: null, glyph: '»', cost: null, disabled: null, action: { kind: 'attackMove' } });
     const standing = fighters.every((s) => e.stance[s] === 1);
     out.push({
       id: 'stance',

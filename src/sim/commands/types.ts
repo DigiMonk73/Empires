@@ -4,7 +4,8 @@
  * values. Entity references are handles.
  */
 export type Command =
-  | { t: 'move'; ids: number[]; x: number; y: number; queue?: boolean }
+  /** `am`: attack-move (a modern convenience; the original has none — mil:2). */
+  | { t: 'move'; ids: number[]; x: number; y: number; queue?: boolean; am?: boolean }
   | { t: 'stop'; ids: number[] }
   /** Villagers gather resource node `res` (trees, mines, bushes, fish, carcasses). */
   | { t: 'gather'; ids: number[]; res: number; queue?: boolean }

@@ -52,7 +52,7 @@ export class OrderFuzzer {
       } else
         out.push({
           player: p,
-          cmd: { t: 'move', ids, x: quantize(r.float() * (w.map.w - 1) + 0.5), y: quantize(r.float() * (w.map.h - 1) + 0.5), queue: roll > 0.85 },
+          cmd: { t: 'move', ids, x: quantize(r.float() * (w.map.w - 1) + 0.5), y: quantize(r.float() * (w.map.h - 1) + 0.5), queue: roll > 0.85, ...(roll > 0.7 && roll < 0.78 ? { am: true } : {}) },
         });
     }
     return out;

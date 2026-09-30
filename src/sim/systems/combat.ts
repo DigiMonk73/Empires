@@ -171,11 +171,15 @@ export function targetSystem(w: World): void {
   const e = w.ents;
   const phase = w.tick % 10;
   for (let s = phase; s < e.top; s += 10) {
-    if (!e.alive[s] || e.kind[s] !== EKind.unit || w.orders[s]) continue;
+    if (!e.alive[s] || e.kind[s] !== EKind.unit) continue;
+    const head = w.orders[s]?.[0];
+    // Idle units look around; so do units on an attack-move (they stop to fight, then march on).
+    const marching = head?.k === 'move' && head.am === true;
+    if (head && !marching) continue;
     const t = TYPES[e.type[s]!]!;
     const owner = e.owner[s]!;
     const lion = owner === 0 && t.animal?.behavior === 'aggressive';
-    if (!lion && (owner === 0 || isVillager(w, s) || !mayReact(w, s))) continue;
+    if (!lion && (owner === 0 || isVillager(w, s) || t.unit?.noAutoAttack || !canAttack(w, s))) continue;
     const st = w.stats(owner, e.type[s]!);
     const reach = st.range > 0 ? st.range : t.radius + 0.25;
     const look = e.stance[s] === 1 ? reach + 0.5 : lion ? 3 : st.los;
@@ -192,7 +196,13 @@ export function targetSystem(w: World): void {
       best = j;
       bestD = d;
     });
-    if (best >= 0) startAttack(w, s, e.handleOf(best), false, true);
+    if (best < 0) continue;
+    if (marching) {
+      // Fight first, then resume the march (the move order stays queued behind the attack).
+      w.orders[s]!.unshift({ k: 'attack', h: e.handleOf(best), hunt: false, retarget: 0, windup: 0, auto: true });
+      w.paths[s] = undefined;
+      w.pathing.cancel(s);
+    } else startAttack(w, s, e.handleOf(best), false, true);
   }
 }
 
@@ -294,6 +304,15 @@ export function attackSystem(w: World): void {
       finish(w, s);
       continue;
     }
+    if (d < st.minRange) {
+      // Too close for siege to fire (min range): self-given orders give up; commanded ones wait.
+      if (o.auto) finish(w, s);
+      else {
+        w.paths[s] = [];
+        o.windup = 0;
+      }
+      continue;
+    }
     if (d <= reach) {
       w.paths[s] = [];
       w.pathing.cancel(s);
@@ -306,7 +325,13 @@ export function attackSystem(w: World): void {
       if (o.windup > 0) {
         if (--o.windup === 0) {
           if (st.missile) launch(w, s, t, st.missile, o.hunt);
-          else hit(w, s, t, damageBetween(st.atk, w.stats(e.owner[t]!, e.type[t]!).arm, building));
+          else {
+            const tx = e.x[t]!;
+            const ty = e.y[t]!;
+            hit(w, s, t, damageBetween(st.atk, w.stats(e.owner[t]!, e.type[t]!).arm, building));
+            const tr = TYPES[e.type[s]!]!.unit?.trample ?? 0;
+            if (tr > 0 && e.alive[s]) splash(w, s, e.owner[s]!, e.type[s]!, tx, ty, tr, t, false, 1);
+          }
         }
       } else if (e.timer[s]! <= 0) {
         e.timer[s] = st.reload;
@@ -336,6 +361,18 @@ export function attackSystem(w: World): void {
     const path = w.paths[s];
     const end = path && path.length ? [path[path.length - 2]!, path[path.length - 1]!] : null;
     const stale = !end || Math.abs(end[0]! - e.x[t]!) + Math.abs(end[1]! - e.y[t]!) > 1.5;
+    if (o.auto && e.stuck[s]! > 40) {
+      // Blocked for 2 s (a scrum around the target): let the next scan pick an enemy we can reach.
+      e.stuck[s] = 0;
+      finish(w, s);
+      continue;
+    }
+    if (path !== undefined && !path.length && d <= 1.5) {
+      // Arrived on (or beside) the target's tile but not touching it: a tile path can't get closer, so step
+      // straight at it (separation stops us at arm's length, inside melee reach).
+      w.paths[s] = [e.x[t]!, e.y[t]!];
+      continue;
+    }
     if ((path === undefined || (!path.length && d > reach) || (stale && ++o.retarget % 10 === 0)) && !w.pathing.pending(s)) {
       w.pathing.request(s, { k: 'point', tx: Math.floor(e.x[t]!), ty: Math.floor(e.y[t]!), x: e.x[t]!, y: e.y[t]! });
     }
@@ -385,6 +422,12 @@ export function projectileSystem(w: World): void {
       continue;
     }
     const t = e.slotOf(p.target);
+    const blast = w.stats(p.owner, p.type).blastRadius;
+    if (blast > 0) {
+      // Stones burst where they land: everyone near the impact point is hurt, own units included (mil:2).
+      splash(w, e.slotOf(p.src), p.owner, p.type, p.x1, p.y1, blast, -1, true, 0.5, p.x0, p.y0);
+      continue;
+    }
     if (t < 0) continue;
     const tt = TYPES[e.type[t]!]!;
     let on: boolean;
@@ -403,6 +446,59 @@ export function projectileSystem(w: World): void {
     hit(w, src, t, damageBetween(atk, w.stats(e.owner[t]!, e.type[t]!).arm, e.kind[t] === EKind.building), p.x0, p.y0);
   }
   list.length = k;
+}
+
+/**
+ * Area damage around (x, y) within `radius` (to each victim's edge). `friendly`: own and allied units are hit too
+ * (stones); otherwise only hostiles (trample). Damage tapers linearly to `edge` × full at the rim. `skip` is a
+ * victim already hit directly. Order is slot order — deterministic.
+ */
+export function splash(w: World, attacker: number, owner: number, type: number, x: number, y: number, radius: number, skip: number, friendly: boolean, edge: number, fromX = x, fromY = y): void {
+  const e = w.ents;
+  const atk = w.stats(owner, type).atk;
+  const victims: number[] = [];
+  const consider = (j: number): void => {
+    if (j === skip || !e.alive[j] || j === attacker) return;
+    if (!friendly && (e.owner[j] === owner || (e.owner[j] !== 0 && w.players[e.owner[j]!]!.team === w.players[owner]!.team))) return;
+    victims.push(j);
+  };
+  w.grid.forEachNear(x, y, radius + 1, consider);
+  // Buildings (not in the unit grid): scan the footprints touching the blast.
+  const x0 = Math.max(0, Math.floor(x - radius - 1));
+  const x1 = Math.min(w.map.w - 1, Math.floor(x + radius + 1));
+  const y0 = Math.max(0, Math.floor(y - radius - 1));
+  const y1 = Math.min(w.map.h - 1, Math.floor(y + radius + 1));
+  const seen: number[] = [];
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      const bh = w.map.bldAt[ty * w.map.w + tx]! - 1;
+      const b = bh >= 0 ? e.slotOf(bh) : -1;
+      if (b >= 0 && !seen.includes(b)) {
+        seen.push(b);
+        consider(b);
+      }
+    }
+  }
+  victims.sort((a, b) => a - b);
+  for (const j of victims) {
+    if (!e.alive[j]) continue;
+    const tt = TYPES[e.type[j]!]!;
+    let d: number;
+    if (e.kind[j] === EKind.building) {
+      const h = tt.size / 2;
+      const dx = Math.max(0, Math.abs(x - e.x[j]!) - h);
+      const dy = Math.max(0, Math.abs(y - e.y[j]!) - h);
+      d = Math.sqrt(dx * dx + dy * dy);
+    } else {
+      const dx = e.x[j]! - x;
+      const dy = e.y[j]! - y;
+      d = Math.max(0, Math.sqrt(dx * dx + dy * dy) - tt.radius);
+    }
+    if (d > radius) continue;
+    const k = 1 - (1 - edge) * (d / radius);
+    const dmg = damageBetween(atk, w.stats(e.owner[j]!, e.type[j]!).arm, e.kind[j] === EKind.building) * k;
+    hit(w, attacker >= 0 && e.alive[attacker] ? attacker : -1, j, dmg, fromX, fromY);
+  }
 }
 
 /** Carcasses rot away (econ:1.1: gazelle 0.3 food/s, elephant 0.2/s, …). */
