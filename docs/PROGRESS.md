@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7 exit is blocked on KI-7 (full ladder Hard > Easy 11/16 < 12/16) — asked the user: keep tuning the AI, or defer the gate to M13. Until they answer: diagnose KI-7 further (seat/civ asymmetry, massed defence). Then tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7), M8 water.
+- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — expand into tasks, then M8.1. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.

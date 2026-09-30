@@ -27,6 +27,13 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   11/16: villagers then die working 12–25 tiles out, Hard spends all its food on replacing them, never
   researches Battle Axe and reaches Bronze at 27 min (Easy 21). Tried and reverted (3-cycle rule): villagers
   retreat to the Town Center from an army (11/16, wars 2/4); gold miners farm when gold floats (10/16).
-  Next ideas: check the seat/civ/map asymmetry (Easy vs Easy on these seeds), defend with the army
-  massed at home rather than trickling, pick counters to what the enemy fields. Relaxing the gate or deferring
-  it to M13 (AI v2) is the user's call.
+  Diagnosis (second pass): the 16-game measure is dominated by start position and plan matchup, not strength.
+  Same-level mirrors on seeds 101–108 go to Player 2 in 5/8 (Easy) and 6/8 (Hard); with the same civ on both
+  sides P2 still takes 102, 103, 106, 108. Swapping the start positions flips 101, 103, 104, 106 (the map
+  decides); 102 and 108 stay with P2 wherever it starts (its rush/boom draw beats P1's). Across 32 swapped and
+  unswapped mirrors P2 wins ~20 — not a significant sim bias. Starts differ in lions within 25 tiles (P1 on 102
+  and 106) and woodline distance (106: 13 vs 7 tiles). A fourth fix (soldiers before villagers while the army
+  is under half strength) scored Hard > Easy 11/16 again and dropped Hardest > Easiest to 13 and Moderate >
+  Easiest to 11 — reverted. Each change reshuffles which seeds are won; the count barely moves.
+  Options for the user: (a) measure the ladder on more seeds (32) or small maps so one game is ~3%, not 6%;
+  (b) defer this gate to M13 (AI v2: scouting, counters, massed defence) and tag m7 now; (c) keep tuning.
