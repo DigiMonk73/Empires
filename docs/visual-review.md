@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10.6 · fog on Highland (artifacts/m10/fog.png)
+- The explored trail of three scouting villagers on a hilly map: the soft fog edge follows the hill's contour;
+  the villagers stand in their own sight. Fog 4.
+
 ## 2026-09-30 · M10.5 · fire (artifacts/m10), dust
 - Damaged buildings burn: orange flame tongues on the roof under dark smoke columns leaning downwind, more fires
   as HP falls (the 15% granary has three). First try's additive flames blew out to white blobs → normal-blended

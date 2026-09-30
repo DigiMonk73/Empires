@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M10.6 fog edges and the M10 review (screenshots, perf), then the M10 exit.
+- **Next up:** the M10 exit — review + perf, verify:full, tag m10, submodule bump + s9pk 0.10.0.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -578,7 +578,10 @@ so far.
       chariots, elephants and siege engines kick up dust as they move; a collapsing building billows dust and
       smoke for 3 s; shots landing in water and ships going down splash. A pool of soft sprites between the
       missiles and the fog; `renderStats().particles` counts them.
-- [ ] **M10.6 Fog and review.** Soft fog edges that ease in; the M10 screenshot review and perf check.
+- [x] **M10.6 Fog.** The fog overlay is a grid lifted to the drawn ground (it hugs the hills instead of floating
+      at level 0); newly seen and newly lost tiles ease over 450 ms of real time (a paused game still clears where
+      its units look — the first try used game time and left paused reveals black under the fog); with the
+      render clock frozen they snap, so screenshots stay exact.
 - _Exit:_ screenshots ≥ 4/5; perf gates met.
 
 ## M11 — Audio

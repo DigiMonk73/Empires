@@ -229,6 +229,7 @@ async function boot(): Promise<void> {
     wr.cull(tl.x, tl.y, br.x, br.y);
     // Water moves with real time; a frozen render clock (screenshots) pins it to game time.
     setWaterTime(frozen ? (session.sim.tick + alpha) / 20 : performance.now() / 1000);
+    wr.fog.snap = frozen;
     wr.update(alpha, session.localPlayer);
     selection.prune((h) => world.ents.valid(h));
     wr.drawOverlays(selection.list, session.localPlayer, alpha);
