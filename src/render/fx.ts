@@ -107,9 +107,9 @@ export class FxLayer {
       const f = Math.min(clip.frames - 1, Math.floor((age / 20) * clip.fps));
       const key = `die/${fx.dir}/${f}`;
       if (key === fx.lastKey) continue;
-      fx.lastKey = key;
       const fr = this.art!.frame(fx.model, key);
-      if (!fr) continue;
+      if (!fr) continue; // textures still loading: try again next frame
+      fx.lastKey = key;
       fx.base.texture = fr.tex;
       fx.base.anchor.set(fr.anchorX, fr.anchorY);
       fx.base.scale.set(1 / meta.scale);

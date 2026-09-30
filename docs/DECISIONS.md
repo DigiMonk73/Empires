@@ -177,3 +177,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   home and repeats. Price: 20 × (distance between the Docks in tiles) ÷ 40 — a 40-tile voyage trades one for one,
   longer ones pay more (the research has no formula). The boat waits at home while the stockpile is short; if
   the far Dock falls, the goods come back unsold. Button letters F / W / T are ours.
+- **D39 — WebP atlases, loaded on demand** (2026-09-30, M8.6b; closes KI-6). The baker encodes pages as lossy
+  WebP at quality 0.9 (Chromium's encoder; Chromium, WebKit and WKWebView all decode it) and keeps lossless PNG
+  copies in `artifacts/bake/pages/` for review tools and the calibration test: public/baked 145 → 45.5 MB, no
+  visible artifacts at 1× or close up. The game loads every model's metadata at boot but a model's textures only
+  when a frame of it is first drawn (all of them decoded would be 1.33 GB of GPU memory); the opening scene's
+  entities, resources, sites and rubble are preloaded, anything else shows its placeholder for the moment it
+  takes to load. Tests settle (animation frames until no art is loading) before screenshots.

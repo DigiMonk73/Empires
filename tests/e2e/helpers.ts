@@ -27,12 +27,15 @@ export async function snap(page: Page, info: TestInfo, name: string): Promise<st
   const file = join(SCREEN_DIR, info.project.name, `${name}.png`);
   mkdirSync(dirname(file), { recursive: true });
   await page.evaluate(() => window.__empires!.freezeRenderClock(0));
-  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await frames(page); // includes any baked art still loading (KI-6)
   await page.screenshot({ path: file });
   return file;
 }
 
-/** Wait for two rendered frames (views, fog and picking update in the frame loop). */
+/** Let the page render: a couple of animation frames, and until any baked art that came into view has loaded. */
 export async function frames(page: Page): Promise<void> {
-  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await page.evaluate(async () => {
+    if (window.__empires?.settle) await window.__empires.settle();
+    else await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
 }

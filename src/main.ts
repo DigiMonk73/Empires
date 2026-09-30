@@ -58,7 +58,15 @@ async function boot(): Promise<void> {
 
   const cameraRoot = new Container();
   app.stage.addChild(cameraRoot);
-  const art = params.get('art') === '0' ? null : await BakedArt.load();
+  // Baked art (KI-6): every model's metadata now, textures on demand — preloading only what the opening scene
+  // shows (its entities, the resources, construction sites and rubble) so the first frame is complete.
+  const present = new Set<string>();
+  for (let s = 0; s < world.ents.top; s++) {
+    if (!world.ents.alive[s]) continue;
+    const id = TYPES[world.ents.type[s]!]!.id;
+    present.add(id).add(`${id}Post`).add(`${id}Arm`);
+  }
+  const art = params.get('art') === '0' ? null : await BakedArt.load('./baked/', (id, meta) => meta.kind === 'resource' || present.has(id) || /^(site|rubble)\d$/.test(id));
   setIconArt(art);
   const wr = new WorldRenderer(app.renderer, world, art);
   session.onEvents((ev) => wr.onEvents(ev));
@@ -334,6 +342,15 @@ async function boot(): Promise<void> {
       for (let i = 0; i < n; i++) session.stepOnce();
       alpha = 1;
     },
+    settle: async () => {
+      const raf = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      for (let i = 0; i < 6; i++) {
+        await raf();
+        if (!art || !art.stats().pending) break;
+        await art.idle();
+      }
+    },
+    artStats: () => art?.stats() ?? { loaded: 0, pending: 0, known: 0 },
     resetPerf: () => {
       cpuHistory.length = 0;
     },
@@ -344,7 +361,8 @@ async function boot(): Promise<void> {
   });
   requestAnimationFrame(() => requestAnimationFrame(() => readyResolve()));
   if (params.get('smoke') === '1' && isTauri()) {
-    await runTauriSmokeTest(app, () => ({ ...renderStats() }));
+    await art?.idle(); // the WebP atlases decode in WKWebView (KI-6): the report says how many models loaded
+    await runTauriSmokeTest(app, () => ({ ...renderStats(), art: art?.stats() ?? null }));
   }
 }
 

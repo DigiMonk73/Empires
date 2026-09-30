@@ -15,11 +15,8 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   whose licence covers personal, non-commercial projects only (see `assets/LICENSES.md`). Fine for this build;
   before any public or commercial release, re-record them (the user's own voice, or a CC0/CC-BY TTS voice such
   as a permissively licensed Piper model) with `tools/voices.ts`.
-- **KI-6 · must (next: M8.6b) · baked art size** — 145 MB after M8.6a (civilian ships +28 MB); was 115 MB after M7.4 (72 models, ~11,000 frames; the
-  elephants, chariots and villager are 5–6 MB each) against the M9 budget of 150 MB, and every atlas loads at
-  boot. Plan (PLAN risk list): WebP atlases from the baker (Chromium canvas encode; WKWebView and WebKit decode
-  WebP), load only the models a match can use (its civs' trees), and a size line in the verify summary.
-  Do before M9's art completion adds four architecture sets.
+- **KI-6 · closed (M8.6b, D39)** — baked art was 145 MB and all of it loaded at boot (1.33 GB decoded): now WebP
+  (45.5 MB) with textures loaded on first use.
 - **KI-7 · must · M7 exit blocked: full AI ladder Hard > Easy 11/16 (gate 12/16, D33)** — verify:full at the
   M7 exit is green except this. Held-out seeds 101–108: Hard loses 4–5 games, almost all as Player 1 (Greek)
   against an Easy (Egyptian) boom. Diagnosis (seed 107): Hard lost 42 villagers to Easy's 1 — 30 of them sent

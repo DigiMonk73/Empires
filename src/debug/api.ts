@@ -62,6 +62,10 @@ export interface EmpiresDebugApi {
   freezeRenderClock(t: number): void;
   /** Clear the frame-time history (perf tests). */
   resetPerf(): void;
+  /** Let rendering settle: animation frames until no baked art is still loading (screenshots, KI-6). */
+  settle(): Promise<void>;
+  /** Baked models with textures resident / loading / known. */
+  artStats(): { loaded: number; pending: number; known: number };
 }
 
 export interface RenderStats {

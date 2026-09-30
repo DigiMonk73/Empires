@@ -8,12 +8,14 @@ declare global {
     __bake?: {
       version: number;
       list(): string[];
-      bake(id: string): { meta: AtlasMeta; pages: string[]; contact: string; ms: number; renderer: string };
+      /** `pages`: WebP for the game; `pngs`: the same pages lossless, for review tools and calibration. */
+      bake(id: string): { meta: AtlasMeta; pages: string[]; pngs: string[]; contact: string; ms: number; renderer: string };
     };
   }
 }
 
 let baker: Baker | null = null;
+const WEBP_QUALITY = 0.9;
 
 window.__bake = {
   version: BAKER_VERSION,
@@ -29,7 +31,10 @@ window.__bake = {
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     return {
       meta,
-      pages: pages.map((p) => p.toDataURL('image/png')),
+      // Lossy WebP at 0.9 (KI-6): a fifth of the PNG size; the shipped atlases decode in Chromium, WebKit and
+      // WKWebView alike.
+      pages: pages.map((p) => p.toDataURL('image/webp', WEBP_QUALITY)),
+      pngs: pages.map((p) => p.toDataURL('image/png')),
       contact,
       ms: performance.now() - t0,
       renderer: String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER)),

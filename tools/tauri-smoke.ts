@@ -26,7 +26,7 @@ child.on('close', (code) => {
   }
   const report = JSON.parse(line.slice('SMOKE_REPORT '.length));
   writeFileSync('artifacts/tauri/smoke.json', JSON.stringify(report, null, 2));
-  const summary = `tauri smoke ${report.ok ? 'ok' : 'FAILED'}: ${report.glRenderer} · render avg ${Number(report.renderMsAvg).toFixed(3)} ms · p95 ${Number(report.renderMsP95).toFixed(2)} ms · luma sd ${Number(report.lumaSd).toFixed(1)}`;
+  const summary = `tauri smoke ${report.ok ? 'ok' : 'FAILED'}: ${report.glRenderer} · render avg ${Number(report.renderMsAvg).toFixed(3)} ms · p95 ${Number(report.renderMsP95).toFixed(2)} ms · luma sd ${Number(report.lumaSd).toFixed(1)} · art ${report.art ? `${report.art.loaded}/${report.art.known} models` : 'none'}`;
   console.log(summary);
   process.exit(code === 0 && report.ok ? 0 : 1);
 });

@@ -14,7 +14,8 @@ if (!model || !out) {
   process.exit(2);
 }
 const meta = JSON.parse(readFileSync(`public/baked/${model}.json`, 'utf8')) as AtlasMeta;
-const pages = meta.pages.map((p) => PNG.sync.read(readFileSync(`public/baked/${p}`)));
+// Lossless copies of the shipped WebP pages (tools/bake/cli.ts writes them to artifacts/bake/pages/).
+const pages = meta.pages.map((p) => PNG.sync.read(readFileSync(`artifacts/bake/pages/${p.replace(/\.webp$/, '.png')}`)));
 const clips = clipArg && clipArg !== 'all' ? clipArg.split(',') : Object.keys(meta.clips);
 const facings = (facingArg ?? '1,5').split(',').map(Number);
 const k = Number(kArg ?? 2);

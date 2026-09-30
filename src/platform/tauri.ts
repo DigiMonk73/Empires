@@ -43,7 +43,8 @@ export async function runTauriSmokeTest(app: Application, extra: () => Record<st
       lumaSd,
       userAgent: navigator.userAgent,
     });
-    report.ok = lumaSd > 2 && report.backend === 'webgl';
+    const art = report.art as { loaded: number } | null | undefined;
+    report.ok = lumaSd > 2 && report.backend === 'webgl' && (!art || art.loaded > 0);
   } catch (e) {
     report.error = String(e);
   }

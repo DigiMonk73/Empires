@@ -18,7 +18,7 @@ interface Frame {
 
 function load(id: string): { frame: Frame; png: PNG } {
   const meta = JSON.parse(readFileSync(`public/baked/${id}.json`, 'utf8'));
-  const png = PNG.sync.read(readFileSync(`public/baked/${meta.pages[0]}`));
+  const png = PNG.sync.read(readFileSync(`artifacts/bake/pages/${meta.pages[0].replace(/\.webp$/, '.png')}`)); // lossless copy
   return { frame: meta.frames.v0 as Frame, png };
 }
 

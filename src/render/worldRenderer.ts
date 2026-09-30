@@ -28,6 +28,8 @@ interface EntityView {
   type: number;
   /** Wall segments: the level's art id ('mediumWall') and the arm sprites toward joined neighbours. */
   wall?: { level: string; arms: Sprite[]; mask: number };
+  /** Drawn with placeholder shapes while its baked art was missing or still loading (KI-6): rebuilt when art arrives. */
+  placeholder?: number;
 }
 
 /** The 8 neighbour directions in the arm variants' order (d·45° from +x toward +y). */
@@ -189,7 +191,7 @@ export class WorldRenderer {
         sp = new Sprite(cf.tex);
         sp.anchor.set(cf.anchorX, cf.anchorY);
         sp.scale.set(1 / animal!.scale);
-      } else if (baked) {
+      } else if (baked && this.art!.frame(def.id, `v${Math.floor(v * baked.variants) % baked.variants}`)) {
         const f = this.art!.frame(def.id, `v${Math.floor(v * baked.variants) % baked.variants}`)!;
         sp = new Sprite(f.tex);
         sp.anchor.set(f.anchorX, f.anchorY);
@@ -293,7 +295,7 @@ export class WorldRenderer {
       root.addChild(team);
     }
     this.objectLayer.addChild(root);
-    return { handle: e.handleOf(slot), root, base, team, model: null, building: null, site: null, lastKey: '', type: e.type[slot]! };
+    return { handle: e.handleOf(slot), root, base, team, model: null, building: null, site: null, lastKey: '', type: e.type[slot]!, placeholder: this.art?.version ?? 0 };
   }
 
   /** Pick the baked frame for a unit from its activity, facing and time in activity. */
@@ -315,9 +317,9 @@ export class WorldRenderer {
     if (hitAt !== undefined && this.onClipHit && v.root.visible && f === Math.floor(hitAt * clip.frames) && !v.lastKey.endsWith(`/${f}`)) {
       this.onClipHit(clipName, e.x[slot]!, e.y[slot]!);
     }
-    v.lastKey = key;
     const fr = this.art!.frame(v.model!, key);
-    if (!fr) return;
+    if (!fr) return; // textures still loading: try again next frame
+    v.lastKey = key;
     v.base.texture = fr.tex;
     v.base.anchor.set(fr.anchorX, fr.anchorY);
     v.base.scale.set(1 / meta.scale);
@@ -439,12 +441,12 @@ export class WorldRenderer {
     }
     v.base.alpha = built ? 1 : 0.35 + 0.65 * e.build[s]!;
     if (mask === v.wall!.mask) return;
+    const id = `${v.wall!.level}Arm`;
+    const meta = this.art!.meta(id);
+    if (!meta || !this.art!.frame(id, 'v0')) return; // arms still loading: try again next frame
     v.wall!.mask = mask;
     for (const a of v.wall!.arms) a.destroy();
     v.wall!.arms = [];
-    const id = `${v.wall!.level}Arm`;
-    const meta = this.art!.meta(id);
-    if (!meta) return;
     DIRS8.forEach(([dx, dy], d) => {
       if (!(mask & (1 << d))) return;
       const f = this.art!.frame(id, `v${d}`);
@@ -474,9 +476,9 @@ export class WorldRenderer {
     const stage = e.build[s]! >= 1 ? BUILD_STAGES : Math.floor(e.build[s]! * BUILD_STAGES);
     const key = `v${variant}:${stage}`;
     if (key === v.lastKey) return;
-    v.lastKey = key;
     const f: ArtFrame | null = this.art!.frame(id, `v${variant}`);
-    if (!f) return;
+    if (!f) return; // still loading
+    v.lastKey = key;
     const k = stage / BUILD_STAGES;
     this.showFrame(v.base, f, meta.scale, k);
     if (v.team) {
@@ -510,7 +512,9 @@ export class WorldRenderer {
     for (let s = 0; s < Math.max(e.top, this.views.length); s++) {
       let v = this.views[s];
       const alive = s < e.top && e.alive[s] === 1;
-      if (v && (!alive || v.handle !== e.handleOf(s) || v.type !== e.type[s])) {
+      // Rebuild on death, reuse of the slot, research changing the type, or baked art arriving for a placeholder.
+      const artArrived = v?.placeholder !== undefined && !!this.art && v.placeholder !== this.art.version;
+      if (v && (!alive || v.handle !== e.handleOf(s) || v.type !== e.type[s] || artArrived)) {
         v.root.destroy({ children: true });
         this.views[s] = v = undefined;
       }

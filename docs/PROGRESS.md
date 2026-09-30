@@ -16,8 +16,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; next M8.6b WebP + lazy atlases (KI-6: 145 MB of 150), then warship art. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
+- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 ladder gate (M7 tag).
+- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; M8.6b WebP + lazy atlases (45.5 MB, textures on demand) done; next M8.6c warship art. After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -410,9 +410,10 @@ Ships already train at the Dock and path on water (their own move class and regi
       extruded hull pinched fore and aft on the water line, a thin foam ring, braced square sails with a team
       stripe (square-on sails vanish side-on), team strakes; clips idle bob / walk heel / die list-and-settle.
       Drawn 1.5× their collision circle. Contact sheets 3/5. Budget: +28 MB → public/baked 145 MB of M9's 150.
-- [ ] **M8.6b WebP + lazy atlases (KI-6).** Before any more art: WebP atlases from the baker, load only the models a
-      match can use, a size line in the verify summary. _Accept:_ baked assets ≤ 60% of today's; boot and e2e
-      unchanged; the Tauri smoke test (WKWebView) decodes them.
+- [x] **M8.6b WebP + lazy atlases (KI-6).** Lossy WebP pages (q 0.9) with lossless PNG copies for tools:
+      public/baked 145 → 45.5 MB (31%); every model's metadata at boot, textures on first use (all decoded would be
+      1.33 GB of GPU memory; the smoke scene needs 25 of 83 models); placeholders rebuild when art arrives; tests
+      settle before screenshots (e2e 57 → 40 s). Tauri smoke: WKWebView decodes them. Bake prints the size (D39).
 - [ ] **M8.6c Warship art.** Scout Ship → War Galley → Trireme (oar banks that sweep), Catapult Trireme →
       Juggernaught (deck engine with the siege clip's `hit` marker), Fire Galley (bow fire pot); deep fish and
       whale sprites; wakes. _Accept:_ contact sheets ≥ 3/5; `?scenario=harbor&battle=1` screenshots.

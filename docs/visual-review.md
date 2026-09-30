@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.6b · all scenes (WebP atlases, lazy textures)
+- Every scene re-shot on lossy WebP atlases: ≤ 0.16% px change anywhere but the drifting menu; art-closeup
+  checked by eye — clean edges, true team colours, no blotching. No placeholder caught in any shot (tests settle
+  until on-demand art has loaded).
+
 ## 2026-09-30 · M8.6a · harbor-fishing, trade, ferry-aboard (baked ships); contact sheets
 - Baked fishing boats (net boom out, team-striped braced sail), trade boats and transports replace the shared
   placeholder. Fixed in review: a thick white foam ring read as a lifebuoy (now a thin pale waterline); square

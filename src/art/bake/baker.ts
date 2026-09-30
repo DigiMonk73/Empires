@@ -16,7 +16,7 @@ export const SS = 4;
 const PITCH = (30 * Math.PI) / 180;
 /** Direction toward the sun: from the viewer's upper-left, so shadows fall toward screen right/down (+x). */
 export const SUN_DIR = new THREE.Vector3(-0.6, 0.86, -0.2).normalize();
-export const BAKER_VERSION = 1;
+export const BAKER_VERSION = 2; // 2: WebP pages (KI-6)
 
 export interface FrameMeta {
   p: number;
@@ -35,6 +35,8 @@ export interface AtlasMeta {
   scale: number;
   bakerVersion: number;
   pages: string[];
+  /** Page sizes in pixels, so HUD icons can be cut from a page without loading it as a texture (KI-6). */
+  pageSizes: { w: number; h: number }[];
   facings: number;
   variants: number;
   clips: Record<string, { frames: number; fps: number; loop: boolean; markers?: Record<string, number> }>;
@@ -224,7 +226,8 @@ export class Baker {
       kind: def.kind,
       scale: BAKE_SCALE,
       bakerVersion: BAKER_VERSION,
-      pages: pages.map((_, i) => `${def.id}-${i}.png`),
+      pages: pages.map((_, i) => `${def.id}-${i}.webp`),
+      pageSizes: pages.map((c) => ({ w: c.width, h: c.height })),
       facings: def.facings,
       variants,
       clips: Object.fromEntries(Object.entries(clips).map(([k, c]) => [k, { frames: c.frames, fps: c.fps, loop: c.loop, ...(c.markers ? { markers: c.markers } : {}) }])),
