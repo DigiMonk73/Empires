@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.4 · Babylonian contact sheets (13 buildings × ages); verify shots ≤ 0.11% (re-bake only)
+- Babylonian set: mudhif reed vaults and reed ricks (Stone); buttressed mudbrick under stepped merlons (Tool);
+  brick with a blue rosette frieze, arched doors and bull-capital porticoes (Bronze); blue glazed walls with
+  yellow lions and gilded merlons (Iron). The ziggurat temple and the four-terrace Wonder with hanging gardens
+  read at a glance. Must-fix fixed: terrace tops and Iron shed roofs were solid glaze; the stairs were turned the
+  wrong way and buried in the terraces (now solid flights climbing the +X faces). Buildings 3.5–4.
+
 ## 2026-09-30 · M9.3 · Egyptian contact sheets; siege-volley, ai-base (0.3–0.6%)
 - Each building type now reads by shape: the Market is a stall square round a covered hall, the Archery Range a
   long open gallery with targets, the Stable a stall lean-to over a fenced paddock, the Siege Workshop a tall open

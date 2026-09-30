@@ -3,11 +3,12 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1–M9.3 done: Academy, alligator, architecture kits + Egyptian set, distinct building shapes). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.3 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion in progress (M9.1–M9.4 done: Academy, alligator, architecture kits, Egyptian and Babylonian sets, distinct building shapes). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.4 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
-  get the Egyptian kit (`arch/`, D43), the other sets follow in M9.4–M9.6. Review tools:
+  get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit; Asian and Roman follow in
+  M9.5–M9.6. Review tools:
   `node tools/frames.ts <model> out.png` (contact sheets), `node tools/gallery.ts <civs> <ages>` (every
   building + animals, `?scenario=gallery&civ=…`, after `npx vite build`) → `artifacts/gallery/`.
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
@@ -18,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9.4 Babylonian kit (drafted in `arch/babylonian.ts`, not registered yet), then Asian and Roman.
+- **Next up:** M9.5 Asian and M9.6 Roman kits (drafted in `arch/asian.ts`, `arch/roman.ts`, not registered yet).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -494,8 +495,11 @@ Macedonian, Palmyran, Roman.
       Siege Workshop is an open engine shed, the Archery Range a long shooting gallery with the bowyer's house,
       the Stable a stall lean-to over a paddock and trough, the Market a stall square round a covered hall, the
       Barracks an L of halls round a drill yard. Egyptian sheds: reed mat → palm logs → stone slab and cornice.
-- [ ] **M9.4 Babylonian set.** Glazed blue brick with yellow bands, crenellated parapets, stepped terraces,
-      lion reliefs, arched gates; a ziggurat Wonder.
+- [x] **M9.4 Babylonian set** (`arch/babylonian.ts`: Babylonian, Hittite, Persian). Stone: barrel-vaulted reed
+      houses (mudhif) and reed ricks; Tool: buttressed mudbrick under stepped merlons, cedar beam ends; Bronze:
+      baked brick with a blue glazed rosette frieze, arched doors, Persian bull-capital columns; Iron: blue glazed
+      walls with striding lions and gilded merlons. Stela → lion landmark; a ziggurat temple; a four-terrace
+      ziggurat Wonder with hanging gardens and a triple stair.
 - [ ] **M9.5 Asian set.** Timber frames, red lacquer, curved tiled roofs with upturned eaves, stone bases,
       lanterns; a pagoda Wonder.
 - [ ] **M9.6 Roman set.** Terracotta roofs, arcades, brick and concrete, marble porticoes, domes; a domed
