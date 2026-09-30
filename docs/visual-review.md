@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M7.10 · victory, victory-results
+- AI change only: the menu→victory game plays out differently (P1 34 kills / 11 lost). Results table renders
+  as before. No visual change.
+
 ## 2026-09-30 · M7.9 · tech-tree (new); top bar in every shot
 - Greek tree: buildings across with baked icons, ages down; done items gold with ✓, later dimmed, missing
   struck through on red. Reads well. UI 4. The ~0.12% change in every other shot is the new Tech Tree button.

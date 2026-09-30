@@ -19,6 +19,8 @@ const ARMY: Record<Plan, number[]> = { rush: [0, 6, 14, 18, 22], boom: [0, 3, 8,
 /** Soldiers ready before a wave goes out. */
 const WAVE: Record<Plan, number[]> = { rush: [0, 6, 8, 10, 12], boom: [0, 99, 99, 12, 14] };
 const NON_MILITARY = new Set(['villager', 'fishingShip', 'tradeShip', 'transport', 'priest']);
+/** Raiders villagers can gang up on three to one: slow enough to catch, weak enough to beat (not riders, not hoplites). */
+const MILITIA_VS = new Set(['infantry', 'footArcher', 'slinger', 'siege']);
 /** Line upgrades the AI researches, per building, in order (econ:5). */
 const LINE_TECHS: [string, string[]][] = [
   ['barracks', ['battleAxe', 'shortSword', 'broadSword', 'longSword', 'legion']],
@@ -246,12 +248,16 @@ export class MilitaryBrain {
 
   /**
    * An enemy army near our buildings: every soldier turns out to meet it, and while we're outnumbered the
-   * villagers working near a raider gang up on it (three to one beats a clubman; the original AI did the same).
+   * villagers working near a lone raider on foot gang up on it (three to one beats a clubman; the original AI did
+   * the same). Against a group they keep working — sent at an army they only fed it (M7 exit: Hard lost 30
+   * villagers that way to an Easy army).
    */
   private defend(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: SeenEntity[]): boolean {
     if (!threats.length) return false;
     if (army.length < threats.length) {
       for (const t of threats) {
+        // Only on a lone raider on foot: villagers sent at an army (or chasing riders) just feed it.
+        if (!MILITIA_VS.has(t.cls) || threats.some((o) => o !== t && dist(o.x, o.y, t.x, t.y) < 5)) continue;
         const near = s.villagers
           .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6)
           .sort((a, b) => dist(a.x, a.y, t.x, t.y) - dist(b.x, b.y, t.x, t.y) || a.h - b.h)

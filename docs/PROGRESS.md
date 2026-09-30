@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7 exit — verify:full, tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7). Then M8 water.
+- **Next up:** M7 exit is blocked on KI-7 (full ladder Hard > Easy 11/16 < 12/16) — asked the user: keep tuning the AI, or defer the gate to M13. Until they answer: diagnose KI-7 further (seat/civ asymmetry, massed defence). Then tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7), M8 water.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -367,6 +367,11 @@ each one *work* in the sim, UI and AI, one slice at a time.
       (researched / built / trainable now), now, later, missing. A unit is missing when anything in its line,
       the tech that upgrades to it, or a tech it needs is missing (Greeks: Long Swordsman, Composite Bowman).
       Opens from the top bar (live progress) and from skirmish setup (the chosen civ). Tests: 4 unit + e2e.
+- [x] **M7.10 AI militia on lone raiders only.** Found at the M7 exit: villagers ganged up on whole armies
+      (Hard lost 30 villagers that way to an Easy army). Now only on a lone raider on foot (not riders, not
+      hoplites). Full ladder: Hardest > Easiest 14→16/16, wars decided 3→4/4; Hard > Easy still 11/16.
+- [ ] **M7 exit** `[blocked — KI-7]` verify:full green except the full ladder Hard > Easy 11/16 (gate 12/16).
+      Everything else green: Docker both arches 183 MB, Tauri smoke, 81 e2e, clean bake. Tag m7 + s9pk 0.7.0 wait.
 - _Exit:_ 100% research rows implemented + tested; AI uses Iron-age units.
 
 ## M8 — Water

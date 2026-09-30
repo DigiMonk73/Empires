@@ -20,3 +20,13 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   boot. Plan (PLAN risk list): WebP atlases from the baker (Chromium canvas encode; WKWebView and WebKit decode
   WebP), load only the models a match can use (its civs' trees), and a size line in the verify summary.
   Do before M9's art completion adds four architecture sets.
+- **KI-7 · must · M7 exit blocked: full AI ladder Hard > Easy 11/16 (gate 12/16, D33)** — verify:full at the
+  M7 exit is green except this. Held-out seeds 101–108: Hard loses 4–5 games, almost all as Player 1 (Greek)
+  against an Easy (Egyptian) boom. Diagnosis (seed 107): Hard lost 42 villagers to Easy's 1 — 30 of them sent
+  as militia at an army. Fixed in M7.10 (Hardest > Easiest 14→16/16, wars decided 3→4/4) but Hard > Easy stayed
+  11/16: villagers then die working 12–25 tiles out, Hard spends all its food on replacing them, never
+  researches Battle Axe and reaches Bronze at 27 min (Easy 21). Tried and reverted (3-cycle rule): villagers
+  retreat to the Town Center from an army (11/16, wars 2/4); gold miners farm when gold floats (10/16).
+  Next ideas: check the seat/civ/map asymmetry (Easy vs Easy on these seeds), defend with the army
+  massed at home rather than trickling, pick counters to what the enemy fields. Relaxing the gate or deferring
+  it to M13 (AI v2) is the user's call.
