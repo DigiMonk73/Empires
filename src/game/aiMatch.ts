@@ -67,7 +67,7 @@ const isVillager = (w: Sim['world'], s: number): boolean => TYPES[w.ents.type[s]
 
 export function runMatch(o: MatchOptions): MatchResult {
   const civs = o.civs ?? ['greek', 'egyptian', 'persian', 'babylonian', 'hittite', 'yamato', 'shang', 'roman'];
-  const cfg = generateMap({ seed: o.seed, type: o.type ?? 'continental', size: o.size ?? 'tiny', players: o.levels.map((_, i) => ({ civ: civs[i % civs.length]! })), ...(o.victory === 'standard' ? { relics: true } : {}) });
+  const cfg = generateMap({ seed: o.seed, type: o.type ?? 'continental', size: o.size ?? 'tiny', players: o.levels.map((_, i) => ({ civ: civs[i % civs.length]! })), ...(o.victory === 'standard' ? { relics: true } : {}), ...(o.startingAge === 'nomad' ? { nomad: true } : {}) });
   const sim = Sim.create({ ...cfg, ...(o.victory ? { victory: o.victory } : {}), ...(o.startingAge ? { startingAge: o.startingAge } : {}), ...(o.popCap ? { popCap: o.popCap } : {}), players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
   const w = sim.world;
   const n = o.levels.length;

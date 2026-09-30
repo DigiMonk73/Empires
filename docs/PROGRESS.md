@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** water AI 39/48 held out (gate 44, D56); KI-9/KI-10/KI-11 closed (D58, D59), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** Nomad start, then the M14 exit (verify:full — water is the one gate still failing, 39/48 held out).
+- **Next up:** the water AI (39/48 held out, gate 44) — the one gate before the M14 exit (verify:full, tag, package 0.14.0).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -844,7 +844,8 @@ of island/Narrows games decided in 2 h (11/12).
       (Iron starts filled 50 with 44 villagers and never had a wave). 32 late-start games (Tool/Bronze/Iron/
       Post-Iron × 8, Hard vs Moderate): 31 decided in 60 min, idle ≤ 1.1%, Hard 20/31, no crashes (was: Iron
       starts 3/8 undecided, idle ~30%). Default games unchanged (every rule keys on the starting age).
-      Open: KI-10, Nomad.
+      _Nomad (D60):_ the lobby's starting ages include Nomad — no Town Centers, 3 villagers; the AI founds one first.
+      16 AI games: all founded in 2 min, 14/16 decided.
       _D58 (the user's choice on KI-9/KI-11):_ 1v1s judged decided within 60 min on 24 held-out seeds; hills on; the
       predator fix applied; the AI's population logic reads the game's limit (50 was hard-coded — a 25 limit
       re-opened the M13.4 age deadlock). Full suite: wars 21/24; ladder all pass but Hard > Moderate 44/64 (48);

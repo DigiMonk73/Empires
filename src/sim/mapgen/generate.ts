@@ -37,6 +37,8 @@ export interface MapGenOptions {
   relics?: boolean;
   /** Place alligators even while GATORS_ON is off (tests, `?scenario=map&gators=1`). */
   alligators?: boolean;
+  /** Nomad start (D60): no Town Centers — the three villagers stand where it would be. */
+  nomad?: boolean;
 }
 
 interface Grid {
@@ -525,7 +527,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     for (let k = 0; k < gazelles.n; k++) units.push({ type: 'gazelle', owner: 0, x: gx + 0.5 + (k % 3) * 0.9, y: gy + 0.5 + Math.floor(k / 3) * 0.9 });
     // Town Center and three villagers at 2–4 tiles.
     const [tx, ty] = starts[p]!;
-    buildings.push({ type: 'townCenter', owner: p + 1, tx, ty });
+    if (!o.nomad) buildings.push({ type: 'townCenter', owner: p + 1, tx, ty });
     const vs: [number, number][] = [[tx + 3.6, ty + 1.2], [tx + 3.9, ty + 2.4], [tx + 1.3, ty + 3.8]];
     for (const [vx, vy] of vs) units.push({ type: 'villager', owner: p + 1, x: vx, y: vy });
   }

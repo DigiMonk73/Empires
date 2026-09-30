@@ -52,15 +52,16 @@ export const VICTORY = { countdownYears: 2000, secondsPerYear: 0.5, artifacts: 5
  * FAN): a later age starts with the age advances researched; Post-Iron with every technology the civilization
  * has. Nomad (no Town Center) is not offered yet — D53.
  */
-export type StartingAge = 'default' | 'tool' | 'bronze' | 'iron' | 'postIron';
+export type StartingAge = 'default' | 'nomad' | 'tool' | 'bronze' | 'iron' | 'postIron';
 export const STARTING_AGES: readonly { id: StartingAge; name: string; techs: readonly string[] }[] = [
   { id: 'default', name: 'Default', techs: [] },
+  { id: 'nomad', name: 'Nomad', techs: [] }, // no Town Center: the villagers found one (D60)
   { id: 'tool', name: 'Tool Age', techs: ['toolAge'] },
   { id: 'bronze', name: 'Bronze Age', techs: ['toolAge', 'bronzeAge'] },
   { id: 'iron', name: 'Iron Age', techs: ['toolAge', 'bronzeAge', 'ironAge'] },
   { id: 'postIron', name: 'Post-Iron Age', techs: ['toolAge', 'bronzeAge', 'ironAge'] },
 ];
-export const STARTING_AGES_SRC = { src: 'econ:7', note: 'Post-Iron = Iron Age with every tech researched (FAN)', verify: true, decision: 'D53' } as const;
+export const STARTING_AGES_SRC = { src: 'econ:7', note: 'Post-Iron = Iron Age with every tech researched (FAN); Nomad keeps 3 villagers (fandom: 1)', verify: true, decision: 'D53' } as const;
 
 /** Score and Time Limit victories (econ:7): the lobby's choices are ours (D53) — the research gives none. */
 export const SCORE_TARGETS: readonly number[] = [250, 500, 750, 1000, 1500];

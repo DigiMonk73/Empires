@@ -162,6 +162,7 @@ export class AiPlayer {
     const s = this.snapshot(v, me);
     const cmds: Command[] = [];
     s.woodReserve = this.naval.woodReserve(s);
+    if (this.found(s, cmds)) return cmds;
     this.diplomacy.update(s, this.player, cmds);
     this.explore(s, cmds);
     this.predators(s, cmds);
@@ -288,6 +289,24 @@ export class AiPlayer {
   }
 
   /** Foundations nobody is building (builder killed or pulled away): send the nearest villager back. */
+  /**
+   * A Nomad start (D60): no Town Center — every villager founds one where they stand, before anything else.
+   * Returns true while there is none standing.
+   */
+  private found(s: Snapshot, cmds: Command[]): boolean {
+    if (s.tc || !s.villagers.length) return false;
+    const site = s.buildings.find((b) => b.type === 'townCenter');
+    if (!site) {
+      const x = s.villagers.reduce((a, u) => a + u.x, 0) / s.villagers.length;
+      const y = s.villagers.reduce((a, u) => a + u.y, 0) / s.villagers.length;
+      this.build(s, cmds, 'townCenter', x, y, 0, 8, s.villagers.length);
+      return true;
+    }
+    const idle = s.villagers.filter((u) => !s.busy.has(u.h) && !(u.order === 'build' && u.target === site.h));
+    if (idle.length) cmds.push({ t: 'construct', ids: idle.map((u) => u.h), h: site.h });
+    return true;
+  }
+
   private finishFoundations(s: Snapshot, cmds: Command[]): void {
     for (const b of s.buildings) {
       if (b.done || b.kind === 'farm' || s.villagers.some((u) => u.order === 'build' && u.target === b.h)) continue;

@@ -5,6 +5,8 @@ import { CIV_BY_ID, TECHS } from '../../src/data/index.ts';
 import { TYPES } from '../../src/sim/rules/registry.ts';
 import { DEFAULT_SETUP, setupFromQuery, setupToQuery, skirmishConfig } from '../../src/game/skirmish.ts';
 import { clockRows, winLine } from '../../src/ui/clocks.ts';
+import { AiPlayer } from '../../src/ai/ai.ts';
+import { PlayerView } from '../../src/sim/view/playerView.ts';
 
 /** Two players: player 1 with four villagers, player 2 with one (so player 1 leads on score). */
 function game(extra: Partial<SimConfig>) {
@@ -86,5 +88,17 @@ describe('setup options (M14.3, econ:7)', () => {
     // Unknown values fall back to the defaults.
     const bad = setupFromQuery(new URLSearchParams('scenario=skirmish&win=bogus&age=stone&pop=33&target=7'));
     expect([bad.victory, bad.startingAge, bad.popCap, bad.scoreTarget]).toEqual(['standard', 'default', 50, 1000]);
+  });
+
+  it('Nomad (D60): no Town Centers, three villagers each; a computer founds one within two minutes', () => {
+    const cfg = skirmishConfig({ ...DEFAULT_SETUP, startingAge: 'nomad', players: [{ civ: 'greek', team: 1, controller: 'moderate' }, { civ: 'persian', team: 2, controller: 'moderate' }] });
+    expect(cfg.scenario!.buildings!.filter((b) => b.type === 'townCenter')).toEqual([]);
+    expect(cfg.scenario!.units!.filter((u) => u.type === 'villager' && u.owner === 1).length).toBe(3);
+    const sim = Sim.create(cfg);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(sim.world, 1);
+    const hasTc = () => view.ownBuildings().some((b) => b.type === 'townCenter' && b.done);
+    for (let t = 0; t < 20 * 120 && !hasTc(); t++) sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+    expect(hasTc()).toBe(true);
   });
 });

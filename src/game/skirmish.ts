@@ -118,6 +118,7 @@ export function skirmishConfig(s: SkirmishSetup): SimConfig {
     startingResources: s.resources,
     revealMap: s.reveal,
     relics: s.victory === 'standard',
+    nomad: s.startingAge === 'nomad',
   });
   return {
     ...map,

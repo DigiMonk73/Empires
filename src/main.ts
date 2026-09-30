@@ -130,7 +130,12 @@ async function boot(): Promise<void> {
     camera.setZoom(loaded.camera.zoom);
     camera.centerOnWorld(loaded.camera.x, loaded.camera.y);
   } else if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 1);
-  else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
+  else {
+    // A Nomad start (D60): no Town Center yet — look at our villagers.
+    const u = findFirst(world, 1, 'villager');
+    if (u >= 0) camera.centerOnWorld(world.ents.x[u]!, world.ents.y[u]!);
+    else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
+  }
   camera.apply();
 
   installUiTextures();

@@ -368,3 +368,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   minutes with 11 idle soldiers waiting for a wave it had no room to train), and a Dock the army can walk to is not
   "across the water" (a won continental war waited 10 minutes for transports). Full suite with alligators: 1v1 wars
   23/24, Hard > Moderate 49/64, every ladder pairing passes; water held out 39/48 as without them. `GATORS_ON` on.
+- **D60 — Nomad start** (2026-09-30, M14.6; econ:7 "Nomad: no Town Center. Fandom says you get 1 villager
+  (unverified)"). A starting-age choice in the lobby: no Town Centers; each player keeps the usual 3 villagers where
+  the Town Center would have stood (fandom's single villager is the unverified alternative — one lion would end the
+  game at minute one) and the usual stockpile, whose 200 wood pays for the first Town Center (60 s, any spot; a
+  second still needs a Government Center). The camera opens on your villagers. A computer founds its Town Center
+  where its villagers stand before anything else, every villager building. 16 AI Nomad games (Hard vs Moderate):
+  Town Centers up in the first two minutes, Tool Age ~12 min, 14/16 decided in 60 min.
