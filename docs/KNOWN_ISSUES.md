@@ -17,7 +17,8 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   as a permissively licensed Piper model) with `tools/voices.ts`.
 - **KI-6 · closed (M8.6b, D39)** — baked art was 145 MB and all of it loaded at boot (1.33 GB decoded): now WebP
   (45.5 MB) with textures loaded on first use.
-- **KI-7 · must · M7 exit blocked: full AI ladder Hard > Easy 11/16 (gate 12/16, D33)** — verify:full at the
+- **KI-7 · moved to M13 · Hard > Easy on the full AI ladder** — 46/64 (72%) on 32 maps (D41), below 75%; tagged m7
+  on the other two pairings, gate returns in M13. History: — verify:full at the
   M7 exit is green except this. Held-out seeds 101–108: Hard loses 4–5 games, almost all as Player 1 (Greek)
   against an Easy (Egyptian) boom. Diagnosis (seed 107): Hard lost 42 villagers to Easy's 1 — 30 of them sent
   as militia at an army. Fixed in M7.10 (Hardest > Easiest 14→16/16, wars decided 3→4/4) but Hard > Easy stayed

@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish **done** (tag `m6`, s9pk 0.6.0 80 MB, verified on the StartOS VM). Next: M7 full land tech tree. M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
-- **Last green commit:** m6 (verify ~70 s incl. AI suite + ladder; verify:full ~255 s: Docker 89.5 MB, Tauri, s9pk).
+- **Milestone:** M7 Full land tech tree **done** (tag `m7`; Hard > Easy ladder pairing deferred to M13 — D41). M8 Water in progress: M8.1–M8.7 and M8.8a–b done. M6 done (tag `m6`, s9pk 0.6.0 verified on the StartOS VM).
+- **Last green commit:** M8.8b (verify ~100 s); verify:full at the M7 exit ~515 s (Docker both arches 183 MB, Tauri, s9pk; full ladder now 32 maps, ~280 s).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
   sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Baked gazelle/elephant/lion, clubman/axeman/slinger/bowman, scout (horse rig), Archery Range, Stable,
@@ -16,8 +16,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 ladder gate (M7 tag).
-- **Next up:** M7 tag waits on the user's KI-7 call (the 16-game ladder is noise-bound: start position and plan matchup decide half of mirror games; options in KI-7). Meanwhile: M8 water — M8.1–M8.5 and M8.6a (civilian ship art) done; M8.1–M8.7 done (water gameplay, ship art, WebP atlases, water maps); M8.8a AI naval economy done; next M8.8b AI warships, then transports and the water AI suite (exit gate). After the call: tag m7, submodule bump + s9pk 0.7.0 (no VM check at M7).
+- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13).
+- **Next up:** M8.8c AI transports (invade across water), then M8.8d water AI suite (exit gate ≥ 90% island games decided); then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -370,8 +370,9 @@ each one *work* in the sim, UI and AI, one slice at a time.
 - [x] **M7.10 AI militia on lone raiders only.** Found at the M7 exit: villagers ganged up on whole armies
       (Hard lost 30 villagers that way to an Easy army). Now only on a lone raider on foot (not riders, not
       hoplites). Full ladder: Hardest > Easiest 14→16/16, wars decided 3→4/4; Hard > Easy still 11/16.
-- [ ] **M7 exit** `[blocked — KI-7]` verify:full green except the full ladder Hard > Easy 11/16 (gate 12/16).
-      Everything else green: Docker both arches 183 MB, Tauri smoke, 81 e2e, clean bake. Tag m7 + s9pk 0.7.0 wait.
+- [x] **M7 exit** Tagged `m7` on a7991b9 (2026-09-30). verify:full green except the ladder; the user chose to
+      measure it on 32 maps (D41): Hardest > Easiest 55/64, Moderate > Easiest 56/64, Hard > Easy 46/64 (72%,
+      reported, gated again in M13 — KI-7). 0.7.0 package skipped; next package 0.8.0 at the M8 exit.
 - _Exit:_ 100% research rows implemented + tested; AI uses Iron-age units.
 
 ## M8 — Water
@@ -467,6 +468,7 @@ Ships already train at the Dock and path on water (their own move class and regi
 
 ## M13 — AI v2 ladder
 - 5 levels; civ strategies; defense/walls/towers; micro; priests; siege; relic/ruin/wonder play.
+- Hard > Easy ≥ 75% on the 32-map ladder (46/64 at M7 — KI-7, D41); remove it from `DEFERRED` in ai-suite.
 - _Exit:_ Done-definition AI gates.
 
 ## M14 — Rules completeness

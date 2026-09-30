@@ -201,3 +201,7 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   than 6%, so start position and the rush/boom draw — which decided half of the 8-seed mirrors (KI-7) — stop
   deciding the gate. The threshold is unchanged (the stronger level wins ≥ 75%). If Hard > Easy still falls
   short on 32 maps, that pairing's gate moves to M13 (AI v2) and m7 is tagged on the other two.
+  _Result (2026-09-30, M7 code at a7991b9):_ Hardest > Easiest 55/64 (86%), Moderate > Easiest 56/64 (88%),
+  Hard > Easy 46/64 (72%). With 64 games the shortfall is real, so as agreed the Hard > Easy pairing is reported
+  but not gated until M13 (AI v2), and m7 was tagged on the other two. The 0.7.0 StartOS package is skipped: M8
+  is nearly done, so the next package is 0.8.0 at the M8 exit.
