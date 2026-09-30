@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M12.6 · help, credits, scores-paused (new); all 130 re-shot (self-hosted fonts)
+- The designed fonts arrive: Cinzel's capitals in titles, the top bar, the age and headings; Alegreya for text,
+  menus and messages. Readable at every size used; the tech tree's small labels stay clear. Help: a two-column
+  list (gold Cinzel terms, Alegreya prose) with a How to play / Keys switch; Credits the same layout. In game:
+  the score list and F11 line at the upper right in player colours, the S button in the minimap corner, a large
+  "Paused" in Cinzel with the hint beneath. UI 4.
+
 ## 2026-09-30 · M12.5 · saves-server (new), options (Autosave row)
 - Save dialog: This device / Server tabs under the title (the chosen one lit), the server's list and the name
   field as before. Options gain an Autosave toggle between Start speed and Hotkeys. The saved-at column shows the

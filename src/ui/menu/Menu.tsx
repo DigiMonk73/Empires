@@ -14,6 +14,7 @@ import { Emblem } from '../emblems.tsx';
 import { VolumeControls } from '../options/VolumeControls.tsx';
 import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
 import { gameSettings } from '../settings.ts';
+import { Credits, Help } from './HelpCredits.tsx';
 import './menu.css';
 
 /**
@@ -25,7 +26,7 @@ const cap = (s: string): string => s[0]!.toUpperCase() + s.slice(1);
 const SIZES = Object.keys(MAP_SIZES) as MapSizeId[];
 const RESOURCES: StartingResources[] = ['default', 'medium', 'high', 'deathmatch'];
 
-function MainMenu({ onSkirmish, onLoad, onOptions }: { onSkirmish: () => void; onLoad: () => void; onOptions: () => void }) {
+function MainMenu({ onSkirmish, onLoad, onOptions, onHelp, onCredits }: { onSkirmish: () => void; onLoad: () => void; onOptions: () => void; onHelp: () => void; onCredits: () => void }) {
   return (
     <div class="menu-main" data-testid="main-menu">
       <h1 class="menu-title">Empires</h1>
@@ -39,6 +40,12 @@ function MainMenu({ onSkirmish, onLoad, onOptions }: { onSkirmish: () => void; o
         </button>
         <button data-testid="menu-options" onClick={onOptions}>
           Options
+        </button>
+        <button data-testid="menu-help" onClick={onHelp}>
+          Help
+        </button>
+        <button data-testid="menu-credits" onClick={onCredits}>
+          Credits
         </button>
       </div>
     </div>
@@ -213,12 +220,22 @@ function Options({ onBack }: { onBack: () => void }) {
 }
 
 function Menu() {
-  const [screen, setScreen] = useState<'main' | 'skirmish' | 'load' | 'options'>('main');
+  const [screen, setScreen] = useState<'main' | 'skirmish' | 'load' | 'options' | 'help' | 'credits'>('main');
   const back = () => setScreen('main');
   return (
     <div class="menu">
-      {screen === 'main' && <MainMenu onSkirmish={() => setScreen('skirmish')} onLoad={() => setScreen('load')} onOptions={() => setScreen('options')} />}
+      {screen === 'main' && (
+        <MainMenu
+          onSkirmish={() => setScreen('skirmish')}
+          onLoad={() => setScreen('load')}
+          onOptions={() => setScreen('options')}
+          onHelp={() => setScreen('help')}
+          onCredits={() => setScreen('credits')}
+        />
+      )}
       {screen === 'options' && <Options onBack={back} />}
+      {screen === 'help' && <Help onBack={back} />}
+      {screen === 'credits' && <Credits onBack={back} />}
       {screen === 'skirmish' && <Skirmish onBack={back} />}
       {screen === 'load' && <SaveList mode="load" onLoad={(id, where) => (location.search = loadQuery(id, new URLSearchParams(location.search), where))} onClose={back} />}
     </div>

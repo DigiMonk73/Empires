@@ -610,3 +610,75 @@
 .graph-legend .graph-ages {
   color: #cdb487;
 }
+
+/* Score list, F11 line, pause banner (M12.6). */
+.scoreboard {
+  position: absolute;
+  top: 44px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-shadow: 0 0 3px #000, 1px 1px 1px #000, -1px -1px 1px #000;
+}
+.time-line {
+  color: #efe2c0;
+  margin-bottom: 4px;
+}
+.score-row {
+  display: flex;
+  gap: 14px;
+  filter: brightness(1.35);
+}
+.score-row.defeated {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.score-total {
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.score-btn {
+  pointer-events: auto;
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: #f4e6c8;
+  background: #3a2d1e;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.score-btn.on {
+  background: #8a6a2e;
+  border-color: #e0b45a;
+}
+.paused-banner {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 44px;
+  letter-spacing: 6px;
+  color: #f2d27a;
+  text-shadow: 0 2px 10px #000, 0 0 3px #000;
+}
+.paused-banner span {
+  display: block;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-align: center;
+  color: #efe2c0;
+}

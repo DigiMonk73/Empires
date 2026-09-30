@@ -214,3 +214,47 @@
 .vol-row button {
   justify-self: start;
 }
+
+/* Help and Credits (M12.6). */
+.help-panel,
+.credits-panel {
+  width: min(880px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+.help-tabs {
+  display: flex;
+  gap: 6px;
+  margin: -6px 0 12px;
+}
+.menu .help-tabs button.small.on {
+  background: #8a6a2e;
+  border-color: #e0b45a;
+}
+.help-body {
+  overflow: auto;
+  min-height: 0;
+}
+.help-how {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 10px 18px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.help-how dt {
+  font-family: 'Cinzel', Georgia, serif;
+  color: #f2d27a;
+  text-align: right;
+}
+.help-how dd {
+  margin: 0;
+  color: #efe2c0;
+}
+.credits-lead {
+  font-size: 17px;
+  color: #e8d6a8;
+  margin: -6px 0 16px;
+}

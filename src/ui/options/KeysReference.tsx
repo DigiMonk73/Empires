@@ -18,11 +18,15 @@ const GENERAL: [string, string][] = [
   ['Esc', 'Cancel · back · deselect'],
   ['Arrows · edge', 'Scroll'],
   ['+ / −', 'Game speed'],
+  ['F3 · Pause', 'Pause / resume'],
+  ['F4 · S', 'Score list'],
+  ['F11', 'Time, speed and population'],
   ['F10', 'Menu (pauses)'],
   ['F1', 'This list'],
 ];
 
-export function KeysReference({ onClose }: { onClose: () => void }) {
+/** The keys for the chosen layout (the F1 overlay and the main menu's Help). */
+export function KeysContent() {
   const s = gameSettings.value;
   const extra: [string, string][] = [];
   if (s.qol.shiftQueue) extra.push(['Shift + right-click', 'Add the order to the queue']);
@@ -30,59 +34,65 @@ export function KeysReference({ onClose }: { onClose: () => void }) {
   if (s.qol.zoom) extra.push(['Wheel', 'Zoom']);
   if (s.qol.rally) extra.push(['Right-click (building)', 'Rally point']);
   return (
-    <div class="gameover" data-testid="keys" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div class="gameover-panel keys-panel">
-        <div class="gameover-title small">Keys</div>
-        <div class="keys-cols">
+    <div class="keys-cols">
+      <table class="keys-table">
+        {[...GENERAL, ...extra].map(([k, what]) => (
+          <tr>
+            <th>{k}</th>
+            <td>{what}</td>
+          </tr>
+        ))}
+      </table>
+      {s.hotkeys === 'grid' ? (
+        <div class="keys-grid" data-testid="keys-grid">
+          <p>Command buttons take the key of their place in the grid:</p>
+          <div class="keys-grid-cells">
+            {GRID_KEYS.map((k) => (
+              <span>{k}</span>
+            ))}
+          </div>
+          <p>Villagers: the first button opens the build menu. Esc goes back.</p>
+        </div>
+      ) : (
+        <div class="keys-classic" data-testid="keys-classic">
           <table class="keys-table">
-            {[...GENERAL, ...extra].map(([k, what]) => (
+            <tr>
+              <th colSpan={2}>Villager: B, then</th>
+            </tr>
+            {Object.entries(BUILD_KEYS).map(([id, k]) => (
               <tr>
                 <th>{k}</th>
-                <td>{what}</td>
+                <td>{BUILDING_BY_ID.get(id)?.name ?? id}</td>
+              </tr>
+            ))}
+            <tr>
+              <th>R · S</th>
+              <td>Repair · Stop</td>
+            </tr>
+          </table>
+          <table class="keys-table">
+            <tr>
+              <th colSpan={2}>Train (building selected)</th>
+            </tr>
+            {Object.entries(TRAIN_KEYS).map(([id, k]) => (
+              <tr>
+                <th>{k}</th>
+                <td>{UNIT_BY_ID.get(id)?.name ?? id}</td>
               </tr>
             ))}
           </table>
-          {s.hotkeys === 'grid' ? (
-            <div class="keys-grid" data-testid="keys-grid">
-              <p>Command buttons take the key of their place in the grid:</p>
-              <div class="keys-grid-cells">
-                {GRID_KEYS.map((k) => (
-                  <span>{k}</span>
-                ))}
-              </div>
-              <p>Villagers: the first button opens the build menu. Esc goes back.</p>
-            </div>
-          ) : (
-            <div class="keys-classic" data-testid="keys-classic">
-              <table class="keys-table">
-                <tr>
-                  <th colSpan={2}>Villager: B, then</th>
-                </tr>
-                {Object.entries(BUILD_KEYS).map(([id, k]) => (
-                  <tr>
-                    <th>{k}</th>
-                    <td>{BUILDING_BY_ID.get(id)?.name ?? id}</td>
-                  </tr>
-                ))}
-                <tr>
-                  <th>R · S</th>
-                  <td>Repair · Stop</td>
-                </tr>
-              </table>
-              <table class="keys-table">
-                <tr>
-                  <th colSpan={2}>Train (building selected)</th>
-                </tr>
-                {Object.entries(TRAIN_KEYS).map(([id, k]) => (
-                  <tr>
-                    <th>{k}</th>
-                    <td>{UNIT_BY_ID.get(id)?.name ?? id}</td>
-                  </tr>
-                ))}
-              </table>
-            </div>
-          )}
         </div>
+      )}
+    </div>
+  );
+}
+
+export function KeysReference({ onClose }: { onClose: () => void }) {
+  return (
+    <div class="gameover" data-testid="keys" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div class="gameover-panel keys-panel">
+        <div class="gameover-title small">Keys</div>
+        <KeysContent />
         <div class="gameover-buttons">
           <button data-testid="keys-close" onClick={onClose}>
             Close

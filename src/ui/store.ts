@@ -46,6 +46,12 @@ export const hud = {
   optionsOpen: signal(false),
   /** The Diplomacy dialog's contents while it is open (M12.3; refreshed with the HUD). */
   diplomacy: signal<DiploView | null>(null),
+  /** The score list at the upper right (F4 or the S button, M12.6): null while hidden. */
+  scores: signal<{ player: number; name: string; color: string; total: number; defeated: boolean }[] | null>(null),
+  /** F11: time, game speed and population under the top bar. */
+  timeLine: signal(false),
+  /** Paused with F3 / Pause (not by a menu). */
+  userPaused: signal(false),
   /** The keyboard reference (F1). */
   keysOpen: signal(false),
   /** Which selected unit the status box shows when the selection grid is off (Tab cycles). */
@@ -87,6 +93,7 @@ export const hudActions: {
   setStance(to: number, stance: number): void;
   setAlliedVictory(on: boolean): void;
   tribute(to: number, res: number, amount: number): void;
+  toggleScores(): void;
   /** Center the camera on a world point (a message's location). */
   jumpTo(x: number, y: number): void;
   showResults(): void;
@@ -114,6 +121,7 @@ export const hudActions: {
   cancelQueue: () => {},
   nextIdle: () => {},
   jumpTo: () => {},
+  toggleScores: () => {},
   showDiplomacy: () => {},
   setStance: () => {},
   setAlliedVictory: () => {},

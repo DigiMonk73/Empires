@@ -4,7 +4,7 @@ import { RESOURCE_KINDS, TYPES } from './sim/rules/registry.ts';
 import { GameSession } from './game/session.ts';
 import { SCENARIOS } from './game/scenarios.ts';
 import { Camera } from './render/camera.ts';
-import { WorldRenderer } from './render/worldRenderer.ts';
+import { WorldRenderer, playerColor } from './render/worldRenderer.ts';
 import { installDebugApi, type RenderStats, type UnitInfo } from './debug/api.ts';
 import { isTauri, runTauriSmokeTest } from './platform/tauri.ts';
 import { InputController } from './input/controller.ts';
@@ -18,6 +18,7 @@ import { idleVillagers, syncHud } from './ui/sync.ts';
 import { Notifier, notes } from './ui/notify.ts';
 import { diplomacyView } from './ui/diplomacy.ts';
 import { TimelineRecorder } from './game/timeline.ts';
+import { computeScores } from './sim/rules/score.ts';
 import { applyHotkeys, gameSettings, SPEEDS } from './ui/settings.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
@@ -33,6 +34,7 @@ import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { AudioHooks } from './audio/hooks.ts';
+import './ui/fonts.css';
 import { AUTOSAVE_ID, AUTOSAVE_TICKS, loadQuery, loadSession, saveSession, type SavedGame } from './game/saveGame.ts';
 import { saves } from './platform/saves.ts';
 import { serverSaves } from './platform/serverSaves.ts';
@@ -155,7 +157,7 @@ async function boot(): Promise<void> {
     hud.saveDialog.value = null;
     hud.optionsOpen.value = false;
     hud.saveName.value = `${kind} — ${formatClock(world.tick)}`;
-    session.paused = open;
+    session.paused = open || hud.userPaused.value;
   };
   const snapshot = (id: string, name: string): SavedGame => {
     const vc = camera.viewCenter();
@@ -200,6 +202,17 @@ async function boot(): Promise<void> {
   // The post-game graphs (M12.4): sampled every 30 s of game time, carried in saves.
   const timeline = new TimelineRecorder(world, loaded?.timeline);
   session.onTick(() => timeline.onTick());
+  const scoreList = () =>
+    computeScores(world).map((sc) => ({
+      player: sc.player,
+      name: sc.player === session.localPlayer ? 'You' : `Player ${sc.player}`,
+      color: `#${playerColor(sc.player).toString(16).padStart(6, '0')}`,
+      total: sc.total,
+      defeated: world.players[sc.player]!.defeated !== null,
+    }));
+  hudActions.toggleScores = () => {
+    hud.scores.value = hud.scores.value ? null : scoreList();
+  };
   hudActions.showResults = () => {
     hud.timeline.value = timeline.finish();
     hud.results.value = buildResults(world);
@@ -250,7 +263,7 @@ async function boot(): Promise<void> {
   let keysSeen = false;
   effect(() => {
     const open = hud.keysOpen.value;
-    if (keysSeen && !hud.menuOpen.peek()) session.paused = open;
+    if (keysSeen && !hud.menuOpen.peek()) session.paused = open || hud.userPaused.peek();
     keysSeen = true;
   });
   window.addEventListener('keydown', (e) => {
@@ -266,6 +279,23 @@ async function boot(): Promise<void> {
       return;
     }
     if (hud.menuOpen.value) return;
+    // F3 / Pause: pause (research §5); F4: the score list; F11: time, speed and population.
+    if (e.key === 'F3' || e.key === 'Pause') {
+      e.preventDefault();
+      hud.userPaused.value = !hud.userPaused.value;
+      session.paused = hud.userPaused.value;
+      return;
+    }
+    if (e.key === 'F4') {
+      e.preventDefault();
+      hudActions.toggleScores();
+      return;
+    }
+    if (e.key === 'F11') {
+      e.preventDefault();
+      hud.timeLine.value = !hud.timeLine.value;
+      return;
+    }
     // Space: go to the selection; H: the Town Center (research §5).
     if (e.key === ' ') {
       e.preventDefault();
@@ -347,6 +377,7 @@ async function boot(): Promise<void> {
       syncHud(world, session.localPlayer, selection.list);
       notifier?.update();
       if (hud.diplomacy.value) hud.diplomacy.value = diplomacyView(world, session.localPlayer);
+      if (hud.scores.value && hudTick % 10 === 0) hud.scores.value = scoreList(); // once a second
       refreshCommands();
     }
     frameMs = t.deltaMS;
@@ -468,6 +499,7 @@ async function boot(): Promise<void> {
       alpha = 1;
     },
     settle: async () => {
+      await document.fonts.ready; // screenshots show the real fonts, not the fallback
       const raf = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
       for (let i = 0; i < 6; i++) {
         await raf();

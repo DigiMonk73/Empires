@@ -5,6 +5,7 @@ original game (D14).
 
 | Asset | Path | Origin | Terms |
 | --- | --- | --- | --- |
+| Fonts: Cinzel (titles), Alegreya (text) | `src/ui/fonts/Cinzel.ttf`, `src/ui/fonts/Alegreya.ttf` (variable, all weights) | Google Fonts repository (`github.com/google/fonts`, `ofl/cinzel`, `ofl/alegreya`), fetched 2026-09-30 (M12.6). Cinzel © The Cinzel Project Authors (Natanael Gama); Alegreya © The Alegreya Project Authors (Huerta Tipográfica) | SIL Open Font License 1.1 — licence texts in `assets/fonts/Cinzel-OFL.txt`, `assets/fonts/Alegreya-OFL.txt` |
 | Icon / brand mark | `assets/brand/icon.svg`, `public/favicon.svg` | Drawn in code for this project | Project's own |
 | Unit, building, resource and terrain sprites | `public/baked/` | Modelled in code (`src/art/`) and baked by `tools/bake/cli.ts` | Project's own |
 | Sound effects | none on disk — synthesised at runtime by `src/audio/synth.ts` (`node tools/sfx.ts` writes copies to `artifacts/` for listening) | Procedural synthesis | Project's own |

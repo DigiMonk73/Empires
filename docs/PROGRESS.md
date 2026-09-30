@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M12 UI & QoL in progress (M12.1–5 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M12 UI & QoL: all tasks done (M12.1–6); exit pending. M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m11 (verify ~127 s without a re-bake); verify:full at the M11 exit 1123 s (audio check, Docker both arches 126 MB, Tauri smoke render avg 1.9 ms, s9pk, 428 unit + 103 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M12.6 Help, Credits, scores (M12.1–5 done), then the M12 exit (verify:full, tag, s9pk 0.12.0 with README/instructions for server saves).
+- **Next up:** M12 exit — verify:full, tag m12, empires-startos 0.12.0 (README/instructions: server saves in the data volume, options, diplomacy), then M13 AI v2.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -679,8 +679,15 @@ fog-aware hooks, a mute toggle. No music.
       `saves-server.spec` (server save → load, tick and hash equal; autosave at 05:00 then 10:00 in one slot).
       Fixed on the way: re-clicking the current tab emptied the list; an autosave on a sampling tick
       duplicated the timeline point (sampling is now once per tick).
-- [ ] **M12.6 Menus: Help, Credits, scores.** Help (controls, hotkeys, rules summary), Credits (fonts, voices,
-      tools — `assets/LICENSES.md`), the F4 score list and F11 clock/speed/population toggles in game.
+- [x] **M12.6 Menus: Help, Credits, scores.** Main menu **Help** (How to play: goal, gather, build, advance,
+      fight, diplomacy — each checked against the rules; Keys: the chosen layout's list, `KeysContent` shared with
+      F1) and **Credits** (made in code; macOS voices; fonts; libraries; sourced rules). In game: the **score
+      list** (F4 or the S button by the minimap, as in RoR; once a second; defeated players struck through),
+      **F11** time · speed · population line, **F3 / Pause** pauses with a banner (menus and the keys list keep
+      it). Fonts: D14's Cinzel and Alegreya were never shipped (players got a system fallback) — now self-hosted
+      from Google Fonts (OFL 1.1, bundled by Vite with relative hashed URLs; `serve.mjs` serves and gzips .ttf;
+      screenshots wait for `document.fonts.ready`), licences in `assets/fonts/` and `assets/LICENSES.md` — every
+      screenshot changed once. e2e `help.spec` (Help/Credits, fonts loaded; scores, F11, F3 pause holds ticks).
 - _Exit:_ ≥ 40 e2e scenarios green in both browsers.
 
 ## M13 — AI v2 ladder

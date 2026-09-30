@@ -21,7 +21,7 @@ const dataDir = args.get('data') ?? process.env.DATA_DIR ?? '';
 const savesDir = dataDir ? join(resolve(dataDir), 'saves') : '';
 
 /** Text types worth compressing on the fly (the baked metadata is ~2 MB of JSON). */
-const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.txt', '.map']);
+const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.txt', '.map', '.ttf']);
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -41,6 +41,7 @@ const MIME = {
   '.mp3': 'audio/mpeg',
   '.woff2': 'font/woff2',
   '.woff': 'font/woff',
+  '.ttf': 'font/ttf',
   '.txt': 'text/plain; charset=utf-8',
   '.wasm': 'application/wasm',
 };

@@ -63,6 +63,37 @@ function TopBar() {
   );
 }
 
+/** The score list (F4 / S, M12.6) and the F11 line (time, speed, population) at the upper right. */
+function ScoreBoard() {
+  const list = hud.scores.value;
+  const line = hud.timeLine.value;
+  if (!list && !line) return null;
+  return (
+    <div class="scoreboard" data-testid="scoreboard">
+      {line && (
+        <div class="time-line" data-testid="time-line">
+          {hud.clock.value} · {hud.speed.value.toFixed(1)}× · Pop {hud.pop.value}/{hud.popCap.value}
+        </div>
+      )}
+      {list?.map((r) => (
+        <div class={`score-row${r.defeated ? ' defeated' : ''}`} data-testid={`score-${r.player}`} style={{ color: r.color }}>
+          <span class="score-name">{r.name}</span>
+          <span class="score-total">{r.total}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PausedBanner() {
+  if (!hud.userPaused.value || hud.menuOpen.value) return null;
+  return (
+    <div class="paused-banner" data-testid="paused">
+      Paused <span>(F3 to resume)</span>
+    </div>
+  );
+}
+
 /** Messages at the upper left (M12.1); a placed one jumps the camera there when clicked. */
 function Messages() {
   const list = notes.value;
@@ -437,6 +468,8 @@ export function Hud() {
       <Results />
       <TopBar />
       <Messages />
+      <ScoreBoard />
+      <PausedBanner />
       <div class="hud-bottom" data-testid="bottom-panel">
         <div class="panel sel-panel">{sel.length === 0 ? <div class="sel-empty" /> : sel.length === 1 ? <SinglePanel s={sel[0]!} /> : gameSettings.value.qol.selectionGrid ? <MultiPanel list={sel} /> : <FocusPanel list={sel} />}</div>
         <div class="panel cmd-panel">
@@ -444,6 +477,9 @@ export function Hud() {
         </div>
         <div class="panel minimap-panel">
           <div id="minimap-slot" data-testid="minimap" />
+          <button class={`score-btn${hud.scores.value ? ' on' : ''}`} data-testid="score-btn" title="Score list (F4)" onClick={() => hudActions.toggleScores()}>
+            S
+          </button>
           {gameSettings.value.qol.idleButton && (
             <button
               class={`idle-btn${hud.idleVillagers.value ? ' has-idle' : ''}`}
