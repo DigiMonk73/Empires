@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-8 water AI gate (M13.7). KI-7 closed (M13.1).
-- **Next up:** M13.7 water (the last hard gate: 6–7/12 decided in 2 h, needs 11).
+- **Next up:** M13.7 water — 10/12 decided at the checkpoint (seeds 303 Narrows, 305 tiny-island wood stalemate open; needs 11).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -760,7 +760,15 @@ of island/Narrows games decided in 2 h (11/12).
       wars 3/4. `MatchOptions.civs`, `MatchResult.trained`. The M13.5 fixed-seed priest test became a scene test
       (priests convert an enemy elephant in reach; the Temple researches Astrology) — seed outcomes move with
       every AI change.
-- [ ] **M13.7 Water.** ≥ 90% of island/Narrows 1v1s decided in 2 h (KI-8, D42): bigger coordinated landings, siege
+- [ ] **M13.7 Water.** _Checkpoint (10/12):_ villagers are only sent to resources on the land they stand on
+      (`AiPlayer.landAt`/`nodeLand`, cached; 6 → 9/12 alone); **sim fix** — a ranged unit attacking a building
+      pathed to "within range" counted in tiles along the worst axis (a square) but fires on true distance (a
+      circle), so from a diagonal it stopped out of range and gave up: warships never hurt a Dock and archers
+      failed on buildings approached diagonally (`ranged-buildings.test.ts`, both fail without the fix); an enemy
+      fishing boat off our coast no longer cancels the hunt for the enemy's last building (a Market hid all game).
+      Tried and backed out: a wood expedition to islets (tiny maps hold ~880 wood off the home islands; triggering
+      on *known* wood sent villagers off early — 10 → 6/12) and a warship cap when wood is low (→ 4/12). Open:
+      seeds 303 (Narrows) and 305 (a tiny island stalemate on wood). Then: ≥ 90% of island/Narrows 1v1s decided in 2 h (KI-8, D42): bigger coordinated landings, siege
       carried over, hunting stray ships, reaching islet forests; set `WATER_GATED = true`.
 - [ ] **M13.8 Diplomacy answers (D47).** Computers start allied with each other in free-for-alls (research §7's
       table of how many turn hostile), a neutral computer turns hostile when attacked twice or after 10–15 min

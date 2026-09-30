@@ -514,14 +514,19 @@ export class AiPlayer {
   private sendTo(s: Snapshot, cmds: Command[], u: OwnUnit, slot: number): boolean {
     const jobs = slot === 0 ? ['forage', 'hunt', 'fish'] : slot === 1 ? ['wood'] : slot === 2 ? ['gold'] : ['stone'];
     const tc = s.tc;
-    const hx = tc?.x ?? u.x;
-    const hy = tc?.y ?? u.y;
+    // Only what this villager can walk to (M13.7): nodes across the water were chosen when nearer the Town Center.
+    // A villager on other land (a wood expedition) works round where it stands.
+    const land = this.landAt(s, u.x, u.y);
+    const away = !!tc && !!land && land !== this.landAt(s, tc.x + tc.size / 2 + 0.5, tc.y);
+    const hx = away || !tc ? u.x : tc.x;
+    const hy = away || !tc ? u.y : tc.y;
     const load = s.load;
+    const walkable = (r: KnownResource): boolean => !land || r.job === 'fish' || r.job === 'hunt' || this.nodeLand(s, r) === land;
     for (const job of jobs) {
       // Near home first, then further out (a new pit follows the gatherers there).
       let node: KnownResource | null = null;
       for (const reach of [30, 60, Infinity]) {
-        const nodes = s.known.filter((r) => r.job === job && dist(r.x, r.y, hx, hy) < reach && (load.get(r.i) ?? 0) < (job === 'wood' ? 2 : 3) && !this.military.danger(s, r.x, r.y));
+        const nodes = s.known.filter((r) => r.job === job && dist(r.x, r.y, hx, hy) < reach && (load.get(r.i) ?? 0) < (job === 'wood' ? 2 : 3) && !this.military.danger(s, r.x, r.y) && walkable(r));
         node = this.nearest(nodes, hx, hy);
         if (node) break;
       }
@@ -661,6 +666,35 @@ export class AiPlayer {
       }
     }
     return true;
+  }
+
+  /** The land region at or next to (x, y), 0 if none within 3 tiles. */
+  landAt(s: Snapshot, x: number, y: number): number {
+    for (let r = 0; r <= 3; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const l = s.v.region(1, Math.floor(x) + dx, Math.floor(y) + dy);
+          if (l) return l;
+        }
+      }
+    }
+    return 0;
+  }
+
+  /** Which land a resource node stands on (cached: trees and mines don't move; a forest's inner trees look outward). */
+  private readonly nodeLands = new Map<number, number>();
+  nodeLand(s: Snapshot, r: KnownResource): number {
+    let l = this.nodeLands.get(r.i);
+    if (l === undefined) {
+      l = this.landAt(s, r.x, r.y);
+      // Deep inside a forest: follow the trees outward until open ground (up to 8 tiles).
+      for (let k = 4; !l && k <= 8; k++) {
+        for (const [dx, dy] of [[k, 0], [-k, 0], [0, k], [0, -k]] as const) l ||= s.v.region(1, Math.floor(r.x) + dx, Math.floor(r.y) + dy);
+      }
+      this.nodeLands.set(r.i, l);
+    }
+    return l;
   }
 
   private nearest<T extends { x: number; y: number; i: number }>(list: T[], x: number, y: number): T | null {

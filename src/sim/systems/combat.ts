@@ -409,7 +409,11 @@ export function attackSystem(w: World): void {
         const size = TYPES[e.type[t]!]!.size;
         const x0 = Math.round(e.x[t]! - size / 2);
         const y0 = Math.round(e.y[t]! - size / 2);
-        w.pathing.request(s, { k: 'rect', x0, y0, x1: x0 + size - 1, y1: y0 + size - 1, range: st.range > 0 ? Math.max(1, Math.floor(st.range)) : 1 });
+        // The goal counts tiles along the worst axis (a square) but a shot needs the true distance (a circle): a
+        // ship at the square's corner stood 6.4 tiles from a Dock with range 5 and gave up (M13.7). Aim for the
+        // square that fits inside the circle (range / √2, less half a tile for tile centres).
+        const reachTiles = st.range > 0 ? Math.max(1, Math.floor(st.range * 0.7071 - 0.5)) : 1;
+        w.pathing.request(s, { k: 'rect', x0, y0, x1: x0 + size - 1, y1: y0 + size - 1, range: reachTiles });
       } else if (w.paths[s] !== undefined && !w.paths[s]!.length) {
         const h = TYPES[e.type[t]!]!.size / 2;
         if (!approachRect(w, s, e.x[t]! - h, e.y[t]! - h, e.x[t]! + h, e.y[t]! + h)) {

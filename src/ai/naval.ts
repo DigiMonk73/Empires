@@ -263,7 +263,9 @@ export class NavalBrain {
     } else {
       // No enemy building left: on an island keep sailing for the last one (the survivors are over there) —
       // unless they are here on our land, or this is a land map (the land war hunts them).
-      const onOurLand = s.v.others().some((o) => !o.building && o.owner > 0 && s.v.teamOf(o.owner) !== s.me.team && this.landOf(s, o.x, o.y) === home);
+      // (Soldiers only: an enemy fishing boat off our coast is not the enemy on our land — M13.7, it cancelled the
+      // hunt for a last Market on the enemy's island.)
+      const onOurLand = s.v.others().some((o) => !o.building && LAND_ARMY(o.cls) && o.owner > 0 && s.v.teamOf(o.owner) !== s.me.team && this.landOf(s, o.x, o.y) === home);
       if (!this.island || onOurLand) this.target = null;
       if (!this.target) return;
     }
