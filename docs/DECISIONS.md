@@ -152,3 +152,8 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   owner's stats (the original froze its old techs, except Monotheism/Astrology/Fanaticism/Ballistics/
   Siegecraft); every idle priest tends wounded allies in sight (the original did so after a first heal order);
   Delete needs no confirmation (as the original). Healing adjacency is radius + 0.35 tiles.
+- **D35 — Writing and Ballistics** (2026-09-29, M7.6). Writing: the researcher's line of sight and exploration
+  are shared with its teammates (one way — each ally needs its own Writing to share back), tracked per entity
+  so it can be undone (`losMask`). Ballistics: a missile aims where a moving unit's last step carries it by the
+  time the missile lands (flight = distance ÷ speed); buildings are never led. Line of sight in the fog is the
+  owner's compiled stat (it used the type's base value until M7.6).

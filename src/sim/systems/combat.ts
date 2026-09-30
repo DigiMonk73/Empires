@@ -479,6 +479,15 @@ function launch(w: World, s: number, t: number, def: ProjectileDef, hunt: boolea
   const e = w.ents;
   let x1 = e.x[t]!;
   let y1 = e.y[t]!;
+  if (e.kind[t] === EKind.unit && w.players[e.owner[s]!]!.stats.flags.has('ballistics')) {
+    // Ballistics (econ:5): lead a moving target — aim where its last step carries it by the time the missile lands.
+    const vx = e.x[t]! - e.px[t]!;
+    const vy = e.y[t]! - e.py[t]!;
+    const d0 = Math.sqrt((x1 - e.x[s]!) * (x1 - e.x[s]!) + (y1 - e.y[s]!) * (y1 - e.y[s]!));
+    const flight = Math.max(1, Math.round((d0 / def.speed) * 20));
+    x1 = Math.min(w.map.w - 0.01, Math.max(0, x1 + vx * flight));
+    y1 = Math.min(w.map.h - 0.01, Math.max(0, y1 + vy * flight));
+  }
   if ((def.accuracy ?? 1) < 1 && !w.rng.combat.chance(def.accuracy!)) {
     // A miss lands 0.6–1.2 tiles off, in a random direction (sector of 16 via the trig table).
     const d = 0.6 + w.rng.combat.float() * 0.6;

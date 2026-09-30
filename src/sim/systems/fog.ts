@@ -1,4 +1,3 @@
-import { TYPES } from '../rules/registry.ts';
 import type { World } from '../world.ts';
 
 /**
@@ -56,13 +55,28 @@ function stamp(w: World, player: number, tx: number, ty: number, r: number, delt
   w.fog.version[player]!++;
 }
 
-/** Remove an entity's stamp (death, removal). */
+/** Remove an entity's stamp (death, removal, a change of sides) from every player it was given to. */
 export function unstampLos(w: World, slot: number): void {
   const e = w.ents;
   const r = e.losR[slot]!;
   if (!r) return;
-  stamp(w, e.owner[slot]!, e.losTx[slot]!, e.losTy[slot]!, r, -1);
+  const mask = e.losMask[slot]!;
+  for (let p = 0; p < w.players.length; p++) if (mask & (1 << p)) stamp(w, p, e.losTx[slot]!, e.losTy[slot]!, r, -1);
   e.losR[slot] = 0;
+  e.losMask[slot] = 0;
+}
+
+/**
+ * Who sees what `owner`'s entities see: the owner, plus its allies once it has researched Writing ("allies share
+ * your line of sight", econ:5).
+ */
+function sightMask(w: World, owner: number): number {
+  let m = 1 << owner;
+  const p = w.players[owner]!;
+  if (p.stats.flags.has('writing')) {
+    for (let q = 1; q < w.players.length; q++) if (q !== owner && w.players[q]!.team === p.team) m |= 1 << q;
+  }
+  return m;
 }
 
 /** Restamp entities whose tile or line of sight changed. Gaia (player 0) has no fog. */
@@ -72,12 +86,15 @@ export function fogSystem(w: World): void {
     if (!e.alive[s] || e.owner[s] === 0) continue;
     const tx = Math.floor(e.x[s]!);
     const ty = Math.floor(e.y[s]!);
-    const r = Math.max(1, Math.round(TYPES[e.type[s]!]!.los));
-    if (e.losR[s] === r && e.losTx[s] === tx && e.losTy[s] === ty) continue;
+    // Line of sight as compiled for the owner (ages, Woodworking, Afterlife, civ bonuses change it).
+    const r = Math.max(1, Math.round(w.stats(e.owner[s]!, e.type[s]!).los));
+    const mask = sightMask(w, e.owner[s]!);
+    if (e.losR[s] === r && e.losTx[s] === tx && e.losTy[s] === ty && e.losMask[s] === mask) continue;
     unstampLos(w, s);
-    stamp(w, e.owner[s]!, tx, ty, r, 1);
+    for (let p = 0; p < w.players.length; p++) if (mask & (1 << p)) stamp(w, p, tx, ty, r, 1);
     e.losTx[s] = tx;
     e.losTy[s] = ty;
     e.losR[s] = r;
+    e.losMask[s] = mask;
   }
 }

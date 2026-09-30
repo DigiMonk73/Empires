@@ -296,7 +296,9 @@ export class MilitaryBrain {
     const out = army.length - army.filter((u) => u.idle).length;
     // A wave leaves when enough are ready. Reinforcements join only a wave that is still strong — pairs
     // trickling into an enemy base die one by one; otherwise they wait at the rally point for the next wave.
-    if (idle.length < (out >= Math.ceil(waveAt / 2) ? 2 : waveAt)) return;
+    // With no enemy building known the war is a hunt for the last of them: whoever is idle keeps sweeping.
+    const hunting = !buildings.length && s.v.tick > 20 * 60 * 20;
+    if (!idle.length || (!hunting && idle.length < (out >= Math.ceil(waveAt / 2) ? 2 : waveAt))) return;
     this.lastPush = s.v.tick;
     let [gx, gy] = this.enemyGuess(s);
     // Enemy units in sight but no buildings known (the last stragglers): chase them.

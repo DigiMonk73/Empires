@@ -4,6 +4,7 @@ import { TYPES } from '../rules/registry.ts';
 import type { World } from '../world.ts';
 import { edgeDist, hostile, kill } from './combat.ts';
 import { approachRect, REACH } from './gather.ts';
+import { unstampLos } from './fog.ts';
 
 /**
  * Priests (mil:3). Converting: from range (10; Afterlife +3) with full faith the priest chants, and each chant
@@ -79,6 +80,7 @@ function finish(w: World, s: number): void {
 export function convert(w: World, t: number, owner: number, priest: number): void {
   const e = w.ents;
   const from = e.owner[t]!;
+  unstampLos(w, t); // its sight goes with it (fogSystem restamps it for the new side)
   e.owner[t] = owner;
   w.orders[t] = undefined;
   w.paths[t] = undefined;

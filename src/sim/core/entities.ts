@@ -70,6 +70,8 @@ export class EntityStore {
   losTx = new Int16Array(0);
   losTy = new Int16Array(0);
   losR = new Uint8Array(0);
+  /** Fog: players the stamp was given to (bit per player — the owner, plus allies once it has Writing). */
+  losMask = new Uint16Array(0);
 
   constructor(initialCap = 256) {
     this.grow(initialCap);
@@ -107,6 +109,7 @@ export class EntityStore {
     this.losTx = copy(this.losTx, (n) => new Int16Array(n));
     this.losTy = copy(this.losTy, (n) => new Int16Array(n));
     this.losR = copy(this.losR, (n) => new Uint8Array(n));
+    this.losMask = copy(this.losMask, (n) => new Uint16Array(n));
     this.cap = newCap;
   }
 
@@ -137,6 +140,7 @@ export class EntityStore {
     this.stuck[slot] = 0;
     this.lastDist[slot] = 0;
     this.losR[slot] = 0;
+    this.losMask[slot] = 0;
     this.carryJob[slot] = 0;
     this.carryAmt[slot] = 0;
     this.stock[slot] = 0;
@@ -176,7 +180,7 @@ export class EntityStore {
   /** Names of the per-slot typed arrays, in canonical order (save/load, hashing). */
   static readonly FIELDS = [
     'alive', 'gen', 'kind', 'type', 'owner', 'x', 'y', 'px', 'py', 'facing', 'hp', 'act', 'actStart', 'target',
-    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR', 'carryJob', 'carryAmt', 'stock', 'faith', 'stance',
+    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR', 'losMask', 'carryJob', 'carryAmt', 'stock', 'faith', 'stance',
   ] as const;
 
   /** Replace all state from a snapshot's parts. */

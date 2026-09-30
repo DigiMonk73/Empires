@@ -375,6 +375,12 @@ export class WorldRenderer {
       }
       const L = p.hunt ? 15 : 11;
       g.moveTo(a.x - dx * L, a.y - dy * L).lineTo(a.x, a.y).stroke({ width: 1.3, color: 0x4a3420 });
+      if (!p.hunt && this.world.players[p.owner]?.stats.flags.has('flamingProjectiles')) {
+        // Alchemy: flaming arrows — a burning tip and a short trail of flame.
+        g.moveTo(a.x, a.y).lineTo(a.x - dx * 6, a.y - dy * 6).stroke({ width: 3, color: 0xff8a2a, alpha: 0.8 });
+        g.circle(a.x, a.y, 2.6).fill({ color: 0xffd060, alpha: 0.9 });
+        continue;
+      }
       g.moveTo(a.x, a.y).lineTo(a.x - dx * 2.5, a.y - dy * 2.5).stroke({ width: 2, color: 0x9aa0a8 });
       if (!p.hunt) g.moveTo(a.x - dx * L, a.y - dy * L).lineTo(a.x - dx * (L - 3), a.y - dy * (L - 3)).stroke({ width: 2.2, color: 0xe8e0d0 });
     }
