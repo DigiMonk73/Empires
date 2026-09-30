@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion **done** (tag `m9`; s9pk 0.9.0 updated from 0.8.0 on the StartOS VM and checked). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** m9 (verify ~300 s with a full re-bake, ~140 s without); verify:full at the M9 exit 1089 s (Docker both arches 124 MB, Tauri smoke, s9pk, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
+- **Milestone:** M10 World polish **done** (tag `m10`, s9pk 0.10.0 built). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** m10 (verify ~125 s without a re-bake); verify:full at the M10 exit 1108 s (Docker both arches 124 MB, Tauri smoke render avg 3.1 ms, s9pk, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
   get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit, Choson/Shang/Yamato the Asian kit,
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** the M10 exit — review + perf, verify:full, tag m10, submodule bump + s9pk 0.10.0.
+- **Next up:** M11 audio — expand into tasks (SFX library, voices, generative music, mixer, options).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -582,7 +582,7 @@ so far.
       at level 0); newly seen and newly lost tiles ease over 450 ms of real time (a paused game still clears where
       its units look — the first try used game time and left paused reveals black under the fog); with the
       render clock frozen they snap, so screenshots stay exact.
-- _Exit:_ screenshots ≥ 4/5; perf gates met.
+- _Exit:_ screenshots ≥ 4/5; perf gates met. **Met** (M10.1b–M10.6 reviews, Highland re-scored 4 with beaches and water; Tauri render 3.1 ms avg). Tag `m10`. Hills on the standard maps wait on KI-9.
 
 ## M11 — Audio
 - SFX library; voices; generative music; mixer; options.

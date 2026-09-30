@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10 exit · highland re-scored (artifacts/m10/highland.png)
+- With beaches, foam, palms by the ponds and the fog on the hills, Highland reads as a finished map: 4 (was 3.5
+  at M10.2). Every M10 item is at 4.
+
 ## 2026-09-30 · M10.6 · fog on Highland (artifacts/m10/fog.png)
 - The explored trail of three scouting villagers on a hilly map: the soft fog edge follows the hill's contour;
   the villagers stand in their own sight. Fog 4.
