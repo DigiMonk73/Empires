@@ -117,9 +117,8 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         }
         const size = RESOURCE_KINDS[r.kind[cmd.res]!]!.size;
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
-          if (isVillager(w, slot)) startGather(w, slot, cmd.res, !!cmd.queue);
-          else {
-            // Soldiers just walk to the node.
+          if (!startGather(w, slot, cmd.res, !!cmd.queue)) {
+            // Soldiers (and boats sent at anything but fish) just go to the node.
             w.orders[slot] = [{ k: 'move', x: quantize(r.tx[cmd.res]! + size / 2), y: quantize(r.ty[cmd.res]! + size / 2) }];
             clearMovement(w, slot);
           }

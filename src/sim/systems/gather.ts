@@ -13,6 +13,10 @@ import type { Order, World } from '../world.ts';
  * full, carry it to the nearest reachable drop site that accepts it (TC: everything; Granary: forage and farm
  * food; Storage Pit: wood, gold, stone, meat, fish), deposit, and return. Depleted nodes vanish and the villager
  * moves on to the nearest node of the same kind.
+ *
+ * Fishing boats (M8.1, econ:1.3) run the same cycle on fish only — shore fish and the boats-only deep fish and
+ * whales — at their own rate and carry (0.4/s, 15; Fishing Ship 20), look for more within 8 tiles, and deliver
+ * only to a Dock. Villagers deliver shore fish to the TC or a Storage Pit, never to a Dock (1.0c).
  */
 export const JOBS: readonly Job[] = ['forage', 'farm', 'hunt', 'fish', 'wood', 'gold', 'stone', 'build', 'repair'];
 const RES_INDEX: Record<Job, number> = { forage: 0, farm: 0, hunt: 0, fish: 0, wood: 1, gold: 2, stone: 3, build: -1, repair: -1 };
@@ -20,14 +24,19 @@ const DROP_KEY: Record<Job, string> = { forage: 'food', farm: 'food', hunt: 'mea
 
 /** Max distance (tiles) from a villager to a node's or building's footprint to work or deposit. */
 export const REACH = 0.9;
-/** How far (tiles) a villager looks for another node of the same kind when one runs out. */
+/** How far (tiles) a villager (a boat: 8, econ:1.3) looks for another node of the same kind when one runs out. */
 const RETARGET_RADIUS = 10;
+const BOAT_RETARGET_RADIUS = 8;
 const RETRY_TICKS = 20;
 
 type GatherOrder = Extract<Order, { k: 'gather' }>;
 
 export function isVillager(w: World, slot: number): boolean {
   return TYPES[w.ents.type[slot]!]!.unit?.cls === 'villager';
+}
+
+export function isFishingBoat(w: World, slot: number): boolean {
+  return TYPES[w.ents.type[slot]!]!.unit?.cls === 'fishingShip';
 }
 
 /** Euclidean distance from a point to a [x0,x1]×[y0,y1] rectangle (0 inside). */
@@ -101,13 +110,14 @@ function unitRegion(w: World, s: number): { labels: Int32Array; region: number }
 export function findDropSite(w: World, s: number, job: Job): number {
   const e = w.ents;
   const key = DROP_KEY[job];
+  const boat = isFishingBoat(w, s);
   const { labels, region } = unitRegion(w, s);
   let best = NO_ENTITY;
   let bestD = Infinity;
   for (let b = 0; b < e.top; b++) {
     if (!e.alive[b] || e.kind[b] !== EKind.building || e.owner[b] !== e.owner[s] || e.build[b]! < 1) continue;
     const def = TYPES[e.type[b]!]!.building!;
-    if (!def.dropoff?.includes(key as never)) continue;
+    if (!def.dropoff?.includes(key as never) || !!def.shore !== boat) continue;
     const dx = e.x[b]! - e.x[s]!;
     const dy = e.y[b]! - e.y[s]!;
     const d = dx * dx + dy * dy;
@@ -124,12 +134,14 @@ export function findDropSite(w: World, s: number, job: Job): number {
 export function findNearbyNode(w: World, s: number, job: Job, x: number, y: number): number {
   const r = w.res;
   const { labels, region } = unitRegion(w, s);
+  const boat = isFishingBoat(w, s);
+  const R = boat ? BOAT_RETARGET_RADIUS : RETARGET_RADIUS;
   let best = -1;
   let bestD = Infinity;
-  const cx0 = Math.max(0, Math.floor((x - RETARGET_RADIUS) / 16));
-  const cx1 = Math.min(r.chunksAcross - 1, Math.floor((x + RETARGET_RADIUS) / 16));
-  const cy0 = Math.max(0, Math.floor((y - RETARGET_RADIUS) / 16));
-  const cy1 = Math.floor((y + RETARGET_RADIUS) / 16);
+  const cx0 = Math.max(0, Math.floor((x - R) / 16));
+  const cx1 = Math.min(r.chunksAcross - 1, Math.floor((x + R) / 16));
+  const cy0 = Math.max(0, Math.floor((y - R) / 16));
+  const cy1 = Math.floor((y + R) / 16);
   for (let cy = cy0; cy <= cy1; cy++) {
     for (let cx = cx0; cx <= cx1; cx++) {
       const list = r.chunks[cy * r.chunksAcross + cx];
@@ -137,11 +149,11 @@ export function findNearbyNode(w: World, s: number, job: Job, x: number, y: numb
       for (const i of list) {
         if (r.state[i] !== ResState.standing || r.amount[i]! <= 0) continue;
         const def = RESOURCE_KINDS[r.kind[i]!]!;
-        if (def.job !== job || def.boatsOnly) continue;
+        if (def.job !== job || (def.boatsOnly && !boat)) continue;
         const dx = r.tx[i]! + def.size / 2 - x;
         const dy = r.ty[i]! + def.size / 2 - y;
         const d = dx * dx + dy * dy;
-        if (d > RETARGET_RADIUS * RETARGET_RADIUS || d >= bestD) continue;
+        if (d > R * R || d >= bestD) continue;
         if (region && !rectReachable(w, labels, region, r.tx[i]!, r.ty[i]!, r.tx[i]! + def.size - 1, r.ty[i]! + def.size - 1)) continue;
         bestD = d;
         best = i;
@@ -173,9 +185,9 @@ export function depleteNode(w: World, i: number): void {
 /** Start a gather order (used by commands and rally points). Returns false for non-villagers or bad nodes. */
 export function startGather(w: World, s: number, node: number, queue: boolean): boolean {
   const r = w.res;
-  if (!isVillager(w, s) || node < 0 || node >= r.count || r.state[node] !== ResState.standing) return false;
+  if (node < 0 || node >= r.count || r.state[node] !== ResState.standing) return false;
   const def = RESOURCE_KINDS[r.kind[node]!]!;
-  if (def.boatsOnly) return false;
+  if (isFishingBoat(w, s) ? def.job !== 'fish' : !isVillager(w, s) || def.boatsOnly) return false;
   const order: GatherOrder = { k: 'gather', res: node, phase: 0, drop: NO_ENTITY, retry: 0 };
   const q = w.orders[s];
   if (queue && q && q.length) {
@@ -228,7 +240,10 @@ export function gatherSystem(w: World): void {
     const stats = w.players[e.owner[s]!]!.stats;
     let def = RESOURCE_KINDS[r.kind[o.res]!]!;
     const job = def.job;
-    const cap = stats.carry[job];
+    // Boats work at their own type's rate and carry (the Fishing Ship upgrade carries more).
+    const boat = isFishingBoat(w, s) ? w.stats(e.owner[s]!, e.type[s]!) : null;
+    const cap = boat ? boat.carry : stats.carry[job];
+    const rate = boat ? boat.gatherPerTick : stats.work[job];
 
     // Node gone: find another of the same kind, or deliver what we carry and stop.
     if (r.state[o.res] !== ResState.standing && o.phase !== 2) {
@@ -302,7 +317,7 @@ export function gatherSystem(w: World): void {
         e.carryJob[s] = jobIdx;
         e.carryAmt[s] = 0;
       }
-      const take = Math.min(stats.work[job], r.amount[o.res]!, cap - e.carryAmt[s]!);
+      const take = Math.min(rate, r.amount[o.res]!, cap - e.carryAmt[s]!);
       r.amount[o.res] = r.amount[o.res]! - take;
       e.carryAmt[s] = e.carryAmt[s]! + take;
       if (r.amount[o.res]! <= 1e-9) depleteNode(w, o.res);

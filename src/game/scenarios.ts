@@ -144,6 +144,42 @@ function village(): SimConfig {
   };
 }
 
+/**
+ * A harbor (M8): a coast with a Dock, fishing boats, shore fish along the beach and deep fish out at sea — for the
+ * water tasks' tests and screenshots.
+ */
+function harbor(): SimConfig {
+  const W = 32;
+  const rows: string[] = [];
+  for (let y = 0; y < W; y++) {
+    let row = '';
+    for (let x = 0; x < W; x++) row += x < 14 ? '.' : x === 14 && y % 5 === 2 && (y < 13 || y > 17) ? 'f' : x >= 24 ? 'w' : '~';
+    rows.push(row);
+  }
+  return {
+    victory: 'none',
+    seed: 8,
+    map: { w: W, h: W, ascii: rows },
+    players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    startingResources: 'high',
+    scenario: {
+      buildings: [
+        { type: 'townCenter', owner: 1, tx: 5, ty: 14 },
+        { type: 'dock', owner: 1, tx: 14, ty: 14 },
+      ],
+      units: [
+        { type: 'fishingBoat', owner: 1, x: 18.5, y: 12.5 },
+        { type: 'villager', owner: 1, x: 12.5, y: 7.5 },
+      ],
+      resources: [
+        { kind: 'deepFish', tx: 20, ty: 8 },
+        { kind: 'deepFish', tx: 21, ty: 19 },
+        { kind: 'deepFish', tx: 18, ty: 25 },
+      ],
+    },
+  };
+}
+
 /** A raid: clubmen fall on an enemy camp — for combat review (corpses, rubble, HP bars). */
 function raid(): SimConfig {
   const W = 32;
@@ -315,6 +351,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   demo,
   start,
   village,
+  harbor,
   raid,
   fort,
   siege,

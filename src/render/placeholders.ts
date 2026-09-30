@@ -187,6 +187,22 @@ export function resourceArt(renderer: Renderer, kind: string): SpriteArt {
           g.poly([x - 4, y, x - 7, y - 2 + r, x - 7, y + 2 + r]).fill({ color: 0x1e3a4a, alpha: 0.75 });
         }
         break;
+      case 'deepFish':
+        // A big school out at sea (2×2): wider ripples, more backs.
+        g.ellipse(0, 0, 30, 13).stroke({ color: 0xd8f0ff, alpha: 0.5, width: 1.2 });
+        g.ellipse(3, 1, 19, 8).stroke({ color: 0xd8f0ff, alpha: 0.35, width: 1 });
+        for (const [x, y, r] of [[-14, -2, 0.3], [-3, -6, -0.4], [8, -3, 0.2], [-6, 4, 0.1], [12, 4, -0.3]] as const) {
+          g.ellipse(x, y, 5, 2).fill({ color: 0x1a3444, alpha: 0.75 });
+          g.poly([x - 5, y, x - 9, y - 2.5 + r, x - 9, y + 2.5 + r]).fill({ color: 0x1a3444, alpha: 0.75 });
+        }
+        break;
+      case 'whale':
+        // A long dark back breaking the surface, with a spout.
+        g.ellipse(0, 0, 30, 12).stroke({ color: 0xd8f0ff, alpha: 0.5, width: 1.2 });
+        g.ellipse(0, -2, 20, 6).fill({ color: 0x2a3440, alpha: 0.9 });
+        g.poly([18, -2, 27, -7, 25, 0, 27, 5]).fill({ color: 0x2a3440, alpha: 0.9 });
+        for (const [x, y] of [[-12, -10], [-10, -15], [-14, -14]] as const) g.circle(x, y, 2).fill({ color: 0xeef8ff, alpha: 0.7 });
+        break;
       default:
         if (kind.startsWith('carcass:')) {
           // A fallen animal on its side: body, legs, a dark stain.

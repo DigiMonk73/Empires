@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.1 · harbor-fishing (new); menu-main, menu-skirmish
+- Harbor: the Dock on the shore, two placeholder sailboats, shore-fish ripples along the beach and the new
+  deep-fish schools (wider rings, more backs) read clearly; the selected boat's panel shows "Carrying 10 Fish".
+  Should-fix (M8.5): baked boats (the placeholder hull floats on a dark disc), a boat portrait ("Fi").
+- Menu: a uniform 1 px shift of the whole backdrop — its slow real-time drift, not a content change.
+
 ## 2026-09-30 · M7.10 · victory, victory-results
 - AI change only: the menu→victory game plays out differently (P1 34 kills / 11 lost). Results table renders
   as before. No visual change.

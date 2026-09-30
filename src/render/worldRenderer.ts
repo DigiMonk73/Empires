@@ -176,10 +176,6 @@ export class WorldRenderer {
         continue;
       }
       const def = RESOURCE_KINDS[r.kind[i]!]!;
-      if (def.boatsOnly) {
-        this.resViews[i] = undefined; // deep fish and whales render with water effects later
-        continue;
-      }
       const cx = r.tx[i]! + def.size / 2;
       const cy = r.ty[i]! + def.size / 2;
       const v = hash2(r.tx[i]!, r.ty[i]!);
