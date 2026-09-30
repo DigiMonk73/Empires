@@ -2,6 +2,7 @@ import type { AiLevel } from '../data/setup.ts';
 import type { Command } from '../sim/commands/types.ts';
 import { Rng, STREAM } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
+import { MilitaryBrain } from './military.ts';
 
 /**
  * Computer player (D10): reads only its PlayerView (fog-filtered) and answers with ordinary Commands, like a human
@@ -35,7 +36,7 @@ const SHARES: Record<number, [number, number, number, number]> = {
 const FOOD_JOBS = new Set(['forage', 'farm', 'hunt', 'fish']);
 const RES_OF_JOB: Record<string, number> = { forage: 0, farm: 0, hunt: 0, fish: 0, wood: 1, gold: 2, stone: 3 };
 
-interface Snapshot {
+export interface Snapshot {
   v: PlayerView;
   me: ReturnType<PlayerView['me']>;
   units: OwnUnit[];
@@ -63,12 +64,18 @@ export class AiPlayer {
   /** Exploration loops walked so far (radius 11, 18, 26). */
   private loops = 0;
   private lastRebalance = 0;
+  readonly military: MilitaryBrain;
 
-  constructor(player: number, level: AiLevel, seed: number) {
+  /** No army at all (economy benchmarks and the AI suite's timing runs). */
+  readonly peaceful: boolean;
+
+  constructor(player: number, level: AiLevel, seed: number, opts: { peaceful?: boolean } = {}) {
     this.player = player;
     this.level = level;
     this.p = AI_LEVEL_PARAMS[level];
     this.rng = new Rng(seed, STREAM.aiBase + player);
+    this.military = new MilitaryBrain(this.rng, level);
+    this.peaceful = !!opts.peaceful;
   }
 
   /** Called every tick; decides every `think` ticks (staggered by player). Returns commands for this tick. */
@@ -85,6 +92,7 @@ export class AiPlayer {
     this.economyBuildings(s, cmds);
     this.ageUp(s, cmds);
     this.farms(s, cmds);
+    if (!this.peaceful) this.military.update(this, s, cmds);
     this.assignIdle(s, cmds);
     this.rebalance(s, cmds);
     return cmds;
@@ -107,7 +115,7 @@ export class AiPlayer {
     return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set() };
   }
 
-  private has(s: Snapshot, type: string, doneOnly = false): OwnBuilding[] {
+  has(s: Snapshot, type: string, doneOnly = false): OwnBuilding[] {
     return s.buildings.filter((b) => b.type === type && (!doneOnly || b.done));
   }
 
@@ -218,7 +226,9 @@ export class AiPlayer {
     if (!tc || tc.queue > 0) return;
     const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
     if (!tech || s.v.researching(tech)) return;
-    if ((s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1)) return; // boom first
+    // Boom to the villager target first — but under pressure (losses), go anyway once the clock says so.
+    const late = s.v.tick > (s.me.age === 1 ? 10 : 20) * 60 * 20 && s.villagers.length >= 12;
+    if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !late) return;
     if (s.v.researchBlocker(tc.h, tech)) return;
     cmds.push({ t: 'research', bld: tc.h, tech });
   }
@@ -346,7 +356,7 @@ export class AiPlayer {
   }
 
   // ── Building ─────────────────────────────────────────────────────────────────────────────────────────────
-  private isPending(s: Snapshot, type: string): boolean {
+  isPending(s: Snapshot, type: string): boolean {
     const t = this.pending.get(type);
     return t !== undefined && s.v.tick - t < 20 * 8;
   }
@@ -355,7 +365,7 @@ export class AiPlayer {
    * Place `type` with its centre `minD`–`maxD` tiles from (x, y), keeping a clear tile around it (no walling in),
    * and send `nBuilders` villagers (wood/idle first). Returns true if ordered.
    */
-  private build(s: Snapshot, cmds: Command[], type: string, x: number, y: number, minD: number, maxD: number, nBuilders: number): boolean {
+  build(s: Snapshot, cmds: Command[], type: string, x: number, y: number, minD: number, maxD: number, nBuilders: number): boolean {
     if (!s.v.canBuild(type) || !s.v.canAfford(s.v.cost(type))) return false;
     const size = type === 'house' || type === 'watchTower' ? 2 : 3;
     const spot = this.findSpot(s, type, size, x, y, minD, maxD);
@@ -420,7 +430,7 @@ function rank(u: OwnUnit): number {
   return u.idle ? 0 : u.job === 'wood' ? 1 : 2;
 }
 
-function dist(ax: number, ay: number, bx: number, by: number): number {
+export function dist(ax: number, ay: number, bx: number, by: number): number {
   const dx = ax - bx;
   const dy = ay - by;
   return Math.sqrt(dx * dx + dy * dy);

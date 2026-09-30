@@ -90,6 +90,11 @@ export class PlayerView {
     return { res: [...p.res], pop: p.pop, popCap: p.popCap, age: p.stats.age, techs: p.techs, team: p.team, defeated: p.defeated !== null, civ: p.civ };
   }
 
+  /** Team of another player (diplomacy is fixed at game start). */
+  teamOf(player: number): number {
+    return this.w.players[player]?.team ?? 0;
+  }
+
   /** Is (tx, ty) explored by this player? */
   explored(tx: number, ty: number): boolean {
     return !!this.w.fog.explored[this.player]![ty * this.w.map.w + tx];

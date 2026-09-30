@@ -3,7 +3,7 @@ import { runMatch } from '../../src/game/aiMatch.ts';
 
 describe('AI v1 economy (M6.4)', () => {
   it('Moderate AIs boom to the Tool Age by 12:00 with villagers kept busy', () => {
-    const r = runMatch({ seed: 3, type: 'continental', size: 'small', levels: ['moderate', 'moderate'], minutes: 12 });
+    const r = runMatch({ seed: 3, type: 'continental', size: 'small', levels: ['moderate', 'moderate'], minutes: 12, peaceful: true });
     for (const ages of r.ageTick) {
       expect(ages[2]).toBeGreaterThan(0);
       expect(ages[2]).toBeLessThanOrEqual(12 * 60 * 20);
@@ -17,5 +17,13 @@ describe('AI v1 economy (M6.4)', () => {
     const a = runMatch({ seed: 5, levels: ['moderate', 'easy'], minutes: 4 });
     const b = runMatch({ seed: 5, levels: ['moderate', 'easy'], minutes: 4 });
     expect(b.hash).toBe(a.hash);
+  });
+});
+
+describe('AI v1 military (M6.5)', () => {
+  it('Moderate vs Moderate is decided by conquest', () => {
+    const r = runMatch({ seed: 5, type: 'continental', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 40 });
+    expect(r.winner).not.toBeNull();
+    expect(r.winner!.length).toBe(1);
   });
 });

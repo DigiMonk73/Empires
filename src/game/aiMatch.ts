@@ -16,6 +16,8 @@ export interface MatchOptions {
   size?: MapSizeId;
   levels: AiLevel[];
   minutes: number;
+  /** AIs build no army (economy timing runs). */
+  peaceful?: boolean;
   clock?: () => number;
 }
 
@@ -44,7 +46,7 @@ export function runMatch(o: MatchOptions): MatchResult {
   const sim = Sim.create({ ...cfg, players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
   const w = sim.world;
   const n = o.levels.length;
-  const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i));
+  const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful }));
   const views = o.levels.map((_, i) => new PlayerView(w, i + 1));
   const samples: MatchSample[] = [];
   const idle = new Array<number>(n).fill(0);

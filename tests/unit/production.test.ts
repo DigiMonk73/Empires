@@ -75,3 +75,13 @@ describe('production', () => {
     expect(reasons).toEqual(['not trained here', 'not trained here']);
   });
 });
+
+describe('queue edge cases', () => {
+  it('an unaffordable train order leaves no empty queue behind', () => {
+    const { sim, tc } = setup(1);
+    sim.world.players[1]!.res[0] = 10;
+    sim.step([{ player: 1, cmd: { t: 'train', bld: tc, unit: 'villager' } }]);
+    expect(sim.world.prod[sim.world.ents.slotOf(tc)]).toBeUndefined();
+    sim.step();
+  });
+});

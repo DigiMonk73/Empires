@@ -165,6 +165,8 @@ export function queueUnit(w: World, player: number, bh: number, unitId: string, 
     pay(w, player, cost);
     prod.items.push(type);
   }
+  // Nothing queued (e.g. unaffordable): don't leave an empty queue behind.
+  if (!prod.items.length) w.prod[b] = undefined;
 }
 
 /** Cancel the last queued unit (or the one at `index`) and refund it. */
@@ -215,6 +217,10 @@ export function productionSystem(w: World): void {
     const prod = w.prod[b];
     if (!prod) continue;
     if (!e.alive[b]) {
+      w.prod[b] = undefined;
+      continue;
+    }
+    if (!prod.items.length) {
       w.prod[b] = undefined;
       continue;
     }
