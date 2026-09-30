@@ -3,7 +3,7 @@ import { TYPES } from '../sim/rules/registry.ts';
 import type { SimEvent, World } from '../sim/world.ts';
 import type { UnitClass } from '../data/types.ts';
 import { MOVE_WATER, TERRAINS } from '../data/terrain.ts';
-import type { AudioEngine, VoiceSet } from './engine.ts';
+import type { AudioEngine, VoiceRole } from './engine.ts';
 import type { SfxName } from './synth.ts';
 
 // ── Coverage (M11.1) ─────────────────────────────────────────────────────────────────────────────────────
@@ -270,16 +270,22 @@ export class AudioHooks {
     }
   }
 
-  /** The voice that answers for a group: villagers if it's all villagers, soldiers otherwise. */
-  voiceFor(handles: readonly number[]): VoiceSet | null {
+  /** The voice that answers for a group: villagers or priests if that's all it is, soldiers otherwise. */
+  voiceFor(handles: readonly number[]): VoiceRole | null {
     const e = this.c.world.ents;
+    let villagers = 0;
+    let priests = 0;
     let any = false;
     for (const h of handles) {
       const s = e.slotOf(h);
       if (s < 0 || e.kind[s] !== EKind.unit || e.owner[s] !== this.c.player()) continue;
       any = true;
-      if (TYPES[e.type[s]!]!.unit?.cls !== 'villager') return 'soldier';
+      const cls = TYPES[e.type[s]!]!.unit?.cls;
+      if (cls === 'villager') villagers++;
+      else if (cls === 'priest') priests++;
+      else return 'soldier';
     }
-    return any ? 'villager' : null;
+    if (!any) return null;
+    return priests && !villagers ? 'priest' : 'villager';
   }
 }

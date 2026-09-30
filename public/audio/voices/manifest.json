@@ -1,19 +1,108 @@
 {
-  "villager": [
-    "villager/select1.wav",
-    "villager/select2.wav",
-    "villager/ack1.wav",
-    "villager/ack2.wav",
-    "villager/ack3.wav",
-    "villager/work1.wav"
+  "greek/villager": [
+    "greek/villager/select1.wav",
+    "greek/villager/select2.wav",
+    "greek/villager/ack1.wav",
+    "greek/villager/ack2.wav",
+    "greek/villager/ack3.wav",
+    "greek/villager/work1.wav"
   ],
-  "soldier": [
-    "soldier/select1.wav",
-    "soldier/select2.wav",
-    "soldier/ack1.wav",
-    "soldier/ack2.wav",
-    "soldier/ack3.wav",
-    "soldier/attack1.wav"
+  "greek/soldier": [
+    "greek/soldier/select1.wav",
+    "greek/soldier/select2.wav",
+    "greek/soldier/ack1.wav",
+    "greek/soldier/ack2.wav",
+    "greek/soldier/ack3.wav",
+    "greek/soldier/attack1.wav"
+  ],
+  "greek/priest": [
+    "greek/priest/select1.wav",
+    "greek/priest/ack1.wav",
+    "greek/priest/ack2.wav"
+  ],
+  "roman/villager": [
+    "roman/villager/select1.wav",
+    "roman/villager/select2.wav",
+    "roman/villager/ack1.wav",
+    "roman/villager/ack2.wav",
+    "roman/villager/ack3.wav",
+    "roman/villager/work1.wav"
+  ],
+  "roman/soldier": [
+    "roman/soldier/select1.wav",
+    "roman/soldier/select2.wav",
+    "roman/soldier/ack1.wav",
+    "roman/soldier/ack2.wav",
+    "roman/soldier/ack3.wav",
+    "roman/soldier/attack1.wav"
+  ],
+  "roman/priest": [
+    "roman/priest/select1.wav",
+    "roman/priest/ack1.wav",
+    "roman/priest/ack2.wav"
+  ],
+  "egyptian/villager": [
+    "egyptian/villager/select1.wav",
+    "egyptian/villager/select2.wav",
+    "egyptian/villager/ack1.wav",
+    "egyptian/villager/ack2.wav",
+    "egyptian/villager/ack3.wav",
+    "egyptian/villager/work1.wav"
+  ],
+  "egyptian/soldier": [
+    "egyptian/soldier/select1.wav",
+    "egyptian/soldier/select2.wav",
+    "egyptian/soldier/ack1.wav",
+    "egyptian/soldier/ack2.wav",
+    "egyptian/soldier/ack3.wav",
+    "egyptian/soldier/attack1.wav"
+  ],
+  "egyptian/priest": [
+    "egyptian/priest/select1.wav",
+    "egyptian/priest/ack1.wav",
+    "egyptian/priest/ack2.wav"
+  ],
+  "babylonian/villager": [
+    "babylonian/villager/select1.wav",
+    "babylonian/villager/select2.wav",
+    "babylonian/villager/ack1.wav",
+    "babylonian/villager/ack2.wav",
+    "babylonian/villager/ack3.wav",
+    "babylonian/villager/work1.wav"
+  ],
+  "babylonian/soldier": [
+    "babylonian/soldier/select1.wav",
+    "babylonian/soldier/select2.wav",
+    "babylonian/soldier/ack1.wav",
+    "babylonian/soldier/ack2.wav",
+    "babylonian/soldier/ack3.wav",
+    "babylonian/soldier/attack1.wav"
+  ],
+  "babylonian/priest": [
+    "babylonian/priest/select1.wav",
+    "babylonian/priest/ack1.wav",
+    "babylonian/priest/ack2.wav"
+  ],
+  "asian/villager": [
+    "asian/villager/select1.wav",
+    "asian/villager/select2.wav",
+    "asian/villager/ack1.wav",
+    "asian/villager/ack2.wav",
+    "asian/villager/ack3.wav",
+    "asian/villager/work1.wav"
+  ],
+  "asian/soldier": [
+    "asian/soldier/select1.wav",
+    "asian/soldier/select2.wav",
+    "asian/soldier/ack1.wav",
+    "asian/soldier/ack2.wav",
+    "asian/soldier/ack3.wav",
+    "asian/soldier/attack1.wav"
+  ],
+  "asian/priest": [
+    "asian/priest/select1.wav",
+    "asian/priest/ack1.wav",
+    "asian/priest/ack2.wav"
   ],
   "death": [
     "death/die1.wav",

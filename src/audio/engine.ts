@@ -5,7 +5,10 @@ import { makeSfx, type SfxName } from './synth.ts';
  * per-sound and global voice limits so a battle doesn't turn into noise, and simple 2-D positioning (pan by
  * screen x, quieter off-screen). Counts every sound played for tests (`stats`).
  */
-export type VoiceSet = 'villager' | 'soldier' | 'death';
+/** Who speaks (M11.2): the role, voiced in the culture of the owner's architecture set. */
+export type VoiceRole = 'villager' | 'soldier' | 'priest';
+/** A voice set on disk: `<culture>/<role>` (e.g. `egyptian/soldier`) or `death`. */
+export type VoiceSet = string;
 
 const MAX_PER_SOUND = 4;
 const MAX_TOTAL = 24;
@@ -88,9 +91,10 @@ export class AudioEngine {
 
   /** A voice line from a set (random pick; `prefix` narrows it, e.g. 'ack' or 'select'). */
   voice(set: VoiceSet, prefix = '', pan = 0, gain = 1): void {
-    const key = `voice:${set}`;
+    const role = set.slice(set.indexOf('/') + 1);
+    const key = `voice:${role}`; // counted by role (tests); the culture only picks the lines
     this.stats[key] = (this.stats[key] ?? 0) + 1;
-    const all = this.voices.get(set);
+    const all = this.voices.get(set) ?? this.voices.get(`greek/${role}`);
     if (!this.ctx || !this.voiceBus || !all?.length) return;
     const pick = all.filter((v) => v.name.startsWith(prefix));
     const from = pick.length ? pick : all;

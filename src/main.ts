@@ -408,21 +408,23 @@ function wireAudio(session: GameSession, world: GameSession['sim']['world'], wr:
   session.onEvents((ev) => sounds.onEvents(ev));
   wr.onClipHit = (clip, x, y) => sounds.onClipHit(clip, x, y);
   let works = 0;
+  // Units answer in the culture of their civilization's architecture set (M11.2).
+  const culture = archOf(world.players[me]?.civ);
   session.onCommand((p, cmd) => {
     if (p === me && cmd.t === 'build') audio.play('place', 0, 0.7);
     if (p !== me || !('ids' in cmd) || cmd.t === 'stop' || cmd.t === 'stance') return;
-    const set = sounds.voiceFor(cmd.ids);
-    if (!set) return;
-    const fight = (cmd.t === 'move' && !!cmd.am) || (set === 'soldier' && cmd.t === 'act');
-    audio.ack(set, fight ? 'attack' : set === 'villager' && cmd.t !== 'move' && works++ % 3 === 0 ? 'work' : 'ack');
+    const role = sounds.voiceFor(cmd.ids);
+    if (!role) return;
+    const fight = (cmd.t === 'move' && !!cmd.am) || (role === 'soldier' && cmd.t === 'act');
+    audio.ack(`${culture}/${role}`, fight ? 'attack' : role === 'villager' && cmd.t !== 'move' && works++ % 3 === 0 ? 'work' : 'ack');
   });
   let prev = new Set<number>();
   selection.onChange(() => {
     const now = selection.list;
     const fresh = now.some((h) => !prev.has(h));
     prev = new Set(now);
-    const set = fresh ? sounds.voiceFor(now) : null;
-    if (set) audio.ack(set, 'select');
+    const role = fresh ? sounds.voiceFor(now) : null;
+    if (role) audio.ack(`${culture}/${role}`, 'select');
   });
   return audio;
 }

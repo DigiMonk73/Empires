@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M11.2 voices per culture (5 architecture sets × villager/soldier/priest/death).
+- **Next up:** M11.3 generative music (pure-JS generator, cultures and moods).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -596,8 +596,12 @@ fog-aware hooks, a mute toggle. No music.
       its sound or why it is silent. New cues: building placement, refused orders, trade gold, fishing, healing
       (priest heal clip gains a hit marker), the nearest burning building crackles, hooves under charging
       riders. `audio-coverage.test.ts`.
-- [ ] **M11.2 Voices per culture.** Villager, soldier, priest and death lines for each architecture set
-      (Egyptian, Greek, Babylonian, Asian, Roman) in invented words with the D12 voices; the owner's set speaks.
+- [x] **M11.2 Voices per culture.** 75 lines: villager (6), soldier (6) and priest (3) for each architecture
+      set in short culture-flavoured words (Greek, Latin, Egyptian- and Akkadian-flavoured, Japanese) spoken by
+      the nearest macOS voice (Melina; Alice/Grandpa/Reed; Majed; Carmit/Rocko; Kyoko/Grandpa/Reed), plus the
+      shared death cries — 78 files, 2.3 MB, peaks at −1 dBFS. Sets are `<culture>/<role>`; the player's own
+      architecture set answers selections and orders; all-priest selections answer as priests. (KI-5 covers
+      the voices' personal-use licence; `assets/LICENSES.md` updated.) Coverage test per culture.
 - [ ] **M11.3 Generative music.** Pure-JS generator (renderable offline): plucked-string lyre, frame drum,
       reed/ney, drones; modes per culture; peace/tension/battle moods from what the player sees; crossfades.
 - [ ] **M11.4 Mixer and options.** Master/music/effects/voices volumes and mute in the game menu and the main

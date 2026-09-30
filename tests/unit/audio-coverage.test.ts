@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { makeSfx } from '../../src/audio/synth.ts';
 import { EVENT_SOUNDS, MELEE, deathSound, impactSound, missileSound } from '../../src/audio/hooks.ts';
 import { TYPES } from '../../src/sim/rules/registry.ts';
+import { existsSync, readFileSync } from 'node:fs';
+import { CIVS } from '../../src/data/index.ts';
 
 /** M11.1: every event and every unit's strike, missile and death has a sound (or is deliberately silent). */
 const ctx = {
@@ -50,5 +52,19 @@ describe('audio coverage', () => {
       while (first < x.length && Math.abs(x[first]!) < 0.01) first++;
       expect(first / 22050, `${name} onset`).toBeLessThan(0.2);
     }
+  });
+
+  it('every culture speaks: villager, soldier and priest lines per architecture set (M11.2)', () => {
+    const manifest = JSON.parse(readFileSync('public/audio/voices/manifest.json', 'utf8')) as Record<string, string[]>;
+    for (const arch of new Set(CIVS.map((c) => c.arch))) {
+      for (const role of ['villager', 'soldier', 'priest']) {
+        const lines = manifest[`${arch}/${role}`];
+        expect(lines?.length, `${arch}/${role}`).toBeGreaterThanOrEqual(3);
+        expect(lines!.some((f) => f.includes('/select')), `${arch}/${role} select`).toBe(true);
+        expect(lines!.some((f) => f.includes('/ack')), `${arch}/${role} ack`).toBe(true);
+        for (const f of lines!) expect(existsSync(`public/audio/voices/${f}`), f).toBe(true);
+      }
+    }
+    expect(manifest.death?.length).toBeGreaterThanOrEqual(3);
   });
 });
