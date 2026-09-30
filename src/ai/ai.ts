@@ -20,7 +20,7 @@ interface LevelParams {
 export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
   easiest: { think: 40, villagers: [0, 12, 15, 18, 20] },
   easy: { think: 20, villagers: [0, 16, 20, 24, 28] },
-  moderate: { think: 10, villagers: [0, 21, 26, 32, 36] },
+  moderate: { think: 10, villagers: [0, 20, 26, 32, 36] }, // clicks Tool at ~20 villagers (econ:9)
   hard: { think: 6, villagers: [0, 23, 30, 38, 44] },
   hardest: { think: 4, villagers: [0, 25, 32, 42, 50] },
 };
@@ -28,7 +28,7 @@ export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
 /** Target share of villagers per resource by age (food, wood, gold, stone). */
 const SHARES: Record<number, [number, number, number, number]> = {
   1: [0.62, 0.38, 0, 0],
-  2: [0.5, 0.35, 0.15, 0],
+  2: [0.58, 0.32, 0.1, 0], // Bronze costs food: lean on it (econ:9 "1300 food by 12–14 min")
   3: [0.45, 0.3, 0.2, 0.05],
   4: [0.42, 0.28, 0.22, 0.08],
 };
@@ -50,6 +50,10 @@ export interface Snapshot {
   working: [number, number, number, number];
   /** Handles already given a command this think. */
   busy: Set<number>;
+  /** Gatherers per resource node, including orders given this think. */
+  load: Map<number, number>;
+  /** Wild animals seen (remembered while their spot is out of sight). */
+  game: { h: number; type: string; x: number; y: number }[];
 }
 
 export class AiPlayer {
@@ -64,6 +68,7 @@ export class AiPlayer {
   /** Exploration loops walked so far (radius 11, 18, 26). */
   private loops = 0;
   private lastRebalance = 0;
+  private game = new Map<number, { h: number; type: string; x: number; y: number }>();
   readonly military: MilitaryBrain;
 
   /** No army at all (economy benchmarks and the AI suite's timing runs). */
@@ -86,6 +91,7 @@ export class AiPlayer {
     const s = this.snapshot(v, me);
     const cmds: Command[] = [];
     this.explore(s, cmds);
+    this.predators(s, cmds);
     this.finishFoundations(s, cmds);
     this.trainVillagers(s, cmds);
     this.houses(s, cmds);
@@ -104,7 +110,9 @@ export class AiPlayer {
     const villagers = units.filter((u) => u.cls === 'villager');
     const buildings = v.ownBuildings();
     const tc = buildings.find((b) => b.type === 'townCenter' && b.done) ?? null;
-    const known = v.resources();
+    // Only what our villagers can actually walk to from home.
+    const home = buildings.find((b) => b.type === 'townCenter');
+    const known = v.resources().filter((r) => !home || v.reachable(home.x + home.size / 2 + 0.5, home.y, r.x - 0.5, r.y - 0.5, r.x + 0.5, r.y + 0.5));
     const jobOf = new Map<number, string>();
     for (const r of known) jobOf.set(r.i, r.job);
     const working: [number, number, number, number] = [0, 0, 0, 0];
@@ -112,7 +120,17 @@ export class AiPlayer {
       const job = u.order === 'farm' ? 'farm' : u.order === 'gather' ? (jobOf.get(u.target) ?? u.job) : null;
       if (job && RES_OF_JOB[job] !== undefined) working[RES_OF_JOB[job]!]!++;
     }
-    return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set() };
+    const load = new Map<number, number>();
+    for (const u of villagers) if (u.order === 'gather') load.set(u.target, (load.get(u.target) ?? 0) + 1);
+    // Game memory: refresh what we see; forget animals whose spot is in view but who are gone (killed, fled).
+    const visible = new Set<number>();
+    for (const o of v.others()) {
+      if (o.owner !== 0 || o.building) continue;
+      visible.add(o.h);
+      this.game.set(o.h, { h: o.h, type: o.type, x: o.x, y: o.y });
+    }
+    for (const [h, g] of this.game) if (!visible.has(h) && v.visible(Math.floor(g.x), Math.floor(g.y))) this.game.delete(h);
+    return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set(), load, game: [...this.game.values()] };
   }
 
   has(s: Snapshot, type: string, doneOnly = false): OwnBuilding[] {
@@ -123,9 +141,15 @@ export class AiPlayer {
   private explore(s: Snapshot, cmds: Command[]): void {
     if (!s.tc) return;
     // Once the first loop is done: if the age needs gold/stone we haven't found, walk a wider loop (18, then 26).
-    if (this.exploreDone && this.loops < 3) {
+    if (this.exploreDone && this.loops < 4) {
       const share = SHARES[Math.min(4, s.me.age)]!;
-      const missing = (share[2]! > 0 && !s.known.some((r) => r.job === 'gold')) || (share[3]! > 0 && !s.known.some((r) => r.job === 'stone'));
+      // Food we can reach without farms: berries, shore fish, or game in sight (farms need the Tool Age + Market).
+      const food = s.known.some((r) => r.job === 'forage' || r.job === 'fish' || r.job === 'hunt') || s.game.some((o) => o.type === 'gazelle');
+      const farming = s.me.age >= 2 && this.has(s, 'market', true).length > 0;
+      const missing =
+        (!food && !farming) ||
+        (share[2]! > 0 && !s.known.some((r) => r.job === 'gold')) ||
+        (share[3]! > 0 && !s.known.some((r) => r.job === 'stone'));
       if (!missing) return;
       this.exploreDone = false;
       this.explorer = -1;
@@ -135,7 +159,9 @@ export class AiPlayer {
       const u = s.villagers[s.villagers.length - 1];
       if (!u) return;
       this.explorer = u.h;
-      const r = [11, 18, 26][this.loops] ?? 26;
+      // Wider each time, scaled to the map (a tiny map is 72 tiles across).
+      const k = Math.max(1, s.v.mapW / 96);
+      const r = [13, 20 * k, 28 * k, 36 * k][this.loops] ?? 36 * k;
       this.loops++;
       const pts: [number, number][] = [[1, 0], [0.7, 0.7], [0, 1], [-0.7, 0.7], [-1, 0], [-0.7, -0.7], [0, -1], [0.7, -0.7]];
       const start = this.rng.int(pts.length);
@@ -151,6 +177,28 @@ export class AiPlayer {
     const u = s.villagers.find((x) => x.h === this.explorer);
     if (!u || u.idle) this.exploreDone = true;
     else s.busy.add(u.h);
+  }
+
+  /**
+   * Lions pick off villagers one at a time (working villagers don't fight back): gang up on any lion near our
+   * villagers or buildings with the four nearest villagers — it's 100 food afterwards.
+   */
+  private predators(s: Snapshot, cmds: Command[]): void {
+    for (const lion of s.game) {
+      if (lion.type !== 'lion') continue;
+      const near = s.villagers.some((u) => dist(u.x, u.y, lion.x, lion.y) < 12) || s.buildings.some((b) => dist(b.x, b.y, lion.x, lion.y) < 12);
+      if (!near) continue;
+      const on = s.villagers.filter((u) => u.order === 'attack' && u.target === lion.h).length;
+      if (on >= 4) continue;
+      const group = s.villagers
+        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && dist(u.x, u.y, lion.x, lion.y) < 16)
+        .sort((a, b) => dist(a.x, a.y, lion.x, lion.y) - dist(b.x, b.y, lion.x, lion.y) || a.h - b.h)
+        .slice(0, 4 - on)
+        .map((u) => u.h);
+      if (!group.length) continue;
+      cmds.push({ t: 'act', ids: group, h: lion.h });
+      for (const h of group) s.busy.add(h);
+    }
   }
 
   /** Foundations nobody is building (builder killed or pulled away): send the nearest villager back. */
@@ -262,7 +310,7 @@ export class AiPlayer {
       const order = this.jobsByNeed(s);
       const slot = order.find((k) => this.sendTo(s, cmds, u, k));
       if (slot !== undefined) s.working[slot]!++;
-      else if (this.exploreDone && this.loops < 3) {
+      else if (this.exploreDone && this.loops < 4) {
         this.exploreDone = false;
         this.explorer = -1;
       }
@@ -300,8 +348,7 @@ export class AiPlayer {
     const tc = s.tc;
     const hx = tc?.x ?? u.x;
     const hy = tc?.y ?? u.y;
-    const load = new Map<number, number>();
-    for (const v of s.villagers) if (v.order === 'gather') load.set(v.target, (load.get(v.target) ?? 0) + 1);
+    const load = s.load;
     for (const job of jobs) {
       // Near home first, then further out (a new pit follows the gatherers there).
       let node: KnownResource | null = null;
@@ -313,16 +360,37 @@ export class AiPlayer {
       if (node) {
         cmds.push({ t: 'gather', ids: [u.h], res: node.i });
         s.busy.add(u.h);
+        load.set(node.i, (load.get(node.i) ?? 0) + 1);
         return true;
       }
       if (job === 'forage' && FOOD_JOBS.has('hunt')) {
         // Hunt a gazelle in sight near home.
-        const prey = s.v.others().filter((o) => o.owner === 0 && o.type === 'gazelle' && dist(o.x, o.y, hx, hy) < 22);
+        const others = s.game;
+        // Up to 3 hunters per gazelle (it runs; the others close in).
+        const hunters = (h: number) => s.villagers.filter((v) => v.order === 'attack' && v.target === h).length;
+        const prey = others.filter((o) => o.type === 'gazelle' && dist(o.x, o.y, hx, hy) < 26 && hunters(o.h) < 3);
         const p = this.nearest(prey.map((o) => ({ ...o, i: o.h })), hx, hy);
         if (p) {
           cmds.push({ t: 'act', ids: [u.h], h: p.h });
           s.busy.add(u.h);
           return true;
+        }
+        // No easy food left and no farms yet: take an elephant (300 food) with a group of five — it fights back.
+        if (s.me.age < 2 || !this.has(s, 'market', true).length) {
+          const elephants = others.filter((o) => o.type === 'elephant' && dist(o.x, o.y, hx, hy) < 30);
+          const el = this.nearest(elephants.map((o) => ({ ...o, i: o.h })), hx, hy);
+          if (el) {
+            const already = s.villagers.filter((v) => v.order === 'attack' && v.target === el.h).length;
+            const group = s.villagers
+              .filter((v) => (v.idle || v.job === 'wood') && !s.busy.has(v.h) && v.h !== u.h && (this.exploreDone || v.h !== this.explorer))
+              .sort((a, b) => dist(a.x, a.y, el.x, el.y) - dist(b.x, b.y, el.x, el.y) || a.h - b.h)
+              .slice(0, Math.max(0, 4 - already))
+              .map((v) => v.h);
+            const ids = [u.h, ...group];
+            cmds.push({ t: 'act', ids, h: el.h });
+            for (const h of ids) s.busy.add(h);
+            return true;
+          }
         }
       }
     }

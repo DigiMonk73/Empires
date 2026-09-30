@@ -122,3 +122,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   through the router like a human, so AI games save, replay and would lockstep like any other input. Levels
   differ by decision interval (4–40 ticks) and villager targets per age; no resource bonuses (the Hardest-AI
   bonus is unverified). Headless matches (`game/aiMatch.ts`) drive the AI suite.
+- **D30 — AI suite gates** (2026-09-29, M6.6). Age timing is measured in *peaceful* matches (no armies) so a
+  rush can't mask an economy regression: every Moderate AI must reach Tool ≤ 12:00 and Bronze ≤ 24:00 with
+  villagers idle ≤ 5%. War matches gate conquest on 1v1s (≥ 75% decided within 45 min) — AI v1 is weak at
+  finishing weakened players in free-for-alls, which only have to run without crashing (AI v2, M13). Units
+  blocked > 5 s must stay ≤ 1%. Attack orders now give up after 20 failed approaches to an unreachable target
+  (a real bug for human players too).

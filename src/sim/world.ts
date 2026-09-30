@@ -137,7 +137,7 @@ export type Order =
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
   /** Attack unit/building `h`. `auto`: picked by the unit itself (auto-acquire, retaliation) — leashed, and dropped
    *  by Stand Ground units once the target leaves reach. */
-  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean };
+  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean; stall?: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }

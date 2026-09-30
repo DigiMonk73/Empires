@@ -169,7 +169,13 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
       const spot = nearestFree(g, x, y, 4, clusterOk);
       if (spot) set(g, spot[0], spot[1], 'T');
     }
-    const [gx, gy] = place(p, gazelles);
+    // The herd stands on open ground (not in the sea or a forest), like every other start resource.
+    const [hx, hy] = place(p, gazelles);
+    const herdOk = (x: number, y: number): boolean => {
+      for (let dy = -1; dy <= 3; dy++) for (let dx = -1; dx <= 3; dx++) if (!isOpen(at(g, x + dx, y + dy))) return false;
+      return true;
+    };
+    const [gx, gy] = nearestFree(g, hx, hy, 10, herdOk) ?? [hx, hy];
     for (let k = 0; k < gazelles.n; k++) units.push({ type: 'gazelle', owner: 0, x: gx + 0.5 + (k % 3) * 0.9, y: gy + 0.5 + Math.floor(k / 3) * 0.9 });
     // Town Center and three villagers at 2–4 tiles.
     const [tx, ty] = starts[p]!;
@@ -208,8 +214,9 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   scatter(Math.max(1, Math.round(2 * scale)), dMin, (x, y) => blob(g, r, x, y, 6, isOpen, 'G'));
   // Extra berry clusters start beyond each player's own 20-tile zone (econ:8 says 18–20+) so the zone stays fair.
   scatter(Math.round(5 * scale), 23, (x, y) => blob(g, r, x, y, 6, isOpen, 'B'));
-  scatter(Math.round(7 * scale), 16, (x, y) => units.push({ type: 'elephant', owner: 0, x: x + 0.5, y: y + 0.5 }, { type: 'elephant', owner: 0, x: x + 1.4, y: y + 0.9 }));
-  scatter(Math.round(5 * scale), 14, (x, y) => {
+  // Wild herds stay beyond each player's hunting grounds (≥ 24–26 tiles) so every start has the same easy food.
+  scatter(Math.round(7 * scale), 24, (x, y) => units.push({ type: 'elephant', owner: 0, x: x + 0.5, y: y + 0.5 }, { type: 'elephant', owner: 0, x: x + 1.4, y: y + 0.9 }));
+  scatter(Math.round(5 * scale), 26, (x, y) => {
     for (let k = 0; k < 4; k++) units.push({ type: 'gazelle', owner: 0, x: x + 0.5 + (k % 2) * 0.9, y: y + 0.5 + Math.floor(k / 2) * 0.9 });
   });
   scatter(Math.max(2, Math.round(6 * scale)), 18, (x, y) => units.push({ type: 'lion', owner: 0, x: x + 0.5, y: y + 0.5 }));

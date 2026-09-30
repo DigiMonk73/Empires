@@ -394,6 +394,15 @@ export function attackSystem(w: World): void {
       w.paths[s] = [e.x[t]!, e.y[t]!];
       continue;
     }
+    if (path !== undefined && !path.length && d > 1.5) {
+      // Arrived as close as the map allows but still far off: the target is somewhere we can't reach (a gazelle
+      // that fled across water or into a forest). Give up after repeated tries rather than chase forever.
+      o.stall = (o.stall ?? 0) + 1;
+      if (o.stall > 20) {
+        finish(w, s);
+        continue;
+      }
+    }
     if ((path === undefined || (!path.length && d > reach) || (stale && ++o.retarget % 10 === 0)) && !w.pathing.pending(s)) {
       w.pathing.request(s, { k: 'point', tx: Math.floor(e.x[t]!), ty: Math.floor(e.y[t]!), x: e.x[t]!, y: e.y[t]! });
     }

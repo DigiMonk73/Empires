@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.5 done (mapgen, victory, menus, AI economy + military). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.6 done (mapgen, victory, menus, AI economy + military, AI suite). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,10 +16,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M6.6 AI suite (verify + full ladder gates), then M6.7 Tool/Bronze art, M6.8 audio, M6.9 save/load + e2e.
+- **Next up:** M6.7 Tool/Bronze building art, M6.8 audio basics, M6.9 save/load + menu→victory e2e + StartOS checkpoint.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
-- **Notes:** metrics `docs/metrics/{history,econ,battle}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
+- **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
 ---
 
@@ -238,8 +238,13 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       defence turns out the army at enemies near our buildings; soldiers only from food left over the next age's
       cost. Found + fixed a sim bug: an unaffordable train order left an empty queue that crashed production.
       6/6 Moderate-vs-Moderate matches end in conquest (18–42 min); `peaceful` option for timing runs.
-- [ ] **M6.6 AI suite.** Headless AI-vs-AI matches (`tools/sim/ai-suite.ts`, verify + full ladder): no crashes,
-      Moderate reaches Tool ≤ 12:00 and Bronze ≤ 24:00, idle ≤ 5%, stuck ≤ 1%, games end in conquest.
+- [x] **M6.6 AI suite.** `tools/sim/ai-suite.ts` (verify: 4 peaceful timing + 4 war 1v1s, ~6 s; verify:full: 24
+      incl. 3–4 player FFAs; `docs/metrics/ai.csv`). Gates met: Moderate Tool ≤ 12:00 (worst 10:55) and Bronze
+      ≤ 24:00 (worst 19:36), idle 0.1–0.2%, 1v1 wars decided 4/4 (median ~26 min), stuck 0%, no crashes.
+      The suite found and fixed: unfair maps (wild herds inside hunting grounds; gazelle herds placed in the
+      sea/forest), villagers chasing unreachable animals forever (attack gives up after 20 failed approaches),
+      the AI re-sending villagers to unreachable carcasses (PlayerView.reachable), forgotten game (AI remembers
+      animals it has seen), lions picking off villagers (the AI gangs up on them), one-node crowding.
 - [ ] **M6.7 Tool/Bronze art (one set).** Age-dependent building looks (Stone huts → Tool mudbrick → Bronze
       stone) for TC, house, barracks, granary, storage pit, range, stable, market; Market + Government
       Center models; age-up swaps building frames.

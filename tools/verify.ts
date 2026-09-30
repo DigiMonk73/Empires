@@ -57,6 +57,17 @@ const STEPS: Step[] = [
     title: 'Battle benchmark (20v20 × 3 seeds)',
     cmd: ['node', 'tools/sim/battle.ts', '--record'],
   },
+  {
+    id: 'ai',
+    title: 'AI suite (4 timing + 4 war matches)',
+    cmd: ['node', 'tools/sim/ai-suite.ts', '--record'],
+  },
+  {
+    id: 'aiFull',
+    title: 'AI suite full (24 matches incl. free-for-alls)',
+    cmd: ['node', 'tools/sim/ai-suite.ts', '--full'],
+    full: true,
+  },
   { id: 'build', title: 'Vite build', cmd: ['npx', 'vite', 'build'] },
   {
     id: 'e2e',

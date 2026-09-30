@@ -183,6 +183,25 @@ export class PlayerView {
     return out;
   }
 
+  /**
+   * Can a land unit standing at (fx, fy) reach the node / footprint covering [x0, x1) × [y0, y1)? (Some tile
+   * around it is in the same land region — anyone can see a carcass lying across water is out of reach.)
+   */
+  reachable(fx: number, fy: number, x0: number, y0: number, x1: number, y1: number): boolean {
+    const labels = this.w.pathing.regions.labels(1);
+    const W = this.w.map.w;
+    const H = this.w.map.h;
+    const from = labels[Math.floor(fy) * W + Math.floor(fx)] ?? 0;
+    if (!from) return true; // standing somewhere odd: don't filter
+    for (let y = Math.floor(y0) - 1; y <= Math.ceil(y1); y++) {
+      for (let x = Math.floor(x0) - 1; x <= Math.ceil(x1); x++) {
+        if (x < 0 || y < 0 || x >= W || y >= H) continue;
+        if (labels[y * W + x] === from) return true;
+      }
+    }
+    return false;
+  }
+
   /** Cost [food, wood, gold, stone] of a unit or building type for this player. */
   cost(typeId: string): readonly number[] {
     const ti = TYPES.findIndex((t) => t.id === typeId);

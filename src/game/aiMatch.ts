@@ -34,6 +34,9 @@ export interface MatchResult {
   /** % of villager-seconds spent with no orders, per player. */
   idlePct: number[];
   winner: number[] | null;
+  /** Units ever blocked > 5 s, and all units that ever existed (for the stuck %). */
+  stuckUnits: number;
+  unitsSeen: number;
   maxTickMs: number;
   hash: number;
 }
@@ -52,6 +55,8 @@ export function runMatch(o: MatchOptions): MatchResult {
   const idle = new Array<number>(n).fill(0);
   const vils = new Array<number>(n).fill(0);
   let maxTickMs = 0;
+  const stuck = new Set<number>();
+  const seen = new Set<number>();
   const total = o.minutes * 60 * 20;
   for (let t = 0; t < total; t++) {
     const cmds = ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd })));
@@ -66,6 +71,12 @@ export function runMatch(o: MatchOptions): MatchResult {
         vils[p - 1]!++;
         if (!w.orders[s]) idle[p - 1]!++;
       }
+      for (let s = 0; s < e.top; s++) {
+        if (!e.alive[s] || e.kind[s] !== EKind.unit || e.owner[s] === 0) continue;
+        const h = e.handleOf(s);
+        seen.add(h);
+        if (e.stuck[s]! > 100) stuck.add(h);
+      }
     }
     if (t % 1200 === 0) samples.push(sample(w, n, t / 1200));
     if (w.gameOver) break;
@@ -76,6 +87,8 @@ export function runMatch(o: MatchOptions): MatchResult {
     ageTick: o.levels.map((_, i) => [...w.players[i + 1]!.tally.ageTick]),
     idlePct: idle.map((k, i) => (100 * k) / Math.max(1, vils[i]!)),
     winner: w.gameOver?.winners ?? null,
+    stuckUnits: stuck.size,
+    unitsSeen: seen.size,
     maxTickMs,
     hash: sim.hash(),
   };
