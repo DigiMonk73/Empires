@@ -6,6 +6,7 @@ import { Sim } from '../../src/sim/index.ts';
 import { TYPES } from '../../src/sim/rules/registry.ts';
 import { completeResearch } from '../../src/sim/systems/production.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
+import { generateMap } from '../../src/sim/mapgen/generate.ts';
 
 describe('AI v1 economy (M6.4)', () => {
   it('Moderate AIs boom to the Tool Age by 12:00 with villagers kept busy', () => {
@@ -63,5 +64,26 @@ describe('AI in the Iron Age (M7.4)', () => {
     const techs = w.players[1]!.techs;
     expect(techs.filter((t) => ['longSword', 'heavyCavalry', 'phalanx', 'catapult', 'heavyHorseArcher'].includes(t)).length).toBeGreaterThanOrEqual(2);
     expect(iron.size).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('AI at sea: economy (M8.8a)', () => {
+  it('on a Small Islands start it builds a Dock early and keeps a fishing fleet at work', () => {
+    const cfg = generateMap({ seed: 3, type: 'smallIslands', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
+    const sim = Sim.create({ ...cfg, players: cfg.players.map((p) => ({ ...p, ai: 'moderate' as const })) });
+    const w = sim.world;
+    const ais = [1, 2].map((p) => new AiPlayer(p, 'moderate', 3 * 31 + p, { peaceful: true }));
+    const views = [1, 2].map((p) => new PlayerView(w, p));
+    let dockAt = 0;
+    for (let t = 1; t <= 20 * 60 * 12; t++) {
+      sim.step(ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd }))));
+      sim.drainEvents();
+      if (!dockAt && views[0]!.ownBuildings().some((b) => b.type === 'dock' && b.done)) dockAt = t;
+    }
+    expect(dockAt).toBeGreaterThan(0);
+    expect(dockAt).toBeLessThan(20 * 60 * 7); // Stone Age
+    const boats = views[0]!.ownUnits().filter((u) => u.cls === 'fishingShip');
+    expect(boats.length).toBeGreaterThanOrEqual(6);
+    expect(boats.filter((b) => b.order === 'gather').length).toBeGreaterThanOrEqual(boats.length - 2);
   });
 });

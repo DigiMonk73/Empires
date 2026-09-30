@@ -186,6 +186,39 @@ export class PlayerView {
     return out;
   }
 
+  /** Fish on explored tiles — shore fish and the boats-only deep fish and whales (the naval AI, M8.8). */
+  fish(): KnownResource[] {
+    const r = this.w.res;
+    const out: KnownResource[] = [];
+    for (let i = 0; i < r.count; i++) {
+      if (r.state[i] !== ResState.standing || r.amount[i]! <= 0) continue;
+      const def = RESOURCE_KINDS[r.kind[i]!]!;
+      if (def.job !== 'fish' || !this.explored(r.tx[i]!, r.ty[i]!)) continue;
+      out.push({ i, kind: def.id, job: def.job, x: r.tx[i]! + def.size / 2, y: r.ty[i]! + def.size / 2, amount: r.amount[i]! });
+    }
+    return out;
+  }
+
+  /** Region label of tile (tx, ty) for land (1) or water (2) movement; 0 = impassable for that class. */
+  region(moveClass: number, tx: number, ty: number): number {
+    if (!this.w.map.inBounds(tx, ty)) return 0;
+    return this.w.pathing.regions.labels(moveClass)[this.w.map.idx(tx, ty)] ?? 0;
+  }
+
+  /** Can a boat in water region `sea` sail up beside the footprint [x0, x1) × [y0, y1)? */
+  seaReachable(sea: number, x0: number, y0: number, x1: number, y1: number): boolean {
+    if (!sea) return false;
+    for (let y = Math.floor(y0) - 1; y <= Math.ceil(y1); y++) for (let x = Math.floor(x0) - 1; x <= Math.ceil(x1); x++) if (this.region(2, x, y) === sea) return true;
+    return false;
+  }
+
+  /** Tiles in land region `label` (a full scan: callers ask once and remember). */
+  landSize(label: number): number {
+    let n = 0;
+    for (const l of this.w.pathing.regions.labels(1)) if (l === label) n++;
+    return n;
+  }
+
   /**
    * Can a land unit standing at (fx, fy) reach the node / footprint covering [x0, x1) × [y0, y1)? (Some tile
    * around it is in the same land region — anyone can see a carcass lying across water is out of reach.)

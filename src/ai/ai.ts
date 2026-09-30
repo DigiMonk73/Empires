@@ -3,6 +3,7 @@ import type { Command } from '../sim/commands/types.ts';
 import { Rng, STREAM, type RngState } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
 import { MilitaryBrain, type MilitaryState } from './military.ts';
+import { NavalBrain, type NavalState } from './naval.ts';
 import { TECH_BY_ID } from '../data/index.ts';
 
 /**
@@ -73,6 +74,8 @@ export interface AiState {
   lastRebalance: number;
   game: { h: number; type: string; x: number; y: number }[];
   military: MilitaryState;
+  /** Absent in saves made before the naval AI (M8.8). */
+  naval?: NavalState;
 }
 
 export class AiPlayer {
@@ -89,6 +92,7 @@ export class AiPlayer {
   private lastRebalance = 0;
   private game = new Map<number, { h: number; type: string; x: number; y: number }>();
   readonly military: MilitaryBrain;
+  readonly naval = new NavalBrain();
 
   /** No army at all (economy benchmarks and the AI suite's timing runs). */
   readonly peaceful: boolean;
@@ -112,6 +116,7 @@ export class AiPlayer {
       lastRebalance: this.lastRebalance,
       game: [...this.game.values()].map((g) => ({ ...g })),
       military: this.military.save(),
+      naval: this.naval.save(),
     };
   }
 
@@ -124,6 +129,7 @@ export class AiPlayer {
     this.lastRebalance = st.lastRebalance;
     this.game = new Map(st.game.map((g) => [g.h, { ...g }]));
     this.military.restore(st.military);
+    this.naval.restore(st.naval);
   }
 
   /** Called every tick; decides every `think` ticks (staggered by player). Returns commands for this tick. */
@@ -141,6 +147,7 @@ export class AiPlayer {
     this.economyBuildings(s, cmds);
     this.ageUp(s, cmds);
     this.farms(s, cmds);
+    this.naval.update(this, s, cmds);
     if (!this.peaceful) this.military.update(this, s, cmds);
     this.assignIdle(s, cmds);
     this.rebalance(s, cmds);
@@ -587,7 +594,7 @@ export class AiPlayer {
         const ty = cy + dy - Math.floor(size / 2);
         const d = dist(tx + size / 2, ty + size / 2, x, y);
         if (d < minD || d > maxD) continue;
-        if (!s.v.canPlace(type, tx, ty) || !this.margin(s, tx, ty, size, type === 'farm')) continue;
+        if (!s.v.canPlace(type, tx, ty) || !this.margin(s, tx, ty, size, type === 'farm' || type === 'dock')) continue;
         return [tx, ty];
       }
     }

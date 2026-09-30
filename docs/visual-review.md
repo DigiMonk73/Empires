@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.8a · victory, victory-results
+- AI change only: the menu→victory game plays out differently (a Dock by the lake, victory at 30:26). Renders
+  as before.
+
 ## 2026-09-30 · M8.7 · map-smallIslands, map-mediterranean (new)
 - Small Islands: a whole island per player — berries, gold, stone, woodline, gazelles, shore fish round it and a
   deep-fish school offshore; the minimap shows the other islands and islets. Mediterranean: the sea just south
