@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1–M9.9 done; exit next: verify:full, tag m9). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.9 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion **done** (tag `m9`; s9pk 0.9.0 updated from 0.8.0 on the StartOS VM and checked). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** m9 (verify ~300 s with a full re-bake, ~140 s without); verify:full at the M9 exit 1089 s (Docker both arches 124 MB, Tauri smoke, s9pk, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
   get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit, Choson/Shang/Yamato the Asian kit,
@@ -16,10 +16,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
   combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, windup, dodgeable
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
-- **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
+- **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** the M9 exit — verify:full, tag m9, submodule bump + s9pk 0.9.0; then M10 world polish.
+- **Next up:** M10 world polish — expand into tasks (elevation + combat rule, Highland/Hill Country, transitions and beaches, water and foam, building fire/smoke, fog).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -536,7 +536,7 @@ Macedonian, Palmyran, Roman.
       is one `metas.json` (1.9 MB, 273 KB gzipped) instead of 155 requests. `serve.mjs` now gzips text and
       revalidates `/baked/` (Last-Modified → 304) instead of caching it immutably — atlas names don't change
       between versions, so an updated package could have mixed old pages with new metadata.
-- _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB.
+- _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB. **Met** (M9.9 scorecard; 62 MB). Tag `m9`.
 
 ## M10 — World polish
 - elevation (mapgen, shading, combat rule); transitions; water/foam; particles; fog transitions; Highland,

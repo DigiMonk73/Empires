@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9 exit · on the StartOS VM (artifacts/vm-e2e, Chromium + WebKit)
+- 0.9.0 served by StartOS looks as in the local builds: the stone-and-bronze HUD with the Greek emblem by the age,
+  the island start under fog. Menu loads in 1.0–1.2 s; 14/14 checks.
+
 ## 2026-09-30 · M9.9 · gallery (5 sets × Stone/Iron × 8 views) and contact sheets — the M9 scorecard
 | Group | Score | Notes |
 |---|---|---|
