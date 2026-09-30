@@ -6,6 +6,7 @@ import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
 import { dist, type AiPlayer, type Snapshot } from './ai.ts';
 import { Tactics, worth, type Danger, type Sighting } from './tactics.ts';
 import { styleOf } from './civStyle.ts';
+import { ENEMY } from '../sim/rules/diplomacy.ts';
 
 /**
  * AI military v1 (M6.5). Two plans, picked once per game: a *rush* (Barracks early, clubmen → axemen and
@@ -358,8 +359,8 @@ export class MilitaryBrain {
   }
 
   private enemies(s: Snapshot): SeenEntity[] {
-    const team = s.me.team;
-    return s.v.others().filter((o) => o.owner > 0 && s.v.teamOf(o.owner) !== team);
+    // Stances, not teams (M13.8): a computer never goes for a player it is neutral toward.
+    return s.v.others().filter((o) => o.owner > 0 && s.v.stanceTo(o.owner) === ENEMY);
   }
 
   /** Where the enemy probably is: its known buildings, else across the map centre from us. */

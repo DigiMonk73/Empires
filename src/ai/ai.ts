@@ -5,6 +5,7 @@ import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/vie
 import { MilitaryBrain, type MilitaryState } from './military.ts';
 import { NavalBrain, type NavalState } from './naval.ts';
 import { upgrades } from './upgrades.ts';
+import { AiDiplomacy, type DiplomacyState } from './diplomacy.ts';
 import { TECH_BY_ID } from '../data/index.ts';
 
 /**
@@ -79,6 +80,8 @@ export interface AiState {
   military: MilitaryState;
   /** Absent in saves made before the naval AI (M8.8). */
   naval?: NavalState;
+  /** The computers' diplomacy toward a human (M13.8). */
+  diplomacy?: DiplomacyState;
 }
 
 export class AiPlayer {
@@ -96,6 +99,7 @@ export class AiPlayer {
   private game = new Map<number, { h: number; type: string; x: number; y: number }>();
   readonly military: MilitaryBrain;
   readonly naval = new NavalBrain();
+  readonly diplomacy = new AiDiplomacy();
 
   /** No army at all (economy benchmarks and the AI suite's timing runs). */
   readonly peaceful: boolean;
@@ -120,6 +124,7 @@ export class AiPlayer {
       game: [...this.game.values()].map((g) => ({ ...g })),
       military: this.military.save(),
       naval: this.naval.save(),
+      diplomacy: this.diplomacy.save(),
     };
   }
 
@@ -133,6 +138,7 @@ export class AiPlayer {
     this.game = new Map(st.game.map((g) => [g.h, { ...g }]));
     this.military.restore(st.military);
     this.naval.restore(st.naval);
+    this.diplomacy.restore(st.diplomacy);
   }
 
   /** Called every tick; decides every `think` ticks (staggered by player). Returns commands for this tick. */
@@ -142,6 +148,7 @@ export class AiPlayer {
     if (me.defeated) return [];
     const s = this.snapshot(v, me);
     const cmds: Command[] = [];
+    this.diplomacy.update(s, this.player, cmds);
     this.explore(s, cmds);
     this.predators(s, cmds);
     this.finishFoundations(s, cmds);

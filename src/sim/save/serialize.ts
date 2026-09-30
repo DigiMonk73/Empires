@@ -6,7 +6,14 @@ import type { PathRequest } from '../path/service.ts';
 import { SIM_VERSION } from '../version.ts';
 import { World, type Order, type Projectile, type SimConfig, type Tally } from '../world.ts';
 
-const structuredCloneTally = (t: Tally): Tally => ({ ...t, gathered: [...t.gathered], ageTick: [...t.ageTick], tribute: t.tribute ?? 0 }); // saves before M12.3 have no tribute
+const structuredCloneTally = (t: Tally): Tally => ({
+  ...t,
+  gathered: [...t.gathered],
+  ageTick: [...t.ageTick],
+  tribute: t.tribute ?? 0, // saves before M12.3 have no tribute
+  hitsBy: (t.hitsBy ?? []).map((v) => v ?? 0), // … nor these (M13.8)
+  tributeFrom: (t.tributeFrom ?? []).map((v) => v ?? 0),
+});
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { populationSystem } from '../systems/population.ts';
 import type { Production, Rally } from '../systems/production.ts';

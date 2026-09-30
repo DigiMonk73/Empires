@@ -158,6 +158,12 @@ export function hit(
   // The combat stream is only drawn from when the attacker is higher, so flat ground plays exactly as before.
   if (by >= 0 && amount > 0 && w.map.levelAt(fromX, fromY) > w.map.levelAt(e.x[target]!, e.y[target]!) && w.rng.combat.chance(ELEVATION_CHANCE)) amount *= 3;
   e.hp[target] = e.hp[target]! - amount;
+  const victim = e.owner[target]!;
+  if (by > 0 && victim > 0 && by !== victim) {
+    const hb = w.players[victim]!.tally.hitsBy;
+    while (hb.length <= by) hb.push(0); // dense (a saved game carries it as JSON)
+    hb[by] = hb[by]! + 1;
+  }
   const t = TYPES[e.type[target]!]!;
   if (e.hp[target]! <= 0) {
     const huntersTarget = e.handleOf(target);

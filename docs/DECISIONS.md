@@ -274,3 +274,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   win alone but can together; (3) **rush odds** by level (Moderate 50%, Hard and Hardest 75% — their rush won 77%
   of traces, their boom 52%). One early Watch Tower for Hard was tried and cost more than it saved (41 → 35).
   Result: hard>moderate 33 → 48/64, hard>easy 53 → 58, hardest>hard 31 → 64 (with D48).
+- **D50 — The computers' diplomacy toward a human** (2026-09-30, M13.8; research §7). Only in a free-for-all (no
+  two players share a team) with at least one human; team games and computer-only games (the AI suite) keep the
+  setup's stances. The computers ally with each other; of N computers the table's count start Enemy toward the
+  human (2 → 2, 3 → 2, 4–5 → 3, 6–7 → 4; the first by seat), the rest Neutral. A Neutral computer turns Enemy
+  once the human's units have hit it twice ("if you attack them twice") or at 12 minutes (the research's 10–15)
+  unless the human has sent it 1000 in tribute (the research's "about 1000"; fandom's 2600+ unverified). The sim
+  counts hits taken and tribute received per player (`tally.hitsBy`, `tally.tributeFrom`, saved); the AI reads
+  them through its PlayerView and answers with ordinary diplomacy commands. Computers now pick targets by stance,
+  not team (identical in team games).

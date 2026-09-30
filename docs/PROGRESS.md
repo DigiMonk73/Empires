@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M13 AI v2 in progress (M13.1–7 done; the ladder and water meet the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M13 AI v2 in progress (M13.1–8 done; the ladder and water meet the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m12 (verify ~135 s); verify:full at the M12 exit 699 s (audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 1.9 ms, s9pk, 452 unit + 119 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M13.8 diplomacy answers (D47), M13.9 the long-game suite, then the M13 exit.
+- **Next up:** M13.9 the long-game suite (Done: 200 games, idle ≤ 3% Hard, stuck ≤ 0.5%, median Hard-vs-Hard 1v1 25–60 min), then the M13 exit.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -772,9 +772,12 @@ of island/Narrows games decided in 2 h (11/12).
       home islands, and triggering on *known* wood sent villagers off early — 10 → 6/12) and a warship cap when wood
       is low (→ 4/12). Still open: seed 305, a tiny-island stalemate once both islands are cut bare (every wood
       source spent — the one case an expedition could help, on a map that has none). Ladder and wars unchanged.
-- [ ] **M13.8 Diplomacy answers (D47).** Computers start allied with each other in free-for-alls (research §7's
-      table of how many turn hostile), a neutral computer turns hostile when attacked twice or after 10–15 min
-      without tribute, and answers tribute.
+- [x] **M13.8 Diplomacy answers** (D50). `ai/diplomacy.ts`: in a free-for-all with a human, the computers ally with
+      each other, the research table's count start hostile to the human and the rest neutral; a neutral computer
+      turns hostile when hit twice by the human's units or at 12 minutes without ~1000 tribute. Sim: `tally.hitsBy`
+      and `tally.tributeFrom` (dense, saved; old saves load), `PlayerState.ai` from the config; PlayerView gains
+      `playerIds`, `isComputer`, `stanceTo`/`stanceFrom`, `hitsBy`, `tributeFrom`. The AI picks enemies by stance
+      (military, naval) — the suite plays identically. `ai-diplomacy.test.ts` (4).
 - [ ] **M13.9 Long-game health.** The Done suite: 200 games, 0 crashes, idle ≤ 3% (Hard), stuck ≤ 0.5%, median
       Hard-vs-Hard 1v1 25–60 min — add the missing measures to the suite.
 - Relic, ruin and Wonder play moves to M14 with those rules.

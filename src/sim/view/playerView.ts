@@ -5,6 +5,7 @@ import { buildingAvailable, canAfford, placementValid } from '../systems/build.t
 import { JOBS } from '../systems/gather.ts';
 import { researchBlocker, trainBlocker } from '../systems/production.ts';
 import type { World } from '../world.ts';
+import { stanceOf } from '../rules/diplomacy.ts';
 
 /**
  * What one player may know (D10): everything about their own units and buildings, enemy units they can see,
@@ -96,9 +97,43 @@ export class PlayerView {
     return { res: [...p.res], pop: p.pop, popCap: p.popCap, age: p.stats.age, techs: p.techs, team: p.team, defeated: p.defeated !== null, civ: p.civ };
   }
 
-  /** Team of another player (diplomacy is fixed at game start). */
+  /** Setup team of another player (the lobby grouping; who fights whom is `stanceTo`, M12.3). */
   teamOf(player: number): number {
     return this.w.players[player]?.team ?? 0;
+  }
+
+  // ── Diplomacy (M13.8) ──
+  /** Every player id but Gaia, ourselves included. */
+  playerIds(): number[] {
+    return this.w.players.filter((p) => p.id > 0).map((p) => p.id);
+  }
+
+  /** Is `player` a computer (by the game's setup)? */
+  isComputer(player: number): boolean {
+    return !!this.w.players[player]?.ai;
+  }
+
+  isDefeated(player: number): boolean {
+    const d = this.w.players[player]?.defeated;
+    return d !== null && d !== undefined;
+  }
+
+  /** Our stance toward `player` (0 Ally, 1 Neutral, 2 Enemy), and theirs toward us. */
+  stanceTo(player: number): number {
+    return stanceOf(this.w, this.player, player);
+  }
+
+  stanceFrom(player: number): number {
+    return stanceOf(this.w, player, this.player);
+  }
+
+  /** Hits our units and buildings have taken from `player`'s, and the tribute `player` has sent us. */
+  hitsBy(player: number): number {
+    return this.w.players[this.player]!.tally.hitsBy[player] ?? 0;
+  }
+
+  tributeFrom(player: number): number {
+    return this.w.players[this.player]!.tally.tributeFrom[player] ?? 0;
   }
 
   /** Is (tx, ty) explored by this player? */

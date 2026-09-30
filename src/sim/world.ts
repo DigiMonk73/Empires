@@ -86,6 +86,8 @@ export interface PlayerState {
   stance: number[];
   /** Win together with allies (the Allied Victory checkbox); off: only the last one standing wins. */
   alliedVictory: boolean;
+  /** A computer player at this level (from the config; the humans have none). */
+  ai?: AiLevel;
 }
 
 export interface Tally {
@@ -100,9 +102,13 @@ export interface Tally {
   ageTick: number[];
   /** Resources given as tribute (after the fee) — score: economy ÷ 60. */
   tribute: number;
+  /** Hits taken from each player's units, and tribute received from each (by player id; M13.8 — the computers'
+   * diplomacy reads them: a neutral computer attacked twice, or not paid, turns hostile). */
+  hitsBy: number[];
+  tributeFrom: number[];
 }
 
-export const newTally = (): Tally => ({ kills: 0, losses: 0, razed: 0, buildingsLost: 0, gathered: [0, 0, 0, 0], conversions: 0, ageTick: [0, 0, 0, 0, 0], tribute: 0 });
+export const newTally = (): Tally => ({ kills: 0, losses: 0, razed: 0, buildingsLost: 0, gathered: [0, 0, 0, 0], conversions: 0, ageTick: [0, 0, 0, 0, 0], tribute: 0, hitsBy: [], tributeFrom: [] });
 
 /**
  * A queued unit order. More kinds arrive with gathering, building and combat. A group move names a `leader`
@@ -247,7 +253,7 @@ export class World {
       }
       // The Hardest computer's head start (D48).
       if (p.ai === 'hardest') RESOURCES.forEach((r, k) => (res[k] = res[k]! + HARDEST_BONUS[r]));
-      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true });
+      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true, ...(p.ai ? { ai: p.ai } : {}) });
     });
     const teams = this.players.map((p) => p.team);
     for (const p of this.players) p.stance = stancesFromTeams(p.id, teams);

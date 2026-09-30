@@ -47,6 +47,9 @@ export function payTribute(w: World, from: number, to: number, res: number, amou
   g.res[res] = g.res[res]! - amount - fee;
   w.players[to]!.res[res] = w.players[to]!.res[res]! + amount;
   g.tally.tribute += amount;
+  const tf = w.players[to]!.tally.tributeFrom;
+  while (tf.length <= from) tf.push(0);
+  tf[from] = tf[from]! + amount;
   w.events.push({ t: 'tribute', from, to, res, amount, fee });
 }
 
