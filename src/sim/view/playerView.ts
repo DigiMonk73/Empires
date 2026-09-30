@@ -49,6 +49,8 @@ export interface SeenEntity {
   h: number;
   owner: number;
   type: string;
+  /** Unit class ('villager', 'infantry', …); '' for buildings. */
+  cls: string;
   building: boolean;
   x: number;
   y: number;
@@ -164,7 +166,8 @@ export class PlayerView {
       const i = Math.floor(e.y[s]!) * W + Math.floor(e.x[s]!);
       const building = e.kind[s] === EKind.building;
       if (building ? !this.w.fog.explored[this.player]![i] : !this.w.fog.vis[this.player]![i]) continue;
-      out.push({ h: e.handleOf(s), owner: e.owner[s]!, type: TYPES[e.type[s]!]!.id, building, x: e.x[s]!, y: e.y[s]!, hp: e.hp[s]! });
+      const t = TYPES[e.type[s]!]!;
+      out.push({ h: e.handleOf(s), owner: e.owner[s]!, type: t.id, cls: t.unit?.cls ?? '', building, x: e.x[s]!, y: e.y[s]!, hp: e.hp[s]! });
     }
     return out;
   }

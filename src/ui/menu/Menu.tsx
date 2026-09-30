@@ -6,6 +6,7 @@ import { AI_LEVELS, DEFAULT_SETUP, setupToQuery, type SkirmishPlayer, type Skirm
 import { playerColor } from '../../render/worldRenderer.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { loadQuery } from '../../game/saveGame.ts';
+import { withFlags } from '../../game/urlFlags.ts';
 import './menu.css';
 
 /**
@@ -47,7 +48,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
     upd({ players: [...s.players, { civ: CIVS[(n * 5) % CIVS.length]!.id, team: n + 1, controller: 'moderate' }] });
   };
   const start = () => {
-    location.search = setupToQuery(s);
+    location.search = withFlags(setupToQuery(s), new URLSearchParams(location.search));
   };
   return (
     <div class="menu-panel" data-testid="skirmish-setup">

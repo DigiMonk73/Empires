@@ -3,7 +3,8 @@
  *   node tools/sim/ai-suite.ts [--full] [--record]
  * Timing runs (peaceful): every Moderate AI reaches Tool ≤ 12:00 and Bronze ≤ 24:00; villagers idle ≤ 5%.
  * War runs: no crash; ≥ 75% end in conquest within 45 min; units stuck > 5 s ≤ 1%.
- * --full adds more seeds, bigger maps and 3–4 player free-for-alls.
+ * Ladder (D33): the stronger level wins — or leads 1.5:1 on score at 60 min — in ≥ 75% of games, both seats.
+ * --full adds more seeds, bigger maps, 3–4 player free-for-alls, and Hard > Easy, Moderate > Easiest.
  */
 import { appendFileSync, existsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -19,6 +20,10 @@ if (FULL) {
   for (let k = 0; k < 8; k++) timing.push({ seed: 100 + k, type: k % 2 ? 'inland' : 'continental', size: (['tiny', 'small', 'medium'] as const)[k % 3]!, levels: ['moderate', 'moderate'] });
   for (let k = 0; k < 8; k++) war.push({ seed: 200 + k, type: k % 2 ? 'inland' : 'continental', size: k < 4 ? 'small' : 'medium', levels: k < 4 ? ['moderate', 'moderate', 'moderate'] : ['moderate', 'hard', 'easy', 'moderate'] });
 }
+
+// Ladder seeds 101–108 were held out while tuning the AI (M6.10) — keep them as the regression set.
+const ladderSeeds = FULL ? [101, 102, 103, 104, 105, 106, 107, 108] : [101, 102, 103, 104];
+const ladderPairs: [AiLevel, AiLevel][] = FULL ? [['hardest', 'easiest'], ['hard', 'easy'], ['moderate', 'easiest']] : [['hardest', 'easiest']];
 
 const fails: string[] = [];
 let crashes = 0;
@@ -68,6 +73,26 @@ for (const c of war) {
   stuck += r.stuckUnits;
   units += r.unitsSeen;
 }
+const ladder: string[] = [];
+for (const [strong, weak] of ladderPairs) {
+  let ok = 0;
+  let n = 0;
+  for (const seed of ladderSeeds) {
+    for (const seat of [0, 1]) {
+      const levels: AiLevel[] = seat ? [weak, strong] : [strong, weak];
+      const r = run({ seed, type: seed % 2 ? 'inland' : 'continental', size: 'tiny', levels }, 60, false);
+      if (!r) continue;
+      n++;
+      const won = r.winner ? r.winner.includes(seat + 1) : r.scores[seat]! >= 1.5 * r.scores[1 - seat]!;
+      if (won) ok++;
+      stuck += r.stuckUnits;
+      units += r.unitsSeen;
+      if (process.argv.includes('--verbose')) console.log(`  ladder ${strong}>${weak} seed ${seed} seat ${seat + 1}: ${r.winner ? `P${r.winner.join('+')} wins at ${fmt(r.ticks)}` : `score ${r.scores.join(':')}`} ${won ? 'ok' : 'FAIL'}`);
+    }
+  }
+  ladder.push(`${strong}>${weak} ${ok}/${n}`);
+  if (ok < Math.ceil(n * 0.75)) fails.push(`ladder ${strong}>${weak} only ${ok}/${n}`);
+}
 const idle = idles.reduce((a, b) => a + b, 0) / Math.max(1, idles.length);
 const stuckPct = (100 * stuck) / Math.max(1, units);
 if (idle > 5) fails.push(`idle ${idle.toFixed(1)}%`);
@@ -76,7 +101,7 @@ if (stuckPct > 1) fails.push(`stuck ${stuckPct.toFixed(2)}%`);
 lengths = lengths.sort((a, b) => a - b);
 const median = lengths.length ? lengths[Math.floor(lengths.length / 2)]! : 0;
 console.log(
-  `ai suite ${timing.length}+${war.length} matches in ${((performance.now() - t0) / 1000).toFixed(1)} s: worst Tool ${fmt(worstTool)} Bronze ${fmt(worstBronze)} · idle ${idle.toFixed(1)}% · 1v1 wars decided ${decided}/${duels} (median ${fmt(median)}) · stuck ${stuckPct.toFixed(2)}% · crashes ${crashes}`,
+  `ai suite ${timing.length}+${war.length}+${ladderPairs.length * ladderSeeds.length * 2} matches in ${((performance.now() - t0) / 1000).toFixed(1)} s: worst Tool ${fmt(worstTool)} Bronze ${fmt(worstBronze)} · idle ${idle.toFixed(1)}% · 1v1 wars decided ${decided}/${duels} (median ${fmt(median)}) · ladder ${ladder.join(', ')} · stuck ${stuckPct.toFixed(2)}% · crashes ${crashes}`,
 );
 if (process.argv.includes('--record')) {
   const file = 'docs/metrics/ai.csv';

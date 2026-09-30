@@ -3,6 +3,7 @@ import type { Command } from '../sim/commands/types.ts';
 import { Rng, STREAM, type RngState } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
 import { MilitaryBrain, type MilitaryState } from './military.ts';
+import { TECH_BY_ID } from '../data/index.ts';
 
 /**
  * Computer player (D10): reads only its PlayerView (fog-filtered) and answers with ordinary Commands, like a human
@@ -15,14 +16,16 @@ interface LevelParams {
   think: number;
   /** Villager targets by age (index = age). */
   villagers: [number, number, number, number, number];
+  /** Game minute by which the Tool Age is overdue (the Bronze Age: ten minutes later). */
+  toolBy: number;
 }
 
 export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
-  easiest: { think: 40, villagers: [0, 12, 15, 18, 20] },
-  easy: { think: 20, villagers: [0, 16, 20, 24, 28] },
-  moderate: { think: 10, villagers: [0, 20, 26, 32, 36] }, // clicks Tool at ~20 villagers (econ:9)
-  hard: { think: 6, villagers: [0, 23, 30, 38, 44] },
-  hardest: { think: 4, villagers: [0, 25, 32, 42, 50] },
+  easiest: { think: 40, villagers: [0, 12, 15, 18, 20], toolBy: 12 },
+  easy: { think: 20, villagers: [0, 16, 20, 24, 28], toolBy: 11 },
+  moderate: { think: 10, villagers: [0, 20, 26, 32, 36], toolBy: 10 }, // clicks Tool at ~20 villagers (econ:9)
+  hard: { think: 6, villagers: [0, 21, 30, 38, 44], toolBy: 9 },
+  hardest: { think: 4, villagers: [0, 21, 32, 42, 50], toolBy: 9 },
 };
 
 /** Target share of villagers per resource by age (food, wood, gold, stone). */
@@ -179,11 +182,10 @@ export class AiPlayer {
     // Once the first loop is done: if the age needs gold/stone we haven't found, walk a wider loop (18, then 26).
     if (this.exploreDone && this.loops < 4) {
       const share = SHARES[Math.min(4, s.me.age)]!;
-      // Food we can reach without farms: berries, shore fish, or game in sight (farms need the Tool Age + Market).
-      const food = s.known.some((r) => r.job === 'forage' || r.job === 'fish' || r.job === 'hunt') || s.game.some((o) => o.type === 'gazelle');
+      // Food we can reach without farms — berries, shore fish, game — running low (farms need the Tool Age + Market).
       const farming = s.me.age >= 2 && this.has(s, 'market', true).length > 0;
       const missing =
-        (!food && !farming) ||
+        (!farming && this.wildFood(s) < 1200) ||
         (share[2]! > 0 && !s.known.some((r) => r.job === 'gold')) ||
         (share[3]! > 0 && !s.known.some((r) => r.job === 'stone'));
       if (!missing) return;
@@ -213,6 +215,14 @@ export class AiPlayer {
     const u = s.villagers.find((x) => x.h === this.explorer);
     if (!u || u.idle) this.exploreDone = true;
     else s.busy.add(u.h);
+  }
+
+  /** Food known without farms: berries, shore fish, carcasses, and remembered herds. */
+  private wildFood(s: Snapshot): number {
+    let n = 0;
+    for (const r of s.known) if (FOOD_JOBS.has(r.job)) n += r.amount;
+    for (const g of s.game) n += g.type === 'elephant' ? 300 : g.type === 'gazelle' ? 150 : 0;
+    return n;
   }
 
   /**
@@ -259,7 +269,24 @@ export class AiPlayer {
     if (s.me.pop + tc.queue >= s.me.popCap) return;
     if (!s.v.canAfford(s.v.cost('villager'))) return;
     if (s.v.trainBlocker(tc.h, 'villager')) return;
+    if (this.overdue(s) && s.me.res[0]! < this.ageFood(s) + 50) return; // the age first
     cmds.push({ t: 'train', bld: tc.h, unit: 'villager' });
+  }
+
+  /**
+   * The next age is overdue (Stone Age: `toolBy`, 10:00 for Moderate; Tool Age: ten minutes later): from here
+   * food goes to the age before new villagers or soldiers — replacing losses one by one can stall a game forever.
+   */
+  overdue(s: Snapshot): boolean {
+    const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
+    if (!tech || s.v.researching(tech)) return false;
+    return s.v.tick > (s.me.age === 1 ? this.p.toolBy : this.p.toolBy + 10) * 60 * 20 && s.villagers.length >= 12;
+  }
+
+  /** Food the next age costs (0 when there is none to take). */
+  ageFood(s: Snapshot): number {
+    const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
+    return tech ? (TECH_BY_ID.get(tech)!.cost as Partial<Record<string, number>>).food ?? 0 : 0;
   }
 
   private houses(s: Snapshot, cmds: Command[]): void {
@@ -284,6 +311,21 @@ export class AiPlayer {
     if (!this.has(s, 'storagePit').length && !this.isPending(s, 'storagePit') && s.working[1] >= 2) {
       const t = this.nearest(s.known.filter((r) => r.job === 'wood'), tc.x, tc.y);
       if (t && dist(t.x, t.y, tc.x, tc.y) > 5 && this.build(s, cmds, 'storagePit', t.x, t.y, 2.5, 5, 1)) return;
+    }
+    // A granary beside far food being worked (berries, shore fish, a herd's carcasses): one more in the Stone
+    // Age (wood is needed for the Tool Age's Market and farms), a third later.
+    if (this.has(s, 'granary', true).length && this.has(s, 'granary').length < (s.me.age >= 2 ? 3 : 2) && !this.isPending(s, 'granary')) {
+      const drops = this.foodDrops(s);
+      const far = new Map<number, number>();
+      for (const u of s.villagers) {
+        if (u.order !== 'gather' || !FOOD_JOBS.has(s.jobOf.get(u.target) ?? u.job ?? '') || s.jobOf.get(u.target) === 'farm') continue;
+        const r = s.known.find((k) => k.i === u.target);
+        if (r && drops.every((d) => dist(d.x, d.y, r.x, r.y) > 12)) far.set(r.i, (far.get(r.i) ?? 0) + 1);
+      }
+      // The far spot with the most gatherers (three or more), lowest node index on ties.
+      const [top] = [...far].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+      const at = top && s.known.find((k) => k.i === top[0]);
+      if (at && this.build(s, cmds, 'granary', at.x, at.y, 2.5, 6, 1)) return;
     }
     // More pits when mining far from any drop site.
     for (const job of ['gold', 'stone']) {
@@ -311,8 +353,7 @@ export class AiPlayer {
     const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
     if (!tech || s.v.researching(tech)) return;
     // Boom to the villager target first — but under pressure (losses), go anyway once the clock says so.
-    const late = s.v.tick > (s.me.age === 1 ? 10 : 20) * 60 * 20 && s.villagers.length >= 12;
-    if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !late) return;
+    if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !this.overdue(s)) return;
     if (s.v.researchBlocker(tc.h, tech)) return;
     cmds.push({ t: 'research', bld: tc.h, tech });
   }
@@ -320,7 +361,9 @@ export class AiPlayer {
   /** Farms (Tool Age + Market): replace the berries once they run low, around the granary / Town Center. */
   private farms(s: Snapshot, cmds: Command[]): void {
     if (s.me.age < 2 || !this.has(s, 'market', true).length || this.isPending(s, 'farm')) return;
-    const berries = s.known.filter((r) => r.job === 'forage').reduce((a, r) => a + r.amount, 0);
+    // Only berries near home put farming off: far bushes are slow trips and where raiders catch foragers.
+    const home = s.tc ?? s.buildings[0];
+    const berries = s.known.filter((r) => r.job === 'forage' && home && dist(r.x, r.y, home.x, home.y) < 16).reduce((a, r) => a + r.amount, 0);
     const want = Math.round((this.p.villagers[s.me.age] ?? 20) * (SHARES[s.me.age]![0]!));
     const farms = s.buildings.filter((b) => b.kind === 'farm');
     const freeFarms = farms.filter((f) => f.done && f.farmer < 0);
@@ -334,6 +377,10 @@ export class AiPlayer {
       return;
     }
     if (berries > 400 || farms.length >= want - 1) return;
+    // Food piling up: no more fields for now. Saving for a building the next age needs (the Bronze Age wants a
+    // second Tool Age building): don't spend its wood on fields.
+    if (s.me.res[0]! > this.ageFood(s) + 600) return;
+    if (s.me.age === 2 && !this.has(s, 'archeryRange').length && !this.has(s, 'stable').length && s.me.res[1]! < 150 + 75) return;
     const hub = this.has(s, 'granary', true)[0] ?? s.tc;
     if (hub) this.build(s, cmds, 'farm', hub.x, hub.y, 3, 8, 1);
   }
@@ -353,9 +400,29 @@ export class AiPlayer {
     }
   }
 
+  /**
+   * Target share of villagers per resource. While the Tool Age researches, wood leads: the Market (and then
+   * farms at 75 wood each) must be ready when the berries run out, or food and wood both collapse.
+   */
+  private shares(s: Snapshot): readonly number[] {
+    if (s.me.age === 1 && s.v.researching('toolAge')) return [0.3, 0.7, 0, 0];
+    const sh = [...SHARES[Math.min(4, s.me.age)]!];
+    // Floating a pile nobody is spending while another resource runs dry (2,000 food and no wood for the
+    // Archery Range the Bronze Age needs): move a quarter of the villagers from the pile to the shortfall.
+    const [food, wood] = s.me.res as [number, number];
+    if (food > this.ageFood(s) + 600 && wood < 300 && sh[0]! > 0.3) {
+      sh[0] = sh[0]! - 0.25;
+      sh[1] = sh[1]! + 0.25;
+    } else if (wood > 900 && food < 300 && sh[1]! > 0.2) {
+      sh[1] = sh[1]! - 0.2;
+      sh[0] = sh[0]! + 0.2;
+    }
+    return sh;
+  }
+
   /** Resource slots ordered by how far each is below its target share (wood always included as a fallback). */
   private jobsByNeed(s: Snapshot): number[] {
-    const share = SHARES[Math.min(4, s.me.age)]!;
+    const share = this.shares(s);
     const total = s.working.reduce((a, b) => a + b, 0) + 1;
     const slots = [0, 1, 2, 3].filter((k) => share[k]! > 0 || k === 1);
     return slots.sort((a, b) => share[b]! - s.working[b]! / total - (share[a]! - s.working[a]! / total) || a - b);
@@ -363,7 +430,7 @@ export class AiPlayer {
 
   /** The resource slot furthest below its target share. */
   private neededJob(s: Snapshot): number {
-    const share = SHARES[Math.min(4, s.me.age)]!;
+    const share = this.shares(s);
     const total = s.working.reduce((a, b) => a + b, 0) + 1;
     let best = 0;
     let bestGap = -Infinity;
@@ -404,8 +471,11 @@ export class AiPlayer {
         const others = s.game;
         // Up to 3 hunters per gazelle (it runs; the others close in).
         const hunters = (h: number) => s.villagers.filter((v) => v.order === 'attack' && v.target === h).length;
-        const prey = others.filter((o) => o.type === 'gazelle' && dist(o.x, o.y, hx, hy) < 26 && hunters(o.h) < 3);
-        const p = this.nearest(prey.map((o) => ({ ...o, i: o.h })), hx, hy);
+        // Near home first; herds further out once nothing nearer is left (a granary follows the hunters there).
+        const drops = this.foodDrops(s);
+        const reach = (o: { x: number; y: number }) => Math.min(...drops.map((d) => dist(d.x, d.y, o.x, o.y)));
+        const prey = others.filter((o) => o.type === 'gazelle' && hunters(o.h) < 3);
+        const p = this.nearest(prey.filter((o) => reach(o) < 26).map((o) => ({ ...o, i: o.h })), hx, hy) ?? this.nearest(prey.filter((o) => reach(o) < 48).map((o) => ({ ...o, i: o.h })), hx, hy);
         if (p) {
           cmds.push({ t: 'act', ids: [u.h], h: p.h });
           s.busy.add(u.h);
@@ -413,7 +483,7 @@ export class AiPlayer {
         }
         // No easy food left and no farms yet: take an elephant (300 food) with a group of five — it fights back.
         if (s.me.age < 2 || !this.has(s, 'market', true).length) {
-          const elephants = others.filter((o) => o.type === 'elephant' && dist(o.x, o.y, hx, hy) < 30);
+          const elephants = others.filter((o) => o.type === 'elephant' && reach(o) < 48);
           const el = this.nearest(elephants.map((o) => ({ ...o, i: o.h })), hx, hy);
           if (el) {
             const already = s.villagers.filter((v) => v.order === 'attack' && v.target === el.h).length;
@@ -437,7 +507,7 @@ export class AiPlayer {
   private rebalance(s: Snapshot, cmds: Command[]): void {
     if (s.v.tick - this.lastRebalance < 400) return;
     this.lastRebalance = s.v.tick;
-    const share = SHARES[Math.min(4, s.me.age)]!;
+    const share = this.shares(s);
     const total = s.working.reduce((a, b) => a + b, 0);
     if (total < 6) return;
     let over = -1;
@@ -457,6 +527,12 @@ export class AiPlayer {
       s.working[over]!--;
       s.working[need]!++;
     }
+  }
+
+  /** Where food can be dropped off: Town Centers and finished granaries. */
+  private foodDrops(s: Snapshot): { x: number; y: number }[] {
+    const d = s.buildings.filter((b) => (b.type === 'granary' && b.done) || b.type === 'townCenter');
+    return d.length ? d : s.tc ? [s.tc] : [];
   }
 
   // ── Building ─────────────────────────────────────────────────────────────────────────────────────────────

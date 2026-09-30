@@ -2,6 +2,7 @@ import type { AiState } from '../ai/ai.ts';
 import { Sim, SIM_VERSION } from '../sim/index.ts';
 import { AGE_NAMES } from '../sim/systems/production.ts';
 import { GameSession } from './session.ts';
+import { withFlags } from './urlFlags.ts';
 
 /**
  * A saved game: the simulation's own save bytes (everything that shapes future ticks), the computer players'
@@ -55,7 +56,5 @@ export function loadSession(save: SavedGame): GameSession {
 
 /** The URL that boots a saved game (keeping the display flags a test or the user set). */
 export function loadQuery(id: string, params: URLSearchParams): string {
-  const q = new URLSearchParams({ load: id });
-  for (const k of ['edgeScroll', 'art', 'fog', 'paused']) if (params.has(k)) q.set(k, params.get(k)!);
-  return `?${q}`;
+  return withFlags(`load=${encodeURIComponent(id)}`, params);
 }

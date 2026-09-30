@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.10 · victory, victory-results (new), ai-base
+- Victory banner over a Bronze-Age town at 35:20; results table shows kills/losses/razed, gathered totals and
+  age times; the loser's −100 "Other" is the manual's elimination penalty. HUD 4.
+- ai-base (8:00) changed with the new AI: houses around the TC, granary + a second granary by the hunting
+  grounds, storage pit at the woodline, barracks; reads as a working Stone-Age base. Buildings 4.
+
 ## 2026-09-29 · M6.9 · saves-save (new), menu-skirmish
 - Save dialog matches the game's panels (bronze frame, Cinzel title); the list shows name, map, age, game
   clock and date; "Game saved." confirms. Readability 4, HUD 4.

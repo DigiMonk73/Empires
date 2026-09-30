@@ -22,7 +22,9 @@ describe('AI v1 economy (M6.4)', () => {
 
 describe('AI v1 military (M6.5)', () => {
   it('Moderate vs Moderate is decided by conquest', () => {
-    const r = runMatch({ seed: 5, type: 'continental', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 40 });
+    // Within the hour the Done definition allows for an even 1v1 (25–60 min). Since M6.10's defence it takes
+    // 56 min on this seed (was < 40); the suite still gates 75% of 1v1s decided within 45 min.
+    const r = runMatch({ seed: 5, type: 'continental', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 60 });
     expect(r.winner).not.toBeNull();
     expect(r.winner!.length).toBe(1);
   });

@@ -140,3 +140,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   reloads the page with `?load=<id>` so a loaded game boots exactly like a new one. Saves from another
   `SIM_VERSION` refuse to load (no migrations until M15). No in-memory fallback: when storage is blocked,
   saving says so. StartOS server-side saves (`/data`) come with M12.
+- **D33 — Difficulty ladder** (2026-09-29, M6.10). Levels differ by thinking rate, villager targets, a Tool-Age
+  deadline, and war parameters (army scale 0.5/0.7/1/1.15/1.3; Easiest and Easy never rush and first push
+  at 18 and 14 min — the original's easier AIs were passive early). Gate: in 1v1s on tiny maps (both seats) the
+  stronger level wins by conquest — or leads 1.5:1 on score at 60 min (razing without siege is slow until M7)
+  — in ≥ 75% of games. Quick verify: Hardest>Easiest on seeds 101–104; full: + Hard>Easy, Moderate>Easiest on
+  101–108. Seeds 101–108 were held out while tuning. The Done target (each level beats the one below ≥ 75%,
+  by conquest) stays for M13.

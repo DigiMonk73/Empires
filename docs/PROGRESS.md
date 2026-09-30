@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.9 done (mapgen, victory, menus, AI, AI suite, age art, audio, save/load). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.10 done (mapgen, victory, menus, AI + ladder, AI suite, age art, audio, save/load, menu→victory e2e). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M6.10 AI ladder (Hardest currently loses to Easiest — threat response, far food, ladder gate, menu→victory e2e), then M6 exit: verify:full, tag m6, submodule bump, StartOS VM checkpoint, playtest invite.
+- **Next up:** M6 exit: verify:full, tag m6, submodule bump (commit before make), StartOS VM checkpoint (install, play, save/load, restart, stop VM), playtest invite.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -266,10 +266,16 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       speed: a loaded game plays on tick-for-tick like the original (unit test with two AIs; e2e through the
       UI in both browsers). Also: map seed field in skirmish setup; debug `autoplay(level)`.
       _Found:_ Hardest loses to Easiest (boom never answers a rush; Stone-Age food stall) → M6.10.
-- [ ] **M6.10 AI ladder.** Threat response (train to match raiders regardless of plan, villager militia),
-      far-food use (explore for food, second granary at remote berries/herds), don't over-boom scarce Stone-Age
-      food; AI-suite ladder gate (Hardest beats Easiest, Hard beats Easy on 4 seeds); e2e menu → skirmish →
-      victory (autoplay Hardest vs Easiest). WIP patch: `artifacts/tmp/ai-behaviour-wip.patch`.
+- [x] **M6.10 AI ladder.** Was: Easiest beat Hardest (its 9-minute clubman rush met a boom with no army;
+      Stone-Age food stalls; Iron-Age saving starved Bronze armies). Now: per-level war parameters (easier
+      levels passive early: no rush, first push 14–18 min, smaller armies — like the original), threat response
+      (raiders near buildings *or* villagers → train to match whatever the plan, villager militia when
+      outnumbered), wave discipline (no trickling), immediate building retargeting spread 4 per building,
+      explore when wild food < 1,200, far hunting + a granary at far food, farms judged by berries near home,
+      overdue-age rule (food to the age first, per-level Tool deadline), bank-aware shares, wood kept for the
+      Bronze-Age building. AI-suite ladder gate (D33) on held-out seeds 101–108: Hardest>Easiest 14/16,
+      Hard>Easy 13/16, Moderate>Easiest 14/16. e2e: main menu → skirmish vs Easiest (autoplay Hardest, seed
+      101) → Victory at 35:20 (= the Node match, tick for tick) → results.
 - [ ] **M6 exit.** verify:full, tag m6, submodule bump, StartOS VM checkpoint (install, play, save/load,
       restart); user playtest.
 - _Exit:_ e2e menu→victory; AI suite no crashes; Moderate Tool ≤ 12:00, Bronze ≤ 24:00; idle ≤ 5%; stuck ≤ 1%.

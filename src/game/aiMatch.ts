@@ -5,6 +5,7 @@ import { Sim } from '../sim/index.ts';
 import { generateMap, type LandMapType } from '../sim/mapgen/generate.ts';
 import { TYPES } from '../sim/rules/registry.ts';
 import { PlayerView } from '../sim/view/playerView.ts';
+import { computeScores } from '../sim/rules/score.ts';
 
 /**
  * Headless AI-vs-AI match (the AI suite, M6.6): a generated map with every player an AiPlayer, stepped for a fixed
@@ -34,6 +35,8 @@ export interface MatchResult {
   /** % of villager-seconds spent with no orders, per player. */
   idlePct: number[];
   winner: number[] | null;
+  /** Final score per player (index = player − 1). */
+  scores: number[];
   /** Units ever blocked > 5 s, and all units that ever existed (for the stuck %). */
   stuckUnits: number;
   unitsSeen: number;
@@ -88,6 +91,7 @@ export function runMatch(o: MatchOptions): MatchResult {
     ageTick: o.levels.map((_, i) => [...w.players[i + 1]!.tally.ageTick]),
     idlePct: idle.map((k, i) => (100 * k) / Math.max(1, vils[i]!)),
     winner: w.gameOver?.winners ?? null,
+    scores: o.levels.map((_, i) => computeScores(w).find((l) => l.player === i + 1)?.total ?? 0),
     stuckUnits: stuck.size,
     unitsSeen: seen.size,
     maxTickMs,
