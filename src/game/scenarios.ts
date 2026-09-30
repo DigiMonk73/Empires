@@ -366,6 +366,45 @@ function gallery(p: URLSearchParams): SimConfig {
   };
 }
 
+/**
+ * Hills for review (M10.1b): a stepped hill (a level-3 plateau, one level per ring) with a House on top, bowmen
+ * on the crest over clubmen on the plain, trees on the slope, a Town Center below.
+ */
+function hillsScene(): SimConfig {
+  const W = 32;
+  let heights = '';
+  for (let y = 0; y <= W; y++) {
+    for (let x = 0; x <= W; x++) {
+      const d = Math.max(Math.abs(x - 11), Math.abs(y - 11)); // square rings round the plateau (corners 8–14)
+      heights += String(Math.max(0, Math.min(3, 6 - d)));
+    }
+  }
+  const rows: string[] = [];
+  for (let y = 0; y < W; y++) {
+    let row = '';
+    for (let x = 0; x < W; x++) row += (x === 7 && y >= 9 && y <= 13) || (y === 7 && x >= 10 && x <= 13) ? 'T' : '.';
+    rows.push(row);
+  }
+  return {
+    victory: 'none',
+    seed: 23,
+    map: { w: W, h: W, ascii: rows, heights },
+    players: [{ civ: 'greek' }, { civ: 'persian' }],
+    startingResources: 'deathmatch',
+    scenario: {
+      buildings: [
+        { type: 'house', owner: 1, tx: 10, ty: 10 },
+        { type: 'townCenter', owner: 1, tx: 20, ty: 20 },
+      ],
+      units: [
+        ...[0, 1, 2].map((i) => ({ type: 'bowman', owner: 1, x: 12.5 + i * 0.9, y: 13.2 })),
+        ...[0, 1, 2].map((i) => ({ type: 'clubman', owner: 2, x: 12.5 + i * 1.1, y: 18.5 })),
+        { type: 'villager', owner: 1, x: 16.5, y: 11.5 },
+      ],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -408,6 +447,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   temple: templeScene,
   wonder: wonderScene,
   gallery,
+  hills: hillsScene,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10.1b · hills (new), hills-map (?scenario=map&hills=1)
+- The stepped review hill reads as a mound: slopes facing away from the sun fall into shade, the crest carries a
+  House and three bowmen standing visibly above the clubmen on the plain, the trees on the slope sit on it.
+  Smoothing the drawn height turned the first try's thin bright ramp lines into rounded hills. Terrain 4.
+- Generated 1–2-level hills are gentle — readable as soft shading, not landmarks; taller ones come with
+  Highland/Hill Country (M10.2). Flat scenes unchanged (shade is exactly 1 on level ground).
+
 ## 2026-09-30 · M9 exit · on the StartOS VM (artifacts/vm-e2e, Chromium + WebKit)
 - 0.9.0 served by StartOS looks as in the local builds: the stone-and-bronze HUD with the Greek emblem by the age,
   the island start under fog. Menu loads in 1.0–1.2 s; 14/14 checks.

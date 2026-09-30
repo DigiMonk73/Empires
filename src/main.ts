@@ -20,6 +20,7 @@ import { hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
 import { installUiTextures } from './ui/textures.ts';
 import { archOf } from './render/arch.ts';
+import { groundHeight } from './render/ground.ts';
 import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
@@ -91,6 +92,7 @@ async function boot(): Promise<void> {
     insetTop: 36,
     insetBottom: 170,
   });
+  camera.ground = (x, y) => groundHeight(world.map, x, y);
   const selection = new Selection();
   const audio = wireAudio(session, world, wr, camera, selection, app, menuMode);
   const screenLayer = new Graphics();
@@ -273,7 +275,7 @@ async function boot(): Promise<void> {
     version: '0.2.0',
     ready: () => readyPromise,
     renderStats,
-    worldToScreen: (x, y, h = 0) => camera.worldToScreen(x, y, h),
+    worldToScreen: (x, y, h) => camera.worldToScreen(x, y, h), // h defaults to the ground there
     screenToWorld: (px, py) => camera.screenToWorld(px, py),
     entityScreenPos: (h) => {
       const s = world.ents.slotOf(h);

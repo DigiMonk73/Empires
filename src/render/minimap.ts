@@ -130,7 +130,11 @@ export class Minimap {
     for (let ty = 0; ty < m.h; ty++) {
       for (let tx = 0; tx < m.w; tx++) {
         const t = TERRAINS[m.terrain[m.idx(tx, ty)]!]!;
-        c.fillStyle = `#${t.color.toString(16).padStart(6, '0')}`;
+        // Hills read lighter, one step per level (M10.1b).
+        const lv = m.levelAt(tx + 0.5, ty + 0.5);
+        const k = 1 + 0.09 * lv;
+        const ch = (sh: number) => Math.min(255, Math.round(((t.color >> sh) & 255) * k));
+        c.fillStyle = lv ? `rgb(${ch(16)},${ch(8)},${ch(0)})` : `#${t.color.toString(16).padStart(6, '0')}`;
         const p = this.toMini(tx, ty);
         c.beginPath();
         c.moveTo(p.x, p.y);

@@ -3,6 +3,7 @@ import { TYPES } from '../sim/rules/registry.ts';
 import type { SimEvent, World } from '../sim/world.ts';
 import { worldToIso } from './iso.ts';
 import type { BakedArt } from './bakedArt.ts';
+import { groundHeight } from './ground.ts';
 
 /**
  * Visual-only aftermath of combat: the sim forgets the dead at once, and this layer plays their death clip, leaves
@@ -61,7 +62,7 @@ export class FxLayer {
     const team = new Sprite();
     team.tint = this.color(ev.owner);
     root.addChild(base, team);
-    const p = worldToIso(ev.x, ev.y);
+    const p = worldToIso(ev.x, ev.y, groundHeight(this.world.map, ev.x, ev.y));
     root.position.set(p.x, p.y);
     root.zIndex = this.depth(Math.floor(ev.x), Math.floor(ev.y), -1); // lies flat: under anyone walking over it
     this.layer.addChild(root);
@@ -81,7 +82,7 @@ export class FxLayer {
     base.scale.set(1 / scale);
     if (id.startsWith('site')) base.tint = 0x6a5c50; // scorched, trampled ground
     root.addChild(base);
-    const p = worldToIso(ev.x, ev.y);
+    const p = worldToIso(ev.x, ev.y, groundHeight(this.world.map, ev.x, ev.y));
     root.position.set(p.x, p.y);
     root.zIndex = this.depth(ev.x - t.size / 2, ev.y - t.size / 2, -2);
     this.layer.addChild(root);

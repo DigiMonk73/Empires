@@ -10,6 +10,7 @@ import { TerrainLayer } from './terrainMesh.ts';
 import { FogLayer } from './fogLayer.ts';
 import type { ArtFrame, BakedArt } from './bakedArt.ts';
 import { archModelId, archOf } from './arch.ts';
+import { groundHeight } from './ground.ts';
 import { FxLayer } from './fx.ts';
 import type { SimEvent } from '../sim/world.ts';
 
@@ -146,7 +147,7 @@ export class WorldRenderer {
       const o = this.world.orders[s]?.[0];
       const t = o?.k === 'convert' ? e.slotOf(o.h) : -1;
       if (t < 0 || !this.fog.isVisible(player, Math.floor(e.x[t]!), Math.floor(e.y[t]!))) continue;
-      worldToIso(e.x[t]!, e.y[t]!, 0, p);
+      this.ground(e.x[t]!, e.y[t]!, p);
       const k = 0.5 + 0.5 * Math.sin(now * 0.4);
       const r = 16 + 5 * k;
       g.ellipse(p.x, p.y, r, r / 2).stroke({ width: 2, color: 0xffd86a, alpha: 0.45 + 0.4 * k });
@@ -154,7 +155,7 @@ export class WorldRenderer {
     this.flashes = this.flashes.filter((f) => now - f.t0 < 14);
     for (const f of this.flashes) {
       const u = (now - f.t0) / 14;
-      worldToIso(f.x, f.y, 0, p);
+      this.ground(f.x, f.y, p);
       g.ellipse(p.x, p.y, 10 + 30 * u, (10 + 30 * u) / 2).stroke({ width: 3, color: 0xfff0b0, alpha: 1 - u });
       g.circle(p.x, p.y - 24, 14 * (1 - u)).fill({ color: 0xfff6d0, alpha: 0.5 * (1 - u) });
     }
@@ -205,7 +206,7 @@ export class WorldRenderer {
         const k = def.job === 'hunt' ? 1 : 0.9 + v * 0.25;
         sp.scale.set(v < 0.5 ? -k : k, k);
       }
-      const p = worldToIso(cx, cy);
+      const p = this.ground(cx, cy);
       sp.position.set(p.x, p.y);
       // Fish and carcasses lie flat: sort from the tile's back corner so anything standing there draws on top.
       sp.zIndex = def.job === 'fish' || def.job === 'hunt' ? depth(r.tx[i]!, r.ty[i]!, -1) : depth(cx, cy);
@@ -354,16 +355,16 @@ export class WorldRenderer {
       const peak = p.arc ? 0.9 * dist : 0.12 * dist;
       const h0 = TYPES[p.type]?.building ? 2.8 : 1.4;
       const hAt = (k: number): number => h0 + (0.8 - h0) * k + peak * 4 * k * (1 - k);
-      worldToIso(x, y, hAt(u), a);
+      this.ground(x, y, a, hAt(u));
       const u2 = Math.min(1, u + 0.04);
-      worldToIso(p.x0 + (p.x1 - p.x0) * u2, p.y0 + (p.y1 - p.y0) * u2, hAt(u2), b);
+      this.ground(p.x0 + (p.x1 - p.x0) * u2, p.y0 + (p.y1 - p.y0) * u2, b, hAt(u2));
       let dx = b.x - a.x;
       let dy = b.y - a.y;
       const len = Math.hypot(dx, dy) || 1;
       dx /= len;
       dy /= len;
       // Faint ground shadow keeps height readable.
-      const gp = worldToIso(x, y);
+      const gp = this.ground(x, y);
       g.ellipse(gp.x, gp.y, 3, 1.5).fill({ color: 0x000000, alpha: 0.25 });
       if (p.arc) {
         g.circle(a.x, a.y, 2.6).fill(0x8a8274);
@@ -529,7 +530,7 @@ export class WorldRenderer {
       if (!v) this.views[s] = v = this.createView(s);
       const x = e.px[s]! + (e.x[s]! - e.px[s]!) * alpha;
       const y = e.py[s]! + (e.y[s]! - e.py[s]!) * alpha;
-      worldToIso(x, y, 0, p);
+      this.ground(x, y, p);
       v.root.position.set(p.x, p.y);
       const flat = e.kind[s] === EKind.building && TYPES[e.type[s]!]!.building!.kind === 'farm';
       // Farms are flat fields people walk on: sort from their back corner, under everything standing on them.
@@ -590,7 +591,7 @@ export class WorldRenderer {
       const t = TYPES[e.type[s]!]!;
       const x = e.px[s]! + (e.x[s]! - e.px[s]!) * alpha;
       const y = e.py[s]! + (e.y[s]! - e.py[s]!) * alpha;
-      worldToIso(x, y, 0, p);
+      this.ground(x, y, p);
       const owner = e.owner[s]!;
       const color = owner === localPlayer ? 0xffffff : owner === 0 ? 0xf0d040 : 0xff4040;
       const isB = e.kind[s] === EKind.building;
@@ -610,7 +611,7 @@ export class WorldRenderer {
     this.markers = this.markers.filter((k) => now - k.t0 < 550);
     for (const k of this.markers) {
       const f = (now - k.t0) / 550;
-      worldToIso(k.x, k.y, 0, p);
+      this.ground(k.x, k.y, p);
       const r = 5 + f * 12;
       m.ellipse(p.x, p.y, r, r / 2).stroke({ width: 2, color: k.color, alpha: 1 - f });
       m.ellipse(p.x, p.y, 3, 1.5).fill({ color: k.color, alpha: 1 - f });
@@ -665,15 +666,23 @@ export class WorldRenderer {
    * Building placement ghost at tile (tx, ty): the building drawn translucent plus a green/red diamond per
    * footprint tile. Pass typeId null to hide.
    */
+  /** The ground diamond of tile (tx, ty), each corner at its own height. */
+  private tileQuad(tx: number, ty: number): number[] {
+    const m = this.world.map;
+    const out: number[] = [];
+    for (const [x, y] of [[tx, ty], [tx + 1, ty], [tx + 1, ty + 1], [tx, ty + 1]] as const) {
+      const q = worldToIso(x, y, groundHeight(m, x, y));
+      out.push(q.x, q.y);
+    }
+    return out;
+  }
+
   /** Placement preview for a wall line: one diamond per segment, green where it can go. */
   drawGhostTiles(tiles: readonly { tx: number; ty: number; ok: boolean }[]): void {
     const g = this.ghostGfx.clear();
     if (this.ghostSprite) this.ghostSprite.visible = false;
     const p = { x: 0, y: 0 };
-    for (const t of tiles) {
-      worldToIso(t.tx, t.ty, 0, p);
-      g.poly([p.x, p.y, p.x + 32, p.y + 16, p.x, p.y + 32, p.x - 32, p.y + 16]).fill({ color: t.ok ? 0x40ff60 : 0xff3030, alpha: 0.35 });
-    }
+    for (const t of tiles) g.poly(this.tileQuad(t.tx, t.ty)).fill({ color: t.ok ? 0x40ff60 : 0xff3030, alpha: 0.35 });
   }
 
   drawGhost(typeId: string | null, size: number, tx: number, ty: number, tileOk: readonly boolean[], owner = 1): void {
@@ -686,9 +695,8 @@ export class WorldRenderer {
     let k = 0;
     for (let dy = 0; dy < size; dy++) {
       for (let dx = 0; dx < size; dx++) {
-        worldToIso(tx + dx, ty + dy, 0, p);
         const ok = tileOk[k++];
-        g.poly([p.x, p.y, p.x + 32, p.y + 16, p.x, p.y + 32, p.x - 32, p.y + 16]).fill({ color: ok ? 0x40ff60 : 0xff3030, alpha: 0.28 });
+        g.poly(this.tileQuad(tx + dx, ty + dy)).fill({ color: ok ? 0x40ff60 : 0xff3030, alpha: 0.28 });
       }
     }
     const model = this.buildingModel(typeId, owner);
@@ -706,7 +714,7 @@ export class WorldRenderer {
       sp.texture = f.tex;
       sp.anchor.set(f.anchorX, f.anchorY);
       sp.scale.set(1 / meta!.scale);
-      worldToIso(tx + size / 2, ty + size / 2, 0, p);
+      this.ground(tx + size / 2, ty + size / 2, p);
       sp.position.set(p.x, p.y);
       sp.visible = true;
     } else sp.visible = false;
@@ -732,12 +740,17 @@ export class WorldRenderer {
     return out;
   }
 
+  /** Iso position of world point (x, y) on the ground (hills lift it), `above` levels higher. */
+  ground(x: number, y: number, out: { x: number; y: number } = { x: 0, y: 0 }, above = 0): { x: number; y: number } {
+    return worldToIso(x, y, groundHeight(this.world.map, x, y) + above, out);
+  }
+
   /** Screen-space (world container) position of an entity's ground point, interpolated. */
   entityIso(slot: number, alpha: number): { x: number; y: number } {
     const e = this.world.ents;
     const x = e.px[slot]! + (e.x[slot]! - e.px[slot]!) * alpha;
     const y = e.py[slot]! + (e.y[slot]! - e.py[slot]!) * alpha;
-    return worldToIso(x, y);
+    return this.ground(x, y);
   }
 
   get viewCount(): number {

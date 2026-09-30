@@ -1,5 +1,5 @@
 import type { Container } from 'pixi.js';
-import { isoToWorld, worldToIso, type Point } from './iso.ts';
+import { ELEVATION_PX, isoToWorld, worldToIso, type Point } from './iso.ts';
 
 export interface CameraOptions {
   edgeScroll: boolean;
@@ -60,8 +60,11 @@ export class Camera {
     );
   }
 
+  /** Ground height (levels) at a world point — set by the game so centring and picking follow the hills. */
+  ground: (x: number, y: number) => number = () => 0;
+
   centerOnWorld(x: number, y: number): void {
-    worldToIso(x, y, 0, this.center);
+    worldToIso(x, y, this.ground(x, y), this.center);
   }
 
   setZoom(z: number): void {
@@ -122,15 +125,26 @@ export class Camera {
     return { x: this.center.x + (px - c.x) / this.zoom, y: this.center.y + (py - c.y) / this.zoom };
   }
 
-  /** World tile coords → page (CSS px). */
-  worldToScreen(x: number, y: number, h = 0): Point {
+  /** World tile coords → page (CSS px); `h` defaults to the ground there. */
+  worldToScreen(x: number, y: number, h = this.ground(x, y)): Point {
     const p = worldToIso(x, y, h);
     const c = this.viewCenter();
     return { x: (p.x - this.center.x) * this.zoom + c.x, y: (p.y - this.center.y) * this.zoom + c.y };
   }
 
+  /**
+   * Page → the world point on the ground under it. On a hill the ground is drawn higher than its flat position,
+   * so walk up: start from the flat answer and re-project with the height found there (converges in a few steps
+   * on the gentle slopes the maps have).
+   */
   screenToWorld(px: number, py: number): Point {
     const iso = this.screenToIso(px, py);
-    return isoToWorld(iso.x, iso.y);
+    const w = isoToWorld(iso.x, iso.y);
+    for (let k = 0; k < 6; k++) {
+      const h = this.ground(w.x, w.y);
+      if (h === 0 && k === 0) break;
+      isoToWorld(iso.x, iso.y + h * ELEVATION_PX, w);
+    }
+    return w;
   }
 }

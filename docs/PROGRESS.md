@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M10.1b elevation on screen (terrain mesh heights + shading, sprites/picking at ground height).
+- **Next up:** M10.2 Highland and Hill Country maps (their hills don't touch the gated suite maps), then M10.3 transitions.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -547,10 +547,13 @@ so far.
       own stream, slopes ≤ 1, flat shores and bases (10 tiles). `elevation.test.ts` (heights, placement, the odds
       over 2000 hits, every map type's slopes/shores/bases). **Hill generation is off** (`HILLS_ON`, KI-9 — the
       AI war gate fails 2/4 on hilly maps; the user decides); `?scenario=map&hills=1` generates them.
-- [ ] **M10.1b Elevation on screen.** Terrain mesh lifted by height with slope shading (sun from the upper
-      left); sprites, selection rings, HP bars, projectiles, fx and the build ghost at ground height; picking
-      (screen → world) walks up the slope; the minimap shades hills. _Accept:_ a hills screenshot ≥ 4/5; e2e
-      clicks on a hill hit their target.
+- [x] **M10.1b Elevation on screen.** `render/ground.ts` draws the ground at a smoothed height (the sim's whole
+      levels averaged over ±0.6 tiles, so terraces read as mounds); the terrain mesh is lifted by it and shaded by
+      the slope against the bakes' sun (×1.6 off level, clamped); sprites, rings, HP bars, markers, projectiles,
+      corpses/rubble and the build ghost (per-corner tile quads) stand on it; `Camera.ground` makes centring and
+      `screenToWorld` follow the hills (iterative); the minimap lightens each level. `?scenario=hills` and
+      `hills.spec.ts` (select a lifted bowman, move across the plateau, attack downhill — both browsers). Flat
+      maps render exactly as before.
 - [ ] **M10.2 Highland and Hill Country** map types (more and higher hills; Highland with lakes).
 - [ ] **M10.3 Terrain transitions.** Beaches as a sand band along every shore, desert distinct from beach,
       palm and pine forests by map type, softer grass/dirt/desert edges.

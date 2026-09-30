@@ -1,16 +1,37 @@
 import { Container, Geometry, Mesh, Shader } from 'pixi.js';
 import { TERRAINS } from '../data/terrain.ts';
 import type { TileMap } from '../sim/map/tilemap.ts';
-import { HALF_H, HALF_W } from './iso.ts';
+import { ELEVATION_PX, HALF_H, HALF_W } from './iso.ts';
+import { groundHeight } from './ground.ts';
 
 /**
  * Terrain as GPU chunk meshes (16×16 tiles each). Vertices sit on a half-tile lattice: tile centers take the
  * tile's own color, edges and corners average their neighbors — so terrain blends smoothly across borders with
- * no visible grid. The fragment shader adds multi-octave value noise for grain. Texture splatting, elevation
- * shading and animated water replace the flat colors in M10.
+ * no visible grid. The fragment shader adds multi-octave value noise for grain. Hills (M10.1b): every vertex is
+ * lifted by the ground height (16 px a level) and its colour shaded by the slope against the bakes' sun, so a
+ * slope facing the upper left brightens and one facing away darkens (level ground keeps its colour exactly).
  */
 export const CHUNK_TILES = 16;
 const SUB = 2; // vertices per tile edge
+/** The bakes' sun (art/bake/baker.ts SUN_DIR) as (x, up, y), normalised. */
+const SUN = ((): [number, number, number] => {
+  const v = [-0.6, 0.86, -0.2];
+  const n = Math.hypot(v[0]!, v[1]!, v[2]!);
+  return [v[0]! / n, v[1]! / n, v[2]! / n];
+})();
+/** One elevation level in tile units of height (16 px over the 39.2 px a unit of height covers on screen). */
+const LEVEL_UNITS = 0.408;
+
+/** Light on the ground at (x, y) relative to level ground: Lambert on the slope normal, clamped. */
+function slopeShade(map: TileMap, x: number, y: number): number {
+  const gx = (groundHeight(map, x + 0.5, y) - groundHeight(map, x - 0.5, y)) * LEVEL_UNITS;
+  const gy = (groundHeight(map, x, y + 0.5) - groundHeight(map, x, y - 0.5)) * LEVEL_UNITS;
+  if (gx === 0 && gy === 0) return 1;
+  const n = Math.hypot(gx, 1, gy);
+  const lambert = (-gx * SUN[0] + SUN[1] - gy * SUN[2]) / n;
+  // Exaggerated a little (×1.6 off level) so low hills still read at game zoom, as the original's did.
+  return Math.min(1.4, Math.max(0.5, 1 + (lambert / SUN[1] - 1) * 1.6));
+}
 
 const VERTEX = /* glsl */ `
 in vec2 aPosition;
@@ -99,7 +120,7 @@ export class TerrainLayer {
         const wy = ty0 + j / SUB;
         const v = j * vw + i;
         pos[v * 2] = (wx - wy) * HALF_W;
-        pos[v * 2 + 1] = (wx + wy) * HALF_H;
+        pos[v * 2 + 1] = (wx + wy) * HALF_H - groundHeight(map, wx, wy) * ELEVATION_PX;
         wld[v * 2] = wx;
         wld[v * 2 + 1] = wy;
         // Tiles touching this lattice point: centers → 1 tile, edge midpoints → 2, corners → 4.
@@ -115,9 +136,10 @@ export class TerrainLayer {
           acc[2] += a[2];
         }
         const n = xs.length * ys.length;
-        col[v * 3] = acc[0] / n;
-        col[v * 3 + 1] = acc[1] / n;
-        col[v * 3 + 2] = acc[2] / n;
+        const shade = slopeShade(map, wx, wy);
+        col[v * 3] = (acc[0] / n) * shade;
+        col[v * 3 + 1] = (acc[1] / n) * shade;
+        col[v * 3 + 2] = (acc[2] / n) * shade;
       }
     }
     const idx = new Uint32Array((vw - 1) * (vh - 1) * 6);
@@ -146,7 +168,9 @@ export class TerrainLayer {
     // Screen-space (iso) bounds of the chunk diamond, for culling.
     const x0 = (tx0 - (ty0 + th)) * HALF_W;
     const x1 = (tx0 + tw - ty0) * HALF_W;
-    const y0 = (tx0 + ty0) * HALF_H;
+    let top = 0;
+    for (let y = ty0; y <= ty0 + th; y++) for (let x = tx0; x <= tx0 + tw; x++) top = Math.max(top, map.corner(x, y));
+    const y0 = (tx0 + ty0) * HALF_H - top * ELEVATION_PX; // hills rise above the flat diamond
     const y1 = (tx0 + tw + ty0 + th) * HALF_H;
     this.chunks.push({ mesh, x0, y0, x1, y1 });
   }
