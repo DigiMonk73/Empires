@@ -5,7 +5,7 @@ import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
-import { cancelUnit, queueUnit } from '../systems/production.ts';
+import { cancelUnit, queueResearch, queueUnit } from '../systems/production.ts';
 import { startFarm } from '../systems/farm.ts';
 import { startAttack } from '../systems/combat.ts';
 
@@ -150,6 +150,9 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         }
         break;
       }
+      case 'research':
+        queueResearch(w, player, cmd.bld, cmd.tech);
+        break;
       case 'train':
         queueUnit(w, player, cmd.bld, cmd.unit, Math.max(1, Math.min(5, cmd.n ?? 1)));
         break;

@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M5 Combat — M5.1–M5.2 done (combat core, projectiles). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M5 Combat — M5.1–M5.3 done (combat core, projectiles, research + training). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m4 (verify ~30 s incl. economy benchmark; verify:full ~100 s: Docker 77 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,7 +16,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-4 large-unit crowd jams.
-- **Next up:** M5.3 research system + Tool Age + barracks/range/stable training, then M5.4 auto-acquire.
+- **Next up:** M5.4 auto-acquire + retaliation (+ Stand Ground), then M5.5 soldier art.
 - **Playable now:** `?scenario=raid` (right-click enemies with clubmen); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -174,9 +174,11 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       hit only if the target is still within radius + 0.15 of the aim point (dodging works), buildings always
       hit; hunters' spears (80%: a miss lands 0.6–1.2 tiles off); 7-tick windup before blows/launches aligns
       damage with the art's hit frame (D26); renderer draws arcing arrows/spears/stones with ground shadows.
-- [ ] **M5.3 Research + training.** Generic `research` command on buildings (queue shared with units, cost at
-      queue, effects applied via compilePlayerStats on completion); Tool Age at the TC; Barracks (clubman →
-      axeman via Battle Axe), Archery Range (bowman), Stable (scout); command-grid buttons with techs.
+- [x] **M5.3 Research + training.** `research` command (codec 10); techs share the building queue (items are
+      unit type indices or tech ids), cost at queue, refund on cancel, one research of a tech at a time;
+      blockers: building, age, prerequisites, civ, "any N of these buildings" (age advances); completion
+      recompiles stats, upgrades units in the field (clubman → axeman) and adds max-HP gains; HUD age label;
+      command grid lists techs (age advances as ⬆II/⬆III); Barracks/Range/Stable train from data.
 - [ ] **M5.4 Auto-acquire + retaliation.** Military auto-attacks enemies in LOS (scan staggered via UnitGrid;
       scouts never auto-attack); 1.0a rule: own/allied units within 2 tiles of an attacked unit respond;
       villagers fight back when attacked (idle ones only); chase leash (verify); lions attack villagers.

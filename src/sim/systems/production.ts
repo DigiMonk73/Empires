@@ -1,7 +1,9 @@
 import { CIV_BY_ID, TECH_BY_ID, UNIT_BY_ID } from '../../data/index.ts';
+import { compilePlayerStats } from '../rules/playerStats.ts';
+import { TICKS_PER_SECOND } from '../time.ts';
 import { EKind } from '../core/entities.ts';
 import { nearestTile } from '../path/service.ts';
-import { TYPES, unitTypeIndex } from '../rules/registry.ts';
+import { TYPES, buildingTypeIndex, unitTypeIndex } from '../rules/registry.ts';
 import type { World } from '../world.ts';
 import { canAfford, pay } from './build.ts';
 import { startGather } from './gather.ts';
@@ -14,8 +16,8 @@ import { startGather } from './gather.ts';
 export const MAX_QUEUE = 5;
 
 export interface Production {
-  /** Queued unit type indices; the head is in training. */
-  items: number[];
+  /** Queue: unit type indices (training) or tech ids (research); the head is in progress. */
+  items: (number | string)[];
   /** Ticks of training done on the head item (fractional for fast Docks). */
   progress: number;
   /** Set while paused for housing (so the "need houses" event fires once). */
@@ -44,6 +46,93 @@ export function trainBlocker(w: World, player: number, b: number, unitId: string
   for (const t of needs) if (!p.techs.includes(t)) return `requires ${TECH_BY_ID.get(t)?.name ?? t}`;
   void def;
   return null;
+}
+
+/** Why `player` can't research `techId` at building slot `b` right now (null = can). */
+export function researchBlocker(w: World, player: number, b: number, techId: string): string | null {
+  const e = w.ents;
+  const tech = TECH_BY_ID.get(techId);
+  if (!tech) return 'unknown technology';
+  if (e.owner[b] !== player || e.kind[b] !== EKind.building || e.build[b]! < 1) return 'building not ready';
+  if (TYPES[e.type[b]!]!.building!.id !== tech.at) return 'not researched here';
+  const p = w.players[player]!;
+  if (p.techs.includes(techId)) return 'already researched';
+  if (CIV_BY_ID.get(p.civ)?.disabled.techs.includes(techId)) return 'not available to this civilization';
+  if (p.stats.age < tech.age) return `requires the ${AGE_NAMES[tech.age]}`;
+  for (const r of tech.requires ?? []) if (!p.techs.includes(r)) return `requires ${TECH_BY_ID.get(r)?.name ?? r}`;
+  if (tech.requiresAnyBuildings) {
+    const { count, of } = tech.requiresAnyBuildings;
+    const have = new Set<string>();
+    for (let s = 0; s < e.top; s++) {
+      if (!e.alive[s] || e.owner[s] !== player || e.kind[s] !== EKind.building || e.build[s]! < 1) continue;
+      const id = TYPES[e.type[s]!]!.building!.id;
+      if (of.includes(id)) have.add(id);
+    }
+    if (have.size < count) return `requires ${count} of: ${of.map((id) => TYPES[buildingTypeIndex(id)]!.name).join(', ')}`;
+  }
+  // One research of a tech at a time across the player's buildings.
+  for (let s = 0; s < e.top; s++) if (e.alive[s] && e.owner[s] === player && w.prod[s]?.items.includes(techId)) return 'already being researched';
+  return null;
+}
+
+export const AGE_NAMES = ['', 'Stone Age', 'Tool Age', 'Bronze Age', 'Iron Age'];
+
+export function queueResearch(w: World, player: number, bh: number, techId: string): void {
+  const b = w.ents.slotOf(bh);
+  if (b < 0) return;
+  const why = researchBlocker(w, player, b, techId);
+  const cost = techCost(techId);
+  const reason = why ?? ((w.prod[b]?.items.length ?? 0) >= MAX_QUEUE ? 'queue is full' : !canAfford(w, player, cost) ? 'not enough resources' : null);
+  if (reason) {
+    w.events.push({ t: 'rejected', player, reason });
+    return;
+  }
+  pay(w, player, cost);
+  let prod = w.prod[b];
+  if (!prod) w.prod[b] = prod = { items: [], progress: 0, housed: false };
+  prod.items.push(techId);
+}
+
+function techCost(techId: string): number[] {
+  const c = TECH_BY_ID.get(techId)!.cost as Partial<Record<string, number>>;
+  return [c.food ?? 0, c.wood ?? 0, c.gold ?? 0, c.stone ?? 0];
+}
+
+/** Cost of a queue item (unit type index or tech id). */
+function itemCost(w: World, player: number, item: number | string): readonly number[] {
+  return typeof item === 'string' ? techCost(item) : w.stats(player, item).cost;
+}
+
+/** Ticks a queue item takes. */
+function itemTicks(w: World, player: number, item: number | string): number {
+  return typeof item === 'string' ? Math.round(TECH_BY_ID.get(item)!.researchTime * TICKS_PER_SECOND) : w.stats(player, item).trainTicks;
+}
+
+/**
+ * A finished research: record it, recompile the player's stats, and bring the field up to date — units of an
+ * upgraded line become the new type (econ:5), and every unit gains any increase in max HP.
+ */
+export function completeResearch(w: World, player: number, techId: string): void {
+  const p = w.players[player]!;
+  const before = p.stats;
+  p.techs.push(techId);
+  p.stats = compilePlayerStats(p.civ, p.techs);
+  const e = w.ents;
+  for (let s = 0; s < e.top; s++) {
+    if (!e.alive[s] || e.owner[s] !== player) continue;
+    const t = TYPES[e.type[s]!]!;
+    if (e.kind[s] === EKind.unit && t.unit) {
+      let root = t.unit.id;
+      while (UNIT_BY_ID.get(root)?.upgradeOf) root = UNIT_BY_ID.get(root)!.upgradeOf!;
+      const want = p.stats.upgrades.get(root);
+      if (want && want !== t.unit.id) e.type[s] = unitTypeIndex(want);
+    }
+    const oldMax = before.types[t.index]!.hp;
+    const newMax = p.stats.types[e.type[s]!]!.hp;
+    if (e.kind[s] === EKind.building && e.build[s]! < 1) continue;
+    if (newMax > oldMax) e.hp[s] = e.hp[s]! + (newMax - oldMax);
+  }
+  w.events.push({ t: 'researched', player, tech: techId });
 }
 
 /** The unit type index actually produced for base unit `unitId` (after upgrades). */
@@ -83,8 +172,8 @@ export function cancelUnit(w: World, player: number, bh: number, index = -1): vo
   const prod = b >= 0 ? w.prod[b] : undefined;
   if (!prod || !prod.items.length || w.ents.owner[b] !== player) return;
   const i = index < 0 || index >= prod.items.length ? prod.items.length - 1 : index;
-  const [type] = prod.items.splice(i, 1);
-  pay(w, player, w.stats(player, type!).cost, -1);
+  const [item] = prod.items.splice(i, 1);
+  pay(w, player, itemCost(w, player, item!), -1);
   if (i === 0) {
     prod.progress = 0;
     prod.housed = false;
@@ -97,7 +186,7 @@ export function refundQueue(w: World, b: number): void {
   const prod = w.prod[b];
   if (!prod) return;
   const player = w.ents.owner[b]!;
-  for (const type of prod.items) pay(w, player, w.stats(player, type).cost, -1);
+  for (const item of prod.items) pay(w, player, itemCost(w, player, item), -1);
   w.prod[b] = undefined;
 }
 
@@ -130,7 +219,18 @@ export function productionSystem(w: World): void {
     }
     const player = e.owner[b]!;
     const p = w.players[player]!;
-    const type = prod.items[0]!;
+    const head = prod.items[0]!;
+    if (typeof head === 'string') {
+      // Research (econ:5): not affected by housing or the Dock's faster work rate.
+      prod.progress += 1;
+      if (prod.progress + 1e-9 < itemTicks(w, player, head)) continue;
+      prod.items.shift();
+      prod.progress = 0;
+      if (!prod.items.length) w.prod[b] = undefined;
+      completeResearch(w, player, head);
+      continue;
+    }
+    const type = head;
     const st = w.stats(player, type);
     if (p.pop + st.pop > p.popCap) {
       if (!prod.housed) {

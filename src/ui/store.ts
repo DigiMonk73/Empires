@@ -28,7 +28,7 @@ export const hud = {
   selection: signal<SelInfo[]>([]),
   commands: signal<CommandButton[]>([]),
   /** Queue of the single selected own building. */
-  queue: signal<{ type: string; progress: number }[]>([]),
+  queue: signal<{ type: string; label: string; glyph?: string; progress: number }[]>([]),
   /** Carry text for a single selected villager. */
   carry: signal(''),
   placing: signal<string | null>(null),

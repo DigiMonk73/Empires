@@ -52,7 +52,13 @@ function hpColor(f: number): string {
 function Icon({ model, label, size, glyph }: { model: string | null; label: string; size: number; glyph?: string | undefined }) {
   const st = iconStyle(model, size);
   if (st) return <span class="icon-img" style={{ ...st, width: `${size}px`, height: `${size}px` }} />;
-  return <span class={glyph ? 'icon-glyph' : 'icon-txt'}>{glyph ?? label.slice(0, 2)}</span>;
+  // Multi-character glyphs (⬆III) shrink to fit the button.
+  const fit = glyph && [...glyph].length > 2 ? { fontSize: `${Math.round(size * 0.36)}px`, letterSpacing: '-0.5px' } : undefined;
+  return (
+    <span class={glyph ? 'icon-glyph' : 'icon-txt'} style={fit}>
+      {glyph ?? label.slice(0, 2)}
+    </span>
+  );
 }
 
 function SinglePanel({ s }: { s: SelInfo }) {
@@ -88,7 +94,7 @@ function SinglePanel({ s }: { s: SelInfo }) {
           <div class="queue" data-testid="queue">
             {q.map((item, i) => (
               <button class="queue-item" title="Click to cancel" onClick={() => hudActions.cancelQueue(i)}>
-                <Icon model={item.type} label={item.type} size={30} />
+                <Icon model={item.type} label={item.label} size={30} glyph={item.glyph} />
                 {i === 0 && <div class="queue-progress" style={{ width: `${item.progress * 100}%` }} />}
               </button>
             ))}

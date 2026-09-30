@@ -227,6 +227,9 @@ export class InputController {
       case 'train':
         this.session.router.submit(me, { t: 'train', bld: a.bld, unit: a.unit });
         break;
+      case 'research':
+        this.session.router.submit(me, { t: 'research', bld: a.bld, tech: a.tech });
+        break;
       case 'stop':
         this.session.router.submit(me, { t: 'stop', ids: this.ownUnits() });
         break;

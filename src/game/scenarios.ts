@@ -108,6 +108,7 @@ function village(): SimConfig {
     seed: 5,
     map: { w: W, h: W, ascii: rows },
     players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    startingResources: 'high',
     scenario: {
       buildings: [
         { type: 'townCenter', owner: 1, tx: 14, ty: 14 },

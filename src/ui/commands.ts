@@ -1,9 +1,9 @@
-import { BUILDINGS, UNIT_BY_ID } from '../data/index.ts';
+import { BUILDINGS, TECHS, TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES, buildingTypeIndex } from '../sim/rules/registry.ts';
 import { buildingAvailable, canAfford } from '../sim/systems/build.ts';
 import { isVillager } from '../sim/systems/gather.ts';
-import { MAX_QUEUE, producedType, trainBlocker } from '../sim/systems/production.ts';
+import { MAX_QUEUE, producedType, researchBlocker, trainBlocker } from '../sim/systems/production.ts';
 import type { World } from '../sim/world.ts';
 
 /**
@@ -15,6 +15,7 @@ export type Action =
   | { kind: 'back' }
   | { kind: 'place'; building: string }
   | { kind: 'train'; bld: number; unit: string }
+  | { kind: 'research'; bld: number; tech: string }
   | { kind: 'stop' };
 
 export interface CommandButton {
@@ -105,17 +106,52 @@ export function computeCommands(w: World, player: number, selected: readonly num
         action: { kind: 'train', bld: e.handleOf(b), unit },
       });
     }
+    // Research: what this building offers now, plus next-age items greyed out; finished techs disappear.
+    const q = w.prod[b]?.items.length ?? 0;
+    for (const tech of TECHS) {
+      if (tech.at !== def.id || p.techs.includes(tech.id) || tech.age > p.stats.age + 1) continue;
+      const why = researchBlocker(w, player, b, tech.id);
+      if (why === 'not available to this civilization' || why === 'already researched') continue;
+      const c = tech.cost as Partial<Record<string, number>>;
+      const cost: [number, number, number, number] = [c.food ?? 0, c.wood ?? 0, c.gold ?? 0, c.stone ?? 0];
+      out.push({
+        id: `research:${tech.id}`,
+        label: tech.name,
+        hotkey: '',
+        icon: null,
+        glyph: techGlyph(tech.id),
+        cost,
+        disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : !canAfford(w, player, cost) ? 'not enough resources' : null),
+        action: { kind: 'research', bld: e.handleOf(b), tech: tech.id },
+      });
+    }
   }
   return out;
 }
 
-/** Production queue of a selected building, for the selection panel. */
-export function queueOf(w: World, bh: number): { type: string; progress: number }[] {
+const NUMERALS = ['', 'I', 'II', 'III', 'IV'];
+
+/** Age advances show an arrow and the age they lead to (⬆II = Tool Age); other techs use initials for now. */
+export function techGlyph(techId: string): string | undefined {
+  const age = TECH_BY_ID.get(techId)?.effects.find((ef) => ef.op === 'age');
+  return age && age.op === 'age' ? `⬆${NUMERALS[age.age]}` : undefined;
+}
+
+/** Production queue of a selected building (units and research), for the selection panel. */
+export function queueOf(w: World, bh: number): { type: string; label: string; glyph?: string; progress: number }[] {
   const b = w.ents.slotOf(bh);
   const prod = b >= 0 ? w.prod[b] : undefined;
   if (!prod) return [];
-  return prod.items.map((ti, i) => ({
-    type: TYPES[ti]!.id,
-    progress: i === 0 ? Math.min(1, prod.progress / w.stats(w.ents.owner[b]!, ti).trainTicks) : 0,
-  }));
+  return prod.items.map((item, i) => {
+    if (typeof item === 'string') {
+      const tech = TECH_BY_ID.get(item)!;
+      const glyph = techGlyph(item);
+      return { type: item, label: tech.name, ...(glyph ? { glyph } : {}), progress: i === 0 ? Math.min(1, prod.progress / (tech.researchTime * 20)) : 0 };
+    }
+    return {
+      type: TYPES[item]!.id,
+      label: TYPES[item]!.name,
+      progress: i === 0 ? Math.min(1, prod.progress / w.stats(w.ents.owner[b]!, item).trainTicks) : 0,
+    };
+  });
 }

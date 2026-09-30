@@ -5,6 +5,7 @@ import type { World } from '../sim/world.ts';
 import { playerColor } from '../render/worldRenderer.ts';
 import { hud, type SelInfo } from './store.ts';
 import { queueOf } from './commands.ts';
+import { AGE_NAMES } from '../sim/systems/production.ts';
 
 function fmtClock(tick: number): string {
   const s = Math.floor(tick / 20);
@@ -22,7 +23,10 @@ function classStr(v: Record<string, number | undefined>, keys: string[]): string
 /** Copy what the HUD shows out of the world. Called ~10×/s. */
 export function syncHud(world: World, player: number, selected: readonly number[]): void {
   const p = world.players[player];
-  if (p) hud.res.value = [p.res[0]!, p.res[1]!, p.res[2]!, p.res[3]!];
+  if (p) {
+    hud.res.value = [p.res[0]!, p.res[1]!, p.res[2]!, p.res[3]!];
+    hud.age.value = AGE_NAMES[p.stats.age] ?? 'Stone Age';
+  }
   const e = world.ents;
   let pop = 0;
   let cap = 0;

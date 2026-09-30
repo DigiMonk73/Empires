@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M5.3 · research-queued (new)
+- Town Center grid: villager + age advances labelled ⬆II / ⬆III (identical ⬆ arrows were ambiguous); the queue
+  shows the same glyph with its progress bar. HUD 3/5 — tech icons are text glyphs until M9's baked icons.
+
 ## 2026-09-29 · M5.2 · volley (new), raid*
 - Arrows read at zoom 2: dark shaft, pale fletching, steel tip, a faint ground shadow tracking the flight;
   slight arc for arrows, high arc for stones. Readability 3 at zoom 1 (arrows are ~11 px) — acceptable, as in

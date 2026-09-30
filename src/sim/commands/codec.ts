@@ -14,6 +14,7 @@ const CMD_TRAIN = 6;
 const CMD_CANCEL_TRAIN = 7;
 const CMD_RALLY = 8;
 const CMD_ACT = 9;
+const CMD_RESEARCH = 10;
 
 class Writer {
   bytes: number[] = [];
@@ -121,6 +122,11 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(c.h);
       w.uv(c.queue ? 1 : 0);
       return;
+    case 'research':
+      w.uv(CMD_RESEARCH);
+      w.uv(c.bld);
+      w.str(c.tech);
+      return;
     case 'train':
       w.uv(CMD_TRAIN);
       w.uv(c.bld);
@@ -173,6 +179,10 @@ function readCommand(r: Reader): Command {
       const h = r.uv();
       const queue = r.uv() === 1;
       return queue ? { t: 'act', ids, h, queue } : { t: 'act', ids, h };
+    }
+    case CMD_RESEARCH: {
+      const bld = r.uv();
+      return { t: 'research', bld, tech: r.str() };
     }
     case CMD_TRAIN: {
       const bld = r.uv();

@@ -16,7 +16,9 @@ export type Command =
   | { t: 'act'; ids: number[]; h: number; queue?: boolean }
   /** Queue `n` of base unit `unit` at building `bld`. */
   | { t: 'train'; bld: number; unit: string; n?: number }
-  /** Cancel a queued unit (default: the last one) at building `bld`, refunding it. */
+  /** Research technology `tech` at building `bld` (shares the building's queue). */
+  | { t: 'research'; bld: number; tech: string }
+  /** Cancel a queued unit or research (default: the last one) at building `bld`, refunding it. */
   | { t: 'cancelTrain'; bld: number; index?: number }
   /** Set the rally point of buildings `blds`: a point, or a resource node (`res`) to gather. */
   | { t: 'rally'; blds: number[]; x: number; y: number; res?: number };
