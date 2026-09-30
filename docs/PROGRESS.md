@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14.3 setup options (victory incl. Score / Time Limit, starting age, population, Full Tech Tree, reveal) in the lobby.
+- **Next up:** M14.4 Full Tech Tree (rules + the lobby toggle), then M14.5 alligators.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -809,13 +809,23 @@ of island/Narrows games decided in 2 h (11/12).
       the upper right in years (`ui/clocks.ts`), notices, sounds, and the game-over line says how the game was won.
       Skirmish setup `victory` (default Standard, `win=` in the URL; places the relics). `?scenario=countdowns`.
       Tests: `standard-victory.test.ts` (6) + an e2e that runs a Wonder to victory. The lobby selector: M14.3.
-- [ ] **M14.3 Setup options.** Victory: Standard / Conquest / Score (target) / Time Limit (minutes); starting age
+- [x] **M14.3 Setup options.** Victory: Standard / Conquest / Score (target) / Time Limit (minutes); starting age
       (Default, Tool, Bronze, Iron, Post-Iron); population limit 25–200; Full Tech Tree; reveal map; the lobby and
       the sim config; score and time-limit endings.
+      _Done:_ (D53) sim config `scoreTarget`, `timeLimit`, `startingAge` (`systems/startAge.ts`, applied in
+      `Sim.create`; Post-Iron researches the civ's whole tree); `victory.ts` Score / Time Limit endings with the
+      winner's side; HUD rows "Score to win" / "Time left"; game-over lines. Lobby: a second row (Victory + target or
+      limit, Starting age, Population); URL `win` `target` `limit` `age` `pop`. `runMatch({ startingAge })`. Tests:
+      `setup-options.test.ts` (4) + a lobby e2e. Full Tech Tree moves to M14.4 with its rules; Nomad and the AI at
+      later ages to M14.6.
 - [ ] **M14.4 Full Tech Tree.** Every civilization's tree complete, no civ bonuses; no Fire Galley (econ:6.4).
 - [ ] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1).
 - [ ] **M14.6 AI relic, ruin and Wonder play.** Claim and hold the objects near home; race the countdowns (attack
       an enemy Wonder or the holder of the objects first); Hard+ build a Wonder when rich in the Iron Age.
+      Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
+      start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
+      villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army
+      size by starting age; and Nomad (found a Town Center first), then offer it in the lobby (D53).
 - [ ] **M14.7 No unresolved `verify: true`.** A DECISIONS entry for every flagged value (29 at the start of M14);
       the data rows carry `decision`; a test fails on any flag without one.
 - _Exit:_ no unresolved `verify:true`.

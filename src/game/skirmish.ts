@@ -1,10 +1,10 @@
-import type { MapSizeId, StartingResources } from '../data/setup.ts';
+import { POP_LIMITS, SCORE_TARGETS, STARTING_AGES, TIME_LIMITS, type MapSizeId, type StartingAge, type StartingResources } from '../data/setup.ts';
 import { GEN_MAP_TYPES, generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import type { AiLevel, SimConfig } from '../sim/world.ts';
 
-/** Skirmish victory settings (econ:7); Score and Time Limit arrive with M14.3. */
-export type SkirmishVictory = 'standard' | 'conquest';
-export const SKIRMISH_VICTORIES: readonly SkirmishVictory[] = ['standard', 'conquest'];
+/** Skirmish victory settings (econ:7). */
+export type SkirmishVictory = 'standard' | 'conquest' | 'score' | 'time';
+export const SKIRMISH_VICTORIES: readonly SkirmishVictory[] = ['standard', 'conquest', 'score', 'time'];
 
 /**
  * Skirmish setup ↔ URL. The menu writes a setup into the query string and reloads; the game boots from it. A player
@@ -26,6 +26,12 @@ export interface SkirmishSetup {
   speed: number;
   /** Standard (the original's default) places 5 Artifacts and 5 Ruins and runs the Wonder/relic countdowns. */
   victory: SkirmishVictory;
+  /** Score victory: the total to reach. Time Limit: minutes of game time. */
+  scoreTarget: number;
+  timeLimit: number;
+  startingAge: StartingAge;
+  /** Population limit (25–200, econ:2). */
+  popCap: number;
 }
 
 export const AI_LEVELS: readonly AiLevel[] = ['easiest', 'easy', 'moderate', 'hard', 'hardest'];
@@ -42,6 +48,10 @@ export const DEFAULT_SETUP: SkirmishSetup = {
   reveal: false,
   speed: 1,
   victory: 'standard',
+  scoreTarget: 1000,
+  timeLimit: 60,
+  startingAge: 'default',
+  popCap: 50,
 };
 
 export function setupToQuery(s: SkirmishSetup): string {
@@ -54,7 +64,11 @@ export function setupToQuery(s: SkirmishSetup): string {
     res: s.resources,
     speed: String(s.speed),
     win: s.victory,
+    age: s.startingAge,
+    pop: String(s.popCap),
   });
+  if (s.victory === 'score') q.set('target', String(s.scoreTarget));
+  if (s.victory === 'time') q.set('limit', String(s.timeLimit));
   if (s.reveal) q.set('reveal', '1');
   return q.toString();
 }
@@ -77,7 +91,17 @@ export function setupFromQuery(q: URLSearchParams): SkirmishSetup {
     reveal: q.get('reveal') === '1',
     speed: Number(q.get('speed') ?? 1) || 1,
     victory: SKIRMISH_VICTORIES.includes(q.get('win') as SkirmishVictory) ? (q.get('win') as SkirmishVictory) : DEFAULT_SETUP.victory,
+    scoreTarget: pick(q.get('target'), SCORE_TARGETS, DEFAULT_SETUP.scoreTarget),
+    timeLimit: pick(q.get('limit'), TIME_LIMITS, DEFAULT_SETUP.timeLimit),
+    startingAge: STARTING_AGES.some((a) => a.id === q.get('age')) ? (q.get('age') as StartingAge) : DEFAULT_SETUP.startingAge,
+    popCap: pick(q.get('pop'), POP_LIMITS, DEFAULT_SETUP.popCap),
   };
+}
+
+/** A number from the query if it is one of the offered choices. */
+function pick(v: string | null, choices: readonly number[], dflt: number): number {
+  const n = Number(v);
+  return choices.includes(n) ? n : dflt;
 }
 
 export function skirmishConfig(s: SkirmishSetup): SimConfig {
@@ -90,5 +114,13 @@ export function skirmishConfig(s: SkirmishSetup): SimConfig {
     revealMap: s.reveal,
     relics: s.victory === 'standard',
   });
-  return { ...map, victory: s.victory, players: s.players.map((p) => ({ civ: p.civ, team: p.team, ...(p.controller !== 'human' ? { ai: p.controller } : {}) })) };
+  return {
+    ...map,
+    victory: s.victory,
+    ...(s.victory === 'score' ? { scoreTarget: s.scoreTarget } : {}),
+    ...(s.victory === 'time' ? { timeLimit: s.timeLimit } : {}),
+    ...(s.startingAge !== 'default' ? { startingAge: s.startingAge } : {}),
+    popCap: s.popCap,
+    players: s.players.map((p) => ({ civ: p.civ, team: p.team, ...(p.controller !== 'human' ? { ai: p.controller } : {}) })),
+  };
 }

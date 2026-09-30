@@ -382,7 +382,7 @@ async function boot(): Promise<void> {
       notifier?.update();
       if (hud.diplomacy.value) hud.diplomacy.value = diplomacyView(world, session.localPlayer);
       if (hud.scores.value && hudTick % 10 === 0) hud.scores.value = scoreList(); // once a second
-      if (hudTick % 5 === 0) syncClocks(world, session.localPlayer); // a year is 10 ticks
+      if (hudTick % 5 === 0) syncClocks(world, session.localPlayer); // a year is 10 ticks; half a second of the time limit
       refreshCommands();
     }
     frameMs = t.deltaMS;

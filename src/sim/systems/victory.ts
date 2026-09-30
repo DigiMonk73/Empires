@@ -2,6 +2,7 @@ import { EKind } from '../core/entities.ts';
 import { VICTORY } from '../../data/setup.ts';
 import { mutualAllies } from '../rules/diplomacy.ts';
 import { TYPES } from '../rules/registry.ts';
+import { computeScores } from '../rules/score.ts';
 import type { Countdown, WinHow, World } from '../world.ts';
 
 /**
@@ -13,6 +14,10 @@ import type { Countdown, WinHow, World } from '../world.ts';
  * Standard (M14.2, econ:7) adds three countdowns of 2000 years (1000 s at speed 1.0): a finished Wonder, or
  * every Artifact or every Ruin held by one side. Losing the Wonder or one of the objects stops the clock; the
  * holder wins, with the standing players who are its mutual allies (all ticking Allied Victory), when it runs out.
+ *
+ * Score (M14.3): the first standing player to reach the target wins (several at once: the highest score, then the
+ * lower seat). Time Limit: when the time is up the highest score wins (a tie: the lower seat). Both with their
+ * side, as above, and conquest still ends any of these games.
  */
 const EXEMPT = new Set(['tradeShip', 'transport', 'fishingShip']);
 export const COUNTDOWN_TICKS = VICTORY.countdownYears * VICTORY.secondsPerYear * 20;
@@ -45,6 +50,18 @@ export function victorySystem(w: World): void {
   } else if (standing.length === 0) {
     win(w, 0, [], 'conquest'); // everyone fell together
   } else if (w.victory === 'standard') countdowns(w);
+  else if (w.victory === 'score' || (w.victory === 'time' && w.tick >= w.timeLimitTicks)) {
+    const lines = computeScores(w).filter((l) => w.players[l.player]!.defeated === null);
+    let best = lines[0]!;
+    for (const l of lines) if (l.total > best.total || (l.total === best.total && l.player < best.player)) best = l;
+    if (w.victory === 'time' || best.total >= w.scoreTarget) win(w, w.players[best.player]!.team, sideOf(w, best.player), w.victory, best.player);
+  }
+}
+
+/** A winner's side: itself and the standing players who are its mutual allies, all ticking Allied Victory. */
+function sideOf(w: World, winner: number): number[] {
+  const p = w.players[winner]!;
+  return w.players.filter((q) => q.id > 0 && q.defeated === null && (q.id === p.id || (p.alliedVictory && q.alliedVictory && mutualAllies(w, p.id, q.id)))).map((q) => q.id);
 }
 
 function win(w: World, team: number, winners: number[], how: WinHow, by = 0): void {
@@ -94,8 +111,6 @@ function countdowns(w: World): void {
   // The first clock to run out wins (ties: the one started first).
   const done = kept.find((c) => c.end <= w.tick);
   if (!done) return;
-  const p = w.players[done.player]!;
-  const side = w.players.filter((q) => q.id > 0 && q.defeated === null && (q.id === p.id || (p.alliedVictory && q.alliedVictory && mutualAllies(w, p.id, q.id))));
   w.countdowns = [];
-  win(w, p.team, side.map((q) => q.id), done.kind, p.id);
+  win(w, w.players[done.player]!.team, sideOf(w, done.player), done.kind, done.player);
 }

@@ -1,3 +1,4 @@
+import type { StartingAge } from '../data/setup.ts';
 import type { AiLevel, MapSizeId } from '../data/setup.ts';
 import { AiPlayer } from '../ai/ai.ts';
 import { EKind } from '../sim/core/entities.ts';
@@ -21,6 +22,8 @@ export interface MatchOptions {
   peaceful?: boolean;
   /** Civilizations by seat (default: Greek, Egyptian, Persian, …). */
   civs?: string[];
+  /** Starting age (M14.3; default: the Stone Age). */
+  startingAge?: StartingAge;
   clock?: () => number;
 }
 
@@ -59,7 +62,7 @@ const isVillager = (w: Sim['world'], s: number): boolean => TYPES[w.ents.type[s]
 export function runMatch(o: MatchOptions): MatchResult {
   const civs = o.civs ?? ['greek', 'egyptian', 'persian', 'babylonian', 'hittite', 'yamato', 'shang', 'roman'];
   const cfg = generateMap({ seed: o.seed, type: o.type ?? 'continental', size: o.size ?? 'tiny', players: o.levels.map((_, i) => ({ civ: civs[i % civs.length]! })) });
-  const sim = Sim.create({ ...cfg, players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
+  const sim = Sim.create({ ...cfg, ...(o.startingAge ? { startingAge: o.startingAge } : {}), players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
   const w = sim.world;
   const n = o.levels.length;
   const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful, civ: civs[i % civs.length]! }));

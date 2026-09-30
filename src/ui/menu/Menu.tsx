@@ -2,8 +2,8 @@ import { render } from 'preact';
 import { GEN_MAP_TYPES } from '../../sim/mapgen/generate.ts';
 import { useState } from 'preact/hooks';
 import { CIVS } from '../../data/civs.ts';
-import { MAP_SIZES, MAP_TYPES, type MapSizeId, type StartingResources } from '../../data/setup.ts';
-import { AI_LEVELS, DEFAULT_SETUP, setupToQuery, type SkirmishPlayer, type SkirmishSetup } from '../../game/skirmish.ts';
+import { MAP_SIZES, MAP_TYPES, POP_LIMITS, SCORE_TARGETS, STARTING_AGES, TIME_LIMITS, type MapSizeId, type StartingAge, type StartingResources } from '../../data/setup.ts';
+import { AI_LEVELS, DEFAULT_SETUP, SKIRMISH_VICTORIES, setupToQuery, type SkirmishPlayer, type SkirmishSetup, type SkirmishVictory } from '../../game/skirmish.ts';
 import { playerColor } from '../../render/worldRenderer.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { TechTree } from '../techtree/TechTree.tsx';
@@ -25,6 +25,13 @@ const hex = (p: number): string => `#${playerColor(p).toString(16).padStart(6, '
 const cap = (s: string): string => s[0]!.toUpperCase() + s.slice(1);
 const SIZES = Object.keys(MAP_SIZES) as MapSizeId[];
 const RESOURCES: StartingResources[] = ['default', 'medium', 'high', 'deathmatch'];
+const VICTORY_NAMES: Record<SkirmishVictory, string> = { standard: 'Standard', conquest: 'Conquest', score: 'Score', time: 'Time Limit' };
+const VICTORY_HINTS: Record<SkirmishVictory, string> = {
+  standard: 'Conquest, or hold a Wonder, all the Artifacts or all the Ruins for 2000 years',
+  conquest: 'Destroy every enemy unit and building',
+  score: 'The first to reach the target score wins',
+  time: 'The highest score when the time runs out wins',
+};
 
 function MainMenu({ onSkirmish, onLoad, onOptions, onHelp, onCredits }: { onSkirmish: () => void; onLoad: () => void; onOptions: () => void; onHelp: () => void; onCredits: () => void }) {
   return (
@@ -106,6 +113,52 @@ function Skirmish({ onBack }: { onBack: () => void }) {
         </label>
         <label class="check">
           <input type="checkbox" checked={s.reveal} onChange={(e) => upd({ reveal: (e.target as HTMLInputElement).checked })} /> Reveal map
+        </label>
+      </div>
+      <div class="menu-row">
+        <label title={VICTORY_HINTS[s.victory]}>
+          Victory
+          <select data-testid="setup-victory" value={s.victory} onChange={(e) => upd({ victory: (e.target as HTMLSelectElement).value as SkirmishVictory })}>
+            {SKIRMISH_VICTORIES.map((v) => (
+              <option value={v}>{VICTORY_NAMES[v]}</option>
+            ))}
+          </select>
+        </label>
+        {s.victory === 'score' && (
+          <label>
+            Target
+            <select data-testid="setup-target" value={String(s.scoreTarget)} onChange={(e) => upd({ scoreTarget: Number((e.target as HTMLSelectElement).value) })}>
+              {SCORE_TARGETS.map((n) => (
+                <option value={String(n)}>{n}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {s.victory === 'time' && (
+          <label>
+            Time limit
+            <select data-testid="setup-limit" value={String(s.timeLimit)} onChange={(e) => upd({ timeLimit: Number((e.target as HTMLSelectElement).value) })}>
+              {TIME_LIMITS.map((n) => (
+                <option value={String(n)}>{n} min</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label>
+          Starting age
+          <select data-testid="setup-age" value={s.startingAge} onChange={(e) => upd({ startingAge: (e.target as HTMLSelectElement).value as StartingAge })}>
+            {STARTING_AGES.map((a) => (
+              <option value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Population
+          <select data-testid="setup-pop" value={String(s.popCap)} onChange={(e) => upd({ popCap: Number((e.target as HTMLSelectElement).value) })}>
+            {POP_LIMITS.map((n) => (
+              <option value={String(n)}>{n}</option>
+            ))}
+          </select>
         </label>
       </div>
       <table class="menu-players">

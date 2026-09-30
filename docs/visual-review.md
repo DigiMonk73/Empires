@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M14.3 · menu-skirmish (a second settings row)
+- Victory, Starting age and Population on a second row under Map / Size / Resources / Seed, same labels and
+  selects; Target or Time limit appears beside Victory when chosen. Aligned, readable; the players table moves
+  down a row and the panel still fits at 1280×800 CSS px. UI 4.
+
 ## 2026-09-30 · M14.2 · countdowns (new); ai-base, victory*, results-timeline re-shot (Standard skirmishes)
 - The clocks at the upper right in Cinzel, one line each ("You · Wonder · 1998", "Player 2 · All Artifacts ·
   1998"), in the owner's colour lightened a third (the raw blue was dark over unexplored ground); the notice at the

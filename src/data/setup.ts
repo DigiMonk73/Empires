@@ -47,6 +47,26 @@ export const GAME_SPEEDS = [1.0, 1.5, 2.0] as const;
 /** Wonder / relic / ruin countdown: 2000 game-years ≈ 1000 s at speed 1.0 (mil:5, econ:7). */
 export const VICTORY = { countdownYears: 2000, secondsPerYear: 0.5, artifacts: 5, ruins: 5, src: 'econ:7,mil:5', verify: true } as const;
 
+/**
+ * Starting ages (econ:7 "Default/Stone, Tool, Bronze, Iron, plus Nomad"; Post-Iron from the Death Match preset,
+ * FAN): a later age starts with the age advances researched; Post-Iron with every technology the civilization
+ * has. Nomad (no Town Center) is not offered yet — D53.
+ */
+export type StartingAge = 'default' | 'tool' | 'bronze' | 'iron' | 'postIron';
+export const STARTING_AGES: readonly { id: StartingAge; name: string; techs: readonly string[] }[] = [
+  { id: 'default', name: 'Default', techs: [] },
+  { id: 'tool', name: 'Tool Age', techs: ['toolAge'] },
+  { id: 'bronze', name: 'Bronze Age', techs: ['toolAge', 'bronzeAge'] },
+  { id: 'iron', name: 'Iron Age', techs: ['toolAge', 'bronzeAge', 'ironAge'] },
+  { id: 'postIron', name: 'Post-Iron Age', techs: ['toolAge', 'bronzeAge', 'ironAge'] },
+];
+export const STARTING_AGES_SRC = { src: 'econ:7', note: 'Post-Iron = Iron Age with every tech researched (FAN)', verify: true } as const;
+
+/** Score and Time Limit victories (econ:7): the lobby's choices are ours (D53) — the research gives none. */
+export const SCORE_TARGETS: readonly number[] = [250, 500, 750, 1000, 1500];
+export const TIME_LIMITS: readonly number[] = [15, 30, 45, 60, 90, 120]; // minutes of game time
+export const POP_LIMITS: readonly number[] = [25, 50, 75, 100, 125, 150, 175, 200];
+
 /** Player colors 1–8 (mil:6). Gaia uses teal. */
 export const PLAYER_COLORS: readonly { name: string; hex: number }[] = [
   { name: 'Blue', hex: 0x3f5f9f },

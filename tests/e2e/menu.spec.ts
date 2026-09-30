@@ -37,3 +37,25 @@ test('main menu → skirmish setup → game → in-game menu → resign → defe
   expect(errors).toEqual([]);
   void pageErrors;
 });
+
+test('skirmish setup options: Time Limit, a Bronze Age start and a population of 100 reach the game', async ({ page }) => {
+  await page.goto('./?edgeScroll=0');
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('menu-skirmish').click();
+  await expect(page.getByTestId('setup-limit')).toHaveCount(0);
+  await page.getByTestId('setup-victory').selectOption('time');
+  await page.getByTestId('setup-limit').selectOption('30');
+  await page.getByTestId('setup-age').selectOption('bronze');
+  await page.getByTestId('setup-pop').selectOption('100');
+  await page.getByTestId('setup-seed').fill('77');
+  await page.getByTestId('setup-start').click();
+  await page.waitForURL(/win=time/);
+  expect(page.url()).toMatch(/limit=30/);
+  expect(page.url()).toMatch(/pop=100/);
+  await page.waitForFunction(() => !!window.__empires);
+  await page.evaluate(() => window.__empires!.ready());
+  await page.evaluate(() => window.__empires!.step(10));
+  await expect(page.getByTestId('clock-time-left')).toHaveText(/^Time left · (30:00|29:59)$/);
+  await expect(page.getByTestId('age')).toHaveText('Bronze Age');
+  expect(pageErrors(page)).toEqual([]);
+});

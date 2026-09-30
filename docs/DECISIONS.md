@@ -307,3 +307,14 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   the one started first wins. Skirmishes default to Standard (the original's default), which places the 5 + 5
   relics; `?win=conquest` turns both off. The AI suite and tests keep conquest until the computers play for the
   clocks (M14.6).
+- **D53 — Setup options** (2026-09-30, M14.3; econ:7). Victory: Standard (default), Conquest, Score, Time Limit;
+  conquest ends every mode. The research gives no lobby values for the last two, so ours: Score targets 250 /
+  500 / 750 / 1000 / 1500 (default 1000) and Time Limits 15–120 min of game time (default 60). Score: the first
+  standing player whose total reaches the target wins, checked once a second (several at once: the higher score,
+  then the lower seat). Time Limit: the highest score when time is up (a tie: the lower seat). The winner's side
+  wins with it (mutual allies ticking Allied Victory). Starting ages: Default, Tool, Bronze, Iron, and Post-Iron —
+  the Iron Age with every technology the civilization has (fandom's Death Match; `STARTING_AGES_SRC` stays
+  `verify: true`); the advances are researched before the first tick, give no "first to" bonus, and nothing else
+  changes (no extra villagers or buildings: the research names none). Nomad (no Town Center, fandom's single
+  villager unverified) is not offered: the computers can't yet found a town, so it waits for M14.6. Population
+  25–200 in steps of 25 (econ:2), default 50. The URL carries all of it (`win`, `target`, `limit`, `age`, `pop`).

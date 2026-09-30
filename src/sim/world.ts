@@ -1,6 +1,7 @@
 import { RESOURCES } from '../data/types.ts';
 import type { CargoUnit } from './systems/transport.ts';
-import { HARDEST_BONUS, STARTING_RESOURCES, type AiLevel, type StartingResources } from '../data/setup.ts';
+import { HARDEST_BONUS, STARTING_RESOURCES, type AiLevel, type StartingAge, type StartingResources } from '../data/setup.ts';
+import { TICKS_PER_SECOND } from './time.ts';
 import { terrainIndex } from '../data/terrain.ts';
 import { Act, EKind, EntityStore } from './core/entities.ts';
 import { ResourceStore } from './core/resources.ts';
@@ -62,14 +63,20 @@ export interface SimConfig {
    * (M14.2); 'conquest' (the default here: tests, the AI suite); 'none' (sandbox/review scenarios never end).
    */
   victory?: VictoryMode;
+  /** 'score': the first to reach this total wins (econ:7). */
+  scoreTarget?: number;
+  /** 'time': minutes of game time; the highest score then wins (econ:7). */
+  timeLimit?: number;
+  /** Starting age (econ:7): the age advances — or for Post-Iron every technology — researched at the start. */
+  startingAge?: StartingAge;
   /** "Reveal Map" option: the whole map starts explored (units in unwatched areas stay hidden). */
   revealMap?: boolean;
   /** Population limit (default 50; RoR allows 25–200). */
   popCap?: number;
 }
 
-export type VictoryMode = 'standard' | 'conquest' | 'none';
-export type WinHow = 'conquest' | 'wonder' | 'artifacts' | 'ruins';
+export type VictoryMode = 'standard' | 'conquest' | 'score' | 'time' | 'none';
+export type WinHow = 'conquest' | 'wonder' | 'artifacts' | 'ruins' | 'score' | 'time';
 
 /**
  * A running Standard-victory countdown (M14.2): a finished Wonder (`h` its handle), or every Artifact or every Ruin
@@ -253,12 +260,16 @@ export class World {
   /** Movement metrics (not hashed): unit-ticks spent moving / blocked. */
   moveStats = { movingTicks: 0, blockedTicks: 0, gaveUp: 0, repaths: 0, directPaths: 0, sharedPaths: 0 };
 
-  /** Victory condition from the config (econ:7). */
+  /** Victory condition from the config (econ:7), with its Score target / Time Limit in ticks (0 = none). */
   readonly victory: VictoryMode;
+  readonly scoreTarget: number;
+  readonly timeLimitTicks: number;
 
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;
     this.victory = cfg.victory ?? 'conquest';
+    this.scoreTarget = cfg.victory === 'score' ? (cfg.scoreTarget ?? 1000) : 0;
+    this.timeLimitTicks = cfg.victory === 'time' ? (cfg.timeLimit ?? 60) * 60 * TICKS_PER_SECOND : 0;
     const fill = terrainIndex(cfg.map.terrain ?? 'grass');
     this.map = new TileMap(cfg.map.w, cfg.map.h, fill);
     this.ents = new EntityStore();

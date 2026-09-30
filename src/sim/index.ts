@@ -1,3 +1,4 @@
+import { applyStartingAge } from './systems/startAge.ts';
 import { applyCommands } from './commands/apply.ts';
 import type { PlayerCommand } from './commands/types.ts';
 import { hashBreakdown } from './hash.ts';
@@ -36,7 +37,9 @@ export class Sim {
   }
 
   static create(config: SimConfig): Sim {
-    return new Sim(config, new World(config));
+    const w = new World(config);
+    applyStartingAge(w, config.startingAge);
+    return new Sim(config, w);
   }
 
   /** Rebuild a simulation from `serialize()` output. */
