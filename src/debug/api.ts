@@ -11,6 +11,10 @@ export interface UnitInfo {
   act: number;
   hp: number;
   hasOrder: boolean;
+  /** Carried amount (villagers). */
+  carry: number;
+  /** Baked sprite frame last shown, e.g. `chop/3/4` (null for placeholders). */
+  sprite: string | null;
 }
 
 export interface EmpiresDebugApi {
@@ -30,6 +34,8 @@ export interface EmpiresDebugApi {
     units(owner?: number): UnitInfo[];
     selection(): number[];
     player(p: number): { res: number[] };
+    /** Resource node index at tile (tx, ty), or -1. */
+    resourceAt(tx: number, ty: number): number;
   };
   /** Submit a command as a player (test setup; normal play goes through input). */
   issue(player: number, cmd: Command): void;

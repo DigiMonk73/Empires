@@ -204,12 +204,16 @@ async function boot(): Promise<void> {
         for (let s = 0; s < e.top; s++) {
           if (!e.alive[s] || e.kind[s] !== EKind.unit) continue;
           if (owner !== undefined && e.owner[s] !== owner) continue;
-          out.push({ h: e.handleOf(s), type: TYPES[e.type[s]!]!.id, owner: e.owner[s]!, x: e.x[s]!, y: e.y[s]!, act: e.act[s]!, hp: e.hp[s]!, hasOrder: !!world.orders[s] });
+          out.push({
+            h: e.handleOf(s), type: TYPES[e.type[s]!]!.id, owner: e.owner[s]!, x: e.x[s]!, y: e.y[s]!, act: e.act[s]!, hp: e.hp[s]!,
+            hasOrder: !!world.orders[s], carry: e.carryAmt[s]!, sprite: wr.spriteKey(s),
+          });
         }
         return out;
       },
       selection: () => [...selection.list],
       player: (p) => ({ res: [...(world.players[p]?.res ?? [])] }),
+      resourceAt: (tx, ty) => (world.map.inBounds(tx, ty) ? world.map.resAt[world.map.idx(tx, ty)]! - 1 : -1),
     },
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {

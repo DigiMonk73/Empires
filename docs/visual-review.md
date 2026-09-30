@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M4.7a · work-overview, villager frame sheets (tools/frames.ts)
+- Villager work clips read at game scale: pick at the gold, basket at the berries, spear throw at the gazelles;
+  chop/mine/hoe/hammer swings are two-handed where they should be. Readability 4, anchoring 4, light 4.
+- Fixed during review: two-handed grips splayed apart overhead (X roll flips past horizontal → use yaw); tool
+  heads enlarged ~1.5× (unreadable at 1×); the throw spear spun with the arm (now re-aimed each frame).
+- Should-fix: forage reach is subtle from the back facings; the gold sack is dark — nuggets enlarged, check in game.
+
 ## 2026-09-29 · M4.5 · economy-after, economy-placing-house, economy-tc-queue
 - The start scenario now has a gazelle herd, a lone elephant and a pond with shore fish (pond edge just visible at
   the bottom of the view). Animals are still placeholder shapes (tan ovals on legs, no heads that read): readability

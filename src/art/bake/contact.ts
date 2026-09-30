@@ -7,9 +7,12 @@ import type { AtlasMeta } from './baker.ts';
 export function contactSheet(meta: AtlasMeta, pages: HTMLCanvasElement[]): HTMLCanvasElement {
   const keys = Object.keys(meta.frames).filter((k) => !k.endsWith('#t'));
   const rows: string[][] = [];
-  if (Object.keys(meta.clips).length) {
+  const nClips = Object.keys(meta.clips).length;
+  if (nClips) {
+    // Many clips: show a subset of facings so the sheet stays reviewable (≤ ~40 rows).
+    const facings = nClips * meta.facings <= 40 ? [...Array(meta.facings).keys()] : nClips * 4 <= 40 ? [0, 2, 4, 6] : [1, 5];
     for (const [clip, c] of Object.entries(meta.clips)) {
-      for (let d = 0; d < meta.facings; d++) {
+      for (const d of facings) {
         const step = Math.max(1, Math.floor(c.frames / 6));
         const row: string[] = [];
         for (let f = 0; f < c.frames; f += step) row.push(`${clip}/${d}/${f}`);

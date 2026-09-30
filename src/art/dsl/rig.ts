@@ -207,3 +207,29 @@ export function diePose(t: number): Pose {
     drop: -0.02 - 0.08 * fall,
   };
 }
+
+// ── Props ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+const propCache = new WeakMap<THREE.Object3D, THREE.Object3D[]>();
+
+/**
+ * Show exactly the named props (nodes named `prop:<name>`) and hide the rest. Lets one rig carry every tool and
+ * load, with each clip choosing what is in hand. Hidden meshes cast no shadow either.
+ */
+export function showProps(root: THREE.Object3D, names: readonly string[]): void {
+  let list = propCache.get(root);
+  if (!list) {
+    list = [];
+    root.traverse((o) => {
+      if (o.name.startsWith('prop:')) list!.push(o);
+    });
+    propCache.set(root, list);
+  }
+  for (const o of list) o.visible = names.includes(o.name.slice(5));
+}
+
+/** Smoothstep-eased 0→1 over [a, b]. */
+export function ease(t: number, a: number, b: number): number {
+  const x = Math.min(1, Math.max(0, (t - a) / (b - a)));
+  return x * x * (3 - 2 * x);
+}

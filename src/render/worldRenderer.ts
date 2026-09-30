@@ -27,6 +27,28 @@ export function playerColor(owner: number): number {
 }
 
 /** Depth key: sort by world x + y of the ground point (farther = smaller = drawn first). */
+/** Villager work and carry clips by job (sim JOBS order: forage, farm, hunt, fish, wood, gold, stone). */
+const WORK_CLIPS = ['forage', 'farm', 'butcher', 'fish', 'chop', 'mine', 'mine'];
+const CARRY_CLIPS = ['carryFood', 'carryFood', 'carryMeat', 'carryFish', 'carryWood', 'carryGold', 'carryStone'];
+
+/** The clip a unit should play for its activity; the caller falls back to walk/idle when a model lacks it. */
+function clipFor(act: number, carryJob: number, carryAmt: number): string {
+  switch (act) {
+    case Act.move:
+      return carryAmt > 0 ? (CARRY_CLIPS[carryJob - 1] ?? 'walk') : 'walk';
+    case Act.gather:
+      return WORK_CLIPS[carryJob - 1] ?? 'idle';
+    case Act.build:
+      return 'build';
+    case Act.attack:
+      return 'throw'; // villagers only attack when hunting; soldiers get 'attack' clips in M5
+    case Act.dying:
+      return 'die';
+    default:
+      return 'idle';
+  }
+}
+
 function depth(x: number, y: number, bias = 0): number {
   return (x + y) * 1000 + bias;
 }
@@ -200,7 +222,8 @@ export class WorldRenderer {
   private animate(v: EntityView, slot: number, alpha: number): void {
     const e = this.world.ents;
     const meta = this.art!.meta(v.model!)!;
-    const clipName = e.act[slot] === Act.move ? 'walk' : e.act[slot] === Act.dying ? 'die' : 'idle';
+    const want = clipFor(e.act[slot]!, e.carryJob[slot]!, e.carryAmt[slot]!);
+    const clipName = meta.clips[want] ? want : e.act[slot] === Act.move ? 'walk' : 'idle';
     const clip = meta.clips[clipName] ?? meta.clips.idle!;
     const dir = ((e.facing[slot]! + 1) >> 1) & 7; // 16 sim sectors → 8 baked facings
     const secs = (this.world.tick - e.actStart[slot]! + alpha) / 20;
@@ -273,6 +296,11 @@ export class WorldRenderer {
         this.resViews[i] = undefined;
       } else if (fogChanged) sp.visible = this.fog.isExplored(player, r.tx[i]!, r.ty[i]!);
     }
+  }
+
+  /** The baked frame key a unit view last showed (debug/e2e), or null. */
+  spriteKey(slot: number): string | null {
+    return this.views[slot]?.lastKey ?? null;
   }
 
   /** Ground marker for a move order (animates for half a second). */
