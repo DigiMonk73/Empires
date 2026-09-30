@@ -48,7 +48,7 @@ function clipFor(act: number, carryJob: number, carryAmt: number): string {
     case Act.build:
       return 'build';
     case Act.attack:
-      return 'throw'; // villagers only attack when hunting; soldiers get 'attack' clips in M5
+      return 'attack'; // villagers (hunting) play 'throw' instead — see animate()
     case Act.dying:
       return 'die';
     default:
@@ -132,7 +132,15 @@ export class WorldRenderer {
       const v = hash2(r.tx[i]!, r.ty[i]!);
       let sp: Sprite;
       const baked = this.art?.meta(def.id);
-      if (baked) {
+      // A carcass is its animal's last death frame, turned the way it fell.
+      const animal = def.job === 'hunt' ? this.art?.meta(def.id.slice('carcass:'.length)) : undefined;
+      const die = animal?.clips.die;
+      const cf = die ? this.art!.frame(def.id.slice('carcass:'.length), `die/${r.variant[i]! & 7}/${die.frames - 1}`) : null;
+      if (cf) {
+        sp = new Sprite(cf.tex);
+        sp.anchor.set(cf.anchorX, cf.anchorY);
+        sp.scale.set(1 / animal!.scale);
+      } else if (baked) {
         const f = this.art!.frame(def.id, `v${Math.floor(v * baked.variants) % baked.variants}`)!;
         sp = new Sprite(f.tex);
         sp.anchor.set(f.anchorX, f.anchorY);
@@ -229,7 +237,8 @@ export class WorldRenderer {
   private animate(v: EntityView, slot: number, alpha: number): void {
     const e = this.world.ents;
     const meta = this.art!.meta(v.model!)!;
-    const want = clipFor(e.act[slot]!, e.carryJob[slot]!, e.carryAmt[slot]!);
+    let want = clipFor(e.act[slot]!, e.carryJob[slot]!, e.carryAmt[slot]!);
+    if (want === 'attack' && !meta.clips.attack && meta.clips.throw) want = 'throw';
     const clipName = meta.clips[want] ? want : e.act[slot] === Act.move ? 'walk' : 'idle';
     const clip = meta.clips[clipName] ?? meta.clips.idle!;
     const dir = ((e.facing[slot]! + 1) >> 1) & 7; // 16 sim sectors → 8 baked facings

@@ -51,6 +51,7 @@ export function kill(w: World, s: number): number {
       }
     }
     carcass = w.addResource(kind, tx, ty);
+    w.res.variant[carcass] = ((e.facing[s]! + 1) >> 1) & 7; // the facing it fell in (8 sectors), for its sprite
     w.carcasses.push(carcass);
   }
   w.events.push({ t: 'died', h: e.handleOf(s), owner: e.owner[s]!, type: e.type[s]!, x: e.x[s]!, y: e.y[s]!, facing: e.facing[s]! });

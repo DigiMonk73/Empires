@@ -2,6 +2,14 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M4.7c · gazelle/elephant/lion frame sheets, work-overview, economy-after
+- Animals read at game scale: tan gazelles with horns grazing, a grey elephant with ears/tusks/trunk, a maned
+  lion; carcasses lie on their side where they fell. Readability 4, anchoring 4, light 4.
+- Fixed during review: the elephant was a capsule on stubby legs (longer legs, shoulder hump, rump); the lion's
+  tail tuft floated off the tail (tail axis flipped).
+- Should-fix (M9): bodies are still smooth capsules — add musculature/tapering; death plays only as a pose (the
+  sim removes animals instantly — dying/corpse timing lands with M5 deaths).
+
 ## 2026-09-29 · M4.7b · village (new), contact sheets granary/storagePit/barracks/dock/farm/site3
 - A readable Stone-age village: raised granary bins, storage pit under a thatched roof with wood/stone/gold
   stacked beside it, a thatched barracks with spear rack and practice post, a dock on piles over the water,
