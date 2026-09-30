@@ -1,4 +1,5 @@
 import { POPULATION } from '../data/setup.ts';
+import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
@@ -61,10 +62,19 @@ export function syncHud(world: World, player: number, selected: readonly number[
   const one = selected.length === 1 ? e.slotOf(selected[0]!) : -1;
   const field = one >= 0 && e.kind[one] === EKind.building && TYPES[e.type[one]!]!.building?.kind === 'farm' && e.build[one]! >= 1;
   const transport = one >= 0 && e.kind[one] === EKind.unit && TYPES[e.type[one]!]!.unit?.cls === 'transport';
+  const trader = one >= 0 && e.kind[one] === EKind.unit && TYPES[e.type[one]!]!.unit?.cls === 'tradeShip';
+  const trip = trader ? world.orders[one]?.[0] : undefined;
+  const good = trader ? (['Food', 'Wood', 'Gold', 'Stone'][tradeGood(world, one)] ?? 'Wood') : '';
   hud.carry.value = field
     ? `Food ${Math.ceil(e.stock[one]!)}`
     : transport
       ? `Aboard ${world.cargo[one]?.length ?? 0} / ${world.stats(e.owner[one]!, e.type[one]!).capacity}`
+    : trader
+      ? trip?.k === 'trade' && trip.load > 0
+        ? `Carrying ${trip.load} ${good}`
+        : trip?.k === 'trade' && trip.gold > 0 && trip.phase === 2
+          ? `Carrying ${Math.floor(trip.gold)} Gold`
+          : `Trades ${good}`
     : one >= 0 && e.carryAmt[one]! > 0
       ? `Carrying ${Math.floor(e.carryAmt[one]!)} ${CARRY_NAMES[e.carryJob[one]! - 1] ?? ''}`
       : '';

@@ -105,3 +105,29 @@ test('ferry: clubmen board a transport by right-click, and it lands them down th
   for (const c of clubmen) expect(c.y).toBeGreaterThan(8);
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('trade: choose Trade Stone, right-click the other Dock, gold comes home', async ({ page }, info) => {
+  await openGame(page, 'scenario=harbor&trade=1&fog=0&paused=1');
+  await page.evaluate(() => window.__empires!.camera.centerOn(17, 20));
+  await frames(page);
+  const boat = (await page.evaluate(() => window.__empires!.query.units(1))).find((u) => u.type === 'tradeBoat')!;
+  const bp = await page.evaluate((h) => window.__empires!.entityScreenPos(h), boat.h);
+  await page.mouse.click(bp!.x, bp!.y - 6);
+  await expect(page.getByTestId('cmd-trade:3')).toBeVisible();
+  await page.getByTestId('cmd-trade:3').click();
+  await page.evaluate(() => window.__empires!.step(2));
+  const stone0 = (await page.evaluate(() => window.__empires!.query.player(1))).res[3]!;
+  const gold0 = (await page.evaluate(() => window.__empires!.query.player(1))).res[2]!;
+  const dock = await page.evaluate(() => window.__empires!.worldToScreen(15.5, 28.5));
+  await page.mouse.click(dock.x, dock.y - 10, { button: 'right' });
+  await page.evaluate(() => window.__empires!.step(20 * 12));
+  await frames(page);
+  await page.waitForTimeout(150);
+  await expect(page.getByText('Carrying 20 Stone')).toBeVisible();
+  await snap(page, info, 'trade');
+  await page.evaluate(() => window.__empires!.step(20 * 30));
+  const after = (await page.evaluate(() => window.__empires!.query.player(1))).res;
+  expect(stone0 - after[3]!).toBeGreaterThanOrEqual(20);
+  expect(after[2]!).toBeGreaterThan(gold0);
+  expect(pageErrors(page)).toEqual([]);
+});

@@ -171,3 +171,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   and sets everyone down on free land within 2.6 tiles; whoever finds no room stays aboard. A sunk transport's
   cargo is lost (tallied as losses/kills). Cargo lands as the transport's owner, so a converted transport's
   riders change sides (the original's behaviour here is unverified). Save format: SIM_VERSION 0.8.0.
+- **D38 — Sea trade** (2026-09-30, M8.5; `verify:true`). A Trade Boat / Merchant Ship loads 20 of its good (food,
+  wood or stone — Trade Food / Wood / Stone buttons, wood by default) from the stockpile at the nearest own
+  Dock, sails to the other player's Dock it was sent to (ally or enemy — never its own), sells, brings the gold
+  home and repeats. Price: 20 × (distance between the Docks in tiles) ÷ 40 — a 40-tile voyage trades one for one,
+  longer ones pay more (the research has no formula). The boat waits at home while the stockpile is short; if
+  the far Dock falls, the goods come back unsold. Button letters F / W / T are ours.

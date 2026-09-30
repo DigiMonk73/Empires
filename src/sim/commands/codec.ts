@@ -20,6 +20,7 @@ const CMD_RESIGN = 12;
 const CMD_DELETE = 13;
 const CMD_REPAIR = 14;
 const CMD_UNLOAD = 15;
+const CMD_TRADE_GOOD = 16;
 
 class Writer {
   bytes: number[] = [];
@@ -135,6 +136,11 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(CMD_DELETE);
       w.ids(c.ids);
       return;
+    case 'tradeGood':
+      w.uv(CMD_TRADE_GOOD);
+      w.ids(c.ids);
+      w.uv(c.good);
+      return;
     case 'unload':
       w.uv(CMD_UNLOAD);
       w.ids(c.ids);
@@ -208,6 +214,10 @@ function readCommand(r: Reader): Command {
       return { t: 'resign' };
     case CMD_DELETE:
       return { t: 'delete', ids: r.ids() };
+    case CMD_TRADE_GOOD: {
+      const ids = r.ids();
+      return { t: 'tradeGood', ids, good: r.uv() };
+    }
     case CMD_UNLOAD: {
       const ids = r.ids();
       const x = r.pos();

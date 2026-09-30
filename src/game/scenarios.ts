@@ -147,7 +147,8 @@ function village(): SimConfig {
 /**
  * A harbor (M8): a coast with a Dock, fishing boats, shore fish along the beach and deep fish out at sea — for the
  * water tasks' tests and screenshots. `battle=1` adds a War Galley and an enemy Scout Ship out at sea; `ferry=1` a
- * Light Transport at the shore and three clubmen to carry down the coast.
+ * Light Transport at the shore and three clubmen to carry down the coast; `trade=1` a Trade Boat and a second
+ * player's Dock down the coast to trade with.
  */
 function harbor(p: URLSearchParams): SimConfig {
   const W = 32;
@@ -167,6 +168,7 @@ function harbor(p: URLSearchParams): SimConfig {
       buildings: [
         { type: 'townCenter', owner: 1, tx: 5, ty: 14 },
         { type: 'dock', owner: 1, tx: 14, ty: 14 },
+        ...(p.get('trade') === '1' ? [{ type: 'dock', owner: 2, tx: 14, ty: 27 }] : []),
       ],
       units: [
         { type: 'fishingBoat', owner: 1, x: 18.5, y: 12.5 },
@@ -177,6 +179,7 @@ function harbor(p: URLSearchParams): SimConfig {
               { type: 'scoutShip', owner: 2, x: 27.5, y: 9.5 },
             ]
           : []),
+        ...(p.get('trade') === '1' ? [{ type: 'tradeBoat', owner: 1, x: 18.5, y: 16.5 }] : []),
         ...(p.get('ferry') === '1'
           ? [
               { type: 'lightTransport', owner: 1, x: 14.6, y: 4.5 },

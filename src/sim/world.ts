@@ -139,6 +139,8 @@ export type Order =
   | { k: 'board'; h: number; retry: number }
   /** A transport sailing to the water nearest (x, y) to land its cargo there. */
   | { k: 'unload'; x: number; y: number; retry: number }
+  /** A trade boat trading with another player's Dock `dock`: 0 loading at home, 1 sailing to sell, 2 bringing gold. */
+  | { k: 'trade'; dock: number; phase: 0 | 1 | 2; load: number; gold: number; retry: number }
   /** Farm field `h` (phases as gather). */
   | { k: 'farm'; h: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */

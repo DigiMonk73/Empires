@@ -1,4 +1,5 @@
 import { BUILDINGS, TECHS, TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
+import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES, buildingTypeIndex } from '../sim/rules/registry.ts';
 import { buildingAvailable, canAfford } from '../sim/systems/build.ts';
@@ -20,6 +21,7 @@ export type Action =
   | { kind: 'attackMove' }
   | { kind: 'repair' }
   | { kind: 'unload' }
+  | { kind: 'tradeGood'; good: number }
   | { kind: 'stop' };
 
 export interface CommandButton {
@@ -102,6 +104,14 @@ export function computeCommands(w: World, player: number, selected: readonly num
     out.push({ id: 'repair', label: 'Repair', hotkey: 'R', icon: null, glyph: '⚒', cost: null, disabled: null, action: { kind: 'repair' } });
   }
   if (units.length) out.push({ id: 'stop', label: 'Stop', hotkey: 'S', icon: null, glyph: '✋', cost: null, disabled: null, action: { kind: 'stop' } });
+  // Trade boats: which good they sell (then right-click another player's Dock). The letters are ours.
+  const traders = units.filter((s) => TYPES[e.type[s]!]!.unit?.cls === 'tradeShip');
+  if (traders.length) {
+    const cur = tradeGood(w, traders[0]!);
+    for (const [good, label, key, glyph] of [[0, 'Trade Food', 'F', 'Fd'], [1, 'Trade Wood', 'W', 'Wd'], [3, 'Trade Stone', 'T', 'St']] as const) {
+      out.push({ id: `trade:${good}`, label: cur === good ? `${label} (on)` : label, hotkey: key, icon: null, glyph, cost: null, disabled: null, action: { kind: 'tradeGood', good } });
+    }
+  }
   // Unload (the original's L): loaded transports set everyone down on the nearest shore.
   if (units.some((s) => TYPES[e.type[s]!]!.unit?.cls === 'transport' && w.cargo[s]?.length)) {
     out.push({ id: 'unload', label: 'Unload', hotkey: 'L', icon: null, glyph: '⚓', cost: null, disabled: null, action: { kind: 'unload' } });

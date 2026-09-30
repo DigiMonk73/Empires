@@ -17,6 +17,8 @@ export type Command =
   | { t: 'repair'; ids: number[]; h: number; queue?: boolean }
   /** Transports `ids` sail to the water nearest (x, y) and land their cargo. */
   | { t: 'unload'; ids: number[]; x: number; y: number }
+  /** Trade boats `ids` sell `good` (resource index: 0 food, 1 wood, 3 stone). */
+  | { t: 'tradeGood'; ids: number[]; good: number }
   /** Context action on entity `h`: villagers farm own fields / hunt animals; soldiers attack. */
   | { t: 'act'; ids: number[]; h: number; queue?: boolean }
   /** The issuing player gives up (defeated at once; their units stay where they are, idle). */

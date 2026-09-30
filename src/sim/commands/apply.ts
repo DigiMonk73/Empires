@@ -5,6 +5,7 @@ import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
 import { startRepair } from '../systems/repair.ts';
 import { isTransport, startBoard, startUnload } from '../systems/transport.ts';
+import { isTradeBoat, setTradeGood, startTrade } from '../systems/trade.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
 import { cancelUnit, currentBuilding, queueResearch, queueUnit } from '../systems/production.ts';
@@ -149,6 +150,9 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'unload':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) startUnload(w, slot, cmd.x, cmd.y);
         break;
+      case 'tradeGood':
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) setTradeGood(w, slot, cmd.good);
+        break;
       case 'act': {
         const t = w.ents.slotOf(cmd.h);
         if (t < 0) break;
@@ -156,6 +160,8 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
           if (isPriest(w, slot)) {
             // Priests: right-click converts an enemy, heals a friend.
             if (!startConvert(w, slot, cmd.h, !!cmd.queue)) startHeal(w, slot, cmd.h, !!cmd.queue);
+          } else if (isTradeBoat(w, slot)) {
+            startTrade(w, slot, cmd.h); // another player's Dock: trade with it
           } else if (isTransport(w, t) && w.ents.owner[t] === player) {
             startBoard(w, slot, cmd.h, !!cmd.queue); // own transport: step aboard
           } else if (w.ents.kind[t] === EKind.building && w.ents.owner[t] === player) {

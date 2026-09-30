@@ -12,6 +12,7 @@ import { wallLine } from './wallLine.ts';
 import { isVillager } from '../sim/systems/gather.ts';
 import { repairable } from '../sim/systems/repair.ts';
 import { isTransport } from '../sim/systems/transport.ts';
+import { isTradeBoat } from '../sim/systems/trade.ts';
 import { MOVE_LAND } from '../data/terrain.ts';
 import type { Action, CommandButton } from '../ui/commands.ts';
 
@@ -213,6 +214,14 @@ export class InputController {
       this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);
       return;
     }
+    // Trade boats: right-click another player's Dock (ally or enemy) to trade with it.
+    const traders = ids.filter((h) => isTradeBoat(this.world, e.slotOf(h)));
+    if (traders.length && ts >= 0 && e.owner[ts] !== me && e.owner[ts] !== 0 && TYPES[e.type[ts]!]!.building?.shore) {
+      this.session.router.submit(me, { t: 'act', ids: traders, h: target, queue });
+      this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xffd84a);
+      const rest = ids.filter((h) => !traders.includes(h));
+      if (!rest.length) return;
+    }
     // Land units: right-click an own transport to board it (repair a transport with R).
     if (ts >= 0 && e.owner[ts] === me && isTransport(this.world, ts)) {
       const riders = ids.filter((h) => TYPES[e.type[e.slotOf(h)]!]!.moveClass === MOVE_LAND);
@@ -303,6 +312,12 @@ export class InputController {
       case 'stop':
         this.session.router.submit(me, { t: 'stop', ids: this.ownUnits() });
         break;
+      case 'tradeGood': {
+        const e = this.world.ents;
+        const boats = this.ownUnits().filter((h) => isTradeBoat(this.world, e.slotOf(h)));
+        if (boats.length) this.session.router.submit(me, { t: 'tradeGood', ids: boats, good: a.good });
+        break;
+      }
       case 'unload': {
         // Land here: each loaded transport sets its cargo down on the shore nearest where it is.
         const e = this.world.ents;

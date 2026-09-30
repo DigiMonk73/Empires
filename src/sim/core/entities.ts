@@ -63,6 +63,8 @@ export class EntityStore {
   faith = new Float64Array(0);
   /** Units: stance — 0 normal, 1 Stand Ground (hold position; fire within range, hit only what is adjacent). */
   stance = new Uint8Array(0);
+  /** Trade boats: the good they sell — resource index + 1 (1 food, 2 wood, 4 stone); 0 = wood (M8.5). */
+  trade = new Uint8Array(0);
   /** Villagers: what they carry — JOBS index + 1 (0 = nothing) — and how much. */
   carryJob = new Uint8Array(0);
   carryAmt = new Float64Array(0);
@@ -104,6 +106,7 @@ export class EntityStore {
     this.stock = copy(this.stock, (n) => new Float64Array(n));
     this.faith = copy(this.faith, (n) => new Float64Array(n));
     this.stance = copy(this.stance, (n) => new Uint8Array(n));
+    this.trade = copy(this.trade, (n) => new Uint8Array(n));
     this.carryJob = copy(this.carryJob, (n) => new Uint8Array(n));
     this.carryAmt = copy(this.carryAmt, (n) => new Float64Array(n));
     this.losTx = copy(this.losTx, (n) => new Int16Array(n));
@@ -144,6 +147,7 @@ export class EntityStore {
     this.carryJob[slot] = 0;
     this.carryAmt[slot] = 0;
     this.stock[slot] = 0;
+    this.trade[slot] = 0;
     this.faith[slot] = 100;
     this.stance[slot] = 0;
     this.count++;
@@ -180,7 +184,7 @@ export class EntityStore {
   /** Names of the per-slot typed arrays, in canonical order (save/load, hashing). */
   static readonly FIELDS = [
     'alive', 'gen', 'kind', 'type', 'owner', 'x', 'y', 'px', 'py', 'facing', 'hp', 'act', 'actStart', 'target',
-    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR', 'losMask', 'carryJob', 'carryAmt', 'stock', 'faith', 'stance',
+    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR', 'losMask', 'carryJob', 'carryAmt', 'stock', 'faith', 'stance', 'trade',
   ] as const;
 
   /** Replace all state from a snapshot's parts. */

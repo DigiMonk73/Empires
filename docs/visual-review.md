@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.5 · trade (new)
+- A Trade Boat on its second run to the red Dock: "Carrying 20 Stone", 40 stone out and 6 gold in by 0:12
+  (a 13-tile route — below the 40-tile par, so a loss, as intended for a short route). Should-fix (M12): the
+  grid doesn't show which good is on (only the tooltip says "(on)" — same for Stand Ground); the Fd / Wd / St
+  text glyphs want resource icons (M9).
+
 ## 2026-09-30 · M8.4 · ferry-aboard (new)
 - A selected Light Transport: "Aboard 3 / 5" in the panel, Unload (L, ⚓) in the grid; the clubmen are off the
   map. Must-fix found and fixed: the top bar read 3/4 — it recounted units itself (missing riders, Logistics,
