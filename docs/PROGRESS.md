@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M12 UI & QoL in progress (M12.1–3 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M12 UI & QoL in progress (M12.1–4 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m11 (verify ~127 s without a re-bake); verify:full at the M11 exit 1123 s (audio check, Docker both arches 126 MB, Tauri smoke render avg 1.9 ms, s9pk, 428 unit + 103 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M12.4 post-game graphs (M12.1 notifications, M12.2 options/hotkeys/Classic, M12.3 diplomacy/tribute done).
+- **Next up:** M12.5 autosave + server saves (M12.1–4 done: notifications, options/hotkeys/Classic, diplomacy/tribute, post-game graphs).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -655,9 +655,17 @@ fog-aware hooks, a mute toggle. No music.
       theirs, Allied Victory, tribute (player, resource, amount, the cost with the fee, why not). Messages for
       stance changes and tribute; coins sound. Scenario `?scenario=diplomacy`. `diplomacy.test.ts` (7), e2e
       `diplomacy.spec` (stances, tribute 125→100, Neutral clubmen leave villagers alone, Enemy doesn't).
-- [ ] **M12.4 Post-game graphs.** Sample each player's score parts, population, military and gathered
-      resources every 30 s of game time (UI side, from the sim's tallies) → SVG line graphs on the results
-      screen (tabs: Score, Population, Military, Economy) and a timeline of ages. e2e + screenshot.
+- [x] **M12.4 Post-game graphs.** `game/timeline.ts` (`TimelineRecorder`): each player's score, population,
+      soldiers, villagers and resources gathered every 30 s of game time (on `session.onTick`, so stepped tests
+      sample too) and when the results open, plus the tick of each age; the sim is untouched. Carried in saved
+      games (`SavedGame.timeline`; older saves start fresh, samples later than the save are dropped, another
+      game's timeline is ignored). Results screen: **Summary** (the score tables) / **Timeline** tabs; the
+      timeline is an SVG line graph (`ui/results/Graph.tsx`) per metric (Score / Population / Military /
+      Villagers / Gathered) in player colours with a dark underline, round axis steps (`niceStep`), minutes along
+      the bottom, a zero line when a defeated player's score goes negative, and age marks (II/III/IV) on each
+      line. The game menu's **Achievements** opens the results mid-game (the original's menu had it).
+      `timeline.test.ts` (4), e2e `results.spec` (14 min: 29 points per player, age marks, metric switch) and the
+      victory e2e snapshots the full game's timeline.
 - [ ] **M12.5 Autosave + server saves.** Autosave every 5 min of game time (one rolling slot, plus on quit)
       in IndexedDB; the Load list shows it. Optional server saves: `serve.mjs` `GET/PUT/DELETE /api/saves` under
       `DATA_DIR` (`/data` in the StartOS image; size-capped, id-checked); the save dialog offers "on this

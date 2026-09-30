@@ -3,6 +3,7 @@ import { signal } from '@preact/signals';
 import type { Action, CommandButton } from './commands.ts';
 import type { ScoreLine } from '../sim/rules/score.ts';
 import type { DiploView } from './diplomacy.ts';
+import type { Timeline } from '../game/timeline.ts';
 
 /** HUD view-model, refreshed from the simulation ~10×/s (never every frame). */
 export interface SelInfo {
@@ -55,8 +56,9 @@ export const hud = {
   saveName: signal(''),
   /** The tech tree overlay (civ + columns), null when closed. */
   techTree: signal<{ civ: string; columns: TreeColumn[] } | null>(null),
-  /** Post-game results (null = screen closed). */
+  /** Post-game results (null = screen closed), and the game's timeline for the graphs (M12.4). */
   results: signal<ResultRow[] | null>(null),
+  timeline: signal<Timeline | null>(null),
   res: signal<[number, number, number, number]>([0, 0, 0, 0]),
   pop: signal(0),
   popCap: signal(0),

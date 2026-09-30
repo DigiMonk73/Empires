@@ -17,6 +17,7 @@ import { BakedArt } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
 import { Notifier, notes } from './ui/notify.ts';
 import { diplomacyView } from './ui/diplomacy.ts';
+import { TimelineRecorder } from './game/timeline.ts';
 import { applyHotkeys, gameSettings, SPEEDS } from './ui/settings.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
@@ -163,6 +164,7 @@ async function boot(): Promise<void> {
       kind,
       savedAt: Date.now(),
       camera: { x: at.x, y: at.y, zoom: camera.zoom },
+      timeline: timeline.finish(),
     });
     await saves.put(save);
   };
@@ -188,7 +190,11 @@ async function boot(): Promise<void> {
   };
   hud.speed.value = session.speed;
   hudActions.setMuted = (m) => setAudio({ muted: m });
+  // The post-game graphs (M12.4): sampled every 30 s of game time, carried in saves.
+  const timeline = new TimelineRecorder(world, loaded?.timeline);
+  session.onTick(() => timeline.onTick());
   hudActions.showResults = () => {
+    hud.timeline.value = timeline.finish();
     hud.results.value = buildResults(world);
   };
   hudActions.cancelQueue = (i) => {

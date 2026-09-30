@@ -31,5 +31,8 @@ test('main menu → skirmish vs Easiest → conquest victory → results', async
   await page.getByTestId('show-results').click();
   await expect(page.getByTestId('result-1')).toHaveClass(/winner/);
   await snap(page, info, 'victory-results');
+  await page.getByTestId('results-timeline').click();
+  await expect(page.getByTestId('graph')).toBeVisible();
+  await snap(page, info, 'victory-timeline');
   expect(pageErrors(page)).toEqual([]);
 });

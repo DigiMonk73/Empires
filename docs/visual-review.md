@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M12.4 · victory-timeline, results-timeline (new), victory-results (tab bar)
+- Timeline graph on the results panel: gridlines and round values, minutes along the bottom, each player's line in
+  their colour over a dark underline, age marks (dot + II/III on the line). The 33-minute victory shows the winner
+  climbing through Tool and Bronze and the loser's collapse to −66 at elimination — the first pass clipped that
+  below the axis (→ the scale now reaches below zero with a brighter zero line) and cut the last minute label at
+  the right edge (→ wider margin). Both engines identical. UI 4.
+
 ## 2026-09-30 · M12.3 · diplomacy (new)
 - Diplomacy dialog on the stone panel: player swatch and name, civ emblem and name, three stance buttons with the
   chosen one lit in its colour (Ally green, Neutral gold, Enemy red), their stance in the same colours; Allied

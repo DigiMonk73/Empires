@@ -3,6 +3,7 @@ import { Sim, SIM_VERSION } from '../sim/index.ts';
 import { AGE_NAMES } from '../sim/systems/production.ts';
 import { GameSession } from './session.ts';
 import { withFlags } from './urlFlags.ts';
+import type { Timeline } from './timeline.ts';
 
 /**
  * A saved game: the simulation's own save bytes (everything that shapes future ticks), the computer players'
@@ -24,11 +25,13 @@ export interface SavedGame {
   camera: { x: number; y: number; zoom: number };
   world: Uint8Array;
   ais: { player: number; state: AiState }[];
+  /** The post-game graphs' samples so far (M12.4; absent in older saves). */
+  timeline?: Timeline;
 }
 
 export type SaveMeta = Omit<SavedGame, 'world' | 'ais'>;
 
-export function saveSession(session: GameSession, o: { id: string; name: string; kind: string; savedAt: number; camera: SavedGame['camera'] }): SavedGame {
+export function saveSession(session: GameSession, o: { id: string; name: string; kind: string; savedAt: number; camera: SavedGame['camera']; timeline?: Timeline }): SavedGame {
   const w = session.sim.world;
   return {
     id: o.id,
@@ -43,6 +46,7 @@ export function saveSession(session: GameSession, o: { id: string; name: string;
     camera: o.camera,
     world: session.sim.serialize(),
     ais: session.aiStates(),
+    ...(o.timeline ? { timeline: o.timeline } : {}),
   };
 }
 

@@ -21,6 +21,7 @@ export class GameSession {
   paused = false;
   private acc = 0;
   private listeners: ((ev: readonly SimEvent[]) => void)[] = [];
+  private tickListeners: (() => void)[] = [];
   private cmdListeners: ((player: number, cmd: Command) => void)[] = [];
 
   /** Computer players (config `ai`), each with its own fog-filtered view. */
@@ -64,6 +65,11 @@ export class GameSession {
     this.listeners.push(fn);
   }
 
+  /** After every tick (the post-game timeline samples on it). */
+  onTick(fn: () => void): void {
+    this.tickListeners.push(fn);
+  }
+
   /** Every command submitted (any player), as it is submitted. */
   onCommand(fn: (player: number, cmd: Command) => void): void {
     this.cmdListeners.push(fn);
@@ -90,5 +96,6 @@ export class GameSession {
     this.sim.step(this.router.collect(this.sim.tick));
     const ev = this.sim.drainEvents();
     if (ev.length) for (const l of this.listeners) l(ev);
+    for (const l of this.tickListeners) l();
   }
 }

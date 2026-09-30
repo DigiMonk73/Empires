@@ -10,6 +10,9 @@ import { gameSettings } from '../settings.ts';
 import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
 import { KeysReference } from '../options/KeysReference.tsx';
 import { Diplomacy } from '../diplomacy/Diplomacy.tsx';
+import { Graph } from '../results/Graph.tsx';
+import { METRICS, METRIC_LABELS, type Metric } from '../../game/timeline.ts';
+import { useState } from 'preact/hooks';
 
 const RES = [
   { key: 'food', label: 'Food', color: '#d84a3a' },
@@ -242,75 +245,110 @@ function GameOver() {
 /** Post-game: score by category, then the tallies behind it. */
 function Results() {
   const rows = hud.results.value;
+  const [tab, setTab] = useState<'summary' | 'timeline'>('summary');
+  const [metric, setMetric] = useState<Metric>('score');
   if (!rows) return null;
   const res = ['Food', 'Wood', 'Gold', 'Stone'];
+  const timeline = hud.timeline.value;
+  const colors = Object.fromEntries(rows.map((r) => [r.player, r.color]));
   return (
     <div class="results" data-testid="results">
       <div class="results-panel">
         <h2>Results</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Military</th>
-              <th>Economy</th>
-              <th>Religion</th>
-              <th>Technology</th>
-              <th>Other</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr class={r.winner ? 'winner' : ''} data-testid={`result-${r.player}`}>
-                <td>
-                  <Emblem civ={r.civId} size={22} />
-                  <span class="swatch" style={{ background: r.color }} /> {r.name} <span class="civ">{r.civ}</span>
-                </td>
-                <td>{r.military}</td>
-                <td>{r.economy}</td>
-                <td>{r.religion}</td>
-                <td>{r.technology}</td>
-                <td>{r.other}</td>
-                <td class="total">{r.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <table class="detail">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Killed</th>
-              <th>Lost</th>
-              <th>Razed</th>
-              {res.map((x) => (
-                <th>{x}</th>
+        <div class="results-tabs">
+          <button class={`speed${tab === 'summary' ? ' on' : ''}`} data-testid="results-summary" onClick={() => setTab('summary')}>
+            Summary
+          </button>
+          <button class={`speed${tab === 'timeline' ? ' on' : ''}`} data-testid="results-timeline" onClick={() => setTab('timeline')} disabled={!timeline}>
+            Timeline
+          </button>
+        </div>
+        {tab === 'timeline' && timeline ? (
+          <div class="timeline" data-testid="timeline">
+            <div class="results-tabs metrics">
+              {METRICS.map((m) => (
+                <button class={`speed${metric === m ? ' on' : ''}`} data-testid={`metric-${m}`} onClick={() => setMetric(m)}>
+                  {METRIC_LABELS[m]}
+                </button>
               ))}
-              <th>Tool</th>
-              <th>Bronze</th>
-              <th>Iron</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr>
-                <td>
+            </div>
+            <Graph data={timeline} metric={metric} colors={colors} />
+            <div class="graph-legend">
+              {rows.map((r) => (
+                <span>
                   <span class="swatch" style={{ background: r.color }} /> {r.name}
-                </td>
-                <td>{r.kills}</td>
-                <td>{r.losses}</td>
-                <td>{r.razed}</td>
-                {r.gathered.map((v) => (
-                  <td>{v}</td>
-                ))}
-                {r.ages.map((a) => (
-                  <td>{a}</td>
-                ))}
+                </span>
+              ))}
+              <span class="graph-ages">● II Tool · III Bronze · IV Iron</span>
+            </div>
+          </div>
+        ) : (
+          <div>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Military</th>
+                <th>Economy</th>
+                <th>Religion</th>
+                <th>Technology</th>
+                <th>Other</th>
+                <th>Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr class={r.winner ? 'winner' : ''} data-testid={`result-${r.player}`}>
+                  <td>
+                    <Emblem civ={r.civId} size={22} />
+                    <span class="swatch" style={{ background: r.color }} /> {r.name} <span class="civ">{r.civ}</span>
+                  </td>
+                  <td>{r.military}</td>
+                  <td>{r.economy}</td>
+                  <td>{r.religion}</td>
+                  <td>{r.technology}</td>
+                  <td>{r.other}</td>
+                  <td class="total">{r.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <table class="detail">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Killed</th>
+                <th>Lost</th>
+                <th>Razed</th>
+                {res.map((x) => (
+                  <th>{x}</th>
+                ))}
+                <th>Tool</th>
+                <th>Bronze</th>
+                <th>Iron</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr>
+                  <td>
+                    <span class="swatch" style={{ background: r.color }} /> {r.name}
+                  </td>
+                  <td>{r.kills}</td>
+                  <td>{r.losses}</td>
+                  <td>{r.razed}</td>
+                  {r.gathered.map((v) => (
+                    <td>{v}</td>
+                  ))}
+                  {r.ages.map((a) => (
+                    <td>{a}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        )}
         <div class="gameover-buttons">
           <button data-testid="close-results" onClick={() => (hud.results.value = null)}>Back to the game</button>
         </div>
@@ -367,6 +405,7 @@ function GameMenu() {
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
           <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
           <button data-testid="menu-load" onClick={() => (hud.saveDialog.value = 'load')}>Load Game</button>
+          <button data-testid="menu-achievements" onClick={() => hudActions.showResults()}>Achievements</button>
           <button data-testid="menu-game-options" onClick={() => (hud.optionsOpen.value = true)}>Options</button>
           <button data-testid="menu-keys" onClick={() => (hud.keysOpen.value = true)}>Keys (F1)</button>
           <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>

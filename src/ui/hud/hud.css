@@ -527,3 +527,86 @@
 .message.placed:hover {
   text-decoration: underline;
 }
+
+/* Results: Summary / Timeline tabs and the graphs (M12.4). */
+.results-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: -4px 0 14px;
+}
+.results-tabs.metrics {
+  margin: 0 0 8px;
+}
+.results-panel button.speed {
+  font: inherit;
+  font-size: 14px;
+  color: #f4e6c8;
+  background: #3a2d1e;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.results-panel button.speed.on {
+  background: #8a6a2e;
+  border-color: #e0b45a;
+}
+.results-panel button.speed:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.graph {
+  display: block;
+  margin: 0 auto;
+  background: rgba(12, 9, 6, 0.35);
+  border: 1px solid rgba(176, 138, 74, 0.35);
+  border-radius: 4px;
+}
+.graph .grid {
+  stroke: rgba(205, 180, 135, 0.18);
+  stroke-width: 1;
+}
+.graph .grid.zero {
+  stroke: rgba(205, 180, 135, 0.45);
+}
+.graph .axis {
+  fill: #cdb487;
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 12px;
+}
+.graph .shadow {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.7);
+  stroke-width: 4.5;
+  stroke-linejoin: round;
+}
+.graph .line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.graph .age-mark circle {
+  stroke: #1b140c;
+  stroke-width: 1.5;
+}
+.graph .age-mark text {
+  fill: #f2d27a;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #1b140c;
+  stroke-width: 3px;
+}
+.graph-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 8px;
+  font-family: 'Alegreya', Georgia, serif;
+  font-size: 14px;
+}
+.graph-legend .graph-ages {
+  color: #cdb487;
+}
