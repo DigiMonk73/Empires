@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8 exit · on the StartOS VM (artifacts/vm-e2e, Chromium + WebKit)
+- The game served by StartOS 0.8.0 looks as in the local builds: setup (Small Islands, Greek bonuses, Tech Tree),
+  the island start under fog with woodlines, berries and gazelles, the tech tree, and the harbor sea battle.
+
 ## 2026-09-30 · M8.8a · victory, victory-results
 - AI change only: the menu→victory game plays out differently (a Dock by the lake, victory at 30:26). Renders
   as before.

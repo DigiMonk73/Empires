@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M7 Full land tech tree **done** (tag `m7`; Hard > Easy ladder pairing deferred to M13 — D41). M8 Water in progress: M8.1–M8.7 and M8.8a–b done. M6 done (tag `m6`, s9pk 0.6.0 verified on the StartOS VM).
+- **Milestone:** M8 Water **done** (tag `m8`, s9pk 0.8.0 installed and checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41). M6 done (tag `m6`, s9pk 0.6.0 verified on the StartOS VM).
 - **Last green commit:** M8.8b (verify ~100 s); verify:full at the M7 exit ~515 s (Docker both arches 183 MB, Tauri, s9pk; full ladder now 32 maps, ~280 s).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -14,10 +14,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
   combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, windup, dodgeable
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
-- **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
+- **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M8 exit — verify:full, tag m8, empires-startos 0.8.0 (version, notes, docs), submodule bump, make arm, install on the VM (the user asked). Then M9 art completion.; then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
+- **Next up:** M9 art completion — expand into tasks (architecture sets × ages, remaining units/animals, icons and portraits, UI textures).; then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -464,6 +464,14 @@ Ships already train at the Dock and path on water (their own move class and regi
       island), an army across the Narrows counted as a threat (armies filled the population before any
       transport), cramped 10-tile start islands (bigger islands, a second woodline; buildings fall back to
       anywhere within 18), a stale invasion target halting the land war on a continent.
+- [x] **M8 exit** Tagged `m8` on 8e67e07 (2026-09-30). verify:full green in 1011 s: Docker both arches 120.3 MB (was
+      183 — WebP), Tauri smoke (27/91 models loaded), 392 unit + 97 e2e, ladder Hardest > Easiest 55/64, Moderate >
+      Easiest 54/64, Hard > Easy 53/64 (reported, M13), water 7/12 (reported, M13 — D42), 0 crashes. empires-startos
+      0.8.0 (581000e: notes in 5 languages, instructions), s9pk 107 MB. On the VM at the user's request: update
+      0.6.0 → 0.8.0 (migration logged), health green, restart back in ~10 s, logs clean, page/manifest/WebP atlas
+      served with the right types; headless Chromium + WebKit against the VM — menu, Small Islands skirmish, tech
+      tree, the computer growing, save → reload → load (same tick and hash), a sea battle, art on demand, no
+      page errors (artifacts/vm-e2e.ts). VM stopped.
 - _Exit:_ ≥ 90% AI island games decided; naval screenshots reviewed.
 
 ## M9 — Art completion
