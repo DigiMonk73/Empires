@@ -1,6 +1,7 @@
 import { makeSfx, type SfxName } from './synth.ts';
 import { MusicPlayer } from './musicPlayer.ts';
 import type { Culture, Mood } from './music.ts';
+import { DEFAULT_AUDIO, type AudioSettings } from './settings.ts';
 
 /**
  * The mixer: master → { sfx, voice } buses, lazy AudioContext (browsers only start audio after a user gesture),
@@ -31,6 +32,7 @@ export class AudioEngine {
   private total = 0;
   private lastAck = -1e9;
   muted = false;
+  private levels: AudioSettings = { ...DEFAULT_AUDIO };
   /** Sounds started, by name (debug/e2e). */
   readonly stats: Record<string, number> = {};
 
@@ -52,17 +54,14 @@ export class AudioEngine {
     const ctx = new Ctx();
     this.ctx = ctx;
     this.master = ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 0.8;
     this.master.connect(ctx.destination);
     this.sfxBus = ctx.createGain();
-    this.sfxBus.gain.value = 0.7;
     this.sfxBus.connect(this.master);
     this.voiceBus = ctx.createGain();
-    this.voiceBus.gain.value = 0.9;
     this.voiceBus.connect(this.master);
     this.musicBus = ctx.createGain();
-    this.musicBus.gain.value = 0.45;
     this.musicBus.connect(this.master);
+    this.apply(this.levels);
     if (this.musicWanted) this.startMusic(this.musicWanted.culture, this.musicWanted.seed);
     this.sfx = makeSfx(ctx);
     try {
@@ -108,8 +107,22 @@ export class AudioEngine {
   }
 
   setMuted(m: boolean): void {
-    this.muted = m;
-    if (this.master) this.master.gain.value = m ? 0 : 0.8;
+    this.apply({ ...this.levels, muted: m });
+  }
+
+  /** The mixer (M11.4): master, music, effects and voice levels (bus trims keep the defaults' balance). */
+  apply(s: AudioSettings): void {
+    this.levels = { ...s };
+    this.muted = s.muted;
+    if (!this.master) return;
+    this.master.gain.value = s.muted ? 0 : s.master;
+    this.sfxBus!.gain.value = s.sfx * 0.875;
+    this.voiceBus!.gain.value = s.voice;
+    this.musicBus!.gain.value = s.music * 0.75;
+  }
+
+  get settings(): AudioSettings {
+    return { ...this.levels };
   }
 
   /** Play a synthesised effect. `pan` −1…1, `gain` 0…1. */

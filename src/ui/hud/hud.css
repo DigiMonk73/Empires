@@ -472,3 +472,33 @@
   vertical-align: -5px;
   margin-right: 4px;
 }
+
+/* Sound options (M11.4). */
+.volumes {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 14px;
+  min-width: 320px;
+}
+.vol-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+.vol-row .vol-name {
+  color: #e8d6a8;
+}
+.vol-row input[type='range'] {
+  width: 100%;
+  accent-color: #c8a04a;
+}
+.vol-row .vol-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #cdb487;
+}
+.vol-row button {
+  justify-self: start;
+}

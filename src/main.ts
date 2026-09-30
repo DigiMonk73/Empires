@@ -21,6 +21,8 @@ import { setIconArch, setIconArt } from './ui/icons.ts';
 import { installUiTextures } from './ui/textures.ts';
 import { setWaterTime } from './render/terrainMesh.ts';
 import type { Culture } from './audio/music.ts';
+import { audioSettings, setAudio } from './audio/settings.ts';
+import { effect } from '@preact/signals';
 import { archOf } from './render/arch.ts';
 import { groundHeight } from './render/ground.ts';
 import { buildResults, formatClock } from './ui/results.ts';
@@ -168,15 +170,7 @@ async function boot(): Promise<void> {
     location.search = '';
   };
   hud.speed.value = session.speed;
-  hudActions.setMuted = (m) => {
-    audio.setMuted(m);
-    hud.muted.value = m;
-    try {
-      localStorage.setItem('empires.muted', m ? '1' : '0');
-    } catch {
-      /* private mode: the choice lasts this session */
-    }
-  };
+  hudActions.setMuted = (m) => setAudio({ muted: m });
   hudActions.showResults = () => {
     hud.results.value = buildResults(world);
   };
@@ -385,14 +379,12 @@ async function boot(): Promise<void> {
  */
 function wireAudio(session: GameSession, world: GameSession['sim']['world'], wr: WorldRenderer, camera: Camera, selection: Selection, app: Application, menuMode: boolean): AudioEngine {
   const audio = new AudioEngine();
-  let muted = false;
-  try {
-    muted = localStorage.getItem('empires.muted') === '1';
-  } catch {
-    /* storage blocked: default on */
-  }
-  audio.setMuted(muted);
-  hud.muted.value = muted;
+  // The mixer follows the saved settings (M11.4), live as the sliders move.
+  effect(() => {
+    const s = audioSettings.value;
+    audio.apply(s);
+    hud.muted.value = s.muted;
+  });
   audio.armOnGesture();
   // Music in the player's culture (the menu plays the Greek theme in peace).
   audio.startMusic((menuMode ? 'greek' : archOf(world.players[session.localPlayer]?.civ)) as Culture, world.seed || 1);

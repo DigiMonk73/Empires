@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M11.4 · menu-options (new)
+- Options on the main menu: Sound on/off and four sliders (Master, Music, Effects, Voices) with their values, on
+  the stone panel; sliders grey out while sound is off. UI 4.
+
 ## 2026-09-30 · M10 exit · highland re-scored (artifacts/m10/highland.png)
 - With beaches, foam, palms by the ponds and the fog on the hills, Highland reads as a finished map: 4 (was 3.5
   at M10.2). Every M10 item is at 4.

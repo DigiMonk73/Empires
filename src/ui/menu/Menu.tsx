@@ -11,6 +11,7 @@ import { techTree } from '../techTree.ts';
 import { loadQuery } from '../../game/saveGame.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import { Emblem } from '../emblems.tsx';
+import { VolumeControls } from '../options/VolumeControls.tsx';
 import './menu.css';
 
 /**
@@ -22,7 +23,7 @@ const cap = (s: string): string => s[0]!.toUpperCase() + s.slice(1);
 const SIZES = Object.keys(MAP_SIZES) as MapSizeId[];
 const RESOURCES: StartingResources[] = ['default', 'medium', 'high', 'deathmatch'];
 
-function MainMenu({ onSkirmish, onLoad }: { onSkirmish: () => void; onLoad: () => void }) {
+function MainMenu({ onSkirmish, onLoad, onOptions }: { onSkirmish: () => void; onLoad: () => void; onOptions: () => void }) {
   return (
     <div class="menu-main" data-testid="main-menu">
       <h1 class="menu-title">Empires</h1>
@@ -34,7 +35,7 @@ function MainMenu({ onSkirmish, onLoad }: { onSkirmish: () => void; onLoad: () =
         <button data-testid="menu-loadgame" onClick={onLoad}>
           Load Game
         </button>
-        <button disabled title="Coming soon">
+        <button data-testid="menu-options" onClick={onOptions}>
           Options
         </button>
       </div>
@@ -187,12 +188,28 @@ function CivInfo({ civ }: { civ: string }) {
   );
 }
 
+/** Options (M11.4): sound for now — mute and the four volumes; more settings join in M12. */
+function Options({ onBack }: { onBack: () => void }) {
+  return (
+    <div class="menu-panel" data-testid="options">
+      <h2>Options</h2>
+      <VolumeControls />
+      <div class="menu-buttons row">
+        <button data-testid="options-back" onClick={onBack}>
+          Back
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Menu() {
-  const [screen, setScreen] = useState<'main' | 'skirmish' | 'load'>('main');
+  const [screen, setScreen] = useState<'main' | 'skirmish' | 'load' | 'options'>('main');
   const back = () => setScreen('main');
   return (
     <div class="menu">
-      {screen === 'main' && <MainMenu onSkirmish={() => setScreen('skirmish')} onLoad={() => setScreen('load')} />}
+      {screen === 'main' && <MainMenu onSkirmish={() => setScreen('skirmish')} onLoad={() => setScreen('load')} onOptions={() => setScreen('options')} />}
+      {screen === 'options' && <Options onBack={back} />}
       {screen === 'skirmish' && <Skirmish onBack={back} />}
       {screen === 'load' && <SaveList mode="load" onLoad={(id) => (location.search = loadQuery(id, new URLSearchParams(location.search)))} onClose={back} />}
     </div>

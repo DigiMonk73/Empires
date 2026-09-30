@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { frames, openGame, pageErrors } from './helpers.ts';
+import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 /** Sounds are counted as they are started, so the hooks are testable without listening. */
 const played = (page: import('@playwright/test').Page) => page.evaluate(() => window.__empires!.audioStats().played);
@@ -98,4 +98,31 @@ test('audio: music starts with the engine and turns to battle when our units fig
   expect(m.mood).toBe('battle');
   expect(m.playing).toBe('battle');
   expect(pageErrors(page)).toEqual([]);
+});
+
+test('audio: Options on the main menu set the volumes; they persist into the game menu (M11.4)', async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto('./?edgeScroll=0'); // the main menu (no scenario, no debug flag)
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
+  await page.waitForFunction(() => !!window.__empires);
+  await page.getByTestId('menu-options').click();
+  await page.getByTestId('options').waitFor();
+  await page.getByTestId('vol-music').fill('25');
+  await page.getByTestId('vol-sfx').fill('70');
+  await page.getByTestId('opt-mute').click();
+  await snap(page, info, 'menu-options');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('empires.audio') ?? '{}'));
+  expect(saved).toMatchObject({ music: 0.25, sfx: 0.7, muted: true });
+  await page.getByTestId('options-back').click();
+  // Into a game: the game menu shows the same settings.
+  await page.goto('./?debug=1&edgeScroll=0&scenario=raid&paused=1');
+  await page.waitForFunction(() => !!window.__empires);
+  await page.getByTestId('menu-btn').click();
+  await expect(page.getByTestId('vol-music')).toHaveValue('25');
+  await expect(page.getByTestId('menu-sound')).toHaveText('Off');
+  await page.getByTestId('menu-sound').click();
+  await expect(page.getByTestId('vol-music')).toBeEnabled();
+  expect((await page.evaluate(() => window.__empires!.audioStats())).muted).toBe(false);
+  expect(errors).toEqual([]);
 });

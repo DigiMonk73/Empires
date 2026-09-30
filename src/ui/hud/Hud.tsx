@@ -1,6 +1,7 @@
 import { hud, hudActions, type SelInfo } from '../store.ts';
 import { iconStyle } from '../icons.ts';
 import { Emblem } from '../emblems.tsx';
+import { VolumeControls } from '../options/VolumeControls.tsx';
 import type { CommandButton } from '../commands.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { TechTree } from '../techtree/TechTree.tsx';
@@ -303,12 +304,7 @@ function GameMenu() {
             </button>
           ))}
         </div>
-        <div class="gameover-sub">
-          Sound:{' '}
-          <button class={`speed${hud.muted.value ? '' : ' on'}`} data-testid="menu-sound" onClick={() => hudActions.setMuted(!hud.muted.value)}>
-            {hud.muted.value ? 'Off' : 'On'}
-          </button>
-        </div>
+        <VolumeControls muteId="menu-sound" />
         <div class="gameover-buttons column">
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
           <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
