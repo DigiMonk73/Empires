@@ -9,6 +9,8 @@ import { buildingArt, resourceArt, unitArt, type SpriteArt } from './placeholder
 import { TerrainLayer } from './terrainMesh.ts';
 import { FogLayer } from './fogLayer.ts';
 import type { ArtFrame, BakedArt } from './bakedArt.ts';
+import { FxLayer } from './fx.ts';
+import type { SimEvent } from '../sim/world.ts';
 
 interface EntityView {
   handle: number;
@@ -102,6 +104,14 @@ export class WorldRenderer {
     this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
     this.buildResources();
+    this.fx = new FxLayer(world, this.objectLayer, art, depth, playerColor);
+  }
+
+  /** Corpses and rubble: the renderer's view of deaths the sim has already forgotten. */
+  readonly fx: FxLayer;
+
+  onEvents(events: readonly SimEvent[]): void {
+    this.fx.onEvents(events);
   }
 
   private buildTerrain(): void {
@@ -365,6 +375,7 @@ export class WorldRenderer {
         v.root.scale.x = screenDx < -0.01 ? -1 : 1;
       }
     }
+    this.fx.update(alpha, (tx, ty) => this.fog.isVisible(player, tx, ty), (tx, ty) => this.fog.isExplored(player, tx, ty));
     const r = this.world.res;
     if (this.resViews.length < r.count) this.buildResources(player);
     for (let i = 0; i < r.count; i++) {

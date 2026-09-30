@@ -89,3 +89,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   when their carcass is gone). The benchmark exposed rect goals ending on a diagonal tile ≈1.03 tiles from the
   target (> REACH 0.9): the empty path counted as failure and orders were dropped. `approachRect` now walks the
   unit straight in (the approach point always lies inside its own tile) — used by gather, drop-off, build, farm.
+- **D25 — Death is instant in the sim; aftermath is visual** (2026-09-29, M5.1). A unit at 0 HP is removed the
+  same tick (no dying state to exclude from every system); `died`/`destroyed` events carry type, owner, position
+  and facing, and the renderer's FxLayer plays the death clip, keeps the corpse 20 s then fades it, and leaves
+  rubble 60 s where buildings fell (corpses show only in sight, rubble once explored). A destroyed building
+  refunds its production queue (`verify`: unconfirmed for 1.0). Buildings take ×0.2 damage with a 0.1 floor
+  (mil:2); ranged range is measured to the target's edge; melee on buildings uses the villager work reach.

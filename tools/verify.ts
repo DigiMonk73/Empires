@@ -144,7 +144,9 @@ const ANSI = /\u001b\[[0-9;]*m/g;
 
 function lastLine(s: string): string {
   const lines = s.replace(ANSI, '').trim().split('\n').filter((l) => l.trim());
-  return (lines[lines.length - 1] ?? '').slice(0, 160);
+  // Prefer a summary line (vitest/playwright print tips after it).
+  const summary = [...lines].reverse().find((l) => /^\s*Tests\s+\d+ passed|^\s*\d+ passed \(/.test(l));
+  return (summary ?? lines[lines.length - 1] ?? '').trim().slice(0, 200);
 }
 
 function tail(s: string, n = 40): string {

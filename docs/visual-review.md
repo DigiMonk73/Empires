@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M5.1 · raid-corpses, raid (chromium + webkit)
+- Villagers killed by clubmen fall and lie in the grass (baked die clip, last frame held, 20 s then fade); a razed
+  house leaves a dark trampled plot. Clubmen are still placeholders (M5.5). Readability 3 (placeholders), depth 4.
+- Should-fix (M5.5): rubble reuses the construction site (stakes + rope read as "site", not "ruin") — bake rubble.
+- Should-fix (M5.4): surviving villagers stand still while their neighbours are cut down — retaliation/flee.
+
 ## 2026-09-29 · M4.7c · gazelle/elephant/lion frame sheets, work-overview, economy-after
 - Animals read at game scale: tan gazelles with horns grazing, a grey elephant with ears/tusks/trunk, a maned
   lion; carcasses lie on their side where they fell. Readability 4, anchoring 4, light 4.

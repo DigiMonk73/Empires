@@ -41,6 +41,7 @@ async function boot(): Promise<void> {
   const art = params.get('art') === '0' ? null : await BakedArt.load();
   setIconArt(art);
   const wr = new WorldRenderer(app.renderer, world, art);
+  session.onEvents((ev) => wr.onEvents(ev));
   cameraRoot.addChild(wr.root);
 
   const camera = new Camera(cameraRoot, app.canvas, {

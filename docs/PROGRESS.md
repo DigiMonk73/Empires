@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M5 Combat — starting M5.1. M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M5 Combat — M5.1 done (combat core). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m4 (verify ~30 s incl. economy benchmark; verify:full ~100 s: Docker 77 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -12,11 +12,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
   retarget, construction with (n+2)/3 builders, pop/housing, farms (one farmer, 250 food, vanish when empty),
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
-  combat core (`systems/combat.ts`: damage formula, instant hits — projectiles in M5); sim 500 units p99 ~1.1 ms.
+  combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, instant hits until
+  M5.2; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M5.1 combat core (attack enemies/buildings, deaths → corpses, rubble), then M5.2 projectiles.
-- **Playable now:** `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
+- **Next up:** M5.2 projectiles (dodgeable arrows/spears), then M5.3 research + training.
+- **Playable now:** `?scenario=raid` (right-click enemies with clubmen); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
@@ -164,10 +165,11 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - _Exit:_ mouse e2e builds a house and trains 5 villagers; scripted economy within ±5% of research rates; idle < 3%.
 
 ## M5 — Combat
-- [ ] **M5.1 Combat core.** `act` on enemies → attack (units and buildings); damage vs buildings ×0.2, min 0.1
-      (mil:2); melee reach vs ranged range (+ min range); Stand Ground flag; units die into a `dying` state →
-      corpse that decays (render die clip, then corpse frame, then fade); destroyed buildings → rubble decal,
-      footprint freed, queue refunded; `died`/`destroyed` events; right-click enemy = attack.
+- [x] **M5.1 Combat core.** `act` on hostile units/buildings → attack (villagers too); team hostility; damage vs
+      buildings ×0.2 min 0.1; ranged range to the target's edge, melee touching (buildings: REACH); deaths and
+      destruction are instant in the sim with `died`/`destroyed` events → renderer FxLayer plays the death clip,
+      keeps a corpse 20 s (+5 s fade), leaves rubble 60 s; destroyed buildings free their footprint, refund the
+      queue (D25); right-click enemy = attack; `raid` review scenario. Stand Ground moves to M5.4.
 - [ ] **M5.2 Projectiles.** Sim projectile list (saved/hashed): arrow/spear/stone/bolt kinds with speed, arc,
       aim fixed at release (moving targets dodge — mil:2), hit test on arrival radius; hunter 80% accuracy uses
       the same path; render arcing arrows with shadows.
@@ -179,7 +181,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       villagers fight back when attacked (idle ones only); chase leash (verify); lions attack villagers.
 - [ ] **M5.5 Soldier art.** Humanoid kits: clubman, axeman, bowman (draw/loose clip with arrow socket),
       slinger; horse rig + scout rider; attack clips with `hit` markers aligned to sim reload; corpse frames;
-      Archery Range, Stable, Watch Tower models.
+      Archery Range, Stable, Watch Tower models; baked rubble (broken timbers, thatch, ash) per footprint size.
 - [ ] **M5.6 QoL + splash.** Attack-move (modern QoL; the original has none — toggle), splash framework
       (radius, falloff, friendly fire for stones), trample for elephants later.
 - [ ] **M5.7 Battle gates.** Duel-matrix unit tests (formula, classes, buildings ×0.2); 20v20 scripted battle

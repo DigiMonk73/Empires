@@ -136,6 +136,27 @@ function village(): SimConfig {
   };
 }
 
+/** A raid: clubmen fall on an enemy camp — for combat review (corpses, rubble, HP bars). */
+function raid(): SimConfig {
+  const W = 32;
+  return {
+    seed: 9,
+    map: { w: W, h: W },
+    players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    scenario: {
+      buildings: [
+        { type: 'townCenter', owner: 2, tx: 18, ty: 17 },
+        { type: 'house', owner: 2, tx: 14, ty: 14 },
+        { type: 'house', owner: 2, tx: 22, ty: 13 },
+      ],
+      units: [
+        ...[0, 1, 2, 3, 4, 5].map((i) => ({ type: 'clubman', owner: 1, x: 9.5 + (i % 3) * 0.8, y: 10.5 + Math.floor(i / 3) * 0.8 })),
+        ...[0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 2, x: 15.5 + i * 0.9, y: 17.5 })),
+      ],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -152,5 +173,6 @@ export const SCENARIOS: Record<string, () => SimConfig> = {
   demo,
   start,
   village,
+  raid,
   crowd: () => crowd(1000),
 };

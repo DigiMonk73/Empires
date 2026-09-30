@@ -162,8 +162,9 @@ export class InputController {
   }
 
   /**
-   * Right-click in context: villagers hunt animals, gather a resource, help build an own foundation or farm an
-   * own field; buildings set their rally point (on a resource: new villagers gather it); otherwise units move.
+   * Right-click in context: units attack enemies (villagers hunt animals), villagers gather a resource, help build
+   * an own foundation or farm an own field; buildings set their rally point (on a resource: new villagers gather
+   * it); otherwise units move.
    */
   private command(p: { x: number; y: number }, queue: boolean): void {
     const me = this.session.localPlayer;
@@ -181,8 +182,9 @@ export class InputController {
     const target = this.wr.pick(p.x, p.y);
     const e = this.world.ents;
     const ts = e.slotOf(target);
-    // Animals: villagers hunt them (soldiers will attack them in M5).
-    if (ts >= 0 && e.kind[ts] === EKind.unit && TYPES[e.type[ts]!]!.animal) {
+    // Animals and enemies: attack (villagers attacking animals hunt). The sim filters who can attack what.
+    const enemy = ts >= 0 && e.owner[ts] !== me && e.owner[ts] !== 0 && this.world.players[e.owner[ts]!]!.team !== this.world.players[me]!.team;
+    if (ts >= 0 && ((e.kind[ts] === EKind.unit && TYPES[e.type[ts]!]!.animal) || enemy)) {
       this.session.router.submit(me, { t: 'act', ids, h: target, queue });
       this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);
       return;

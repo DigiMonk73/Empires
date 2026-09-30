@@ -95,6 +95,7 @@ export type SimEvent =
   | { t: 'built'; h: number; player: number }
   | { t: 'trained'; h: number; player: number }
   | { t: 'died'; h: number; owner: number; type: number; x: number; y: number; facing: number }
+  | { t: 'destroyed'; h: number; owner: number; type: number; x: number; y: number; built: boolean }
   | { t: 'farmDepleted'; h: number; player: number }
   | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
