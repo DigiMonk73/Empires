@@ -181,12 +181,12 @@ export function cancelUnit(w: World, player: number, bh: number, index = -1): vo
   if (!prod.items.length) w.prod[b] = undefined;
 }
 
-/** Refund everything queued at a building (e.g. when it is destroyed). */
+/** A destroyed building refunds what was queued — but not the item already in production (mil:5 UI notes). */
 export function refundQueue(w: World, b: number): void {
   const prod = w.prod[b];
   if (!prod) return;
   const player = w.ents.owner[b]!;
-  for (const item of prod.items) pay(w, player, itemCost(w, player, item), -1);
+  for (let i = 1; i < prod.items.length; i++) pay(w, player, itemCost(w, player, prod.items[i]!), -1);
   w.prod[b] = undefined;
 }
 

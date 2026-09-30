@@ -5,6 +5,9 @@ test('fog hides the enemy until scouted; explored ground stays dimmed', async ({
   await openGame(page, 'scenario=demo');
   await page.evaluate(() => window.__empires!.pause(true));
   const enemy = (await page.evaluate(() => window.__empires!.query.units(2)))[0]!;
+  // Keep the enemy camp still (Stand Ground) so the scout isn't chased — this test is about fog, not fighting.
+  const camp = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
+  await page.evaluate((ids) => window.__empires!.issue(2, { t: 'stance', ids, stand: true }), camp);
   // Clicking where an unseen enemy stands selects nothing.
   await page.evaluate((u) => window.__empires!.camera.centerOn(u.x, u.y), enemy);
   await page.evaluate(() => window.__empires!.step(1));
@@ -31,6 +34,9 @@ test('?fog=0 shows everything', async ({ page }, info) => {
   await openGame(page, 'scenario=demo&fog=0');
   await page.evaluate(() => window.__empires!.pause(true));
   const enemy = (await page.evaluate(() => window.__empires!.query.units(2)))[0]!;
+  // Keep the enemy camp still (Stand Ground) so the scout isn't chased — this test is about fog, not fighting.
+  const camp = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
+  await page.evaluate((ids) => window.__empires!.issue(2, { t: 'stance', ids, stand: true }), camp);
   await page.evaluate((u) => window.__empires!.camera.centerOn(u.x, u.y), enemy);
   await page.evaluate(() => window.__empires!.step(1));
   await frames(page);

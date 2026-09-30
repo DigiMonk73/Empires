@@ -121,6 +121,79 @@ export function hit(w: World, attacker: number, target: number, amount: number, 
     return;
   }
   if (t.animal) reactToAttack(w, target, attacker, fromX, fromY);
+  else if (attacker >= 0 && e.kind[target] === EKind.unit) retaliate(w, target, attacker);
+}
+
+/** Leash for self-given attack orders: tiles beyond the unit's line of sight (unverified for 1.0 — D27). */
+export const LEASH = 3;
+/** Patch 1.0a: own and allied units within this many tiles of an attacked unit respond (mil:2). */
+export const RESPONSE_RADIUS = 2;
+
+/** Would `s` react on its own (auto-acquire / retaliate)? Idle units that can fight; never Scouts (mil:2). */
+function mayReact(w: World, s: number): boolean {
+  const e = w.ents;
+  if (!e.alive[s] || e.kind[s] !== EKind.unit || w.orders[s]) return false;
+  const t = TYPES[e.type[s]!]!;
+  if (t.unit?.noAutoAttack || t.animal) return false;
+  return canAttack(w, s);
+}
+
+/**
+ * Patch 1.0a (mil:2): when a unit is attacked, it and every idle own or allied unit within 2 tiles turn on the
+ * attacker — even if the attacker is out of their sight. Busy units (villagers at work, units on the march)
+ * carry on.
+ */
+function retaliate(w: World, target: number, attacker: number): void {
+  const e = w.ents;
+  if (!hostile(w, target, attacker)) return;
+  const team = w.players[e.owner[target]!]!.team;
+  const ah = e.handleOf(attacker);
+  const x = e.x[target]!;
+  const y = e.y[target]!;
+  const r2 = RESPONSE_RADIUS * RESPONSE_RADIUS;
+  w.grid.forEachNear(x, y, RESPONSE_RADIUS, (s) => {
+    if (s !== target && e.owner[s] !== e.owner[target] && w.players[e.owner[s]!]!.team !== team) return;
+    if (e.owner[s] === 0) return;
+    const dx = e.x[s]! - x;
+    const dy = e.y[s]! - y;
+    if (dx * dx + dy * dy > r2 || !mayReact(w, s)) return;
+    startAttack(w, s, ah, false, true);
+  });
+  if (mayReact(w, target)) startAttack(w, target, ah, false, true);
+}
+
+/**
+ * Auto-acquire (mil:2): idle soldiers attack the nearest enemy unit in their line of sight (Stand Ground: only
+ * within reach); aggressive animals (lions) go for units near them. Each unit looks every 10 ticks, staggered.
+ * Runs after separation, so the unit grid is current.
+ */
+export function targetSystem(w: World): void {
+  const e = w.ents;
+  const phase = w.tick % 10;
+  for (let s = phase; s < e.top; s += 10) {
+    if (!e.alive[s] || e.kind[s] !== EKind.unit || w.orders[s]) continue;
+    const t = TYPES[e.type[s]!]!;
+    const owner = e.owner[s]!;
+    const lion = owner === 0 && t.animal?.behavior === 'aggressive';
+    if (!lion && (owner === 0 || isVillager(w, s) || !mayReact(w, s))) continue;
+    const st = w.stats(owner, e.type[s]!);
+    const reach = st.range > 0 ? st.range : t.radius + 0.25;
+    const look = e.stance[s] === 1 ? reach + 0.5 : lion ? 3 : st.los;
+    const x = e.x[s]!;
+    const y = e.y[s]!;
+    let best = -1;
+    let bestD = Infinity;
+    w.grid.forEachNear(x, y, look + 0.6, (j) => {
+      if (j === s || !e.alive[j] || e.kind[j] !== EKind.unit) return;
+      if (lion ? e.owner[j] === 0 : !hostile(w, s, j) || e.owner[j] === 0) return; // soldiers ignore wildlife
+      if (!lion && !w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)]) return;
+      const d = edgeDist(w, s, j);
+      if (d > look || d > bestD || (d === bestD && j > best)) return;
+      best = j;
+      bestD = d;
+    });
+    if (best >= 0) startAttack(w, s, e.handleOf(best), false, true);
+  }
 }
 
 /** Animals: gazelles flee from attackers; elephants and predators fight back (econ:1.1). */
@@ -137,19 +210,22 @@ function reactToAttack(w: World, s: number, attacker: number, fromX: number, fro
     w.paths[s] = undefined;
     w.pathing.cancel(s);
   } else if (attacker >= 0 && w.orders[s]?.[0]?.k !== 'attack') {
-    w.orders[s] = [{ k: 'attack', h: e.handleOf(attacker), hunt: false, retarget: 0, windup: 0 }];
+    w.orders[s] = [{ k: 'attack', h: e.handleOf(attacker), hunt: false, retarget: 0, windup: 0, auto: true }];
     w.paths[s] = undefined;
   }
 }
 
-/** Start an attack order on a hostile unit or building (villagers attacking animals are hunting). */
-export function startAttack(w: World, s: number, targetHandle: number, queue: boolean): boolean {
+/**
+ * Start an attack order on a hostile unit or building (villagers attacking animals are hunting). `auto` marks
+ * orders the unit gave itself (auto-acquire, retaliation).
+ */
+export function startAttack(w: World, s: number, targetHandle: number, queue: boolean, auto = false): boolean {
   const e = w.ents;
   const t = e.slotOf(targetHandle);
   if (t < 0 || t === s || e.kind[s] !== EKind.unit || !hostile(w, s, t)) return false;
   if (!canAttack(w, s)) return false;
   const hunting = !!TYPES[e.type[t]!]!.animal && isVillager(w, s);
-  const order = { k: 'attack' as const, h: targetHandle, hunt: hunting, retarget: 0, windup: 0 };
+  const order = { k: 'attack' as const, h: targetHandle, hunt: hunting, retarget: 0, windup: 0, auto };
   const q = w.orders[s];
   if (queue && q && q.length) q.push(order);
   else {
@@ -213,6 +289,11 @@ export function attackSystem(w: World): void {
     const d = edgeDist(w, s, t);
     // Ranged: range to the target's edge. Melee: touching (buildings: the same reach as villager work).
     const reach = st.range > 0 ? st.range : building ? REACH : TYPES[e.type[s]!]!.radius + 0.25;
+    // Self-given orders give up when the target escapes: Stand Ground never chases, others leash at LOS + 3.
+    if (o.auto && d > reach && (e.stance[s] === 1 || d > w.stats(e.owner[s]!, e.type[s]!).los + LEASH)) {
+      finish(w, s);
+      continue;
+    }
     if (d <= reach) {
       w.paths[s] = [];
       w.pathing.cancel(s);

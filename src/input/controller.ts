@@ -230,6 +230,9 @@ export class InputController {
       case 'research':
         this.session.router.submit(me, { t: 'research', bld: a.bld, tech: a.tech });
         break;
+      case 'stance':
+        this.session.router.submit(me, { t: 'stance', ids: this.ownUnits(), stand: a.stand });
+        break;
       case 'stop':
         this.session.router.submit(me, { t: 'stop', ids: this.ownUnits() });
         break;

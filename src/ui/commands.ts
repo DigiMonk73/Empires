@@ -16,6 +16,7 @@ export type Action =
   | { kind: 'place'; building: string }
   | { kind: 'train'; bld: number; unit: string }
   | { kind: 'research'; bld: number; tech: string }
+  | { kind: 'stance'; stand: boolean }
   | { kind: 'stop' };
 
 export interface CommandButton {
@@ -86,6 +87,21 @@ export function computeCommands(w: World, player: number, selected: readonly num
     out.push({ id: 'buildMenu', label: 'Build', hotkey: 'B', icon: 'house', cost: null, disabled: null, action: { kind: 'buildMenu' } });
   }
   if (units.length) out.push({ id: 'stop', label: 'Stop', hotkey: 'S', icon: null, glyph: '✋', cost: null, disabled: null, action: { kind: 'stop' } });
+  // Stand Ground (the original's only stance) for fighting units; the button shows whether it is on.
+  const fighters = units.filter((s) => !isVillager(w, s) && w.stats(player, e.type[s]!).atk.some((v) => v !== undefined && v > 0));
+  if (fighters.length) {
+    const standing = fighters.every((s) => e.stance[s] === 1);
+    out.push({
+      id: 'stance',
+      label: standing ? 'Stand Ground (on)' : 'Stand Ground',
+      hotkey: '',
+      icon: null,
+      glyph: standing ? '▣' : '□',
+      cost: null,
+      disabled: null,
+      action: { kind: 'stance', stand: !standing },
+    });
+  }
   // A single own completed building: its trainable units.
   if (!units.length && own.length === 1 && e.kind[own[0]!] === EKind.building) {
     const b = own[0]!;

@@ -110,7 +110,9 @@ export type Order =
   /** Farm field `h` (phases as gather). */
   | { k: 'farm'; h: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
-  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number };
+  /** Attack unit/building `h`. `auto`: picked by the unit itself (auto-acquire, retaliation) — leashed, and dropped
+   *  by Stand Ground units once the target leaves reach. */
+  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }

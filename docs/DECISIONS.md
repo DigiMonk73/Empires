@@ -101,3 +101,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   target's position at release (no leading until Ballistics, M7), fly distance ÷ speed, and hit if the target
   is within radius + 0.15 of the aim point (buildings: aim inside the footprint + 0.1). Stray hits on other units
   (½ damage in some sources) are not modelled — unverified for 1.0. Hunter spears: speed 6 (unverified), 80%.
+- **D27 — Targeting rules** (2026-09-29, M5.4). Idle soldiers auto-acquire the nearest visible hostile *unit*
+  within their LOS (buildings only by command; wildlife ignored; Scouts never — mil:2), checked every 10 ticks
+  per unit, staggered by slot. Retaliation follows patch 1.0a: the attacked unit and idle own/allied units
+  within 2 tiles attack the attacker; units with orders (working villagers, marching troops) don't. Self-given
+  attacks leash at LOS + 3 tiles (`verify`: the original's chase distance is unknown); Stand Ground units attack
+  only within reach and never chase, but still follow explicit attack commands. Lions attack units within 3
+  tiles (`verify`). A destroyed building refunds queued items but not the one in production (mil:5), replacing
+  D25's full refund. The mixed unit/research queue is a modern convenience (RoR: one unit type per building, no
+  research queue) — Classic mode (M12) restricts it.

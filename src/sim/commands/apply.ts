@@ -153,6 +153,9 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'research':
         queueResearch(w, player, cmd.bld, cmd.tech);
         break;
+      case 'stance':
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) w.ents.stance[slot] = cmd.stand ? 1 : 0;
+        break;
       case 'train':
         queueUnit(w, player, cmd.bld, cmd.unit, Math.max(1, Math.min(5, cmd.n ?? 1)));
         break;

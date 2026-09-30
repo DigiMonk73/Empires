@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M5 Combat — M5.1–M5.3 done (combat core, projectiles, research + training). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M5 Combat — M5.1–M5.4 done (combat core, projectiles, research + training, auto-acquire). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m4 (verify ~30 s incl. economy benchmark; verify:full ~100 s: Docker 77 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,7 +16,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-4 large-unit crowd jams.
-- **Next up:** M5.4 auto-acquire + retaliation (+ Stand Ground), then M5.5 soldier art.
+- **Next up:** M5.5 soldier art (clubman/axeman, bowman, slinger, scout on horse; attack clips; rubble), then M5.6.
 - **Playable now:** `?scenario=raid` (right-click enemies with clubmen); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -179,9 +179,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       blockers: building, age, prerequisites, civ, "any N of these buildings" (age advances); completion
       recompiles stats, upgrades units in the field (clubman → axeman) and adds max-HP gains; HUD age label;
       command grid lists techs (age advances as ⬆II/⬆III); Barracks/Range/Stable train from data.
-- [ ] **M5.4 Auto-acquire + retaliation.** Military auto-attacks enemies in LOS (scan staggered via UnitGrid;
-      scouts never auto-attack); 1.0a rule: own/allied units within 2 tiles of an attacked unit respond;
-      villagers fight back when attacked (idle ones only); chase leash (verify); lions attack villagers.
+- [x] **M5.4 Auto-acquire + retaliation.** `targetSystem` (after separation + fog; each unit every 10 ticks):
+      idle soldiers attack the nearest visible enemy unit in LOS (not wildlife, never Scouts); lions go for
+      units within 3 tiles; 1.0a rule — an attacked unit and idle own/allied units within 2 tiles turn on the
+      attacker (busy villagers keep working); self-given orders leash at LOS + 3 and Stand Ground units never
+      chase (`stance` field + command, codec 11, grid button ▣/□); building queue refunds exclude the item in
+      production (mil:5 — resolves D25's flag). Towers attacking → M7 with walls/towers (D27).
 - [ ] **M5.5 Soldier art.** Humanoid kits: clubman, axeman, bowman (draw/loose clip with arrow socket),
       slinger; horse rig + scout rider; attack clips with `hit` markers aligned to sim reload; corpse frames;
       Archery Range, Stable, Watch Tower models; baked rubble (broken timbers, thatch, ash) per footprint size.

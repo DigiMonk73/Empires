@@ -14,6 +14,8 @@ export type Command =
   | { t: 'construct'; ids: number[]; h: number; queue?: boolean }
   /** Context action on entity `h`: villagers farm own fields / hunt animals; soldiers attack. */
   | { t: 'act'; ids: number[]; h: number; queue?: boolean }
+  /** Stand Ground on/off for units `ids`. */
+  | { t: 'stance'; ids: number[]; stand: boolean }
   /** Queue `n` of base unit `unit` at building `bld`. */
   | { t: 'train'; bld: number; unit: string; n?: number }
   /** Research technology `tech` at building `bld` (shares the building's queue). */

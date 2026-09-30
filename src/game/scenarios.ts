@@ -168,7 +168,8 @@ function crowd(n: number): SimConfig {
     x: 10.5 + (i % 40) * 1.6,
     y: 10.5 + Math.floor(i / 40) * 1.6,
   }));
-  return { seed: 3, map: { w: W, h: W }, players: [{ civ: 'greek' }, { civ: 'persian' }], scenario: { units } };
+  // Allies, so the crowd stays a render benchmark rather than a battle.
+  return { seed: 3, map: { w: W, h: W }, players: [{ civ: 'greek', team: 1 }, { civ: 'persian', team: 1 }], scenario: { units } };
 }
 
 export const SCENARIOS: Record<string, () => SimConfig> = {

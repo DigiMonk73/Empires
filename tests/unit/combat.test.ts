@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Sim } from '../../src/sim/index.ts';
-import { damageBetween, WINDUP_TICKS } from '../../src/sim/systems/combat.ts';
+import { damageBetween, LEASH, WINDUP_TICKS } from '../../src/sim/systems/combat.ts';
 import { buildingTypeIndex, unitTypeIndex } from '../../src/sim/rules/registry.ts';
 import { compilePlayerStats } from '../../src/sim/rules/playerStats.ts';
+import { decodeCommands, encodeCommands } from '../../src/sim/commands/codec.ts';
 
 type U = { type: string; owner: number; x: number; y: number };
 type B = { type: string; owner: number; tx: number; ty: number };
@@ -86,7 +87,7 @@ describe('fighting', () => {
     expect(w.players[2]!.popCap).toBe(4);
   });
 
-  it('a destroyed building refunds its queue', () => {
+  it('a destroyed building refunds its queue, except the unit already in training (mil:5)', () => {
     const { of, step, w, e } = setup([{ type: 'clubman', owner: 1, x: 8.5, y: 8.5 }], [{ type: 'townCenter', owner: 2, tx: 10, ty: 10 }]);
     const [tc] = of('townCenter', 2);
     const food0 = w.players[2]!.res[0]!;
@@ -95,7 +96,7 @@ describe('fighting', () => {
     e.hp[e.slotOf(tc!)] = 0.5;
     step(60, [{ player: 1, cmd: { t: 'act', ids: of('clubman', 1), h: tc! } }]);
     expect(e.slotOf(tc!)).toBe(-1);
-    expect(w.players[2]!.res[0]).toBe(food0);
+    expect(w.players[2]!.res[0]).toBe(food0 - 50);
   });
 
   it('allies and own units are not attackable; villagers do attack enemies', () => {
@@ -173,5 +174,73 @@ describe('projectiles (mil:2)', () => {
       b.step();
     }
     expect(b.hash()).toBe(sim.hash());
+  });
+});
+
+describe('auto-acquire and retaliation (mil:2)', () => {
+  it('idle soldiers attack enemies that come into sight; scouts never do', () => {
+    const { of, step, w, e } = setup([
+      { type: 'clubman', owner: 1, x: 10.5, y: 10.5 },
+      { type: 'scout', owner: 1, x: 10.5, y: 12.5 },
+      { type: 'villager', owner: 2, x: 13.5, y: 11.5 },
+    ]);
+    step(12);
+    const [c] = of('clubman', 1);
+    const [sc] = of('scout', 1);
+    const [v] = of('villager', 2);
+    expect(w.orders[e.slotOf(c!)]?.[0]).toMatchObject({ k: 'attack', h: v, auto: true });
+    expect(w.orders[e.slotOf(sc!)]).toBeUndefined();
+  });
+
+  it('1.0a: idle units within 2 tiles of an attacked unit respond — busy ones carry on', () => {
+    const { of, step, w, e } = setup([
+      { type: 'villager', owner: 2, x: 20.5, y: 20.5 },
+      { type: 'villager', owner: 2, x: 21.5, y: 20.5 }, // idle, 1 tile away: responds
+      { type: 'villager', owner: 2, x: 20.5, y: 24.5 }, // idle, 4 tiles away: doesn't
+      { type: 'bowman', owner: 1, x: 15.5, y: 20.5 },
+    ]);
+    const [a, b, far] = of('villager', 2);
+    const [bow] = of('bowman', 1);
+    step(1, [{ player: 1, cmd: { t: 'act', ids: [bow!], h: a! } }]);
+    step(40);
+    expect(w.orders[e.slotOf(a!)]?.[0]).toMatchObject({ k: 'attack', h: bow, auto: true });
+    expect(w.orders[e.slotOf(b!)]?.[0]).toMatchObject({ k: 'attack', h: bow, auto: true });
+    expect(w.orders[e.slotOf(far!)]).toBeUndefined();
+  });
+
+  it('self-given attacks give up beyond LOS + leash; Stand Ground units never chase', () => {
+    const { of, step, w, e } = setup([
+      { type: 'clubman', owner: 1, x: 10.5, y: 10.5 },
+      { type: 'clubman', owner: 1, x: 10.5, y: 14.5 },
+      { type: 'scout', owner: 2, x: 13.5, y: 12.5 },
+    ]);
+    const [c1, c2] = of('clubman', 1);
+    const [sc] = of('scout', 2);
+    step(1, [{ player: 1, cmd: { t: 'stance', ids: [c2!], stand: true } }]);
+    step(12);
+    expect(w.orders[e.slotOf(c1!)]?.[0]).toMatchObject({ k: 'attack', h: sc, auto: true });
+    expect(w.orders[e.slotOf(c2!)]).toBeUndefined(); // standing: the scout is out of reach
+    // The (faster) scout runs off: the chaser gives up once it is LOS + LEASH away.
+    step(20 * 20, [{ player: 2, cmd: { t: 'move', ids: [sc!], x: 30.5, y: 30.5 } }]);
+    expect(w.orders[e.slotOf(c1!)]).toBeUndefined();
+    const s1 = e.slotOf(c1!);
+    expect(Math.hypot(e.x[s1]! - 10.5, e.y[s1]! - 10.5)).toBeGreaterThan(1); // it did chase for a while
+    expect(e.x[e.slotOf(c2!)]).toBeCloseTo(10.5, 1);
+    void LEASH;
+  });
+
+  it('lions attack villagers that wander near', () => {
+    const { of, step, w, e } = setup([
+      { type: 'villager', owner: 1, x: 10.5, y: 10.5 },
+      { type: 'lion', owner: 0, x: 12.5, y: 10.5 },
+    ]);
+    step(12);
+    const [lion] = of('lion', 0);
+    expect(w.orders[e.slotOf(lion!)]?.[0]).toMatchObject({ k: 'attack', h: of('villager', 1)[0], auto: true });
+  });
+
+  it('stance commands round-trip through the codec', () => {
+    const cmds = [{ player: 1, cmd: { t: 'stance' as const, ids: [3, 9], stand: true } }];
+    expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);
   });
 });
