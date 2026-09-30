@@ -20,6 +20,13 @@ export function setIconArch(a: string): void {
  */
 export function iconStyle(model: string | null, box: number, arch = homeArch): Record<string, string> | null {
   if (!model || !art) return null;
+  // `model#v` picks a variant (tech icons, a Town Center of a given age).
+  let variant = -1;
+  const hash = model.indexOf('#');
+  if (hash > 0) {
+    variant = Number(model.slice(hash + 1));
+    model = model.slice(0, hash);
+  }
   const sep = model.lastIndexOf('_');
   if (sep > 0) {
     if (!art.meta(model)) model = model.slice(0, sep);
@@ -28,7 +35,7 @@ export function iconStyle(model: string | null, box: number, arch = homeArch): R
   if (!art.meta(model) && art.meta(`${model}Icon`)) model = `${model}Icon`;
   const meta = art.meta(model);
   if (!meta) return null;
-  const key = meta.clips.idle ? 'idle/1/0' : 'v0';
+  const key = variant >= 0 ? `v${Math.min(variant, meta.variants - 1)}` : meta.clips.idle ? 'idle/1/0' : 'v0';
   const f = meta.frames[key];
   if (!f) return null;
   const scale = Math.min(box / f.w, box / f.h) * 0.92;

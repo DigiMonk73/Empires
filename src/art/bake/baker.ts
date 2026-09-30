@@ -146,7 +146,7 @@ export class Baker {
    * Screen-space (2× px, relative to the ground origin) bounds of an object and its ground shadow, in camera
    * space — used to size render cells so nothing (especially long shadows) is clipped.
    */
-  private screenBounds(obj: THREE.Object3D, acc: { x0: number; x1: number; y0: number; y1: number }): void {
+  private screenBounds(obj: THREE.Object3D, acc: { x0: number; x1: number; y0: number; y1: number }, shadows = true): void {
     obj.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(obj);
     if (box.isEmpty()) return;
@@ -155,7 +155,7 @@ export class Baker {
     const p = new THREE.Vector3();
     for (let i = 0; i < 8; i++) {
       p.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z);
-      for (const q of [p.clone(), p.clone().addScaledVector(SUN_DIR, -p.y / SUN_DIR.y)]) {
+      for (const q of shadows ? [p.clone(), p.clone().addScaledVector(SUN_DIR, -p.y / SUN_DIR.y)] : [p.clone()]) {
         const sx = q.dot(right) * PX;
         const sy = -q.dot(up) * PX;
         acc.x0 = Math.min(acc.x0, sx);
@@ -170,11 +170,12 @@ export class Baker {
   bake(def: ModelDef): { meta: AtlasMeta; pages: HTMLCanvasElement[] } {
     // Size the cell to the union of every pose's projected bounds (plus shadows) with a margin.
     const acc = { x0: 0, x1: 0, y0: 0, y1: 0 };
+    const icon = def.kind === 'icon';
     for (let v = 0; v < (def.variants ?? 1); v++) {
       const model = def.build(v);
       const holder = new THREE.Group();
       holder.add(model);
-      if (!def.clips) this.screenBounds(holder, acc);
+      if (!def.clips) this.screenBounds(holder, acc, !icon);
       for (const clip of Object.values(def.clips ?? {})) {
         for (let d = 0; d < def.facings; d++) {
           holder.rotation.y = -(d * Math.PI * 2) / def.facings;
@@ -196,6 +197,7 @@ export class Baker {
     const clips = def.clips ?? {};
     for (let v = 0; v < variants; v++) {
       const model = def.build(v);
+      if (icon) model.traverse((o) => (o.castShadow = false)); // icons float on the button: no ground shadow
       // Facing lives on a wrapper so clip poses (which may rotate the model root) never fight it.
       const obj = new THREE.Group();
       obj.add(model);

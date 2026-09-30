@@ -6,6 +6,7 @@ import { buildingAvailable, canAfford } from '../sim/systems/build.ts';
 import { isVillager } from '../sim/systems/gather.ts';
 import { MAX_QUEUE, currentBuilding, producedType, researchBlocker, trainBlocker } from '../sim/systems/production.ts';
 import type { World } from '../sim/world.ts';
+import { techIcon } from './techIcons.ts';
 
 /**
  * The command grid's view-model: which buttons the current selection offers, with hotkeys (the original's
@@ -166,7 +167,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
         id: `research:${tech.id}`,
         label: tech.name,
         hotkey: '',
-        icon: null,
+        icon: techIcon(tech.id),
         glyph: techGlyph(tech.id),
         cost,
         disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : !canAfford(w, player, cost) ? 'not enough resources' : null),
@@ -179,7 +180,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
 
 const NUMERALS = ['', 'I', 'II', 'III', 'IV'];
 
-/** Age advances show an arrow and the age they lead to (⬆II = Tool Age); other techs use initials for now. */
+/** Fallback when a tech's icon isn't baked: age advances show an arrow and the age they lead to (⬆II = Tool Age). */
 export function techGlyph(techId: string): string | undefined {
   const age = TECH_BY_ID.get(techId)?.effects.find((ef) => ef.op === 'age');
   return age && age.op === 'age' ? `⬆${NUMERALS[age.age]}` : undefined;
@@ -194,7 +195,7 @@ export function queueOf(w: World, bh: number): { type: string; label: string; gl
     if (typeof item === 'string') {
       const tech = TECH_BY_ID.get(item)!;
       const glyph = techGlyph(item);
-      return { type: item, label: tech.name, ...(glyph ? { glyph } : {}), progress: i === 0 ? Math.min(1, prod.progress / (tech.researchTime * 20)) : 0 };
+      return { type: techIcon(item) ?? item, label: tech.name, ...(glyph ? { glyph } : {}), progress: i === 0 ? Math.min(1, prod.progress / (tech.researchTime * 20)) : 0 };
     }
     return {
       type: TYPES[item]!.id,

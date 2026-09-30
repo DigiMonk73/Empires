@@ -12,7 +12,8 @@ export interface ClipDef {
 
 export interface ModelDef {
   id: string;
-  kind: 'unit' | 'building' | 'resource' | 'test';
+  /** `icon`: a HUD still life (tech icons), baked without a ground shadow. */
+  kind: 'unit' | 'building' | 'resource' | 'icon' | 'test';
   /** Buildings/resources: footprint in tiles (for the frame size and calibration). */
   footprint?: number;
   /** Number of visual variants (resources). */

@@ -11,7 +11,7 @@ import type { ModelDef } from './types.ts';
 const MARBLE: MatSpec = { tex: 'plaster', color: 0xeee8da, rough: 0.6, repeat: 2 };
 const GOLD: MatSpec = { tex: 'metal', color: 0xc9a24a, rough: 0.55, metal: 0.45, repeat: 2 };
 const GILT: MatSpec = { tex: 'plain', color: 0xd4ae58, rough: 0.6, metal: 0.25 };
-const FLAME: MatSpec = { tex: 'plain', color: 0xffb040, rough: 1 };
+const FLAME: MatSpec = { tex: 'plain', color: 0xffb040, rough: 1, glow: true };
 
 function colonnade(w: number, d: number, h: number, step: number, y: number): NodeSpec[] {
   const out: NodeSpec[] = [];

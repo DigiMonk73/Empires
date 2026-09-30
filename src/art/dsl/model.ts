@@ -15,6 +15,8 @@ export interface MatSpec {
   repeat?: number;
   /** Team-colored: shows the player color in game (via the tinted overlay sprite). */
   player?: boolean;
+  /** Self-lit (flames, embers): shows its colour regardless of the light. */
+  glow?: boolean;
 }
 
 export const MATERIALS = {
@@ -123,6 +125,11 @@ export function material(m: MatName | MatSpec): THREE.MeshStandardMaterial {
     const map = makeTexture(spec.tex, spec.color, key.length);
     map.repeat.set(spec.repeat ?? 1, spec.repeat ?? 1);
     mat = new THREE.MeshStandardMaterial({ map, roughness: spec.rough ?? 0.85, metalness: spec.metal ?? 0 });
+    if (spec.glow) {
+      mat.emissive.setHex(spec.color);
+      mat.emissiveMap = map;
+      mat.emissiveIntensity = 0.85;
+    }
     mat.userData.player = !!spec.player;
     matCache.set(key, mat);
   }

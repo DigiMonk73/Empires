@@ -85,7 +85,7 @@ function temple(): THREE.Object3D {
       // An altar with a flame bowl in front.
       { geom: box(0.3, 0.25, 0.3), mat: 'stone', t: [1.1, 0.12, 0.7] },
       { geom: cyl(0.12, 0.08, 0.06, 10), mat: 'bronze', t: [1.1, 0.28, 0.7] },
-      { geom: cone(0.07, 0.14, 8), mat: { tex: 'plain', color: 0xffb040, rough: 1 }, t: [1.1, 0.37, 0.7] },
+      { geom: cone(0.07, 0.14, 8), mat: { tex: 'plain', color: 0xffb040, rough: 1, glow: true }, t: [1.1, 0.37, 0.7] },
       banner(-1.15, 1.0, 0.9),
       banner(1.15, -1.0, 0.9),
     ],

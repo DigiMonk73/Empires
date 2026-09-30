@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.7 · tech-tree (0.55%), icon contact sheets
+- Every chip in the tech tree has a picture: ages show the Town Center they build (Tool Age a thatched hall,
+  Bronze and Iron tiled halls), the Market's axe/pick/sheaves/wheel, the Temple's astrolabe, orb, gods, ankh,
+  flames and wreath, the Government Center's diadem, scroll, column, cart, laurel, target, flask and crane.
+  Readable at 26 px; the armour icons (cuirass + sword/bow/horseshoe badge) are the least clear. UI 4.
+- Should-fix (M12): unit chips in the tree are small — idle frames carry a lot of empty margin at 26 px.
+
 ## 2026-09-30 · M9.6b · Greek contact sheets (Iron variants); verify shots ≤ 0.26%
 - Greek Iron Age: the Bronze buildings refaced in bright marble and warm ashlar, red-and-blue meander friezes
   under the team band, gilded finials, a bronze hoplite (Barracks), archer (Range), horse (Stable), torch-bearers

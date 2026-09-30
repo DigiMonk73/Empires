@@ -11,6 +11,7 @@ import { WONDER_MODELS } from './wonder.ts';
 import { ANIMAL_MODELS } from './animals.ts';
 import { SOLDIER_MODELS } from './soldiers.ts';
 import { CAVALRY_MODELS } from './cavalry.ts';
+import { ICON_MODELS } from './icons.ts';
 import { setModels } from './arch/kit.ts';
 import { EGYPTIAN } from './arch/egyptian.ts';
 import { BABYLONIAN } from './arch/babylonian.ts';
@@ -18,6 +19,6 @@ import { ASIAN } from './arch/asian.ts';
 import { ROMAN } from './arch/roman.ts';
 import type { ModelDef } from './types.ts';
 
-export const MODELS: ModelDef[] = [...TEST_MODELS, ...RESOURCE_MODELS, ...UNIT_MODELS, ...SOLDIER_MODELS, ...CAVALRY_MODELS, ...ANIMAL_MODELS, ...BUILDING_MODELS, ...WALL_MODELS, ...SIEGE_MODELS, ...INFANTRY_MODELS, ...MOUNTED_MODELS, ...PRIEST_MODELS, ...WONDER_MODELS, ...SHIP_MODELS, ...setModels(EGYPTIAN), ...setModels(BABYLONIAN), ...setModels(ASIAN), ...setModels(ROMAN)];
+export const MODELS: ModelDef[] = [...TEST_MODELS, ...RESOURCE_MODELS, ...UNIT_MODELS, ...SOLDIER_MODELS, ...CAVALRY_MODELS, ...ANIMAL_MODELS, ...BUILDING_MODELS, ...WALL_MODELS, ...SIEGE_MODELS, ...INFANTRY_MODELS, ...MOUNTED_MODELS, ...PRIEST_MODELS, ...WONDER_MODELS, ...SHIP_MODELS, ...setModels(EGYPTIAN), ...setModels(BABYLONIAN), ...setModels(ASIAN), ...setModels(ROMAN), ...ICON_MODELS];
 export const MODEL_BY_ID = new Map(MODELS.map((m) => [m.id, m]));
 export type { ModelDef, ClipDef } from './types.ts';

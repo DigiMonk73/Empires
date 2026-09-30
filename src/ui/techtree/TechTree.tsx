@@ -1,5 +1,6 @@
 import { CIV_BY_ID } from '../../data/index.ts';
 import { iconStyle } from '../icons.ts';
+import { techIcon } from '../techIcons.ts';
 import type { ItemState, TreeColumn } from '../techTree.ts';
 import './techtree.css';
 
@@ -16,7 +17,7 @@ const STATE_TITLE: Record<ItemState, string> = {
 };
 
 function Chip({ id, name, state, kind, arch }: { id: string; name: string; state: ItemState; kind: string; arch?: string | undefined }) {
-  const st = kind === 'tech' ? null : iconStyle(id, 26, arch);
+  const st = iconStyle(kind === 'tech' ? techIcon(id) : id, 26, arch);
   return (
     <div class={`tt-item ${state} ${kind}`} title={`${name} — ${STATE_TITLE[state]}`} data-testid={kind === 'tech' ? `tt-tech-${id}` : `tt-${id}`} data-state={state}>
       {st ? <span class="tt-icon" style={{ ...st, width: '26px', height: '26px' }} /> : <span class="tt-icon tt-glyph">{kind === 'tech' ? '⚙' : name.slice(0, 2)}</span>}
