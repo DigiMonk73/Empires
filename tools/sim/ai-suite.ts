@@ -21,8 +21,9 @@ if (FULL) {
   for (let k = 0; k < 8; k++) war.push({ seed: 200 + k, type: k % 2 ? 'inland' : 'continental', size: k < 4 ? 'small' : 'medium', levels: k < 4 ? ['moderate', 'moderate', 'moderate'] : ['moderate', 'hard', 'easy', 'moderate'] });
 }
 
-// Ladder seeds 101–108 were held out while tuning the AI (M6.10) — keep them as the regression set.
-const ladderSeeds = FULL ? [101, 102, 103, 104, 105, 106, 107, 108] : [101, 102, 103, 104];
+// Ladder seeds 101–108 were held out while tuning the AI (M6.10) — keep them as the regression set. The full
+// ladder plays 32 maps (D41): on 8, one game was 6% of the score and start position decided half the mirrors.
+const ladderSeeds = FULL ? Array.from({ length: 32 }, (_, i) => 101 + i) : [101, 102, 103, 104];
 const ladderPairs: [AiLevel, AiLevel][] = FULL ? [['hardest', 'easiest'], ['hard', 'easy'], ['moderate', 'easiest']] : [['hardest', 'easiest']];
 
 const fails: string[] = [];

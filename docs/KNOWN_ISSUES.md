@@ -34,3 +34,5 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   Easiest to 11 — reverted. Each change reshuffles which seeds are won; the count barely moves.
   Options for the user: (a) measure the ladder on more seeds (32) or small maps so one game is ~3%, not 6%;
   (b) defer this gate to M13 (AI v2: scouting, counters, massed defence) and tag m7 now; (c) keep tuning.
+  **User chose (a)** (2026-09-30): D41 — the full ladder plays 32 maps; if Hard > Easy still falls short, that
+  pairing's gate moves to M13.

@@ -196,3 +196,8 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   fish and whales at sea by map size (econ:8). Clusters keep their distance from the start and swing around it
   when the spot is wet (the land maps keep their old nudge, so their seeds' maps are unchanged). One-tile puddles
   and specks are cleaned up.
+- **D41 — The full AI ladder plays 32 maps** (2026-09-30; the user's choice, option 1 of KI-7). Each pairing
+  plays seeds 101–132 in both seats (64 games) instead of 101–108 (16): one game is ~1.6% of the score rather
+  than 6%, so start position and the rush/boom draw — which decided half of the 8-seed mirrors (KI-7) — stop
+  deciding the gate. The threshold is unchanged (the stronger level wins ≥ 75%). If Hard > Easy still falls
+  short on 32 maps, that pairing's gate moves to M13 (AI v2) and m7 is tagged on the other two.
