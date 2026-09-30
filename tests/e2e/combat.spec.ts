@@ -61,3 +61,15 @@ test('volley: bowmen shoot arrows that arc to their target', async ({ page }, in
   await snap(page, info, 'volley');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('raid base: stable, range, tower and mounted scouts', async ({ page }, info) => {
+  await openGame(page, 'scenario=raid&fog=0');
+  await page.evaluate(() => window.__empires!.pause(true));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1.3);
+    window.__empires!.camera.centerOn(7.5, 8.5);
+  });
+  await frames(page);
+  await snap(page, info, 'raid-base');
+  expect(pageErrors(page)).toEqual([]);
+});

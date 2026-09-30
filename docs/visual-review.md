@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M5.5b · raid-base (new), raid (rubble), scout / building contact sheets
+- A readable Tool-age base: barracks, archery range (shed, straw targets), stable (stalls, paddock, hay), watch
+  tower (legs, platform, ladder); scouts read as horse + rider at game scale. Rubble now reads as a burnt ruin.
+  Buildings 4, units 4, team colour 4.
+- Fixed during review: the horse's tail stuck up like a post (axis flipped to hang).
+- Should-fix (M9): horse legs are straight tubes (no hock shape); scout's fall separates rider and horse a lot.
+
 ## 2026-09-29 · M5.5a · clubman/axeman/slinger/bowman frame sheets, raid*, volley
 - Four readable infantry silhouettes: pelt + club, cap + stone axe, headband + sling, cap + bow + quiver.
   Overhead blows read as blows; the bow stands upright through the draw. Readability 4, anchoring 4, team 4.

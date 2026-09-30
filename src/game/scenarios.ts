@@ -146,6 +146,10 @@ function raid(): SimConfig {
     players: [{ civ: 'greek' }, { civ: 'egyptian' }],
     scenario: {
       buildings: [
+        { type: 'barracks', owner: 1, tx: 2, ty: 3 },
+        { type: 'archeryRange', owner: 1, tx: 2, ty: 8 },
+        { type: 'stable', owner: 1, tx: 6, ty: 2 },
+        { type: 'watchTower', owner: 1, tx: 6, ty: 13 },
         { type: 'townCenter', owner: 2, tx: 18, ty: 17 },
         { type: 'house', owner: 2, tx: 14, ty: 14 },
         { type: 'house', owner: 2, tx: 22, ty: 13 },
@@ -153,6 +157,8 @@ function raid(): SimConfig {
       units: [
         ...[0, 1, 2, 3, 4, 5].map((i) => ({ type: 'clubman', owner: 1, x: 9.5 + (i % 3) * 0.8, y: 10.5 + Math.floor(i / 3) * 0.8 })),
         ...[0, 1, 2].map((i) => ({ type: 'bowman', owner: 1, x: 13.5 + i * 0.8, y: 22.5 })),
+        { type: 'scout', owner: 1, x: 9.5, y: 7.5 },
+        { type: 'scout', owner: 1, x: 10.5, y: 7.9 },
         ...[0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 2, x: 15.5 + i * 0.9, y: 17.5 })),
       ],
     },

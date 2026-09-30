@@ -289,6 +289,134 @@ function farm(stage: number): THREE.Object3D {
   return build({ children: kids });
 }
 
+/** Archery Range (Tool age): an open-fronted shed, a yard of straw targets, a bow rack. */
+function archeryRange(): THREE.Object3D {
+  const shed: NodeSpec = {
+    t: [-0.55, 0, -0.7],
+    children: [
+      { geom: box(1.7, 0.4, 0.08), mat: 'mudbrick', t: [0, 0.2, -0.36] }, // back wall
+      { geom: box(0.08, 0.4, 0.8), mat: 'mudbrick', t: [-0.85, 0.2, 0] },
+      post(0.85, 0.36, 0.5),
+      post(0, 0.36, 0.5),
+      post(-0.85, 0.36, 0.5),
+      { geom: box(1.8, 0.04, 0.05), mat: 'wood', t: [0, 0.5, 0.36] },
+      { geom: box(1.95, 0.05, 1.0), mat: 'thatch', t: [0, 0.56, 0], r: [-0.3, 0, 0] },
+      { geom: box(1.96, 0.05, 0.05), mat: 'team', t: [0, 0.47, 0.5] },
+    ],
+  };
+  const target = (x: number, z: number): NodeSpec => ({
+    t: [x, 0, z],
+    r: [0, -Math.PI / 4, 0],
+    children: [
+      post(-0.1, 0, 0.3),
+      post(0.1, 0, 0.3),
+      { geom: cyl(0.15, 0.15, 0.08, 14), mat: 'thatch', t: [0, 0.32, 0], r: [0, 0, Math.PI / 2] },
+      { geom: cyl(0.09, 0.09, 0.085, 14), mat: 'team', t: [0, 0.32, 0], r: [0, 0, Math.PI / 2] },
+      { geom: cyl(0.04, 0.04, 0.09, 10), mat: 'plaster', t: [0, 0.32, 0], r: [0, 0, Math.PI / 2] },
+    ],
+  });
+  const bows: NodeSpec[] = [];
+  for (let i = 0; i < 4; i++) bows.push({ geom: cyl(0.01, 0.01, 0.4, 5), mat: 'wood', t: [-0.18 + i * 0.12, 0.26, 0.03], r: [0.15, 0, 0] });
+  const kids: NodeSpec[] = [
+    shed,
+    target(0.95, 0.35),
+    target(0.35, 0.95),
+    target(1.1, 1.1),
+    { t: [0.8, 0, -0.5], children: [post(-0.25, 0, 0.36), post(0.25, 0, 0.36), { geom: box(0.56, 0.03, 0.03), mat: 'wood', t: [0, 0.32, 0] }, ...bows] },
+    banner(-1.3, 1.25, 0.65),
+  ];
+  const r = seeded(51);
+  for (let i = 0; i < 8; i++) kids.push(post(1.42, -1.35 + i * 0.36, 0.15 + r() * 0.05), post(-1.35 + i * 0.36, 1.42, 0.15 + r() * 0.05));
+  return build({ children: kids });
+}
+
+/** Stable (Tool age): a long barn with open stalls, a fenced paddock, hay and a trough. */
+function stable(): THREE.Object3D {
+  const L = 2.3;
+  const D = 1.0;
+  const barn: NodeSpec = {
+    t: [-0.1, 0, -0.75],
+    children: [
+      { geom: box(L, 0.45, 0.08), mat: 'mudbrick', t: [0, 0.225, -D / 2] },
+      { geom: box(0.08, 0.45, D), mat: 'mudbrick', t: [-L / 2, 0.225, 0] },
+      { geom: box(0.08, 0.45, D), mat: 'mudbrick', t: [L / 2, 0.225, 0] },
+      // Stall partitions and front posts (open fronts).
+      ...[-0.58, 0, 0.58].map((x): NodeSpec => ({ geom: box(0.05, 0.3, D * 0.9), mat: 'planks', t: [x, 0.15, 0] })),
+      ...[-1.15, -0.58, 0, 0.58, 1.15].map((x): NodeSpec => post(x, D / 2, 0.5)),
+      { geom: box(L + 0.1, 0.05, 0.06), mat: 'wood', t: [0, 0.5, D / 2] },
+      { geom: gable(L + 0.3, D + 0.4, 0.55), mat: 'thatch', t: [0, 0.5, 0] },
+      { geom: box(L + 0.32, 0.05, 0.05), mat: 'team', t: [0, 0.52, D / 2 + 0.2] },
+    ],
+  };
+  const hay = (x: number, z: number, rot: number): NodeSpec => ({ geom: box(0.28, 0.16, 0.18), mat: 'thatch', t: [x, 0.08, z], r: [0, rot, 0] });
+  const kids: NodeSpec[] = [
+    barn,
+    hay(1.15, 0.1, 0.3),
+    hay(1.2, 0.35, -0.2),
+    { t: [1.18, 0.16, 0.22], children: [hay(0, 0, 0.1)] },
+    { geom: box(0.5, 0.12, 0.16), mat: 'planks', t: [-0.9, 0.06, 0.25] }, // trough
+    { geom: box(0.44, 0.02, 0.1), mat: { tex: 'plain', color: 0x4a7a90, rough: 0.2 }, t: [-0.9, 0.12, 0.25] },
+    banner(1.3, 1.3, 0.65),
+  ];
+  // Paddock rails along the front edges.
+  for (let i = 0; i < 6; i++) kids.push(post(-1.35 + i * 0.5, 1.4, 0.24), post(1.4, -0.1 + i * 0.3, 0.24));
+  kids.push({ geom: box(2.6, 0.03, 0.03), mat: 'wood', t: [-0.1, 0.2, 1.4] }, { geom: box(0.03, 0.03, 1.55), mat: 'wood', t: [1.4, 0.2, 0.67] });
+  return build({ children: kids });
+}
+
+/** Watch Tower (Tool age): a timber lookout on four legs with a railed platform and a thatch cap. */
+function watchTower(): THREE.Object3D {
+  const H = 1.25;
+  const legs: NodeSpec[] = [];
+  for (const [x, z] of [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]] as const) {
+    legs.push({ geom: cyl(0.04, 0.055, H, 7), mat: 'bark', t: [x * 0.85, H / 2, z * 0.85], r: [z * 0.12, 0, -x * 0.12] });
+  }
+  const braces: NodeSpec[] = [0.35, 0.8].map((y) => ({ geom: box(0.8, 0.03, 0.03), mat: 'wood', t: [0, y, 0.42], r: [0, 0, y === 0.35 ? 0.5 : -0.5] }));
+  const rails: NodeSpec[] = [];
+  for (const [x, z, rot] of [[0, -0.5, 0], [0, 0.5, 0], [-0.5, 0, Math.PI / 2], [0.5, 0, Math.PI / 2]] as const) {
+    rails.push({ geom: box(1.0, 0.18, 0.04), mat: 'planks', t: [x, H + 0.1, z], r: [0, rot, 0] });
+  }
+  return build({
+    children: [
+      ...legs,
+      ...braces,
+      { geom: box(1.05, 0.06, 1.05), mat: 'planks', t: [0, H, 0] },
+      ...rails,
+      ...[-0.45, 0.45].flatMap((x) => [-0.45, 0.45].map((z): NodeSpec => post(x, z, 0.5))).map((p) => ({ ...p, t: [p.t![0], H + 0.25, p.t![2]] as const })),
+      { geom: cone(0.85, 0.5, 4), mat: 'thatch', t: [0, H + 0.72, 0], r: [0, Math.PI / 4, 0] },
+      { geom: box(1.08, 0.05, 0.05), mat: 'team', t: [0, H + 0.2, 0.53] },
+      // Ladder up the front-left face.
+      { t: [-0.3, 0, 0.55], r: [0.12, 0, 0], children: [
+        { geom: box(0.03, H, 0.03), mat: 'wood', t: [-0.1, H / 2, 0] },
+        { geom: box(0.03, H, 0.03), mat: 'wood', t: [0.1, H / 2, 0] },
+        ...[0.2, 0.45, 0.7, 0.95].map((y): NodeSpec => ({ geom: box(0.22, 0.025, 0.025), mat: 'wood', t: [0, y, 0] })),
+      ] },
+    ],
+  });
+}
+
+/** Rubble where a building fell: charred timbers, collapsed thatch, ash and stones (render-only, D25). */
+function rubble(size: number): () => THREE.Object3D {
+  return () => {
+    const r = seeded(300 + size);
+    const h = size / 2 - 0.2;
+    const kids: NodeSpec[] = [{ geom: cyl(h * 0.95, h, 0.02, 16), mat: { tex: 'rock', color: 0x3a3430, rough: 1, repeat: 2 }, t: [0, 0.01, 0], s: [1, 1, 0.9] }];
+    const n = 5 + size * 3;
+    for (let i = 0; i < n; i++) {
+      const x = (r() - 0.5) * 2 * h;
+      const z = (r() - 0.5) * 2 * h;
+      const k = r();
+      if (k < 0.4) kids.push({ geom: box(0.35 + r() * 0.4, 0.05, 0.06), mat: { tex: 'planks', color: 0x2e241c, rough: 1, repeat: 2 }, t: [x, 0.04 + r() * 0.06, z], r: [r() * 0.4, r() * Math.PI, r() * 0.5] });
+      else if (k < 0.7) kids.push({ geom: lumpy(0.1 + r() * 0.08, 0.4, 400 + i, 1), mat: { tex: 'thatch', color: 0x6e5a36, rough: 1, repeat: 3 }, t: [x, 0.04, z], s: [1.3, 0.45, 1.1] });
+      else kids.push({ geom: lumpy(0.05 + r() * 0.04, 0.3, 500 + i, 0), mat: 'rock', t: [x, 0.03, z] });
+    }
+    // A couple of broken posts still standing.
+    kids.push({ geom: cyl(0.03, 0.035, 0.28, 6), mat: 'bark', t: [-h * 0.7, 0.14, h * 0.5], r: [0.2, 0, 0.15] });
+    kids.push({ geom: cyl(0.03, 0.035, 0.18, 6), mat: 'bark', t: [h * 0.6, 0.09, -h * 0.6], r: [-0.1, 0, 0.3] });
+    return build({ children: kids });
+  };
+}
+
 /** Construction site under a foundation: a trampled dirt pad, corner stakes with rope, a few logs. */
 function site(size: number): () => THREE.Object3D {
   return () => {
@@ -312,6 +440,12 @@ export const BUILDING_MODELS: ModelDef[] = [
   { id: 'barracks', kind: 'building', footprint: 3, facings: 1, build: barracks },
   { id: 'dock', kind: 'building', footprint: 3, facings: 1, build: dock },
   { id: 'farm', kind: 'building', footprint: 3, facings: 1, variants: 4, build: farm },
+  { id: 'archeryRange', kind: 'building', footprint: 3, facings: 1, build: archeryRange },
+  { id: 'stable', kind: 'building', footprint: 3, facings: 1, build: stable },
+  { id: 'watchTower', kind: 'building', footprint: 2, facings: 1, build: watchTower },
+  { id: 'rubble1', kind: 'building', footprint: 1, facings: 1, build: rubble(1) },
+  { id: 'rubble2', kind: 'building', footprint: 2, facings: 1, build: rubble(2) },
+  { id: 'rubble3', kind: 'building', footprint: 3, facings: 1, build: rubble(3) },
   { id: 'site2', kind: 'building', footprint: 2, facings: 1, build: site(2) },
   { id: 'site3', kind: 'building', footprint: 3, facings: 1, build: site(3) },
 ];

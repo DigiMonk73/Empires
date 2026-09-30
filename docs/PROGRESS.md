@@ -3,12 +3,12 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M5 Combat — M5.1–M5.4 done (combat core, projectiles, research + training, auto-acquire). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M5 Combat — M5.1–M5.5 done (combat core, projectiles, research + training, auto-acquire, soldier art). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m4 (verify ~30 s incl. economy benchmark; verify:full ~100 s: Docker 77 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
-  sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Baked gazelle/elephant/lion, clubman/axeman/slinger/bowman. Placeholders remain for
-  cavalry, siege, priests, ships, alligators, fish, and Tool-age+ buildings. `?scenario=village` shows the whole Stone-age economy. Review sheets: `node tools/frames.ts <model> out.png`.
+  sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Baked gazelle/elephant/lion, clubman/axeman/slinger/bowman, scout (horse rig), Archery Range, Stable,
+  Watch Tower, rubble. Placeholders remain for later cavalry, siege, priests, ships, alligators, fish. `?scenario=village` shows the whole Stone-age economy. Review sheets: `node tools/frames.ts <model> out.png`.
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
   retarget, construction with (n+2)/3 builders, pop/housing, farms (one farmer, 250 food, vanish when empty),
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
@@ -16,7 +16,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-4 large-unit crowd jams.
-- **Next up:** M5.5b horse rig + scout, Archery Range/Stable/Watch Tower, rubble; then M5.6 attack-move + splash.
+- **Next up:** M5.6 attack-move (QoL) + splash framework, then M5.7 battle gates → verify:full → tag m5.
 - **Playable now:** `?scenario=raid` (right-click enemies with clubmen); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -189,8 +189,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       (headband, sling, stone pouch), bowman (cap, self bow, quiver; nocked arrow shown while drawing); attack
       clips 10 f @ 12 fps with the blow/release on frame 4 (0.33 s ≈ the 7-tick windup); weapons held 0.9 rad
       off the forearm; slinger missiles render as stones.
-- [ ] **M5.5b Cavalry + buildings art.** Horse rig + scout rider (idle/walk/attack/die); Archery Range, Stable,
-      Watch Tower (Stone/Tool look); baked rubble per footprint (broken timbers, thatch, ash) replacing the site.
+- [x] **M5.5b Cavalry + buildings art.** `art/models/cavalry.ts`: horse (quadruped) + seated rider as sibling
+      rigs, the rider following the horse's back each frame (height/pitch/roll); scout with a short spear
+      (thrust + half-rear attack, rider thrown on death). Archery Range, Stable, Watch Tower; baked rubble1–3
+      (charred timbers, collapsed thatch, ash, stones) replaces the darkened site. Raid scenario gains a base.
 - [ ] **M5.6 QoL + splash.** Attack-move (modern QoL; the original has none — toggle), splash framework
       (radius, falloff, friendly fire for stones), trample for elephants later.
 - [ ] **M5.7 Battle gates.** Duel-matrix unit tests (formula, classes, buildings ×0.2); 20v20 scripted battle

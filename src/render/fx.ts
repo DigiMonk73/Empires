@@ -70,14 +70,16 @@ export class FxLayer {
 
   private rubble(ev: Extract<SimEvent, { t: 'destroyed' }>): void {
     const t = TYPES[ev.type]!;
-    const f = this.art?.frame(`site${t.size}`, 'v0');
+    // Baked rubble for the footprint size; fall back to a darkened construction site.
+    const id = this.art?.meta(`rubble${t.size}`) ? `rubble${t.size}` : `site${t.size}`;
+    const f = this.art?.frame(id, 'v0');
     if (!f) return;
-    const scale = this.art!.meta(`site${t.size}`)!.scale;
+    const scale = this.art!.meta(id)!.scale;
     const root = new Container();
     const base = new Sprite(f.tex);
     base.anchor.set(f.anchorX, f.anchorY);
     base.scale.set(1 / scale);
-    base.tint = 0x6a5c50; // scorched, trampled ground
+    if (id.startsWith('site')) base.tint = 0x6a5c50; // scorched, trampled ground
     root.addChild(base);
     const p = worldToIso(ev.x, ev.y);
     root.position.set(p.x, p.y);
