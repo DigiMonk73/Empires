@@ -52,7 +52,7 @@ export interface EmpiresDebugApi {
   /** Test/demo only: a computer player takes over the local player. */
   autoplay(level: 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest'): void;
   /** Sounds started so far, by name (counted even before the AudioContext exists). */
-  audioStats(): { ready: boolean; muted: boolean; played: Record<string, number> };
+  audioStats(): { ready: boolean; muted: boolean; played: Record<string, number>; music: { mood: string; playing: string | null; slices: number } };
   /** Submit a command as a player (test setup; normal play goes through input). */
   issue(player: number, cmd: Command): void;
   pause(on: boolean): void;

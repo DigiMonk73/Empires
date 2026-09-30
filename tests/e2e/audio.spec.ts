@@ -78,3 +78,24 @@ test('audio: villagers\' tools are heard on their strike frame', async ({ page }
   await page.waitForFunction(() => Object.keys(window.__empires!.audioStats().played).some((k) => ['chop', 'mine', 'hoe', 'hammer'].includes(k)), null, { timeout: 20_000 });
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('audio: music starts with the engine and turns to battle when our units fight (M11.3)', async ({ page }) => {
+  await openGame(page, 'scenario=raid&fog=0');
+  await page.evaluate(() => window.__empires!.pause(true));
+  await page.mouse.click(640, 300);
+  await page.waitForFunction(() => window.__empires!.audioStats().ready, null, { timeout: 10_000 });
+  await page.waitForFunction(() => window.__empires!.audioStats().music.slices > 0, null, { timeout: 10_000 });
+  expect((await page.evaluate(() => window.__empires!.audioStats().music)).mood).not.toBe('battle');
+  // Send the clubmen at the enemy camp and let them fight.
+  await page.evaluate(() => {
+    const e = window.__empires!;
+    const club = e.query.units(1).filter((u) => u.type === 'clubman').map((u) => u.h);
+    const foe = e.query.units(2)[0]!;
+    e.issue(1, { t: 'act', ids: club, h: foe.h });
+    e.step(20 * 20);
+  });
+  const m = await page.evaluate(() => window.__empires!.audioStats().music);
+  expect(m.mood).toBe('battle');
+  expect(m.playing).toBe('battle');
+  expect(pageErrors(page)).toEqual([]);
+});

@@ -121,6 +121,10 @@ export class AudioHooks {
   private lastHoused = -1e9;
   private lastDeny = -1e9;
   private lastFire = -1e9;
+  /** Music moods (M11.3): when our units last fought and when enemy soldiers were last in sight. */
+  private lastCombat = -1e9;
+  private lastThreat = -1e9;
+  private lastScan = -1e9;
 
   constructor(engine: AudioEngine, ctx: AudioContextInfo) {
     this.a = engine;
@@ -186,14 +190,45 @@ export class AudioHooks {
     if (best >= 0) this.at('fire', e.x[best]!, e.y[best]!, 0.4);
   }
 
+  /** Peace, tension (enemy soldiers in sight within the last 15 s) or battle (we fought within 10 s). */
+  private mood(): void {
+    const now = performance.now();
+    if (now - this.lastScan > 2000) {
+      this.lastScan = now;
+      const w = this.c.world;
+      const e = w.ents;
+      const me = this.c.player();
+      for (let s = 0; s < e.top; s++) {
+        if (!e.alive[s] || e.kind[s] !== EKind.unit) continue;
+        const o = e.owner[s]!;
+        if (o === 0 || o === me || w.players[o]?.team === w.players[me]?.team) continue;
+        const cls = TYPES[e.type[s]!]!.unit?.cls;
+        if (cls === 'villager' || cls === 'fishingShip' || cls === 'tradeShip') continue;
+        if (!this.c.visible(Math.floor(e.x[s]!), Math.floor(e.y[s]!))) continue;
+        this.lastThreat = now;
+        break;
+      }
+    }
+    this.a.setMood(now - this.lastCombat < 10000 ? 'battle' : now - this.lastThreat < 15000 ? 'tension' : 'peace');
+  }
+
   onEvents(ev: readonly SimEvent[]): void {
     const w = this.c.world;
     const me = this.c.player();
     this.fires();
+    this.mood();
     for (const x of ev) {
       switch (x.t) {
         case 'strike': {
           const t = TYPES[x.type]!;
+          const as = w.ents.slotOf(x.h);
+          const ts = w.ents.slotOf(x.tgt);
+          if ((as >= 0 && w.ents.owner[as] === me) || (ts >= 0 && w.ents.owner[ts] === me)) {
+            const ao = as >= 0 ? w.ents.owner[as]! : -1;
+            const to = ts >= 0 ? w.ents.owner[ts]! : -1;
+            if (ao !== 0 && to !== 0) this.lastCombat = performance.now(); // hunting isn't a battle
+          }
+          const tgtSlot = ts;
           let name: SfxName;
           if (x.missile) name = missileSound(x.type);
           else if (t.animal) name = t.id === 'lion' ? 'roar' : 'club';
@@ -202,8 +237,7 @@ export class AudioHooks {
           this.at(name, x.x, x.y, x.missile ? 0.6 : 0.8);
           if (!x.missile && (t.unit?.cls === 'cavalry' || t.unit?.cls === 'scout' || t.unit?.cls === 'chariot') && ((x.h * 7) & 7) === 0) this.at('hooves', x.x, x.y, 0.5);
           // Under attack out of sight: a horn, at most every 12 s.
-          const ts = w.ents.slotOf(x.tgt);
-          if (ts >= 0 && w.ents.owner[ts] === me && w.ents.owner[w.ents.slotOf(x.h)] !== me && !this.place(w.ents.x[ts]!, w.ents.y[ts]!, true)) {
+          if (tgtSlot >= 0 && w.ents.owner[tgtSlot] === me && w.ents.owner[as] !== me && !this.place(w.ents.x[tgtSlot]!, w.ents.y[tgtSlot]!, true)) {
             const now = performance.now();
             if (now - this.lastAlert > 12000) {
               this.lastAlert = now;

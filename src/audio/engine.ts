@@ -1,4 +1,6 @@
 import { makeSfx, type SfxName } from './synth.ts';
+import { MusicPlayer } from './musicPlayer.ts';
+import type { Culture, Mood } from './music.ts';
 
 /**
  * The mixer: master → { sfx, voice } buses, lazy AudioContext (browsers only start audio after a user gesture),
@@ -18,6 +20,11 @@ export class AudioEngine {
   private master: GainNode | null = null;
   private sfxBus: GainNode | null = null;
   private voiceBus: GainNode | null = null;
+  private musicBus: GainNode | null = null;
+  private music: MusicPlayer | null = null;
+  /** The music to play once the context exists (null: no music, e.g. tests that never click). */
+  private musicWanted: { culture: Culture; seed: number } | null = null;
+  private moodWanted: Mood = 'peace';
   private sfx: Record<SfxName, AudioBuffer> | null = null;
   private voices = new Map<string, { name: string; buf: AudioBuffer }[]>();
   private playing = new Map<string, number>();
@@ -53,6 +60,10 @@ export class AudioEngine {
     this.voiceBus = ctx.createGain();
     this.voiceBus.gain.value = 0.9;
     this.voiceBus.connect(this.master);
+    this.musicBus = ctx.createGain();
+    this.musicBus.gain.value = 0.45;
+    this.musicBus.connect(this.master);
+    if (this.musicWanted) this.startMusic(this.musicWanted.culture, this.musicWanted.seed);
     this.sfx = makeSfx(ctx);
     try {
       const manifest = (await (await fetch('./audio/voices/manifest.json')).json()) as Record<string, string[]>;
@@ -71,6 +82,25 @@ export class AudioEngine {
       console.warn('[audio] voices unavailable', e);
     }
     if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  }
+
+  /** Generative music in `culture` (starts as soon as the audio context exists). */
+  startMusic(culture: Culture, seed = 1): void {
+    this.musicWanted = { culture, seed };
+    if (!this.ctx || !this.musicBus || this.music) return;
+    this.music = new MusicPlayer(this.ctx, this.musicBus, culture, seed);
+    this.music.setMood(this.moodWanted);
+    this.music.start();
+  }
+
+  setMood(m: Mood): void {
+    this.moodWanted = m;
+    this.music?.setMood(m);
+  }
+
+  /** Music state for tests: the mood asked for, the mood playing, slices scheduled. */
+  get musicStats(): { mood: Mood; playing: Mood | null; slices: number } {
+    return { mood: this.moodWanted, playing: this.music?.mood ?? null, slices: this.music?.slices ?? 0 };
   }
 
   get ready(): boolean {

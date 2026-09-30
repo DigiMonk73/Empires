@@ -20,6 +20,7 @@ import { hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
 import { installUiTextures } from './ui/textures.ts';
 import { setWaterTime } from './render/terrainMesh.ts';
+import type { Culture } from './audio/music.ts';
 import { archOf } from './render/arch.ts';
 import { groundHeight } from './render/ground.ts';
 import { buildResults, formatClock } from './ui/results.ts';
@@ -342,7 +343,7 @@ async function boot(): Promise<void> {
       if (s >= 0) world.ents.hp[s] = hp;
     },
     autoplay: (level) => session.addAi(session.localPlayer, level),
-    audioStats: () => ({ ready: audio.ready, muted: audio.muted, played: { ...audio.stats } }),
+    audioStats: () => ({ ready: audio.ready, muted: audio.muted, played: { ...audio.stats }, music: audio.musicStats }),
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {
       session.paused = on;
@@ -393,6 +394,8 @@ function wireAudio(session: GameSession, world: GameSession['sim']['world'], wr:
   audio.setMuted(muted);
   hud.muted.value = muted;
   audio.armOnGesture();
+  // Music in the player's culture (the menu plays the Greek theme in peace).
+  audio.startMusic((menuMode ? 'greek' : archOf(world.players[session.localPlayer]?.civ)) as Culture, world.seed || 1);
   document.getElementById('hud')?.addEventListener('click', (e) => {
     if (e.target instanceof Element && e.target.closest('button')) audio.play('click', 0, 0.5);
   });

@@ -11,6 +11,7 @@ function fakeEngine() {
   const engine = {
     play: (name: string, pan = 0, gain = 1) => log.push({ name, pan, gain }),
     voice: (set: string, prefix = '', pan = 0, gain = 1) => log.push({ name: `voice:${set}:${prefix}`, pan, gain }),
+    setMood: () => {}, // music moods (M11.3) — not what these tests listen for
   } as unknown as AudioEngine;
   return { engine, log };
 }
