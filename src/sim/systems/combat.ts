@@ -124,6 +124,9 @@ export function kill(w: World, s: number, by = -1): number {
   return carcass;
 }
 
+/** Elevation advantage (D44): the chance that a hit on a lower target does triple damage. */
+export const ELEVATION_CHANCE = 0.25;
+
 /** Apply damage from `attacker` to `target`; handles death and animal reactions. */
 export function hit(
   w: World,
@@ -135,6 +138,9 @@ export function hit(
   by = attacker >= 0 ? w.ents.owner[attacker]! : -1,
 ): void {
   const e = w.ents;
+  // Elevation (D44, the 1.0 manual): striking down at a lower target, each hit has a 25% chance of triple damage.
+  // The combat stream is only drawn from when the attacker is higher, so flat ground plays exactly as before.
+  if (by >= 0 && amount > 0 && w.map.levelAt(fromX, fromY) > w.map.levelAt(e.x[target]!, e.y[target]!) && w.rng.combat.chance(ELEVATION_CHANCE)) amount *= 3;
   e.hp[target] = e.hp[target]! - amount;
   const t = TYPES[e.type[target]!]!;
   if (e.hp[target]! <= 0) {

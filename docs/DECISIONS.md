@@ -219,3 +219,13 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   Stone-age buildings); the renderer, the build ghost and the icons pick the owner's set and fall back to the
   hand-built Greek-style models (bare ids), which stay the Greek set. Docks, farms, towers, walls, construction
   sites and rubble are shared by all sets for now. Each set adds ~0.5 MB of atlases.
+- **D44 — Elevation** (2026-09-30, M10.1a). Heights live on tile corners (`TileMap.height`, levels 0–7). The
+  combat rule is the 1.0 manual's (our target is RoR 1.0c): when the attacker's tile is on a higher level than
+  the target's, each hit has a 25% chance of doing triple damage (×1.5 on average); no penalty uphill, no effect
+  on level ground. The Fandom/DE-era deterministic ×1.5 / ×0.67 rule was the alternative; the manual is the
+  period source. Projectiles compare from where they were loosed. Buildings need a flat footprint (walls follow
+  the land). Generated maps get dome-shaped hills from their own RNG stream (a seed's layout is unchanged),
+  slopes of at most one level per tile (the original had no cliffs), level ground at the shore and within
+  7 tiles of every Town Center. The combat stream is only drawn from when the attacker is higher, so flat
+  scenarios and old saves (all heights 0) play exactly as before — SIM_VERSION stays 0.8.0. _Hill generation
+  is switched off pending KI-9 (the AI war gate); the rule and flat footprints are live._

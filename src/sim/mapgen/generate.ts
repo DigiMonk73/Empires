@@ -24,6 +24,8 @@ export interface MapGenOptions {
   players: { civ: string; team?: number }[];
   startingResources?: SimConfig['startingResources'];
   revealMap?: boolean;
+  /** Raise hills even while HILLS_ON is off (tests, the hills review scene). */
+  hills?: boolean;
 }
 
 interface Grid {
@@ -37,6 +39,109 @@ const set = (g: Grid, x: number, y: number, ch: string): void => {
 };
 const isWater = (ch: string): boolean => ch === '~' || ch === 'w' || ch === ',' || ch === 'f';
 const isOpen = (ch: string): boolean => ch === '.' || ch === 's' || ch === 'd';
+/** Dry ground above the shoreline (hills may rise on it); beaches, shallows and water stay at level 0. */
+const isDry = (ch: string): boolean => ch !== '~' && ch !== 'w' && ch !== ',' && ch !== 'f' && ch !== 'b';
+
+/** Hills per map type: one hill per `per` dry tiles, peaks up to `peak` levels. */
+const HILLS: Record<GenMapType, { per: number; peak: number }> = {
+  continental: { per: 550, peak: 2 },
+  inland: { per: 550, peak: 2 },
+  coastal: { per: 650, peak: 2 },
+  mediterranean: { per: 650, peak: 2 },
+  narrows: { per: 750, peak: 2 },
+  smallIslands: { per: 1000, peak: 1 },
+  largeIslands: { per: 850, peak: 2 },
+};
+/**
+ * Hills on generated maps — off until the AI war gate is settled (KI-9): on hilly maps AI 1v1 wars run ~5 min
+ * longer and the quick suite's 45-min "decided" window fails 2/4. The machinery (heights, D44, flat footprints)
+ * stays; scenarios can still pass heights.
+ */
+export const HILLS_ON = false;
+/** Radius (tiles) of level ground kept round every Town Center. */
+const FLAT_BASE = 10;
+
+/**
+ * Hills (M10.1a): corner heights 0–7 drawn from their own RNG stream after everything else, so a seed's layout is
+ * unchanged — only lifted. Each hill is a rounded dome (level falls off with the square of the distance); ground
+ * by the water and round every start stays at 0, and a final pass caps every slope at one level per tile (the
+ * largest height field under the domes with that slope — no cliffs, as in the original). Returned as the
+ * `heights` digit string of the map spec.
+ */
+function hills(g: Grid, seed: number, starts: readonly [number, number][], per: number, peakMax: number): string {
+  const W = g.w;
+  const N = W + 1;
+  const r = new Rng(seed ^ 0x4111, STREAM.mapgen);
+  const h = new Int32Array(N * N);
+  const cap = new Int32Array(N * N).fill(7);
+  let dry = 0;
+  for (let y = 0; y < W; y++) {
+    for (let x = 0; x < W; x++) {
+      if (isDry(at(g, x, y))) {
+        dry++;
+        continue;
+      }
+      cap[y * N + x] = cap[y * N + x + 1] = cap[(y + 1) * N + x] = cap[(y + 1) * N + x + 1] = 0;
+    }
+  }
+  const nearStart = (x: number, y: number, rad: number): boolean =>
+    starts.some(([sx, sy]) => {
+      const dx = x - (sx + 1.5);
+      const dy = y - (sy + 1.5);
+      return dx * dx + dy * dy <= rad * rad;
+    });
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (nearStart(x, y, FLAT_BASE)) cap[y * N + x] = 0;
+  const count = Math.round(dry / per);
+  for (let k = 0, tries = 0; k < count && tries < count * 40; tries++) {
+    const cx = r.int(W);
+    const cy = r.int(W);
+    if (!isDry(at(g, cx, cy)) || nearStart(cx, cy, FLAT_BASE + 5)) continue;
+    const rad = 5 + r.int(7);
+    const peak = 1 + r.int(peakMax);
+    const r2 = rad * rad;
+    for (let y = Math.max(0, cy - rad); y <= Math.min(W, cy + rad); y++) {
+      for (let x = Math.max(0, cx - rad); x <= Math.min(W, cx + rad); x++) {
+        const d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+        if (d2 >= r2) continue;
+        const lvl = Math.ceil((peak * (r2 - d2)) / r2);
+        if (lvl > h[y * N + x]!) h[y * N + x] = lvl;
+      }
+    }
+    k++;
+  }
+  for (let i = 0; i < N * N; i++) if (h[i]! > cap[i]!) h[i] = cap[i]!;
+  // Slopes: at most one level between neighbouring corners (8-neighbour chamfer, forward then backward).
+  const lower = (i: number, j: number): void => {
+    if (h[i]! > h[j]! + 1) h[i] = h[j]! + 1;
+  };
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const i = y * N + x;
+        if (x > 0) lower(i, i - 1);
+        if (y > 0) {
+          lower(i, i - N);
+          if (x > 0) lower(i, i - N - 1);
+          if (x < N - 1) lower(i, i - N + 1);
+        }
+      }
+    }
+    for (let y = N - 1; y >= 0; y--) {
+      for (let x = N - 1; x >= 0; x--) {
+        const i = y * N + x;
+        if (x < N - 1) lower(i, i + 1);
+        if (y < N - 1) {
+          lower(i, i + N);
+          if (x < N - 1) lower(i, i + N + 1);
+          if (x > 0) lower(i, i + N - 1);
+        }
+      }
+    }
+  }
+  let out = '';
+  for (let i = 0; i < N * N; i++) out += String.fromCharCode(48 + h[i]!);
+  return out;
+}
 
 /** A lumpy blob of roughly `n` tiles grown from (x, y) by random 4-neighbour steps onto tiles `ok` accepts. */
 function blob(g: Grid, r: Rng, x: number, y: number, n: number, ok: (ch: string) => boolean, ch: string): [number, number][] {
@@ -453,9 +558,11 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
 
   const ascii: string[] = [];
   for (let y = 0; y < W; y++) ascii.push(g.c.slice(y * W, (y + 1) * W).join(''));
+  const hl = HILLS[o.type];
+  const heights = HILLS_ON || o.hills ? hills(g, o.seed, starts, hl.per, hl.peak) : undefined;
   return {
     seed: o.seed,
-    map: { w: W, h: W, ascii },
+    map: { w: W, h: W, ascii, ...(heights ? { heights } : {}) },
     players: o.players.map((p) => ({ civ: p.civ, ...(p.team !== undefined ? { team: p.team } : {}) })),
     ...(o.startingResources ? { startingResources: o.startingResources } : {}),
     ...(o.revealMap ? { revealMap: true } : {}),

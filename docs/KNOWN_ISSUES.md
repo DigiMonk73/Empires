@@ -48,3 +48,13 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   are never reached). Each tuning pass reshuffles which games end (6–7/12), like KI-7. Options for the user:
   (a) keep working the water AI now; (b) tag m8 and move this gate to M13 (AI v2 — the Done definition's
   "wins island maps via transports" lives there); (c) measure on more games.
+- **KI-9 · must · hills vs the AI war gate — awaiting the user** (M10.1a, 2026-09-30). With hills on generated
+  maps (D44), AI 1v1 wars run ~5 min longer (the side on the hills holds; fights and building spots move), and
+  the quick suite's gate — ≥ 75% of 4 Moderate 1v1s decided within 45 min — drops to 2/4. It was already
+  borderline flat: 3/4, median 38:57, one win at 44:54. Three fixes (AI mop-up of the last buildings, a wider
+  flat base, a wider building-spot search) each reshuffled which games ended (2/4 every time) and were reverted
+  except the wider flat base. Hill generation is off (`HILLS_ON` in mapgen) so maps and AI play exactly as at
+  m9; the elevation machinery stays (`?scenario=map&hills=1` shows hilly maps). Options for the user:
+  (a) judge "decided" within 60 min — the Done definition's upper bound for a 1v1 (25–60 min) — and turn hills
+  on; (b) keep 45 min, hills stay off until M13 (AI v2); (c) hills only on Highland and Hill Country (M10.2),
+  the standard maps stay flat.

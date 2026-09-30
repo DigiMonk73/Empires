@@ -72,4 +72,38 @@ export class TileMap {
   passable(tx: number, ty: number, moveClass: number): boolean {
     return this.inBounds(tx, ty) && (this.pass[this.idx(tx, ty)]! & moveClass) !== 0;
   }
+
+  /** Corner height (levels) at corner (cx, cy), clamped to the map. */
+  corner(cx: number, cy: number): number {
+    const x = cx < 0 ? 0 : cx > this.w ? this.w : cx;
+    const y = cy < 0 ? 0 : cy > this.h ? this.h : cy;
+    return this.height[y * (this.w + 1) + x]!;
+  }
+
+  /** Ground height (levels, fractional) at world point (x, y): bilinear between the tile's corners. */
+  heightAt(x: number, y: number): number {
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+    const fx = x - tx;
+    const fy = y - ty;
+    const a = this.corner(tx, ty);
+    const b = this.corner(tx + 1, ty);
+    const c = this.corner(tx, ty + 1);
+    const d = this.corner(tx + 1, ty + 1);
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+  }
+
+  /** Elevation level of the tile under world point (x, y): its corners' mean, rounded (the combat rule, D44). */
+  levelAt(x: number, y: number): number {
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+    return Math.round((this.corner(tx, ty) + this.corner(tx + 1, ty) + this.corner(tx, ty + 1) + this.corner(tx + 1, ty + 1)) / 4);
+  }
+
+  /** Are all corners of the size×size footprint at (tx, ty) at one height? (Buildings stand on flat ground.) */
+  flat(tx: number, ty: number, size: number): boolean {
+    const h0 = this.corner(tx, ty);
+    for (let dy = 0; dy <= size; dy++) for (let dx = 0; dx <= size; dx++) if (this.corner(tx + dx, ty + dy) !== h0) return false;
+    return true;
+  }
 }

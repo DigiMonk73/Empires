@@ -390,6 +390,7 @@ function randomMap(p: URLSearchParams): SimConfig {
     type,
     size: size in MAP_SIZES ? size : 'small',
     players: Array.from({ length: n }, (_, i) => ({ civ: civs[i % civs.length]! })),
+    hills: p.get('hills') === '1',
   });
 }
 

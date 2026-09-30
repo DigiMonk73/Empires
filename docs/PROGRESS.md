@@ -18,8 +18,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M10 world polish — expand into tasks (elevation + combat rule, Highland/Hill Country, transitions and beaches, water and foam, building fire/smoke, fog).
+- **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
+- **Next up:** M10.1b elevation on screen (terrain mesh heights + shading, sprites/picking at ground height).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -539,8 +539,25 @@ Macedonian, Palmyran, Roman.
 - _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB. **Met** (M9.9 scorecard; 62 MB). Tag `m9`.
 
 ## M10 — World polish
-- elevation (mapgen, shading, combat rule); transitions; water/foam; particles; fog transitions; Highland,
-  Hill Country.
+The map already carries corner heights (`TileMap.height`, (w+1)×(h+1), levels 0–7; hashed and saved) — all zero
+so far.
+- [x] **M10.1a Elevation in the sim** (D44). `TileMap.heightAt` (bilinear on corners), `levelAt`, `flat`;
+      `MapSpec.heights` (digit string); buildings need a flat footprint (walls exempt); `hit()` applies the
+      25%-for-×3 rule when the striker's level is higher; mapgen `hills()` — dome hills per map type from their
+      own stream, slopes ≤ 1, flat shores and bases (10 tiles). `elevation.test.ts` (heights, placement, the odds
+      over 2000 hits, every map type's slopes/shores/bases). **Hill generation is off** (`HILLS_ON`, KI-9 — the
+      AI war gate fails 2/4 on hilly maps; the user decides); `?scenario=map&hills=1` generates them.
+- [ ] **M10.1b Elevation on screen.** Terrain mesh lifted by height with slope shading (sun from the upper
+      left); sprites, selection rings, HP bars, projectiles, fx and the build ghost at ground height; picking
+      (screen → world) walks up the slope; the minimap shades hills. _Accept:_ a hills screenshot ≥ 4/5; e2e
+      clicks on a hill hit their target.
+- [ ] **M10.2 Highland and Hill Country** map types (more and higher hills; Highland with lakes).
+- [ ] **M10.3 Terrain transitions.** Beaches as a sand band along every shore, desert distinct from beach,
+      palm and pine forests by map type, softer grass/dirt/desert edges.
+- [ ] **M10.4 Water.** Animated water (ripples, depth ramp), shore foam, ships with a waterline shadow.
+- [ ] **M10.5 Particles.** Buildings burn and smoke below 75/50/25% HP; dust from marching feet and
+      collapsing buildings; splashes.
+- [ ] **M10.6 Fog and review.** Soft fog edges that ease in; the M10 screenshot review and perf check.
 - _Exit:_ screenshots ≥ 4/5; perf gates met.
 
 ## M11 — Audio

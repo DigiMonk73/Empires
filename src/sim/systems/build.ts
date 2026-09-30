@@ -72,6 +72,11 @@ export function placementValid(w: World, typeIdx: number, tx: number, ty: number
       ok &&= good;
     }
   }
+  // Buildings stand on flat ground (M10.1a); walls follow the land.
+  if (ok && !shore && t.building?.kind !== 'wall' && !m.flat(tx, ty, t.size)) {
+    ok = false;
+    if (tileOk) tileOk.fill(false);
+  }
   if (ok && shore) {
     let land = false;
     for (let k = -1; k <= t.size && !land; k++) {

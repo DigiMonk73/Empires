@@ -37,6 +37,8 @@ export interface MapSpec {
    * `B` berry bush.
    */
   ascii?: readonly string[];
+  /** Corner heights, (w+1)×(h+1) digits '0'–'7' row by row (M10.1a); flat when absent. */
+  heights?: string;
 }
 
 export interface ScenarioSpec {
@@ -244,6 +246,11 @@ export class World {
     this.grid = new UnitGrid(cfg.map.w, cfg.map.h);
     this.fog = createFog(this.players.length, cfg.map.w, cfg.map.h, !!cfg.revealMap);
     if (cfg.map.ascii) this.applyAscii(cfg.map.ascii);
+    if (cfg.map.heights) {
+      const hs = cfg.map.heights;
+      const n = Math.min(hs.length, this.map.height.length);
+      for (let i = 0; i < n; i++) this.map.height[i] = hs.charCodeAt(i) - 48;
+    }
     const sc = cfg.scenario;
     for (const r of sc?.resources ?? []) this.addResource(resourceKindIndex(r.kind), r.tx, r.ty);
     for (const b of sc?.buildings ?? []) {
