@@ -3,26 +3,28 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M13 AI v2 **done** (tag `m13`, s9pk 0.13.0). M12 UI & QoL done (tag `m12`, 0.12.0 on the VM). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** m13; verify:full at the M13 exit 279 s (the 500-game Done suite in 106 s on worker threads, audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 4.0 ms, s9pk, 465 unit + 121 e2e).
-- **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
-  building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
-  get the Egyptian kit (`arch/`, D43), Babylonian/Hittite/Persian the Babylonian kit, Choson/Shang/Yamato the Asian kit,
-  Roman/Carthaginian/Macedonian/Palmyran the Roman kit. Review tools:
-  `node tools/frames.ts <model> out.png` (contact sheets), `node tools/gallery.ts <civs> <ages>` (every
-  building + animals, `?scenario=gallery&civ=…`, after `npx vite build`) → `artifacts/gallery/`.
-- **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
-  retarget, construction with (n+2)/3 builders, pop/housing, farms (one farmer, 250 food, vanish when empty),
-  hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
-  combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, windup, dodgeable
-  projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
-- **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
-- **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** none gating (water 46/48 held out); KI-9/KI-10/KI-11 closed (D58, D59), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** the M14 exit — verify:full, tag `m14`, bump empires-startos, package 0.14.0.
-- **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
-  train at the TC (C), rally points, idle-villager button (.).
-- **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
+- **Milestone:** M14 Rules completeness **done** (tag `m14`, s9pk 0.14.0). Next: **M15 Hardening & release**
+  (tasks M15.1–M15.9 below; start with M15.1). Earlier: M13 AI v2 (m13), M12 UI & QoL (m12, 0.12.0 on the VM),
+  M11 Audio, M10 World polish, M9 Art, M8 Water, M7 Tech tree, M6 First skirmish … M0 Rails — all tagged.
+- **Last green:** verify:full at the M14 exit, 874 s — 495 unit + 127 e2e (Chromium + WebKit), 134 screenshots,
+  the 604-game AI suite, Docker amd64 + arm64 (126 MB, /healthz, server saves), Tauri smoke render avg 2.1 ms,
+  s9pk.
+- **AI gates (all pass, full suite):** ladder — every level beats the one below (Hard > Moderate 49/64, bar 48;
+  Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out seeds 1001–1024 (D58); water 46/48
+  held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.03–0.07%, 0 crashes. Margins are thin — see LOOP.md
+  "AI work" before touching the AI or map generation; `tools/sim/diagnose.ts` for dev-set analysis.
+- **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
+  Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
+  25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
+  value names its decision (D57, enforced by `data.test.ts`).
+- **StartOS:** 0.14.0 built (both arches); last installed on the VM: 0.12.0. Next VM check: M15.8.
+- **Open issues:** KI-3 backups (needs a backup target on the VM — the user), KI-5 voice licence (before any
+  public release — the user), KI-1 icon, KI-2 AI images (optional). No gate failing.
+- **Playable now:** `npm run preview` → `/` → Skirmish (setup: map, size, civs, levels, victory, starting age,
+  population, Full Tech Tree, reveal); the Mac app `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/
+  Empires.app`; review scenes `?scenario=relics|countdowns|map&gators=1|battle|…`.
+- **Notes:** metrics `docs/metrics/*.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`;
+  AI suite `node tools/sim/ai-suite.ts [--full --adjacent]`; diagnostics `node tools/sim/diagnose.ts`.
 
 ---
 
@@ -830,7 +832,7 @@ of island/Narrows games decided in 2 h (11/12).
       them failed three AI gates (water 7/12, Hard > Moderate 43/64, Moderate > Easy 47/64 — reshuffled games, the
       island wood stalemate), so `GATORS_ON` is off until M14.6; `?scenario=map&gators=1` shows them. Tests: a
       spit + hunt combat test, a mapgen test (with the option; none without).
-- [~] **M14.6 AI relic, ruin and Wonder play.** Claim and hold the objects near home; race the countdowns (attack
+- [x] **M14.6 AI relic, ruin and Wonder play.** Claim and hold the objects near home; race the countdowns (attack
       an enemy Wonder or the holder of the objects first); Hard+ build a Wonder when rich in the Iron Age.
       _Relic/Wonder play done_ (`ai/relics.ts`, Standard games only — the suite's conquest ladder can't move): one
       unit at a time (an idle rider, else a soldier, else the nearest villager) claims the nearest unwatched relic
@@ -908,8 +910,34 @@ of island/Narrows games decided in 2 h (11/12).
       _Done:_ D57 settles 24 by one rule (the 1.0 dat / manual over later figures; else the plainest reading, as
       modelled), D34/D47/D48/D52/D53 the rest. `Sourced.decision`; `data.test.ts` fails on a flagged row or
       constant without a decision, or one naming a D-number DECISIONS lacks (checked by removing one).
-- _Exit:_ no unresolved `verify:true`.
+- _Exit:_ no unresolved `verify:true`. **Done** — verify:full green (874 s), every AI gate passing, tag `m14`, 0.14.0.
 
 ## M15 — Hardening & release (StartOS checkpoint + user playtest)
-- 8p Giant perf; 2 h soak; lockstep loopback with jitter; 16-facing decision; release .app + .s9pk; docs.
-- _Exit:_ all Done gates (see PLAN.md).
+Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M14 exit): keep them there — run
+`node tools/sim/ai-suite.ts --full --adjacent` after any AI or map change (LOOP.md "AI work").
+- [ ] **M15.1 Determinism at scale** (Done 2). 100 seeds × 24k ticks with 4 AIs: identical hash traces in Node,
+      Chromium and WebKit (today verify:full runs 10 seeds); save → load → continue and replay equal the straight
+      run. _Accept:_ a `verify:full` step, all 100 equal.
+- [ ] **M15.2 Lockstep loopback with jitter** (Done 2). Two sims fed through a network-style router (commands
+      scheduled N ticks ahead, random delay/jitter, reordering within the window) stay hash-identical for 20k
+      ticks with 2 AIs + scripted input. _Accept:_ unit/soak test; the router is what M16 multiplayer will use.
+- [ ] **M15.3 Performance: 8 players × 50 population on Gigantic** (Done 4). A scene / scripted match at full pop:
+      sim p99 ≤ 6 ms/tick; frame CPU p95 ≤ 8 ms, ≤ 150 draw calls, textures ≤ 512 MB (hardware GL, headless
+      Chromium); warm load ≤ 8 s; Tauri smoke render ≤ 8 ms. Profile and fix what misses.
+- [ ] **M15.4 Two-hour soak.** 4–8 AIs for 2 h of game time (headless, and one run in the browser): no crash, heap
+      stable (no growth after 30 min), stuck ≤ 0.5%, frame times flat.
+- [ ] **M15.5 16-facing decision** (D7). Measure how ships and cavalry read turning with 8 facings (contact sheets,
+      a turning scene); decide 8 vs 16 in DECISIONS; bake if 16 (budget: baked assets ≤ 150 MB).
+- [ ] **M15.6 Visual pass** (Done 5). Gallery + every scenario screenshot scored ≥ 4/5, no open must-fix item;
+      calibration IoU ≥ 0.98; KI-1 icon settled or accepted.
+- [ ] **M15.7 Done audit.** `docs/DONE.md`: each Done item with its evidence (test names, metric lines, commits)
+      — content 100% (units/buildings/techs each with data + tests), ≥ 40 e2e scenarios in both browsers, audio
+      gates, Classic toggles. Fix gaps.
+- [ ] **M15.8 Release build** (Done 8). Version 1.0.0; aarch64 `.app` + hidden smoke test; `.s9pk` for both
+      arches; README / instructions / i18n complete; StartOS VM protocol (LOOP.md) incl. backup → restore —
+      **needs a backup target on the VM (KI-3, the user)**. Voice licence (KI-5) before any public release —
+      **the user's call**.
+- [ ] **M15.9 User playtest** (Done 9) — **the user**: a full skirmish against Hard. Push-notify with how to play
+      (`.app` path, StartOS link); fold in their feedback.
+- _Exit:_ all Done gates (see PLAN.md) and the user's sign-off. After Done: M16 multiplayer (StartOS WebSocket
+  relay on the M15.2 router), then polish loops.

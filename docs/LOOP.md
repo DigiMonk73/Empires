@@ -53,6 +53,26 @@ truth**, not conversation memory, because context gets summarized.
   PATH. Never modify the system install.
 - **Scratch files** go in the session scratchpad or `artifacts/` (gitignored), never `/tmp`.
 
+## AI work (lessons from M13–M14)
+- **Measure on a development set, gate on held-out seeds.** Dissecting games one by one fits the seeds you look at:
+  the 12 water seeds of M8–M13 read 11/12 while fresh ones were decided 65% of the time. The suite's gates count
+  seeds nobody traces — water 501–548 (D56), 1v1 wars 1001–1024 (D58); the ladder's 101–132 are the Done set.
+  Trace and tune on the dev sets (water 401–448, wars 601–624, ladder cross-check 1101–1132) with
+  `tools/sim/diagnose.ts`; keep a change only if the held-out numbers don't fall.
+- **Look at a stalled game before changing numbers.** Most "the AI is weak" results this far were bugs found by
+  tracing one game minute by minute (`tools/sim/diagnose.ts trace …`): villagers ping-ponged between two lions,
+  an army waited for a wave its full population could never train, a cache kept land labels that the pathing
+  renumbers whenever a building goes up. Parameter sweeps (rush odds, push ratio, villager targets) moved
+  nothing beyond seed noise (±3 games in 64).
+- **No fixed-seed AI tests.** A test that needs "seed 14 ends by minute 45" breaks whenever maps or the AI change
+  and then tests nothing. Write a scene (a hand-made `SimConfig` with the situation) or a small peaceful match
+  whose outcome doesn't hang on one war.
+- **Anything the AI remembers about regions must key on `v.passVersion()`** — `region()` labels are renumbered
+  whenever passability changes.
+- **The ladder's Hard > Moderate sits near its bar** (49/64 vs 48): expect any AI or map change to move it ±3;
+  run `node tools/sim/ai-suite.ts --full --adjacent` (≈4–6 min) before committing AI changes, not only the quick suite.
+- Quote suite arguments containing `>` (`--pairs 'hard>moderate'`) — unquoted, the shell redirects.
+
 ## Stop and ask the user when
 - credentials are needed (e.g. `start-cli auth login` — ask them to run `! <command>`),
 - a license is in doubt,
