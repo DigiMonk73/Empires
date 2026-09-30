@@ -131,8 +131,8 @@ for (const [pi, [strong, weak]] of ladderPairs.entries()) {
   if (ok < Math.ceil(n * 0.75) && !deferred) fails.push(`ladder ${strong}>${weak} only ${ok}/${n}`);
 }
 // Water maps (M8.8d): island and Narrows 1v1s should be decided (≥ 90%) within 120 min — the AI has to find the
-// enemy by sea and ferry armies over. Reported, gated again in M13 (7/12 at M8 — KI-8, D42). Full runs only.
-const WATER_GATED = false;
+// enemy by sea and ferry armies over. Gated since M13.7 (11/12; 7/12 at M8 — KI-8, D42). Full runs only.
+const WATER_GATED = true;
 let waterLine = '';
 if (FULL && want('water')) {
   let won = 0;

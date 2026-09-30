@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M13 AI v2 in progress (M13.1–6 done; the adjacent ladder meets the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M13 AI v2 in progress (M13.1–7 done; the ladder and water meet the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m12 (verify ~135 s); verify:full at the M12 exit 699 s (audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 1.9 ms, s9pk, 452 unit + 119 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -18,8 +18,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-8 water AI gate (M13.7). KI-7 closed (M13.1).
-- **Next up:** M13.7 water — 10/12 decided at the checkpoint (seeds 303 Narrows, 305 tiny-island wood stalemate open; needs 11).
+- **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
+- **Next up:** M13.8 diplomacy answers (D47), M13.9 the long-game suite, then the M13 exit.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -760,16 +760,18 @@ of island/Narrows games decided in 2 h (11/12).
       wars 3/4. `MatchOptions.civs`, `MatchResult.trained`. The M13.5 fixed-seed priest test became a scene test
       (priests convert an enemy elephant in reach; the Temple researches Astrology) — seed outcomes move with
       every AI change.
-- [ ] **M13.7 Water.** _Checkpoint (10/12):_ villagers are only sent to resources on the land they stand on
-      (`AiPlayer.landAt`/`nodeLand`, cached; 6 → 9/12 alone); **sim fix** — a ranged unit attacking a building
-      pathed to "within range" counted in tiles along the worst axis (a square) but fires on true distance (a
-      circle), so from a diagonal it stopped out of range and gave up: warships never hurt a Dock and archers
-      failed on buildings approached diagonally (`ranged-buildings.test.ts`, both fail without the fix); an enemy
-      fishing boat off our coast no longer cancels the hunt for the enemy's last building (a Market hid all game).
-      Tried and backed out: a wood expedition to islets (tiny maps hold ~880 wood off the home islands; triggering
-      on *known* wood sent villagers off early — 10 → 6/12) and a warship cap when wood is low (→ 4/12). Open:
-      seeds 303 (Narrows) and 305 (a tiny island stalemate on wood). Then: ≥ 90% of island/Narrows 1v1s decided in 2 h (KI-8, D42): bigger coordinated landings, siege
-      carried over, hunting stray ships, reaching islet forests; set `WATER_GATED = true`.
+- [x] **M13.7 Water** — **11/12** island/Narrows 1v1s decided in 2 h (was 6–7; gate ≥ 90% now on,
+      `WATER_GATED = true`; KI-8 closed). Villagers are only sent to resources on the land they stand on
+      (`AiPlayer.landAt`/`nodeLand`, cached; 6 → 9/12 alone). **Sim fix:** a ranged unit attacking a building pathed
+      to "within range" counted in tiles along the worst axis (a square) but fires on true distance (a circle), so
+      from a diagonal it stopped out of range and gave up — warships never hurt a Dock, archers failed on buildings
+      approached diagonally (`ranged-buildings.test.ts`, both fail without the fix). An enemy fishing boat off our
+      coast no longer cancels the hunt for the enemy's last building (a Market hid all game). At a full population
+      with the army at the shore and no transport, a fishing boat is deleted to make room (a Narrows game stood
+      still from minute 50). Tried and backed out: a wood expedition to islets (tiny maps hold ~880 wood off the
+      home islands, and triggering on *known* wood sent villagers off early — 10 → 6/12) and a warship cap when wood
+      is low (→ 4/12). Still open: seed 305, a tiny-island stalemate once both islands are cut bare (every wood
+      source spent — the one case an expedition could help, on a map that has none). Ladder and wars unchanged.
 - [ ] **M13.8 Diplomacy answers (D47).** Computers start allied with each other in free-for-alls (research §7's
       table of how many turn hostile), a neutral computer turns hostile when attacked twice or after 10–15 min
       without tribute, and answers tribute.

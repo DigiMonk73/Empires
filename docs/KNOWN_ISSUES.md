@@ -19,15 +19,6 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   as a permissively licensed Piper model) with `tools/voices.ts`.
 - **KI-6 · closed (M8.6b, D39)** — baked art was 145 MB and all of it loaded at boot (1.33 GB decoded): now WebP
   (45.5 MB) with textures loaded on first use.
-- **KI-8 · moved to M13 (D42, the user's choice) · water AI games decided 7/12 in 2 h (gate ≥ 90%)** — the full AI suite's
-  12 island/Narrows 1v1s (Moderate on tiny, Hard on small). The naval AI works end to end — Docks, fishing,
-  fleets that fight, scouting, transports that board, sail and land, soldiers ashore hunting the island — and
-  ~15 stalls found by tracing games are fixed (M8.8a–d in PROGRESS). What's left is strategy, not plumbing:
-  waves of 5–10 lose to a defended island; nothing brings siege to raze buildings (buildings take ×0.2); a lone
-  surviving warship at sea goes unhunted; long games run the start island out of wood (the islets' forests
-  are never reached). Each tuning pass reshuffles which games end (6–7/12), like KI-7. Options for the user:
-  (a) keep working the water AI now; (b) tag m8 and move this gate to M13 (AI v2 — the Done definition's
-  "wins island maps via transports" lives there); (c) measure on more games.
 - **KI-9 · must · hills vs the AI war gate — awaiting the user** (M10.1a, 2026-09-30). With hills on generated
   maps (D44), AI 1v1 wars run ~5 min longer (the side on the hills holds; fights and building spots move), and
   the quick suite's gate — ≥ 75% of 4 Moderate 1v1s decided within 45 min — drops to 2/4. It was already

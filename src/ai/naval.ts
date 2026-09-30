@@ -281,6 +281,15 @@ export class NavalBrain {
       if (dock && unit && s.v.canAfford(s.v.cost(unit)) && s.me.pop < s.me.popCap) {
         cmds.push({ t: 'train', bld: dock.h, unit });
         this.transportAt = s.v.tick;
+      } else if (dock && unit && s.v.canAfford(s.v.cost(unit)) && s.me.pop >= s.me.popCap) {
+        // A full population with the army waiting at the shore and no transport (M13.7: a Narrows game stood
+        // still from minute 50 to the end, 9,900 wood in the bank): make room — a fishing boat goes.
+        const boat = s.units.find((u) => u.cls === 'fishingShip' && !s.busy.has(u.h));
+        if (boat) {
+          cmds.push({ t: 'delete', ids: [boat.h] });
+          s.busy.add(boat.h);
+          this.transportAt = s.v.tick - 80 * 20; // train the transport on one of the next thinks
+        }
       }
     }
     const shore = transports.length ? this.shorePoint(s, home, s.v.region(2, Math.floor(transports[0]!.x), Math.floor(transports[0]!.y))) : null;
