@@ -307,8 +307,8 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
         rel(22, 28, 'S', 7), // (22+: outside everyone's 20-tile zone alike)
         rel(22, 28, 'G', 9),
         rel(16, 24, 'B', 6),
-        rel(12, 18, 'F', 55),
-        rel(10, 18, 'F', 40), // a second woodline: the islands' other forests are out of reach
+        rel(12, 18, 'F', 70),
+        rel(10, 18, 'F', 55), // a second woodline: the islands' other forests are out of reach
       ]
     : [
         rel(7, 13, 'B', 6 + r.int(3)), // berries 7 ± 1 at 7–16

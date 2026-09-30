@@ -10,7 +10,8 @@ import { REACH } from './gather.ts';
  * Transports (M8.4, D37): a Light Transport carries 5 land units, a Heavy Transport 10 (mil:1b). Land units
  * right-clicked onto an own transport walk to the shore beside it and step aboard — they leave the map and ride
  * as records in the transport's cargo (population still counts them). Right-clicked on land, the transport sails
- * to the water nearest that point and lands everyone on the free ground around it (L: land here). A sunk
+ * to the water nearest that point and lands everyone on the free ground around it (L: land here) — sailing in
+ * again, up to five times, if it was shoved off the beach before everyone was ashore. A sunk
  * transport takes its cargo down with it; units come ashore as the transport's owner (a converted transport
  * converts its cargo).
  */
@@ -96,8 +97,8 @@ function landCargo(w: World, t: number): number {
       const dy = ty + 0.5 - cy;
       return dx * dx + dy * dy <= r2;
     });
-    if (i < 0 && reach < 4 && !landed) {
-      reach = 4;
+    if (i < 0 && reach < 5 && !landed) {
+      reach = 5;
       continue;
     }
     if (i < 0) break;
@@ -150,7 +151,9 @@ export function transportSystem(w: World): void {
         w.pathing.request(s, { k: 'point', tx: Math.floor(o.x), ty: Math.floor(o.y), x: o.x, y: o.y });
       } else if (w.paths[s] !== undefined && w.paths[s]!.length === 0) {
         landCargo(w, s); // as close as the water goes: land whoever fits
-        finish(w, s);
+        // Ships crowding a beach can shove a transport out of reach of the sand: sail in again (5 tries).
+        if (w.cargo[s]?.length && ++o.retry <= 5) w.paths[s] = undefined;
+        else finish(w, s);
       }
     }
   }

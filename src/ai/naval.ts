@@ -21,9 +21,15 @@ export interface NavalState {
 }
 
 /** Fishing boats wanted by age, on a coast and on an island. */
-const FLEET = { coast: [0, 4, 6, 7, 8], island: [0, 7, 9, 10, 10] } as const;
+/**
+ * An island's 50 people, planned: 22 villagers, 6 fishing boats, 3–4 warships, 2 transports and ~16 soldiers
+ * (boats and warships built first used to fill it, leaving room for five).
+ */
+const FLEET = { coast: [0, 4, 6, 7, 8], island: [0, 6, 6, 6, 6] } as const;
 /** Warships wanted by age (none before the Tool Age's Scout Ship), on a coast and on an island. */
-const WARSHIPS = { coast: [0, 0, 2, 3, 4], island: [0, 0, 4, 6, 8] } as const;
+const WARSHIPS = { coast: [0, 0, 2, 3, 4], island: [0, 0, 3, 4, 4] } as const;
+/** …more when enemy warships are about. */
+const WAR_CONTESTED = 6;
 /** A raid sails once this many warships are ready (by age). */
 const RAID_AT = [0, 0, 2, 3, 4];
 const RAID_PATIENCE = 600;
@@ -47,6 +53,7 @@ export class NavalBrain {
   private shore: [number, number] | null = null;
   private hasTransport = false;
   private transportAt = -9999;
+  private beachSkip = 0;
 
   save(): NavalState {
     return { island: this.island, sweep: this.sweep, contact: this.contact, lastRaid: this.lastRaid, target: this.target, boardedAt: this.boardedAt };
@@ -76,8 +83,9 @@ export class NavalBrain {
     // half the fishers wanted) so warships get the Dock — replacing sunk boats otherwise kept it busy forever.
     if (!ai.peaceful && this.enemiesAtSea(s).some((o) => o.cls === 'warship')) this.contact = true;
     // (During an invasion three escorts, unless enemy warships are about.)
-    const escortOnly = this.target && this.hasTransport && !this.enemiesAtSea(s).some((o) => o.cls === 'warship');
-    const warWant = !ai.peaceful && (this.island || this.contact) ? Math.min(WARSHIPS[this.island ? 'island' : 'coast'][s.me.age] ?? 4, escortOnly ? 3 : Infinity) : 0;
+    const contested = this.enemiesAtSea(s).some((o) => o.cls === 'warship');
+    const base = WARSHIPS[this.island ? 'island' : 'coast'][s.me.age] ?? 4;
+    const warWant = !ai.peaceful && (this.island || this.contact) ? (contested && s.me.age >= 2 ? Math.max(base, WAR_CONTESTED) : base) : 0;
     this.fleetShort = s.units.filter((u) => u.cls === 'warship').length < warWant;
     this.dock(ai, s, cmds);
     this.fishers(ai, s, cmds);
@@ -91,6 +99,22 @@ export class NavalBrain {
   /** Sailing armies across (the land military holds its own waves meanwhile). */
   get invading(): boolean {
     return this.target !== null;
+  }
+
+  /**
+   * Our land: where most of our villagers stand (the tiles round the Town Center can be a pocket walled in by
+   * buildings on a crowded island — then no soldier was "at home" and none ever boarded).
+   */
+  private homeLand(s: Snapshot): number {
+    const count = new Map<number, number>();
+    for (const u of s.villagers) {
+      const l = s.v.region(1, Math.floor(u.x), Math.floor(u.y));
+      if (l) count.set(l, (count.get(l) ?? 0) + 1);
+    }
+    let best = 0;
+    let bn = 0;
+    for (const [l, n] of count) if (n > bn || (n === bn && l < best)) [best, bn] = [l, n];
+    return best || this.landOf(s, s.tc!.x, s.tc!.y);
   }
 
   /** The land region at or next to (x, y) (a building's own tiles are impassable). */
@@ -149,9 +173,10 @@ export class NavalBrain {
   }
 
   /** The water tile of sea `sea` touching land region `land` nearest (x, y) (a landing beach), as a tile centre. */
-  private beachNear(s: Snapshot, x: number, y: number, land: number, sea: number): [number, number] | null {
+  private beachNear(s: Snapshot, x: number, y: number, land: number, sea: number, skip = 0): [number, number] | null {
     const cx = Math.floor(x);
     const cy = Math.floor(y);
+    let skipped = 0;
     for (let r = 1; r <= 30; r++) {
       let best: [number, number] | null = null;
       let bd = Infinity;
@@ -169,7 +194,7 @@ export class NavalBrain {
           }
         }
       }
-      if (best) return best;
+      if (best && skipped++ >= skip) return best; // (after a failed landing, a beach further round)
     }
     return null;
   }
@@ -183,7 +208,7 @@ export class NavalBrain {
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
           const x = first[0] + dx;
           const y = first[1] + dy;
-          if (!s.v.region(2, x, y) || out.some(([ox, oy]) => Math.max(Math.abs(ox - x), Math.abs(oy - y)) < 3)) continue;
+          if (s.v.region(2, x, y) !== s.v.region(2, first[0], first[1]) || out.some(([ox, oy]) => Math.max(Math.abs(ox - x), Math.abs(oy - y)) < 3)) continue;
           if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ax, ay]) => s.v.region(1, x + ax!, y + ay!) === home)) out.push([x, y]);
         }
       }
@@ -192,9 +217,9 @@ export class NavalBrain {
   }
 
   /** The water tile nearest the Town Center that touches our land: where waves board. */
-  private shorePoint(s: Snapshot, home: number): [number, number] | null {
+  private shorePoint(s: Snapshot, home: number, sea = 0): [number, number] | null {
     const tc = s.tc!;
-    if (this.shore && s.v.region(2, this.shore[0], this.shore[1])) return this.shore;
+    if (this.shore && s.v.region(2, this.shore[0], this.shore[1]) && (!sea || s.v.region(2, this.shore[0], this.shore[1]) === sea)) return this.shore;
     const cx = Math.floor(tc.x);
     const cy = Math.floor(tc.y);
     for (let r = 1; r <= 40; r++) {
@@ -203,7 +228,7 @@ export class NavalBrain {
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
           const x = cx + dx;
           const y = cy + dy;
-          if (!s.v.region(2, x, y)) continue;
+          if (!s.v.region(2, x, y) || (sea && s.v.region(2, x, y) !== sea)) continue; // (a pocket behind the Dock won't do)
           if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ax, ay]) => s.v.region(1, x + ax!, y + ay!) === home)) return (this.shore = [x, y]);
         }
       }
@@ -218,7 +243,7 @@ export class NavalBrain {
    */
   private invade(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
     const tc = s.tc!;
-    const home = this.landOf(s, tc.x, tc.y);
+    const home = this.homeLand(s);
     const foes = s.v.others().filter((o) => o.building && o.owner > 0 && s.v.teamOf(o.owner) !== s.me.team);
     // Invade only when every enemy building we know is on other land (one we can't place — hemmed in — counts as
     // reachable: a wrong "across the sea" verdict would stop the land war).
@@ -256,7 +281,7 @@ export class NavalBrain {
         this.transportAt = s.v.tick;
       }
     }
-    const shore = this.shorePoint(s, home);
+    const shore = transports.length ? this.shorePoint(s, home, s.v.region(2, Math.floor(transports[0]!.x), Math.floor(transports[0]!.y))) : null;
     if (!transports.length || !shore) return;
     // Each transport its own boarding spot on our shore (they can't share the tile that touches land).
     const spots = this.shoreSpots(s, home, shore, transports.length);
@@ -276,16 +301,23 @@ export class NavalBrain {
       // it, which can lie too far off any beach to set troops down).
       const sea = s.v.region(2, Math.floor(loaded[0]!.x), Math.floor(loaded[0]!.y));
       const land = this.landOf(s, this.target[0], this.target[1]);
-      const beach = this.beachNear(s, this.target[0], this.target[1], land, sea) ?? [this.target[0], this.target[1]];
+      // A transport back with its cargo aboard didn't find ground there: try the next beach along.
+      if (loaded.some((t) => t.idle && dist(t.x, t.y, this.target![0], this.target![1]) < 12)) this.beachSkip = (this.beachSkip + 1) % 6;
+      const beach = this.beachNear(s, this.target[0], this.target[1], land, sea, this.beachSkip) ?? [this.target[0], this.target[1]];
       cmds.push({ t: 'unload', ids: loaded.map((t) => t.h), x: Math.round(beach[0] * 4) / 4, y: Math.round(beach[1] * 4) / 4 });
       this.boardedAt = 0;
       return;
     }
     // Back to our shore; there, board idle soldiers once half a wave is ready.
     let room = 0;
+    // At its spot — or idle within 4 tiles of it, as close as it could get.
+    const atSpot = (t: (typeof transports)[number]) => {
+      const d = dist(t.x, t.y, spotOf(t)[0] + 0.5, spotOf(t)[1] + 0.5);
+      return d <= 2.5 || (t.idle && d <= 4);
+    };
     for (const t of afloat) {
       const [sx, sy] = spotOf(t);
-      if (dist(t.x, t.y, sx + 0.5, sy + 0.5) > 2.5) {
+      if (!atSpot(t)) {
         if (t.idle) cmds.push({ t: 'move', ids: [t.h], x: sx + 0.5, y: sy + 0.5 });
       } else room += capOf(t) - t.aboard - boardingFor(t.h);
     }
@@ -293,8 +325,7 @@ export class NavalBrain {
     const started = afloat.some((t) => t.aboard > 0 || boardingFor(t.h) > 0);
     if (!room || (!started && ready.length < Math.min(4, Math.ceil(afloat.reduce((a, t) => a + capOf(t), 0) / 2)))) return;
     for (const t of afloat) {
-      const [sx, sy] = spotOf(t);
-      if (dist(t.x, t.y, sx + 0.5, sy + 0.5) > 2.5) continue;
+      if (!atSpot(t)) continue;
       const take = ready.filter((u) => !s.busy.has(u.h)).slice(0, Math.max(0, capOf(t) - t.aboard - boardingFor(t.h)));
       if (!take.length) continue;
       for (const u of take) s.busy.add(u.h);
@@ -330,8 +361,8 @@ export class NavalBrain {
     const docks = ai.has(s, 'dock', true);
     if (!docks.length || (!this.island && !this.contact)) return;
     const fleet = s.units.filter((u) => u.cls === 'warship');
-    const escortOnly = this.target && this.hasTransport && !foes.some((o) => o.cls === 'warship');
-    const want = Math.min(WARSHIPS[this.island ? 'island' : 'coast'][s.me.age] ?? 4, escortOnly ? 3 : Infinity);
+    const base = WARSHIPS[this.island ? 'island' : 'coast'][s.me.age] ?? 4;
+    const want = foes.some((o) => o.cls === 'warship') && s.me.age >= 2 ? Math.max(base, WAR_CONTESTED) : base;
     const home = s.units.filter((u) => u.cls === 'fishingShip');
     const guardAt = home.length ? [home.reduce((a, u) => a + u.x, 0) / home.length, home.reduce((a, u) => a + u.y, 0) / home.length] : [docks[0]!.x, docks[0]!.y];
     // Enemy warships near our fishing grounds, and any enemy ship close to our boats or Docks.
@@ -381,9 +412,9 @@ export class NavalBrain {
    * Land soldiers worth training: on an island only a home guard (4) — they can't reach anyone and would take the
    * population and wood the fleet needs — until transports can carry an army (M8.8c).
    */
-  /** Villagers worth keeping: an island 26 (boats and warships need the room), 22 while an invasion is on. */
+  /** Villagers worth keeping: 22 on an island (boats, warships, transports and the army need the room). */
   villagerCap(): number {
-    return !this.island ? Infinity : this.target && this.hasTransport ? 22 : 26;
+    return this.island ? 22 : Infinity;
   }
 
   /** Population to keep free: room for the transports an invasion still lacks. */
@@ -408,7 +439,7 @@ export class NavalBrain {
     if (!this.island && !s.v.fish().some((f) => dist(f.x, f.y, tc.x, tc.y) < 18)) return;
     // An island: on our nearest shore, however far (a Narrows start can be 25+ tiles from the strait). A coast:
     // near the Town Center as before.
-    const shore = this.island ? this.shorePoint(s, this.landOf(s, tc.x, tc.y)) : null;
+    const shore = this.island ? this.shorePoint(s, this.homeLand(s)) : null;
     if (shore) ai.build(s, cmds, 'dock', shore[0] + 0.5, shore[1] + 0.5, 0, docks ? 12 : 6, 1);
     else if (!docks) ai.build(s, cmds, 'dock', tc.x, tc.y, 3, 22, 1);
   }

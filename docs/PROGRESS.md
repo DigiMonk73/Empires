@@ -16,8 +16,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13).
-- **Next up:** M8.8d water AI suite — 7/12 decided (all Hard/small, 1/6 Moderate/tiny): make the tiny Moderate games end; then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
+- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M8 exit).
+- **Next up:** M8 exit blocked on KI-8 (water AI 7/12 decided, gate 90%) — asked the user: keep working it, or tag m8 and move the gate to M13; then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -452,8 +452,10 @@ Ships already train at the Dock and path on water (their own move class and regi
       way: a hemmed-in enemy building read as "across the sea" and stopped the land war. Land suite unchanged
       (3/4, same games). Test: ai.test.ts "invasions".
 - [ ] **M8.8d Water AI suite.** In ai-suite `--full`: 12 island/Narrows 1v1s (Moderate on tiny, Hard on small),
-      ≥ 90% decided within 2 h (the M8 exit gate). _Now 7/12_: every Hard/small game is decided (44–114 min),
-      only 1 of 6 Moderate/tiny games. Fixed so far (each found by tracing a stalled game): transports jostling
+      ≥ 90% decided within 2 h (the M8 exit gate) `[blocked — KI-8]`. _7/12_ (6–7 across tuning passes). Also
+      fixed: transports parked at unreachable boarding spots (spots in the transport's own sea; idle within 4 tiles
+      counts), landings shoved off the beach (the sim sails in again, 5 tries), an island population plan (22 / 6
+      / 3–4 / 2 / ~16 soldiers), island gold, more start wood, beach rotation after a failed landing. Fixed so far (each found by tracing a stalled game): transports jostling
       for one boarding tile (each gets its own spot), 3 transports built where 1 was wanted (queue unseen: one
       order per 90 s), no room in the population for a transport (a reserve for every trainer; an invasion's
       budget: 6 fishers, 3 escorts, 22 villagers), boarding deadlocks, landings short of the beach (sail for the

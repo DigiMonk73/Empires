@@ -85,7 +85,7 @@ describe('AI at sea: economy (M8.8a)', () => {
     const boats = views[0]!.ownUnits().filter((u) => u.cls === 'fishingShip');
     expect(boats.length).toBeGreaterThanOrEqual(6);
     expect(boats.filter((b) => b.order === 'gather').length).toBeGreaterThanOrEqual(boats.length - 2);
-  });
+  }, 30_000); // a long simulated game
 });
 
 describe('AI at sea: warships (M8.8b)', () => {
@@ -114,7 +114,7 @@ describe('AI at sea: warships (M8.8b)', () => {
     expect(peak[1]).toBeGreaterThanOrEqual(1);
     expect(maxLand).toBeLessThanOrEqual(8); // a guard of 4 (+ a few answering a landing)
     expect(sunk).toBeGreaterThan(0); // they met at sea
-  });
+  }, 30_000); // a long simulated game
 });
 
 describe('AI at sea: invasions (M8.8c)', () => {
@@ -147,5 +147,5 @@ describe('AI at sea: invasions (M8.8c)', () => {
     }
     expect(island0[0]).not.toBe(island0[1]);
     expect(landed).toBeGreaterThan(0);
-  });
+  }, 30_000); // a long simulated game
 });

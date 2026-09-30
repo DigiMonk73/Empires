@@ -450,7 +450,7 @@ export class AiPlayer {
     // upgrades (M8.8b — food and gold piled up while the Docks waited for wood).
     if (this.naval.onIsland) {
       const f = Math.min(0.15, sh[0]! - 0.25);
-      const g = s.me.res[2]! > 600 ? Math.max(0, sh[2]! - 0.05) : 0; // gold only while the bank is thin
+      const g = s.me.res[2]! > 600 ? Math.max(0, sh[2]! - 0.02) : 0; // (almost) no gold once there's a bank
       sh[0] = sh[0]! - Math.max(0, f);
       sh[2] = sh[2]! - g;
       sh[1] = sh[1]! + Math.max(0, f) + g;

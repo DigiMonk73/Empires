@@ -37,3 +37,12 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   (b) defer this gate to M13 (AI v2: scouting, counters, massed defence) and tag m7 now; (c) keep tuning.
   **User chose (a)** (2026-09-30): D41 — the full ladder plays 32 maps; if Hard > Easy still falls short, that
   pairing's gate moves to M13.
+- **KI-8 · must · M8 exit blocked: water AI games decided 7/12 in 2 h (gate ≥ 90%)** — the full AI suite's
+  12 island/Narrows 1v1s (Moderate on tiny, Hard on small). The naval AI works end to end — Docks, fishing,
+  fleets that fight, scouting, transports that board, sail and land, soldiers ashore hunting the island — and
+  ~15 stalls found by tracing games are fixed (M8.8a–d in PROGRESS). What's left is strategy, not plumbing:
+  waves of 5–10 lose to a defended island; nothing brings siege to raze buildings (buildings take ×0.2); a lone
+  surviving warship at sea goes unhunted; long games run the start island out of wood (the islets' forests
+  are never reached). Each tuning pass reshuffles which games end (6–7/12), like KI-7. Options for the user:
+  (a) keep working the water AI now; (b) tag m8 and move this gate to M13 (AI v2 — the Done definition's
+  "wins island maps via transports" lives there); (c) measure on more games.
