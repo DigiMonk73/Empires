@@ -298,6 +298,55 @@ export class NavalBrain {
   }
 
   /** The water tile nearest the Town Center that touches our land: where waves board. */
+  /**
+   * The water our ships should sail on: with an invasion target, the biggest body of water touching both our land
+   * and the target's; else the biggest body of water (the open sea, not a cove or a lake).
+   */
+  private sea(s: Snapshot): number {
+    if (!this.target) return this.mainSea(s);
+    const home = this.homeLand(s);
+    const there = this.landOf(s, this.target[0], this.target[1]);
+    if (!home || !there) return this.mainSea(s);
+    const n = new Map<number, number>();
+    const mine = new Set<number>();
+    const theirs = new Set<number>();
+    for (let y = 0; y < s.v.mapH; y++) {
+      for (let x = 0; x < s.v.mapW; x++) {
+        const r = s.v.region(2, x, y);
+        if (!r) continue;
+        n.set(r, (n.get(r) ?? 0) + 1);
+        for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const l = s.v.region(1, x + ax, y + ay);
+          if (l === home) mine.add(r);
+          else if (l === there) theirs.add(r);
+        }
+      }
+    }
+    let best = 0;
+    let bn = 0;
+    for (const [r, c] of n) if (mine.has(r) && theirs.has(r) && (c > bn || (c === bn && r < best))) [best, bn] = [r, c];
+    return best || this.mainSea(s);
+  }
+
+  /** A water tile of sea `sea` within 3 tiles of a building (its centre), as a tile centre. */
+  private waterBeside(s: Snapshot, b: { x: number; y: number }, sea: number): [number, number] | null {
+    let best: [number, number] | null = null;
+    let bd = Infinity;
+    for (let dy = -4; dy <= 4; dy++) {
+      for (let dx = -4; dx <= 4; dx++) {
+        const x = Math.floor(b.x) + dx;
+        const y = Math.floor(b.y) + dy;
+        if (s.v.region(2, x, y) !== sea) continue;
+        const d = dist(x + 0.5, y + 0.5, b.x, b.y);
+        if (d < bd) {
+          bd = d;
+          best = [x + 0.5, y + 0.5];
+        }
+      }
+    }
+    return best;
+  }
+
   /** The biggest body of water (region label) — the open sea, not a cove or a lake. */
   private mainSea(s: Snapshot): number {
     const n = new Map<number, number>();
@@ -410,17 +459,22 @@ export class NavalBrain {
     }
     const stranded = this.ashore(s, cmds, home);
     // One transport (5) in the Tool Age, two from the Bronze Age: a wave lands together, not in fives.
-    const transports = s.units.filter((u) => u.cls === 'transport');
+    // Only transports on the water that reaches the target count (one launched into the ocean behind our own coast
+    // can never get there — M14.6b, a Narrows army of 26 waited an hour for it).
+    const main = this.sea(s);
+    const transports = s.units.filter((u) => u.cls === 'transport' && s.v.region(2, Math.floor(u.x), Math.floor(u.y)) === main);
     this.hasTransport = transports.length > 0;
     const wantTransports = s.me.age >= 3 ? 2 : 1;
     // (One order per 90 s: units still in a Dock's queue aren't counted, and three got built where one was wanted.)
     if (transports.length < wantTransports && s.v.tick - this.transportAt > 90 * 20) {
-      const main = this.mainSea(s);
       const onSea = (d: { x: number; y: number }) => s.v.seaReachable(main, d.x - 1.5, d.y - 1.5, d.x + 1.5, d.y + 1.5);
       const docks = ai.has(s, 'dock', true).filter((d) => d.queue < 2);
       const dock = docks.find(onSea) ?? docks[0];
       const unit = dock && ['heavyTransport', 'lightTransport'].find((u) => !s.v.trainBlocker(dock.h, u));
       if (dock && unit && s.v.canAfford(s.v.cost(unit)) && s.me.pop < s.me.popCap) {
+        // A Dock on two waters launches toward its rally point: point it at the one that reaches the target.
+        const water = this.waterBeside(s, dock, main);
+        if (water) cmds.push({ t: 'rally', blds: [dock.h], x: water[0], y: water[1] });
         cmds.push({ t: 'train', bld: dock.h, unit });
         this.transportAt = s.v.tick;
       } else if (dock && unit && s.v.canAfford(s.v.cost(unit)) && s.me.pop >= s.me.popCap) {
@@ -609,15 +663,19 @@ export class NavalBrain {
   private dock(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
     const tc = s.tc!;
     if (ai.isPending(s, 'dock')) return;
-    // Islands add a second Dock from the Tool Age (fishing boats and warships each want one).
+    // Islands add a second Dock from the Tool Age (fishing boats and warships each want one) — and one more when
+    // none of them is on the water that reaches the enemy (M14.6b: a Narrows army of 26 stood an hour at home, its
+    // transport on the ocean behind its own coast while the strait ran on the other side).
     const docks = ai.has(s, 'dock').length;
-    if (docks >= (this.island && s.me.age >= 2 ? 2 : 1)) return;
+    const sea = this.sea(s);
+    const reaching = !this.target || ai.has(s, 'dock').some((d) => s.v.seaReachable(sea, d.x - 1.5, d.y - 1.5, d.x + 1.5, d.y + 1.5));
+    if (docks >= (this.island && s.me.age >= 2 ? 2 : 1) + (reaching ? 0 : 1)) return;
     if (s.villagers.length < (this.island ? 5 : 8)) return;
     if (!this.island && !s.v.fish().some((f) => dist(f.x, f.y, tc.x, tc.y) < 18)) return;
     // An island: on our nearest shore, however far (a Narrows start can be 25+ tiles from the strait). A coast:
     // near the Town Center as before.
     // (On the open sea, not a cove: transports built in a pocket of water could never sail — M14.6b, seed 402.)
-    const shore = this.island ? this.shorePoint(s, this.homeLand(s), this.mainSea(s)) : null;
+    const shore = this.island ? (reaching ? this.shorePoint(s, this.homeLand(s), sea) : this.shoreOf(s, this.homeLand(s), sea, tc.x, tc.y)) : null;
     if (shore) ai.build(s, cmds, 'dock', shore[0] + 0.5, shore[1] + 0.5, 0, docks ? 12 : 6, 1);
     else if (!docks) ai.build(s, cmds, 'dock', tc.x, tc.y, 3, 22, 1);
   }

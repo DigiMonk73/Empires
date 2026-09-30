@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** water AI 39/48 held out (gate 44, D56); KI-9/KI-10/KI-11 closed (D58, D59), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** the water AI (39/48 held out, gate 44) — the one gate before the M14 exit (verify:full, tag, package 0.14.0).
+- **Next up:** the water AI (42/48 held out, gate 44) — the one gate before the M14 exit (verify:full, tag, package 0.14.0).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -846,6 +846,10 @@ of island/Narrows games decided in 2 h (11/12).
       starts 3/8 undecided, idle ~30%). Default games unchanged (every rule keys on the starting age).
       _Nomad (D60):_ the lobby's starting ages include Nomad — no Town Centers, 3 villagers; the AI founds one first.
       16 AI games: all founded in 2 min, 14/16 decided.
+      _Water:_ ships sail on the water that reaches the enemy — the biggest body touching both our land and the
+      target's (was: the biggest body, which on a Narrows map can be the ocean behind our own coast); a Dock on two
+      waters is rallied into it before a transport is trained; a third Dock when none touches it; transports on the
+      wrong water don't count. Held out 39 → 42/48, dev 38 → 41/48; ladder unchanged.
       _D58 (the user's choice on KI-9/KI-11):_ 1v1s judged decided within 60 min on 24 held-out seeds; hills on; the
       predator fix applied; the AI's population logic reads the game's limit (50 was hard-coded — a 25 limit
       re-opened the M13.4 age deadlock). Full suite: wars 21/24; ladder all pass but Hard > Moderate 44/64 (48);
