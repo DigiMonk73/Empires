@@ -2,6 +2,14 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.6 · Roman contact sheets (13 buildings × ages); verify shots ≤ 0.17% (re-bake only)
+- Roman set: Palatine huts with crossed ridge poles (Stone); stucco on tufa under wide terracotta gables (Tool);
+  red brick, arched openings, pedimented gable ends and pier arcades (Bronze); marble with pilasters, bronze-tiled
+  domes and gilded acroteria (Iron). The high-podium temple reads Roman next to the Greek peripteral one. The
+  amphitheatre Wonder: arcaded tiers, a coursed seating bowl, a sand arena. Must-fix fixed: the team ring was a
+  solid disc lidding the arena; the domes rendered near-black (metalness without an environment → 0.2).
+- All 16 civilizations now build in their own set (5 sets; Greek keeps the hand-built models).
+
 ## 2026-09-30 · M9.5 · Asian contact sheets (13 buildings × ages); verify shots ≤ 0.15% (re-bake only)
 - Asian set: pit dwellings (Stone); raised timber halls under steep thatch with chigi and ridge logs, stilted
   granaries (Tool); red lacquer columns, white walls and grey tile roofs sweeping up at the corners (Bronze);
