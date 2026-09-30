@@ -17,6 +17,8 @@ export type Command =
   | { t: 'act'; ids: number[]; h: number; queue?: boolean }
   /** The issuing player gives up (defeated at once; their units stay where they are, idle). */
   | { t: 'resign' }
+  /** Destroy own units/buildings (the Delete key; a converting priest with Martyrdom converts its target). */
+  | { t: 'delete'; ids: number[] }
   /** Stand Ground on/off for units `ids`. */
   | { t: 'stance'; ids: number[]; stand: boolean }
   /** Queue `n` of base unit `unit` at building `bld`. */

@@ -209,6 +209,14 @@ export class InputController {
       this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);
       return;
     }
+    // Priests: right-click a friendly unit to heal it (the sim ignores it for everyone else).
+    const priests = ids.filter((h) => TYPES[e.type[e.slotOf(h)]!]!.unit?.cls === 'priest');
+    if (priests.length && ts >= 0 && e.kind[ts] === EKind.unit && !enemy && e.owner[ts] !== 0 && ts !== e.slotOf(priests[0]!)) {
+      this.session.router.submit(me, { t: 'act', ids: priests, h: target, queue });
+      this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0x7ae07a);
+      const rest = ids.filter((h) => !priests.includes(h));
+      if (!rest.length) return;
+    }
     if (res >= 0) {
       this.session.router.submit(me, { t: 'gather', ids, res, queue });
       const r = this.world.res;
@@ -341,6 +349,16 @@ export class InputController {
         this.page = 'main';
         this.onUiChange?.();
       } else this.sel.clear();
+      return;
+    }
+    // Delete (the original's Delete key; Mac keyboards send Backspace): destroy the selected own units/buildings.
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const me = this.session.localPlayer;
+      const ids = this.sel.list.filter((h) => this.world.ents.slotOf(h) >= 0 && this.world.ents.owner[this.world.ents.slotOf(h)] === me);
+      if (ids.length) {
+        e.preventDefault();
+        this.session.router.submit(me, { t: 'delete', ids: [...ids] });
+      }
       return;
     }
     // Command-grid hotkeys (letters, no modifiers).

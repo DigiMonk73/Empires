@@ -59,6 +59,7 @@ export function syncHud(world: World, player: number, selected: readonly number[
       isBuilding: e.kind[s] === EKind.building,
       model: t.id,
       ...(e.kind[s] === EKind.building ? { building: e.build[s]! } : {}),
+      ...(u?.cls === 'priest' ? { faith: Math.floor(e.faith[s]!) } : {}),
     });
   }
   hud.selection.value = sel;

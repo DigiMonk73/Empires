@@ -6,7 +6,8 @@ export type SfxName =
   | 'chop' | 'mine' | 'hammer' | 'hoe' | 'forage'
   | 'clash' | 'club' | 'bow' | 'sling' | 'thunk'
   | 'collapse' | 'thud'
-  | 'built' | 'trained' | 'fanfare' | 'defeat' | 'alert' | 'click';
+  | 'built' | 'trained' | 'fanfare' | 'defeat' | 'alert' | 'click'
+  | 'chant' | 'converted';
 
 type Gen = (t: number, i: number, noise: () => number) => number;
 
@@ -113,5 +114,14 @@ export function makeSfx(ctx: BaseAudioContext): Record<SfxName, AudioBuffer> {
       return note(880, 0) + note(660, 0.2);
     }, (x, r) => lowpass(x, r, 2500)),
     click: render(ctx, 0.04, 18, (t, _i, n) => n() * env(t, 0.0005, 0.006), (x, r) => highpass(x, r, 2000)),
+    // A priest's chant: a low voice-like drone rising a fifth ("oh — ah"), buzzy source through a soft formant.
+    chant: render(ctx, 1.6, 19, (t) => {
+      const f = t < 0.5 ? 146.8 : 220;
+      const vib = 1 + 0.01 * Math.sin(2 * Math.PI * 5.5 * t);
+      const src = saw(f * vib, t) * 0.6 + tone(f * vib, t) + 0.5 * tone(2 * f * vib, t);
+      return src * env(t, 0.08, 0.42) * (t < 0.5 ? 1 : 0.9);
+    }, (x, r) => lowpass(x, r, 900)),
+    // Converted: two bright bell partials.
+    converted: render(ctx, 1.2, 20, (t) => (tone(1046.5, t) + 0.6 * tone(1568, t) + 0.3 * tone(2637, t)) * env(t, 0.003, 0.35)),
   };
 }

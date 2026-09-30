@@ -60,6 +60,10 @@ function clipFor(act: number, carryJob: number, carryAmt: number): string {
       return 'attack'; // villagers (hunting) play 'throw' instead — see animate()
     case Act.dying:
       return 'die';
+    case Act.convert:
+      return 'convert';
+    case Act.heal:
+      return 'heal';
     default:
       return 'idle';
   }
@@ -109,7 +113,7 @@ export class WorldRenderer {
     this.objectLayer.sortableChildren = true;
     this.fog = new FogLayer(world);
     this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.missileGfx, this.fog.mesh, this.overlayLayer);
-    this.decalLayer.addChild(this.selGfx, this.markerGfx, this.ghostGfx);
+    this.decalLayer.addChild(this.selGfx, this.markerGfx, this.ghostGfx, this.faithGfx);
     this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
     this.buildResources();
@@ -121,6 +125,36 @@ export class WorldRenderer {
 
   onEvents(events: readonly SimEvent[]): void {
     this.fx.onEvents(events);
+    for (const ev of events) if (ev.t === 'converted') this.flashes.push({ x: ev.x, y: ev.y, t0: this.world.tick });
+  }
+
+  /** Conversions just made: a golden flash on the converted unit (sim ticks, so paused shots are stable). */
+  private flashes: { x: number; y: number; t0: number }[] = [];
+  private readonly faithGfx = new Graphics();
+
+  /** A pulsing ring under every unit a priest is chanting at, and the flash of each conversion. */
+  private drawFaith(player: number, alpha: number): void {
+    const g = this.faithGfx.clear();
+    const e = this.world.ents;
+    const now = this.world.tick + alpha;
+    const p = { x: 0, y: 0 };
+    for (let s = 0; s < e.top; s++) {
+      if (!e.alive[s] || e.act[s] !== Act.convert) continue;
+      const o = this.world.orders[s]?.[0];
+      const t = o?.k === 'convert' ? e.slotOf(o.h) : -1;
+      if (t < 0 || !this.fog.isVisible(player, Math.floor(e.x[t]!), Math.floor(e.y[t]!))) continue;
+      worldToIso(e.x[t]!, e.y[t]!, 0, p);
+      const k = 0.5 + 0.5 * Math.sin(now * 0.4);
+      const r = 16 + 5 * k;
+      g.ellipse(p.x, p.y, r, r / 2).stroke({ width: 2, color: 0xffd86a, alpha: 0.45 + 0.4 * k });
+    }
+    this.flashes = this.flashes.filter((f) => now - f.t0 < 14);
+    for (const f of this.flashes) {
+      const u = (now - f.t0) / 14;
+      worldToIso(f.x, f.y, 0, p);
+      g.ellipse(p.x, p.y, 10 + 30 * u, (10 + 30 * u) / 2).stroke({ width: 3, color: 0xfff0b0, alpha: 1 - u });
+      g.circle(p.x, p.y - 24, 14 * (1 - u)).fill({ color: 0xfff6d0, alpha: 0.5 * (1 - u) });
+    }
   }
 
   private buildTerrain(): void {
@@ -505,6 +539,7 @@ export class WorldRenderer {
     }
     this.fx.update(alpha, (tx, ty) => this.fog.isVisible(player, tx, ty), (tx, ty) => this.fog.isExplored(player, tx, ty));
     this.drawMissiles(alpha, player);
+    this.drawFaith(player, alpha);
     const r = this.world.res;
     if (this.resViews.length < r.count) this.buildResources(player);
     for (let i = 0; i < r.count; i++) {

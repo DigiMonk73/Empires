@@ -147,3 +147,8 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   — in ≥ 75% of games. Quick verify: Hardest>Easiest on seeds 101–104; full: + Hard>Easy, Moderate>Easiest on
   101–108. Seeds 101–108 were held out while tuning. The Done target (each level beats the one below ≥ 75%,
   by conquest) stays for M13.
+- **D34 — Priests** (2026-09-29, M7.5). A chant every 1.5 s (a DE-era figure; 1.0c's is unknown) rolls 30% ×
+  conversionRate ÷ resistance on the conversion RNG stream. Simplifications: a converted unit takes its new
+  owner's stats (the original froze its old techs, except Monotheism/Astrology/Fanaticism/Ballistics/
+  Siegecraft); every idle priest tends wounded allies in sight (the original did so after a first heal order);
+  Delete needs no confirmation (as the original). Healing adjacency is radius + 0.35 tiles.

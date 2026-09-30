@@ -59,6 +59,8 @@ export class EntityStore {
   lastDist = new Float64Array(0);
   /** Buildings: remaining stock (a farm's food). */
   stock = new Float64Array(0);
+  /** Priests: faith 0–100; a conversion needs it full and empties it (mil:3). */
+  faith = new Float64Array(0);
   /** Units: stance — 0 normal, 1 Stand Ground (hold position; fire within range, hit only what is adjacent). */
   stance = new Uint8Array(0);
   /** Villagers: what they carry — JOBS index + 1 (0 = nothing) — and how much. */
@@ -98,6 +100,7 @@ export class EntityStore {
     this.stuck = copy(this.stuck, (n) => new Uint16Array(n));
     this.lastDist = copy(this.lastDist, (n) => new Float64Array(n));
     this.stock = copy(this.stock, (n) => new Float64Array(n));
+    this.faith = copy(this.faith, (n) => new Float64Array(n));
     this.stance = copy(this.stance, (n) => new Uint8Array(n));
     this.carryJob = copy(this.carryJob, (n) => new Uint8Array(n));
     this.carryAmt = copy(this.carryAmt, (n) => new Float64Array(n));
@@ -137,6 +140,7 @@ export class EntityStore {
     this.carryJob[slot] = 0;
     this.carryAmt[slot] = 0;
     this.stock[slot] = 0;
+    this.faith[slot] = 100;
     this.stance[slot] = 0;
     this.count++;
     return makeHandle(slot, this.gen[slot]!);
@@ -172,7 +176,7 @@ export class EntityStore {
   /** Names of the per-slot typed arrays, in canonical order (save/load, hashing). */
   static readonly FIELDS = [
     'alive', 'gen', 'kind', 'type', 'owner', 'x', 'y', 'px', 'py', 'facing', 'hp', 'act', 'actStart', 'target',
-    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR', 'carryJob', 'carryAmt', 'stock', 'stance',
+    'timer', 'build', 'stuck', 'lastDist', 'losTx', 'losTy', 'losR', 'carryJob', 'carryAmt', 'stock', 'faith', 'stance',
   ] as const;
 
   /** Replace all state from a snapshot's parts. */

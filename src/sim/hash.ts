@@ -10,7 +10,7 @@ export function hashBreakdown(w: World): Record<string, number> {
     .array(e.alive, n).array(e.gen, n).array(e.kind, n).array(e.type, n).array(e.owner, n)
     .array(e.x, n).array(e.y, n).array(e.facing, n).array(e.hp, n).array(e.act, n).array(e.actStart, n)
     .array(e.target, n).array(e.timer, n).array(e.build, n).array(e.stuck, n).array(e.lastDist, n)
-    .array(e.losTx, n).array(e.losTy, n).array(e.losR, n).array(e.carryJob, n).array(e.carryAmt, n).array(e.stock, n).array(e.stance, n)
+    .array(e.losTx, n).array(e.losTy, n).array(e.losR, n).array(e.carryJob, n).array(e.carryAmt, n).array(e.stock, n).array(e.faith, n).array(e.stance, n)
     .array(e.freeList(), e.freeList().length, false)
     .digest();
   const r = w.res;

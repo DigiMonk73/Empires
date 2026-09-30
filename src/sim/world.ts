@@ -137,7 +137,10 @@ export type Order =
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
   /** Attack unit/building `h`. `auto`: picked by the unit itself (auto-acquire, retaliation) — leashed, and dropped
    *  by Stand Ground units once the target leaves reach. */
-  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean; stall?: number };
+  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean; stall?: number }
+  /** A priest converting `h` (chanting from range once its faith is full) or healing `h` (adjacent). */
+  | { k: 'convert'; h: number; chant: number; auto: boolean; stall?: number }
+  | { k: 'heal'; h: number; auto: boolean; stall?: number };
 
 export type SimEvent =
   | { t: 'rejected'; player: number; reason: string }
@@ -154,6 +157,8 @@ export type SimEvent =
   | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number }
+  /** Entity `h` changed sides (a priest's conversion). */
+  | { t: 'converted'; h: number; from: number; to: number; x: number; y: number; priest: number }
   /** A swing lands or a missile is released (render/audio only). */
   | { t: 'strike'; h: number; tgt: number; type: number; x: number; y: number; missile: boolean; building: boolean }
   /** A missile comes down (hit or not). */

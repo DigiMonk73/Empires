@@ -18,7 +18,7 @@ export interface AudioContextInfo {
 }
 
 /** Work clip (baked 'hit' marker) → sound. */
-const WORK: Record<string, SfxName> = { chop: 'chop', mine: 'mine', farm: 'hoe', build: 'hammer' };
+const WORK: Record<string, SfxName> = { chop: 'chop', mine: 'mine', farm: 'hoe', build: 'hammer', convert: 'chant' };
 /** Minimum gap between two plays of one work sound — twenty woodcutters make a rhythm, not a roar. */
 const WORK_GAP_MS = 90;
 
@@ -94,6 +94,13 @@ export class AudioHooks {
           else {
             const q = this.place(x.x, x.y, x.owner === me);
             if (q) this.a.voice('death', 'die', q.pan, q.gain * 0.8);
+          }
+          break;
+        case 'converted':
+          // Heard when it concerns us, wherever it happens (the original's short chant cue off-screen).
+          if (x.to === me || x.from === me) {
+            const q = this.place(x.x, x.y, true);
+            this.a.play('converted', q?.pan ?? 0, q ? q.gain * 0.8 : 0.5);
           }
           break;
         case 'destroyed':

@@ -203,3 +203,42 @@ test('army: every land unit in ranks (art review), then the infantry clash', asy
   await snap(page, info, 'army-clash');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('priests by mouse: right-click an enemy to convert it — the chant ring, the flash, the bell', async ({ page }, info) => {
+  await openGame(page, 'scenario=temple&fog=0&paused=1');
+  await page.evaluate(() => {
+    for (const t of ['toolAge', 'bronzeAge']) window.__empires!.grantTech(1, t);
+    window.__empires!.camera.setZoom(1.6);
+    window.__empires!.camera.centerOn(14, 11);
+  });
+  await frames(page);
+  const mine = await page.evaluate(() => window.__empires!.query.units(1));
+  const priest = mine.find((u) => u.type === 'priest')!;
+  const foe = (await page.evaluate(() => window.__empires!.query.units(2)))[0]!;
+  const pp = (await page.evaluate((h) => window.__empires!.entityScreenPos(h), priest.h))!;
+  await page.mouse.click(pp.x, pp.y - 12);
+  expect(await page.evaluate(() => window.__empires!.query.selection())).toEqual([priest.h]);
+  await expect(page.getByTestId('faith')).toHaveText('Faith: 100%');
+  const fp = (await page.evaluate((h) => window.__empires!.entityScreenPos(h), foe.h))!;
+  await page.mouse.click(fp.x, fp.y - 12, { button: 'right' });
+  // Walk into range and chant.
+  let chanting = false;
+  for (let i = 0; i < 200 && !chanting; i++) {
+    await page.evaluate(() => window.__empires!.step(2));
+    chanting = (await page.evaluate((h) => window.__empires!.query.units(1).find((u) => u.h === h)!.act, priest.h)) === 7;
+  }
+  expect(chanting).toBe(true);
+  await page.evaluate(() => window.__empires!.step(6));
+  await frames(page);
+  await snap(page, info, 'priest-chant');
+  let converted = false;
+  for (let i = 0; i < 60 && !converted; i++) {
+    await page.evaluate(() => window.__empires!.step(20));
+    converted = (await page.evaluate((h) => window.__empires!.query.units(1).some((u) => u.h === h), foe.h));
+  }
+  expect(converted).toBe(true);
+  expect((await page.evaluate(() => window.__empires!.audioStats().played)).converted ?? 0).toBeGreaterThanOrEqual(1);
+  await frames(page);
+  await snap(page, info, 'priest-converted');
+  expect(pageErrors(page)).toEqual([]);
+});

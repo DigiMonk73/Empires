@@ -8,6 +8,7 @@ import { placeFoundation, startConstruct } from '../systems/build.ts';
 import { cancelUnit, currentBuilding, queueResearch, queueUnit } from '../systems/production.ts';
 import { startFarm } from '../systems/farm.ts';
 import { startAttack } from '../systems/combat.ts';
+import { deleteOwn, isPriest, startConvert, startHeal } from '../systems/priest.ts';
 
 /** Slots of the command's ids that are live units owned by the issuing player (others are ignored). */
 function ownedUnitSlots(w: World, player: number, ids: readonly number[]): number[] {
@@ -145,7 +146,10 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
         const t = w.ents.slotOf(cmd.h);
         if (t < 0) break;
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
-          if (w.ents.kind[t] === EKind.building && w.ents.owner[t] === player) {
+          if (isPriest(w, slot)) {
+            // Priests: right-click converts an enemy, heals a friend.
+            if (!startConvert(w, slot, cmd.h, !!cmd.queue)) startHeal(w, slot, cmd.h, !!cmd.queue);
+          } else if (w.ents.kind[t] === EKind.building && w.ents.owner[t] === player) {
             if (w.ents.build[t]! < 1) startConstruct(w, slot, cmd.h, !!cmd.queue);
             else startFarm(w, slot, cmd.h, !!cmd.queue);
           } else startAttack(w, slot, cmd.h, !!cmd.queue);
@@ -161,6 +165,11 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
           pl.defeated = w.tick;
           w.events.push({ t: 'defeated', player });
         }
+        break;
+      }
+      case 'delete': {
+        const slots = cmd.ids.map((h) => w.ents.slotOf(h)).filter((s) => s >= 0 && w.ents.owner[s] === player);
+        deleteOwn(w, player, slots);
         break;
       }
       case 'stance':

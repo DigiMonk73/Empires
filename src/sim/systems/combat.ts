@@ -11,6 +11,7 @@ import type { TypeStats } from '../rules/playerStats.ts';
 import type { World } from '../world.ts';
 import { approachRect, depleteNode, isVillager, REACH, startGather } from './gather.ts';
 import { refundQueue } from './production.ts';
+import { FAITH_MAX, isPriest, startConvert } from './priest.ts';
 
 /**
  * Combat core (mil:2). Damage = max(1, Σ over armor classes the target has: max(0, attack − armor)); against
@@ -182,6 +183,8 @@ function retaliate(w: World, target: number, attacker: number): void {
     startAttack(w, s, ah, false, true);
   });
   if (mayReact(w, target)) startAttack(w, target, ah, false, true);
+  // A priest under attack answers by converting the attacker (mil:3), once its faith is full.
+  else if (isPriest(w, target) && e.faith[target]! >= FAITH_MAX && !w.orders[target]) startConvert(w, target, ah, false, true);
 }
 
 /**

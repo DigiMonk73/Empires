@@ -244,6 +244,25 @@ function army(): SimConfig {
   return { victory: 'none', seed: 12, map: { w: 32, h: 32 }, players: [{ civ: 'greek' }, { civ: 'roman' }], scenario: { units } };
 }
 
+/** Priests for review (M7.5): a temple, priests beside wounded soldiers, and enemies across the field. */
+function templeScene(): SimConfig {
+  return {
+    victory: 'none',
+    seed: 13,
+    map: { w: 32, h: 32 },
+    players: [{ civ: 'egyptian' }, { civ: 'greek' }],
+    startingResources: 'deathmatch',
+    scenario: {
+      buildings: [{ type: 'temple', owner: 1, tx: 5, ty: 5 }],
+      units: [
+        ...[0, 1, 2].map((i) => ({ type: 'priest', owner: 1, x: 10.5 + i * 1.2, y: 9.5 })),
+        ...[0, 1].map((i) => ({ type: 'axeman', owner: 1, x: 10.5 + i * 1.2, y: 11.2 })),
+        ...[0, 1, 2].map((i) => ({ type: 'clubman', owner: 2, x: 18.5 + i * 1.2, y: 12.5 })),
+      ],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -281,6 +300,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   fort,
   siege,
   army,
+  temple: templeScene,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

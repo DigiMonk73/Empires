@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7.5 Temple + priests (conversion, healing, faith, temple techs; priest art).
+- **Next up:** M7.6 economy + civic techs (every effect honoured by the sim, one test each), M7.7 Wonder.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -332,8 +332,15 @@ each one *work* in the sim, UI and AI, one slice at a time.
       turbaned rider), horse archers (bow draw from the saddle), war/armored elephant (mahout on the neck, scale
       barding) and elephant archer (howdah); chariots are horse + two-wheeled cart (rolling spoked wheels, team
       side panels) + standing crewman, scythes on the Scythe Chariot's hubs, an archer for the Chariot Archer.
-- [ ] **M7.5 Temple + priests.** Conversion (odds, range, faith, resistances), healing, rejuvenation; temple techs
-      (Astrology, Mysticism, Polytheism, Afterlife, Monotheism, Fanaticism, Jihad, Medicine, Martyrdom).
+- [x] **M7.5 Temple + priests.** `systems/priest.ts`: conversion from range 10 (Afterlife +3) with full faith, a
+      chant every 1.5 s at 30% × Astrology ÷ resistance (chariots 8, ships 2, Macedonian 4); faith refills
+      2/s (Fanaticism 3.5); Monotheism adds priests and buildings (not TC/Wonder, from alongside); healing
+      3 HP/s alongside (Medicine ×3), idle priests tend the wounded near them; a priest under attack answers by
+      converting the attacker; Delete command (Delete/Backspace) with Martyrdom's instant conversion. Faith is
+      an entity field (hashed, saved) → SIM_VERSION 0.7.0. UI: right-click converts/heals, faith in the panel,
+      a pulsing chant ring and a conversion flash; chant and bell sounds. Art: robed priest with staff (chant
+      and heal clips), a colonnaded temple. `?scenario=temple`. Tests priest.test.ts (odds over 60 trials,
+      faith, heal, Monotheism, retaliation, Martyrdom + codec); e2e by mouse. AI priests: M13.
 - [ ] **M7.6 Economy + civic techs.** Market (Wheel, Woodworking line, mining, Domestication/Plow/Irrigation,
       Coinage), Storage Pit (armor/tool lines), Granary, Government Center (Nobility, Writing, Architecture,
       Aristocracy, Alchemy, Engineering, Ballistics, Logistics…): every effect honoured by the sim, one test each.

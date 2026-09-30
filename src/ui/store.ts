@@ -17,6 +17,8 @@ export interface SelInfo {
   model: string;
   /** Construction progress (buildings), 1 = done. */
   building?: number;
+  /** Priests: faith 0–100 ("rejuvenation" in the original's status box). */
+  faith?: number;
 }
 
 /** One player's row on the post-game screen. */

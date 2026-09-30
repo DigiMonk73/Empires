@@ -91,6 +91,11 @@ function SinglePanel({ s }: { s: SelInfo }) {
           </div>
         )}
         {s.building && s.building < 1 && <div class="sel-line">Under construction: {Math.floor(s.building * 100)}%</div>}
+        {s.faith !== undefined && (
+          <div class="sel-line" data-testid="faith" title="A conversion needs full faith">
+            Faith: {s.faith}%
+          </div>
+        )}
         {q.length > 0 && (
           <div class="queue" data-testid="queue">
             {q.map((item, i) => (

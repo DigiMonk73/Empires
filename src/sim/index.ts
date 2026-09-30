@@ -10,6 +10,7 @@ import { productionSystem } from './systems/production.ts';
 import { victorySystem } from './systems/victory.ts';
 import { farmSystem } from './systems/farm.ts';
 import { attackSystem, decaySystem, projectileSystem, targetSystem, towerSystem } from './systems/combat.ts';
+import { priestSystem } from './systems/priest.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
 import { deserializeWorld, serializeWorld } from './save/serialize.ts';
 
@@ -58,6 +59,7 @@ export class Sim {
     farmSystem(w);
     buildSystem(w);
     attackSystem(w);
+    priestSystem(w);
     towerSystem(w);
     projectileSystem(w);
     decaySystem(w);
