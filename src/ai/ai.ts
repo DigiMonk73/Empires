@@ -100,12 +100,12 @@ export class AiPlayer {
   /** No army at all (economy benchmarks and the AI suite's timing runs). */
   readonly peaceful: boolean;
 
-  constructor(player: number, level: AiLevel, seed: number, opts: { peaceful?: boolean } = {}) {
+  constructor(player: number, level: AiLevel, seed: number, opts: { peaceful?: boolean; civ?: string } = {}) {
     this.player = player;
     this.level = level;
     this.p = AI_LEVEL_PARAMS[level];
     this.rng = new Rng(seed, STREAM.aiBase + player);
-    this.military = new MilitaryBrain(this.rng, level);
+    this.military = new MilitaryBrain(this.rng, level, opts.civ ?? '');
     this.peaceful = !!opts.peaceful;
   }
 

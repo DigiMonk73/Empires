@@ -5,6 +5,7 @@ import type { Rng } from '../sim/math/rng.ts';
 import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
 import { dist, type AiPlayer, type Snapshot } from './ai.ts';
 import { Tactics, worth, type Danger, type Sighting } from './tactics.ts';
+import { styleOf } from './civStyle.ts';
 
 /**
  * AI military v1 (M6.5). Two plans, picked once per game: a *rush* (Barracks early, clubmen → axemen and
@@ -74,10 +75,11 @@ export class MilitaryBrain {
   private readonly war: (typeof WAR)[AiLevel];
   private readonly tactics = new Tactics();
 
-  constructor(rng: Rng, level: AiLevel) {
+  constructor(rng: Rng, level: AiLevel, civ = '') {
     this.war = WAR[level];
-    // One draw at every level, so the AI's random stream doesn't depend on it: a rush with the level's odds.
-    this.plan = rng.int(100) < Math.round(this.war.rush * 100) ? 'rush' : 'boom';
+    // One draw at every level, so the AI's random stream doesn't depend on it: a rush with the level's odds (the
+    // economy civilizations boom more, M13.6).
+    this.plan = rng.int(100) < Math.round(this.war.rush * (styleOf(civ).rush ?? 1) * 100) ? 'rush' : 'boom';
   }
 
   /** Bronze Age, an Archery Range standing, and no Siege Workshop yet (levels that field siege). */
@@ -202,9 +204,21 @@ export class MilitaryBrain {
       ai.build(s, cmds, 'stable', tc.x, tc.y, 7, 13, 1);
       return;
     }
-    if (this.plan === 'rush' && s.me.age >= 2 && ai.has(s, 'barracks').length === 1 && !ai.isPending(s, 'barracks') && s.villagers.length >= 18) {
+    const main = styleOf(s.me.civ).main;
+    if ((this.plan === 'rush' || main === 'infantry') && s.me.age >= 2 && ai.has(s, 'barracks').length === 1 && !ai.isPending(s, 'barracks') && s.villagers.length >= 18) {
       ai.build(s, cmds, 'barracks', tc.x, tc.y, 7, 13, 1);
       return;
+    }
+    // The civilization's arm (M13.6): a second Archery Range or Stable once the economy carries it, or the Academy
+    // as soon as the Bronze Age opens it.
+    if (main === 'archers' && s.me.age >= 2 && ai.has(s, 'archeryRange', true).length === 1 && !ai.isPending(s, 'archeryRange') && s.villagers.length >= 20) {
+      if (ai.build(s, cmds, 'archeryRange', tc.x, tc.y, 7, 13, 1)) return;
+    }
+    if (main === 'riders' && s.me.age >= 3 && ai.has(s, 'stable', true).length === 1 && !ai.isPending(s, 'stable') && s.villagers.length >= 22) {
+      if (ai.build(s, cmds, 'stable', tc.x, tc.y, 7, 13, 1)) return;
+    }
+    if (main === 'hoplites' && s.me.age >= 3 && !ai.has(s, 'academy').length && !ai.isPending(s, 'academy') && s.v.canBuild('academy')) {
+      if (ai.build(s, cmds, 'academy', tc.x, tc.y, 7, 13, 1)) return;
     }
 
   }
@@ -274,7 +288,7 @@ export class MilitaryBrain {
       if (!b.done || b.queue >= 2 || s.me.pop + popReserve >= s.me.popCap) continue;
       // Priests (M13.5): a few per level, from gold — the pile every computer floated — minus what the Iron Age needs.
       if (b.type === 'temple') {
-        if (priests >= this.war.priests || s.v.trainBlocker(b.h, 'priest')) continue;
+        if (priests >= this.war.priests + (this.war.priests ? (styleOf(s.me.civ).priests ?? 0) : 0) || s.v.trainBlocker(b.h, 'priest')) continue;
         const ironGold = s.me.age === 3 && !s.me.techs.includes('ironAge') && !s.v.researching('ironAge') ? 800 : 0;
         if (s.me.res[2]! - 125 < ironGold) continue;
         cmds.push({ t: 'train', bld: b.h, unit: 'priest' });
@@ -282,7 +296,7 @@ export class MilitaryBrain {
         continue;
       }
       // Siege is counted on its own: a few engines per level, on top of the army.
-      if (workshop ? siege >= this.war.siege : have >= want) continue;
+      if (workshop ? siege >= this.war.siege + (this.war.siege ? (styleOf(s.me.civ).siege ?? 0) : 0) : have >= want) continue;
       const unit = this.pick(s, b.type, b.h, workshop ? siege : have);
       if (!unit || s.v.trainBlocker(b.h, unit) || !s.v.canAfford(s.v.cost(unit))) continue;
       // Keep food for the next age / villagers while booming.
@@ -309,12 +323,15 @@ export class MilitaryBrain {
       switch (building) {
         case 'barracks':
           return s.me.age >= 2 && n % 3 === 2 ? ['slinger', 'clubman'] : ['shortSwordsman', 'clubman'];
-        case 'archeryRange':
-          // Mounted archers alternate with foot archers where the civ has them.
+        case 'archeryRange': {
+          // The civ's favourite archers (M13.6), with foot archers mixed in; else mounted and foot alternate.
+          const fav = styleOf(s.me.civ).range;
+          if (fav) return n % 3 === 2 ? ['improvedBowman', 'bowman'] : [...fav];
           return n % 2 ? ['horseArcher', 'chariotArcher', 'improvedBowman', 'bowman'] : ['improvedBowman', 'bowman'];
+        }
         case 'stable':
-          // The civ's strongest line first (the tree decides: econ:6.2), then whatever it has.
-          return s.me.age >= 3 ? ['cavalry', 'chariot', 'warElephant', 'camel', 'scout'] : ['scout'];
+          // The civ's favourite riders (M13.6), else its strongest line (the tree decides: econ:6.2).
+          return s.me.age >= 3 ? [...(styleOf(s.me.civ).stable ?? ['cavalry', 'chariot', 'warElephant', 'camel']), 'scout'] : ['scout'];
         case 'academy':
           return ['hoplite'];
         case 'siegeWorkshop':

@@ -19,6 +19,8 @@ export interface MatchOptions {
   minutes: number;
   /** AIs build no army (economy timing runs). */
   peaceful?: boolean;
+  /** Civilizations by seat (default: Greek, Egyptian, Persian, …). */
+  civs?: string[];
   clock?: () => number;
 }
 
@@ -48,17 +50,19 @@ export interface MatchResult {
   plans: string[];
   /** Enemy units each player converted (priests, M13.5). */
   conversions: number[];
+  /** Each player's units ever trained, by type (M13.6: does a civ field its style?). */
+  trained: Record<string, number>[];
 }
 
 const isVillager = (w: Sim['world'], s: number): boolean => TYPES[w.ents.type[s]!]!.unit?.cls === 'villager';
 
 export function runMatch(o: MatchOptions): MatchResult {
-  const civs = ['greek', 'egyptian', 'persian', 'babylonian', 'hittite', 'yamato', 'shang', 'roman'];
+  const civs = o.civs ?? ['greek', 'egyptian', 'persian', 'babylonian', 'hittite', 'yamato', 'shang', 'roman'];
   const cfg = generateMap({ seed: o.seed, type: o.type ?? 'continental', size: o.size ?? 'tiny', players: o.levels.map((_, i) => ({ civ: civs[i % civs.length]! })) });
   const sim = Sim.create({ ...cfg, players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
   const w = sim.world;
   const n = o.levels.length;
-  const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful }));
+  const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful, civ: civs[i % civs.length]! }));
   const views = o.levels.map((_, i) => new PlayerView(w, i + 1));
   const samples: MatchSample[] = [];
   const idle = new Array<number>(n).fill(0);
@@ -67,11 +71,18 @@ export function runMatch(o: MatchOptions): MatchResult {
   const stuck = new Set<number>();
   const seen = new Set<number>();
   const total = o.minutes * 60 * 20;
+  const trained = o.levels.map(() => ({}) as Record<string, number>);
   for (let t = 0; t < total; t++) {
     const cmds = ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd })));
     const t0 = o.clock?.() ?? 0;
     sim.step(cmds);
-    sim.drainEvents(); // nobody listens headless; don't let them pile up
+    for (const ev of sim.drainEvents()) {
+      if (ev.t !== 'trained' || ev.player < 1 || ev.player > n) continue;
+      const slot = w.ents.slotOf(ev.h);
+      if (slot < 0) continue;
+      const id = TYPES[w.ents.type[slot]!]!.id;
+      if (id !== 'villager') trained[ev.player - 1]![id] = (trained[ev.player - 1]![id] ?? 0) + 1;
+    }
     maxTickMs = Math.max(maxTickMs, (o.clock?.() ?? 0) - t0);
     if (t % 20 === 0) {
       const e = w.ents;
@@ -105,6 +116,7 @@ export function runMatch(o: MatchOptions): MatchResult {
     techs: o.levels.map((_, i) => [...w.players[i + 1]!.techs]),
     plans: ais.map((ai) => ai.military.plan),
     conversions: o.levels.map((_, i) => w.players[i + 1]!.tally.conversions),
+    trained,
   };
 }
 

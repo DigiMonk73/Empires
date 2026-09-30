@@ -41,14 +41,14 @@ export class GameSession {
     };
     this.localPlayer = localPlayer;
     config.players.forEach((p, i) => {
-      if (p.ai && i + 1 !== localPlayer) this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i), view: new PlayerView(this.sim.world, i + 1) });
+      if (p.ai && i + 1 !== localPlayer) this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i, { civ: p.civ }), view: new PlayerView(this.sim.world, i + 1) });
     });
   }
 
   /** Hand a player to a computer opponent (tests and demos: the local player "autoplays"). */
   addAi(player: number, level: AiLevel): void {
     if (this.ais.some(({ ai }) => ai.player === player)) return;
-    this.ais.push({ ai: new AiPlayer(player, level, this.sim.config.seed * 31 + player - 1), view: new PlayerView(this.sim.world, player) });
+    this.ais.push({ ai: new AiPlayer(player, level, this.sim.config.seed * 31 + player - 1, { civ: this.sim.world.players[player]?.civ ?? '' }), view: new PlayerView(this.sim.world, player) });
     this.ais.sort((a, b) => a.ai.player - b.ai.player);
   }
 

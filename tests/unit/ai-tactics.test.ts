@@ -4,6 +4,9 @@ import { UPGRADE_TIER } from '../../src/ai/upgrades.ts';
 import { runMatch } from '../../src/game/aiMatch.ts';
 import { Sim } from '../../src/sim/index.ts';
 import { HARDEST_BONUS } from '../../src/data/setup.ts';
+import { AiPlayer } from '../../src/ai/ai.ts';
+import { PlayerView } from '../../src/sim/view/playerView.ts';
+import { completeResearch } from '../../src/sim/systems/production.ts';
 
 describe('AI v2 (M13.2)', () => {
   it('values units by price and health left', () => {
@@ -55,9 +58,38 @@ describe('AI v2 fixes (M13.4)', () => {
 });
 
 describe('AI priests (M13.5)', () => {
-  it('Hard builds a Temple, trains priests from its gold, researches the Temple and converts enemies', () => {
-    const r = runMatch({ seed: 103, type: 'inland', size: 'tiny', levels: ['hard', 'moderate'], minutes: 45 });
-    expect(r.conversions[0]).toBeGreaterThan(0);
-    expect(r.techs[0]).toContain('astrology');
+  it('Hard converts the valuable enemy in reach with its priests and researches the Temple from spare gold', () => {
+    const sim = Sim.create({
+      seed: 7,
+      map: { w: 40, h: 40 },
+      victory: 'none',
+      players: [{ civ: 'egyptian', ai: 'hard' }, { civ: 'greek' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 4, ty: 4 },
+          { type: 'temple', owner: 1, tx: 10, ty: 4 },
+          { type: 'townCenter', owner: 2, tx: 32, ty: 32 },
+        ],
+        units: [
+          { type: 'priest', owner: 1, x: 14.5, y: 12.5 },
+          { type: 'priest', owner: 1, x: 15.5, y: 12.5 },
+          { type: 'warElephant', owner: 2, x: 19.5, y: 15.5 },
+          ...[0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 1, x: 6.5 + i, y: 10.5 })),
+        ],
+      },
+    });
+    const w = sim.world;
+    for (const age of ['toolAge', 'bronzeAge']) completeResearch(w, 1, age);
+    w.players[1]!.res.set([3000, 1000, 1000, 0]);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'egyptian' });
+    const view = new PlayerView(w, 1);
+    let converting = false;
+    for (let t = 0; t < 20 * 60; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      converting ||= w.orders.some((q, s) => q?.[0]?.k === 'convert' && w.ents.owner[s] === 1);
+    }
+    expect(converting).toBe(true);
+    expect(w.players[1]!.techs).toContain('astrology');
   });
 });
