@@ -2,6 +2,16 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M4.7b · village (new), contact sheets granary/storagePit/barracks/dock/farm/site3
+- A readable Stone-age village: raised granary bins, storage pit under a thatched roof with wood/stone/gold
+  stacked beside it, a thatched barracks with spear rack and practice post, a dock on piles over the water,
+  farms at four fill levels, foundations rising out of dirt sites. Buildings 4/5, anchoring 4, team color 4.
+- Fixed during review: storage pit/barracks/dock sheds were yawed 45° so their gables faced the camera flat —
+  aligned to the tile axes they read as proper iso; wheat was chess-pawn cones then smooth bars → irregular
+  clumps; soil used the brick texture (read as planks) → plain earth.
+- Should-fix: the bottom-up reveal slices hut roofs flat mid-way (acceptable, as in the original); stubble strips
+  are plain; construction could add scaffolding (M9).
+
 ## 2026-09-29 · M4.7a · work-overview, villager frame sheets (tools/frames.ts)
 - Villager work clips read at game scale: pick at the gold, basket at the berries, spear throw at the gazelles;
   chop/mine/hoe/hammer swings are two-handed where they should be. Readability 4, anchoring 4, light 4.

@@ -79,3 +79,6 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   `carcass:<animal>` resource node that rots at the animal's decay rate and is butchered like any node (meat
   goes to a TC or Storage Pit). Right-clicking an entity sends `act` (codec id 9): the sim decides the verb
   (hunt, farm, help build, and in M5 attack), so the UI never guesses.
+- **D23 — Dock placement** (2026-09-29, M4.7b; `verify`). The research gives no exact rule. A Dock's whole
+  footprint must be free water (not buildable land, no fish on it) and at least one tile in the ring around it
+  must be dry buildable land. Revisit with shallows/beach details in M8.

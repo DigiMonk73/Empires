@@ -1,5 +1,5 @@
 import { CIV_BY_ID } from '../../data/index.ts';
-import { TERRAINS } from '../../data/terrain.ts';
+import { MOVE_WATER, TERRAINS } from '../../data/terrain.ts';
 import { Act, EKind } from '../core/entities.ts';
 import { NO_ENTITY } from '../core/handles.ts';
 import { Occ } from '../map/tilemap.ts';
@@ -48,9 +48,13 @@ export function buildingAvailable(w: World, player: number, typeIdx: number): Pl
   return { ok: true };
 }
 
-/** Is the footprint free and buildable? `tileOk` (optional) receives each tile's verdict for the placement ghost. */
+/**
+ * Is the footprint free and buildable? `tileOk` (optional) receives each tile's verdict for the placement ghost.
+ * Docks (`shore`) go on water tiles instead, and at least one tile around the footprint must be dry land (D23).
+ */
 export function placementValid(w: World, typeIdx: number, tx: number, ty: number, tileOk?: boolean[]): boolean {
   const t = TYPES[typeIdx]!;
+  const shore = !!t.building?.shore;
   const m = w.map;
   let ok = true;
   for (let dy = 0; dy < t.size; dy++) {
@@ -60,11 +64,23 @@ export function placementValid(w: World, typeIdx: number, tx: number, ty: number
       let good = m.inBounds(x, y);
       if (good) {
         const i = m.idx(x, y);
-        good = TERRAINS[m.terrain[i]!]!.buildable && (m.occ[i]! & (Occ.resource | Occ.building | Occ.farm)) === 0;
+        const ter = TERRAINS[m.terrain[i]!]!;
+        const free = (m.occ[i]! & (Occ.building | Occ.farm)) === 0 && (shore || (m.occ[i]! & Occ.resource) === 0);
+        good = free && (shore ? (ter.pass & MOVE_WATER) !== 0 && !ter.buildable && !m.resAt[i] : ter.buildable);
       }
       if (tileOk) tileOk.push(good);
       ok &&= good;
     }
+  }
+  if (ok && shore) {
+    let land = false;
+    for (let k = -1; k <= t.size && !land; k++) {
+      for (const [x, y] of [[tx + k, ty - 1], [tx + k, ty + t.size], [tx - 1, ty + k], [tx + t.size, ty + k]] as const) {
+        if (m.inBounds(x, y) && TERRAINS[m.terrain[m.idx(x, y)]!]!.buildable) land = true;
+      }
+    }
+    if (!land && tileOk) tileOk.fill(false);
+    ok = land;
   }
   return ok;
 }

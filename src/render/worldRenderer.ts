@@ -1,4 +1,4 @@
-import { Container, Graphics, Point, Sprite, type Renderer } from 'pixi.js';
+import { Container, Graphics, Point, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
 import { PLAYER_COLORS } from '../data/setup.ts';
 import { Act, EKind } from '../sim/core/entities.ts';
 import { ResState } from '../sim/core/resources.ts';
@@ -8,7 +8,7 @@ import { worldToIso } from './iso.ts';
 import { buildingArt, resourceArt, unitArt, type SpriteArt } from './placeholders.ts';
 import { TerrainLayer } from './terrainMesh.ts';
 import { FogLayer } from './fogLayer.ts';
-import type { BakedArt } from './bakedArt.ts';
+import type { ArtFrame, BakedArt } from './bakedArt.ts';
 
 interface EntityView {
   handle: number;
@@ -17,8 +17,15 @@ interface EntityView {
   team: Sprite | null;
   /** Baked model id when the type has baked art (animated, 8 facings). */
   model: string | null;
+  /** Baked building model id (static art: variants, construction reveal). */
+  building: string | null;
+  /** Construction-site pad under an unfinished building. */
+  site: Sprite | null;
   lastKey: string;
 }
+
+/** Construction shows in 10 steps: the building rises out of its site from the bottom of the sprite up. */
+const BUILD_STAGES = 10;
 
 const GAIA_COLOR = 0x00ab93;
 
@@ -179,7 +186,7 @@ export class WorldRenderer {
       team.tint = playerColor(e.owner[slot]!);
       root.addChild(base, team);
       this.objectLayer.addChild(root);
-      return { handle: e.handleOf(slot), root, base, team, model: typeId, lastKey: '' };
+      return { handle: e.handleOf(slot), root, base, team, model: typeId, building: null, site: null, lastKey: '' };
     }
     if (e.kind[slot] === EKind.building) {
       const f = this.art?.frame(typeId, 'v0');
@@ -199,7 +206,7 @@ export class WorldRenderer {
           root.addChild(team);
         }
         this.objectLayer.addChild(root);
-        return { handle: e.handleOf(slot), root, base, team, model: null, lastKey: '' };
+        return { handle: e.handleOf(slot), root, base, team, model: null, building: typeId, site: null, lastKey: '' };
       }
     }
     const art = this.artFor(e.type[slot]!);
@@ -215,7 +222,7 @@ export class WorldRenderer {
       root.addChild(team);
     }
     this.objectLayer.addChild(root);
-    return { handle: e.handleOf(slot), root, base, team, model: null, lastKey: '' };
+    return { handle: e.handleOf(slot), root, base, team, model: null, building: null, site: null, lastKey: '' };
   }
 
   /** Pick the baked frame for a unit from its activity, facing and time in activity. */
@@ -244,6 +251,67 @@ export class WorldRenderer {
         v.team.anchor.set(fr.team.anchorX, fr.team.anchorY);
         v.team.scale.set(1 / meta.scale);
       }
+    }
+  }
+
+  /** Cropped (bottom `k` of the height) sub-textures for construction stages, cached per frame texture. */
+  private cropCache = new Map<string, Texture>();
+
+  private showFrame(sp: Sprite, f: { tex: Texture; anchorX: number; anchorY: number }, scale: number, k: number): void {
+    sp.visible = k > 0;
+    if (k <= 0) return;
+    let tex = f.tex;
+    let ay = f.anchorY;
+    if (k < 1) {
+      const fr = f.tex.frame;
+      const top = Math.round(fr.height * (1 - k)); // whole texels keep the reveal edge crisp
+      const key = `${f.tex.uid}:${top}`;
+      let t = this.cropCache.get(key);
+      if (!t) this.cropCache.set(key, (t = new Texture({ source: f.tex.source, frame: new Rectangle(fr.x, fr.y + top, fr.width, fr.height - top) })));
+      tex = t;
+      // Keep the ground anchor where it was: re-express it relative to the cropped frame.
+      ay = (f.anchorY * fr.height - top) / (fr.height - top);
+    }
+    sp.texture = tex;
+    sp.anchor.set(f.anchorX, ay);
+    sp.scale.set(1 / scale);
+  }
+
+  /** Baked buildings: construction reveal over a site pad; farms show their crop stage by food left. */
+  private updateBuilding(v: EntityView, s: number): void {
+    const e = this.world.ents;
+    const id = v.building!;
+    const meta = this.art!.meta(id)!;
+    const t = TYPES[e.type[s]!]!;
+    let variant = 0;
+    if (meta.variants > 1 && t.building!.kind === 'farm' && e.build[s]! >= 1) {
+      const full = this.world.players[e.owner[s]!]!.stats.farmFood;
+      const used = full > 0 ? 1 - e.stock[s]! / full : 0;
+      variant = Math.min(meta.variants - 1, Math.max(0, Math.floor(used * meta.variants)));
+    }
+    const stage = e.build[s]! >= 1 ? BUILD_STAGES : Math.floor(e.build[s]! * BUILD_STAGES);
+    const key = `v${variant}:${stage}`;
+    if (key === v.lastKey) return;
+    v.lastKey = key;
+    const f: ArtFrame | null = this.art!.frame(id, `v${variant}`);
+    if (!f) return;
+    const k = stage / BUILD_STAGES;
+    this.showFrame(v.base, f, meta.scale, k);
+    if (v.team) {
+      if (f.team) this.showFrame(v.team, f.team, meta.scale, k);
+      else v.team.visible = false;
+    }
+    if (stage < BUILD_STAGES && !v.site) {
+      const siteId = `site${t.size}`;
+      const sf = this.art!.frame(siteId, 'v0');
+      if (sf) {
+        v.site = new Sprite();
+        this.showFrame(v.site, sf, this.art!.meta(siteId)!.scale, 1);
+        v.root.addChildAt(v.site, 0);
+      }
+    } else if (stage >= BUILD_STAGES && v.site) {
+      v.site.destroy();
+      v.site = null;
     }
   }
 
@@ -279,6 +347,8 @@ export class WorldRenderer {
       v.root.visible =
         e.owner[s] === player || (e.kind[s] === EKind.building ? this.fog.isExplored(player, tx, ty) : this.fog.isVisible(player, tx, ty));
       if (v.model) this.animate(v, s, alpha);
+      else if (v.building) this.updateBuilding(v, s);
+      else if (e.kind[s] === EKind.building) v.root.alpha = e.build[s]! < 1 ? 0.35 + 0.65 * e.build[s]! : 1;
       // Placeholders: face left/right by world direction projected to screen.
       else if (e.kind[s] === EKind.unit) {
         const f = e.facing[s]!;

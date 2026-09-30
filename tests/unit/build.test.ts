@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Sim } from '../../src/sim/index.ts';
 import { buildingTypeIndex } from '../../src/sim/rules/registry.ts';
+import { placementValid } from '../../src/sim/systems/build.ts';
 
 function setup(units = 1, civ = 'greek') {
   const sim = Sim.create({
@@ -81,5 +82,18 @@ describe('construction', () => {
     const x = Math.floor(sim.world.ents.x[other]!);
     const y = Math.floor(sim.world.ents.y[other]!);
     expect(x < 9 || x > 11 || y < 9 || y > 11).toBe(true);
+  });
+});
+
+describe('dock placement (D23)', () => {
+  it('docks go on water touching the shore — not on land, not out at sea', () => {
+    const ascii = Array.from({ length: 20 }, () => '.'.repeat(10) + '~'.repeat(10));
+    const sim = Sim.create({ seed: 1, map: { w: 20, h: 20, ascii }, players: [{ civ: 'greek' }] });
+    const dock = buildingTypeIndex('dock');
+    expect(placementValid(sim.world, dock, 10, 5)).toBe(true); // water, land just west
+    expect(placementValid(sim.world, dock, 6, 5)).toBe(false); // on land
+    expect(placementValid(sim.world, dock, 9, 5)).toBe(false); // straddles the shore
+    expect(placementValid(sim.world, dock, 14, 5)).toBe(false); // open water, no land beside it
+    expect(placementValid(sim.world, buildingTypeIndex('house'), 10, 5)).toBe(false); // houses can't go on water
   });
 });

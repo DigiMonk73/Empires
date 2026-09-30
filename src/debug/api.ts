@@ -37,6 +37,8 @@ export interface EmpiresDebugApi {
     /** Resource node index at tile (tx, ty), or -1. */
     resourceAt(tx: number, ty: number): number;
   };
+  /** Handle of the building covering tile (tx, ty), or null. */
+  buildingAt(tx: number, ty: number): number | null;
   /** Submit a command as a player (test setup; normal play goes through input). */
   issue(player: number, cmd: Command): void;
   pause(on: boolean): void;

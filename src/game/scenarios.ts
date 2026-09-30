@@ -87,6 +87,55 @@ function start(): SimConfig {
   };
 }
 
+/**
+ * A Stone-age village for art review: every economy building, farms at four fill levels, foundations at several
+ * stages, villagers at work, and a shore for the dock.
+ */
+function village(): SimConfig {
+  const W = 36;
+  const rows: string[] = [];
+  for (let y = 0; y < W; y++) {
+    let row = '';
+    for (let x = 0; x < W; x++) {
+      let c = x >= 29 ? '~' : '.';
+      if (x < 3 && y < 20) c = 'F';
+      if (x >= 22 && x <= 23 && y >= 4 && y <= 5) c = 'T';
+      row += c;
+    }
+    rows.push(row);
+  }
+  return {
+    seed: 5,
+    map: { w: W, h: W, ascii: rows },
+    players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    scenario: {
+      buildings: [
+        { type: 'townCenter', owner: 1, tx: 14, ty: 14 },
+        { type: 'granary', owner: 1, tx: 9, ty: 17 },
+        { type: 'storagePit', owner: 1, tx: 19, ty: 9 },
+        { type: 'barracks', owner: 1, tx: 20, ty: 18 },
+        { type: 'dock', owner: 1, tx: 28, ty: 14 },
+        { type: 'house', owner: 1, tx: 11, ty: 11 },
+        { type: 'house', owner: 1, tx: 14, ty: 10 },
+        { type: 'farm', owner: 1, tx: 6, ty: 21, stock: 250 },
+        { type: 'farm', owner: 1, tx: 9, ty: 21, stock: 170 },
+        { type: 'farm', owner: 1, tx: 6, ty: 24, stock: 100 },
+        { type: 'farm', owner: 1, tx: 9, ty: 24, stock: 30 },
+        { type: 'house', owner: 1, tx: 17, ty: 22, progress: 0.35 },
+        { type: 'granary', owner: 1, tx: 13, ty: 24, progress: 0.7 },
+        { type: 'barracks', owner: 1, tx: 22, ty: 23, progress: 0.05 },
+      ],
+      units: [
+        { type: 'villager', owner: 1, x: 7.5, y: 22.5 },
+        { type: 'villager', owner: 1, x: 10.4, y: 22.2 },
+        { type: 'villager', owner: 1, x: 18.2, y: 21.6 },
+        { type: 'villager', owner: 1, x: 21.6, y: 6.2 },
+        { type: 'villager', owner: 1, x: 12.6, y: 23.6 },
+      ],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -102,5 +151,6 @@ function crowd(n: number): SimConfig {
 export const SCENARIOS: Record<string, () => SimConfig> = {
   demo,
   start,
+  village,
   crowd: () => crowd(1000),
 };

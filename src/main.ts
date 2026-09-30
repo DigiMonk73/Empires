@@ -215,6 +215,11 @@ async function boot(): Promise<void> {
       player: (p) => ({ res: [...(world.players[p]?.res ?? [])] }),
       resourceAt: (tx, ty) => (world.map.inBounds(tx, ty) ? world.map.resAt[world.map.idx(tx, ty)]! - 1 : -1),
     },
+    buildingAt: (tx, ty) => {
+      if (!world.map.inBounds(tx, ty)) return null;
+      const h = world.map.bldAt[world.map.idx(tx, ty)]! - 1;
+      return h >= 0 && world.ents.slotOf(h) >= 0 ? h : null;
+    },
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {
       session.paused = on;

@@ -6,15 +6,16 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **Milestone:** M4 Economy — M4.1–M4.6 done (stats/effects, gather, construction, production + rally, farms/fish/hunting, mouse UI). M3 done (tag `m3`).
 - **Last green commit:** M4.5 (verify ~25 s; verify:full adds Docker w/ SwiftShader bake stage, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
-  trees/mines/berries, Stone-age TC + house; calibration IoU 1.0; Docker bakes its own sprites (D20).
-  Placeholders remain for soldiers, animals and other buildings. Review sheets: `node tools/frames.ts <model> out.png`.
+  trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
+  sites; calibration IoU 1.0; Docker bakes its own sprites (D20). Placeholders remain for soldiers, animals,
+  and Tool-age+ buildings. `?scenario=village` shows the whole Stone-age economy. Review sheets: `node tools/frames.ts <model> out.png`.
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
   retarget, construction with (n+2)/3 builders, pop/housing, farms (one farmer, 250 food, vanish when empty),
   hunting (spears, gazelles flee, elephants fight back, carcasses rot); `act` command = right-click on an entity;
   combat core (`systems/combat.ts`: damage formula, instant hits — projectiles in M5); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M4.7b economy buildings + construction stages, M4.7c animals, M4.8 metrics; then verify:full → tag m4.
+- **Next up:** M4.7c animals (quadruped rig), M4.8 metrics; then verify:full → tag m4.
 - **Playable now:** `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/history.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -150,8 +151,9 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - [x] **M4.7a Villager work art.** One rig with every tool/load as a prop (`showProps`); clips chop, mine, farm,
       build, forage, butcher, fish, throw (spear re-aimed per frame) and carry-walks (wood, meat, gold, stone, food
       basket, fish); renderer picks clips from act + carryJob; `tools/frames.ts` tight review sheets.
-- [ ] **M4.7b Economy buildings.** Granary, Storage Pit, Farm (field with crop stages by food left), Barracks,
-      Dock (Stone-age hut style); foundation → construction stages (sprite revealed bottom-up + scaffold).
+- [x] **M4.7b Economy buildings.** Granary, Storage Pit, Farm (4 crop stages by food left), Barracks, Dock
+      (Stone-age); construction = site pad + building revealed bottom-up in 10 steps; dock shore placement (D23);
+      `village` review scenario (scenario buildings take `progress`/`stock`).
 - [ ] **M4.7c Animals.** Quadruped rig: gazelle, elephant (+ lion, alligator for M5); idle/walk/die; carcass
       frames replace the placeholders; shore-fish ripple sprite.
 - [ ] **M4.8 e2e + metrics.** Mouse-driven e2e builds a house and trains 5 villagers; scripted economy benchmark

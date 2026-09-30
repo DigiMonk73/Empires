@@ -36,7 +36,8 @@ export interface MapSpec {
 
 export interface ScenarioSpec {
   units?: readonly { type: string; owner: number; x: number; y: number }[];
-  buildings?: readonly { type: string; owner: number; tx: number; ty: number }[];
+  /** `progress` < 1 places a foundation that far along; `stock` sets a farm's food left (default: full). */
+  buildings?: readonly { type: string; owner: number; tx: number; ty: number; progress?: number; stock?: number }[];
   resources?: readonly { kind: string; tx: number; ty: number }[];
 }
 
@@ -162,7 +163,15 @@ export class World {
     if (cfg.map.ascii) this.applyAscii(cfg.map.ascii);
     const sc = cfg.scenario;
     for (const r of sc?.resources ?? []) this.addResource(resourceKindIndex(r.kind), r.tx, r.ty);
-    for (const b of sc?.buildings ?? []) this.placeBuilding(buildingTypeIndex(b.type), b.owner, b.tx, b.ty);
+    for (const b of sc?.buildings ?? []) {
+      const ti = buildingTypeIndex(b.type);
+      const done = b.progress === undefined || b.progress >= 1;
+      const slot = this.ents.slotOf(this.placeBuilding(ti, b.owner, b.tx, b.ty, done));
+      if (!done) {
+        this.ents.build[slot] = b.progress!;
+        this.ents.hp[slot] = Math.max(1, this.stats(b.owner, ti).hp * b.progress!);
+      } else if (TYPES[ti]!.building?.kind === 'farm') this.ents.stock[slot] = b.stock ?? this.players[b.owner]!.stats.farmFood;
+    }
     for (const u of sc?.units ?? []) this.spawnUnit(unitTypeIndex(u.type), u.owner, u.x, u.y);
     this.grid.rebuild(this.ents);
     fogSystem(this);
