@@ -53,3 +53,11 @@ describe('AI v2 fixes (M13.4)', () => {
     expect(r.winner).not.toBeNull();
   });
 });
+
+describe('AI priests (M13.5)', () => {
+  it('Hard builds a Temple, trains priests from its gold, researches the Temple and converts enemies', () => {
+    const r = runMatch({ seed: 103, type: 'inland', size: 'tiny', levels: ['hard', 'moderate'], minutes: 45 });
+    expect(r.conversions[0]).toBeGreaterThan(0);
+    expect(r.techs[0]).toContain('astrology');
+  });
+});

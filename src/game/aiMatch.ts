@@ -46,6 +46,8 @@ export interface MatchResult {
   techs: string[][];
   /** Each computer's opening plan (rush / boom). */
   plans: string[];
+  /** Enemy units each player converted (priests, M13.5). */
+  conversions: number[];
 }
 
 const isVillager = (w: Sim['world'], s: number): boolean => TYPES[w.ents.type[s]!]!.unit?.cls === 'villager';
@@ -102,6 +104,7 @@ export function runMatch(o: MatchOptions): MatchResult {
     hash: sim.hash(),
     techs: o.levels.map((_, i) => [...w.players[i + 1]!.techs]),
     plans: ais.map((ai) => ai.military.plan),
+    conversions: o.levels.map((_, i) => w.players[i + 1]!.tally.conversions),
   };
 }
 

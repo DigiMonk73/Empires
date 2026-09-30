@@ -1,10 +1,10 @@
 import type { AiLevel } from '../data/setup.ts';
-import { TECH_BY_ID } from '../data/index.ts';
+import { TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
 import type { Command } from '../sim/commands/types.ts';
 import type { Rng } from '../sim/math/rng.ts';
 import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
 import { dist, type AiPlayer, type Snapshot } from './ai.ts';
-import { Tactics, type Danger, type Sighting } from './tactics.ts';
+import { Tactics, worth, type Danger, type Sighting } from './tactics.ts';
 
 /**
  * AI military v1 (M6.5). Two plans, picked once per game: a *rush* (Barracks early, clubmen → axemen and
@@ -40,13 +40,13 @@ const NEXT_AGE: Record<number, string> = { 1: 'toolAge', 2: 'bronzeAge', 3: 'iro
  * minutes), whether a rush is allowed, and the pause between pushes (ticks). Like the original, the easier
  * computers are passive early — a 9-minute clubman rush is not "easiest".
  */
-const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: number; patience: number; siege: number; tactics: boolean; towers: number }> = {
-  easiest: { scale: 0.5, firstPush: 18, rush: 0, patience: 1800, siege: 0, tactics: false, towers: 0 },
-  easy: { scale: 0.7, firstPush: 14, rush: 0, patience: 1200, siege: 1, tactics: false, towers: 0 },
-  moderate: { scale: 1, firstPush: 0, rush: 0.5, patience: 600, siege: 2, tactics: false, towers: 0 },
+const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: number; patience: number; siege: number; tactics: boolean; towers: number; priests: number }> = {
+  easiest: { scale: 0.5, firstPush: 18, rush: 0, patience: 1800, siege: 0, tactics: false, towers: 0, priests: 0 },
+  easy: { scale: 0.7, firstPush: 14, rush: 0, patience: 1200, siege: 1, tactics: false, towers: 0, priests: 0 },
+  moderate: { scale: 1, firstPush: 0, rush: 0.5, patience: 600, siege: 2, tactics: false, towers: 0, priests: 1 },
   // The harder levels rush more often: with their tactics a rush won 77% of M13.2's traces, a boom 52%.
-  hard: { scale: 1.15, firstPush: 0, rush: 0.75, patience: 400, siege: 3, tactics: true, towers: 1 },
-  hardest: { scale: 1.3, firstPush: 0, rush: 0.75, patience: 300, siege: 4, tactics: true, towers: 2 },
+  hard: { scale: 1.15, firstPush: 0, rush: 0.75, patience: 400, siege: 3, tactics: true, towers: 1, priests: 2 },
+  hardest: { scale: 1.3, firstPush: 0, rush: 0.75, patience: 300, siege: 4, tactics: true, towers: 2, priests: 3 },
 };
 // (M13.2: one early tower for Hard cost more than it saved — hard>moderate 41 → 35 of 64 — so `towers` stays 0
 // until the defence task, M13.4, places them where raids actually land.)
@@ -119,7 +119,47 @@ export class MilitaryBrain {
       if (threats.length && !this.tactics.militia(s, army, threats, cmds)) this.tactics.flee(s, threats, cmds);
       this.tactics.focus(s, army, enemies, cmds);
     }
+    this.priests(s, cmds, army);
     if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army, ai.naval.invading);
+  }
+
+  /**
+   * Priests (M13.5, mil:3): convert the most valuable enemy soldier within reach (elephants, siege, riders first —
+   * what they are worth), else heal a wounded soldier near them, else keep up with the army, a little behind it.
+   */
+  private priests(s: Snapshot, cmds: Command[], army: OwnUnit[]): void {
+    const priests = s.units.filter((u) => u.cls === 'priest' && !s.busy.has(u.h) && u.order !== 'convert' && u.order !== 'heal');
+    if (!priests.length) return;
+    const foes = this.enemies(s).filter((o) => !o.building && o.cls !== 'priest' && !AT_SEA.has(o.cls) && o.cls !== 'fishingShip' && o.cls !== 'tradeShip' && o.cls !== 'transport');
+    const cx = army.length ? army.reduce((a, u) => a + u.x, 0) / army.length : s.tc?.x ?? 0;
+    const cy = army.length ? army.reduce((a, u) => a + u.y, 0) / army.length : s.tc?.y ?? 0;
+    for (const p of priests) {
+      let best: SeenEntity | null = null;
+      let bw = 0;
+      for (const o of foes) {
+        if (dist(o.x, o.y, p.x, p.y) > 9) continue;
+        const w = worth(o.type, o.hp);
+        if (w > bw || (w === bw && best && o.h < best.h)) {
+          best = o;
+          bw = w;
+        }
+      }
+      if (best && bw >= 60) {
+        cmds.push({ t: 'act', ids: [p.h], h: best.h });
+        s.busy.add(p.h);
+        continue;
+      }
+      const hurt = army.find((u) => dist(u.x, u.y, p.x, p.y) < 8 && u.hp < 0.7 * (UNIT_BY_ID.get(u.type)?.hp ?? u.hp));
+      if (hurt) {
+        cmds.push({ t: 'act', ids: [p.h], h: hurt.h });
+        s.busy.add(p.h);
+        continue;
+      }
+      if (army.length && dist(p.x, p.y, cx, cy) > 6) {
+        cmds.push({ t: 'move', ids: [p.h], x: Math.round(cx * 4) / 4, y: Math.round(cy * 4) / 4 });
+        s.busy.add(p.h);
+      }
+    }
   }
 
   /**
@@ -148,6 +188,10 @@ export class MilitaryBrain {
     // Towers (M13.4, the harder levels, from the Bronze Age): the stone in hand (the start's 150 — nobody mines
     // for them) buys a Watch Tower where the villagers work furthest out, once the Granary has researched it.
     if (this.war.towers && s.me.age >= 3 && this.towers(ai, s, cmds)) return;
+    // A Temple for the levels that field priests (Bronze Age, after the Government Center the Iron Age needs).
+    if (this.war.priests >= 2 && s.me.age >= 3 && ai.has(s, 'governmentCenter', true).length && !ai.has(s, 'temple').length && !ai.isPending(s, 'temple')) {
+      if (ai.build(s, cmds, 'temple', tc.x, tc.y, 6, 12, 1)) return;
+    }
     // A rush wants its Barracks early; anyone attacked without one needs it now.
     if ((this.plan === 'rush' || attacked) && s.villagers.length >= (attacked ? 5 : 9) && !ai.has(s, 'barracks').length && !ai.isPending(s, 'barracks')) {
       ai.build(s, cmds, 'barracks', tc.x, tc.y, 6, 12, 1);
@@ -224,9 +268,19 @@ export class MilitaryBrain {
     const want = Math.max(Math.min(this.wanted(s.me.age), landCap), threats ? threats + 3 : 0);
     let have = army.length;
     let siege = army.filter((u) => u.cls === 'siege').length;
+    let priests = s.units.filter((u) => u.cls === 'priest').length;
     for (const b of s.buildings) {
       const workshop = b.type === 'siegeWorkshop';
       if (!b.done || b.queue >= 2 || s.me.pop + popReserve >= s.me.popCap) continue;
+      // Priests (M13.5): a few per level, from gold — the pile every computer floated — minus what the Iron Age needs.
+      if (b.type === 'temple') {
+        if (priests >= this.war.priests || s.v.trainBlocker(b.h, 'priest')) continue;
+        const ironGold = s.me.age === 3 && !s.me.techs.includes('ironAge') && !s.v.researching('ironAge') ? 800 : 0;
+        if (s.me.res[2]! - 125 < ironGold) continue;
+        cmds.push({ t: 'train', bld: b.h, unit: 'priest' });
+        priests++;
+        continue;
+      }
       // Siege is counted on its own: a few engines per level, on top of the army.
       if (workshop ? siege >= this.war.siege : have >= want) continue;
       const unit = this.pick(s, b.type, b.h, workshop ? siege : have);

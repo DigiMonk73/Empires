@@ -17,6 +17,7 @@ interface Step {
   when?: (c: Counts) => boolean;
 }
 interface Counts {
+  priests: number;
   infantry: number;
   archers: number;
   riders: number;
@@ -53,6 +54,15 @@ const PROGRAMME: Step[] = [
   { tech: 'craftsmanship', tier: 4, when: (c) => c.woodcutters >= 6 },
   { tech: 'coinage', tier: 4, when: (c) => c.goldMiners >= 4 },
   { tech: 'alchemy', tier: 4, when: (c) => c.archers >= 6 },
+  // The Temple (M13.5): once priests are in the field.
+  { tech: 'astrology', tier: 3, when: (c) => c.priests >= 1 },
+  { tech: 'mysticism', tier: 3, when: (c) => c.priests >= 2 },
+  { tech: 'polytheism', tier: 4, when: (c) => c.priests >= 2 },
+  { tech: 'fanaticism', tier: 4, when: (c) => c.priests >= 2 },
+  { tech: 'medicine', tier: 4, when: (c) => c.priests >= 2 },
+  { tech: 'afterlife', tier: 4, when: (c) => c.priests >= 3 },
+  // Hoplites to Centurions need Aristocracy (the Academy line, M13.5).
+  { tech: 'aristocracy', tier: 4, when: (c) => c.infantry >= 6 },
 ];
 
 /** How far down the programme each level goes. */
@@ -69,9 +79,10 @@ const RIDERS = new Set(['scout', 'cavalry', 'camel', 'chariot', 'elephant']);
 export function upgrades(s: Snapshot, level: AiLevel, reserveFood: number, cmds: Command[]): void {
   const tier = UPGRADE_TIER[level];
   if (tier === 0) return;
-  const c: Counts = { infantry: 0, archers: 0, riders: 0, farms: 0, goldMiners: s.working[2], woodcutters: s.working[1] };
+  const c: Counts = { priests: 0, infantry: 0, archers: 0, riders: 0, farms: 0, goldMiners: s.working[2], woodcutters: s.working[1] };
   for (const u of s.units) {
-    if (INFANTRY.has(u.cls)) c.infantry++;
+    if (u.cls === 'priest') c.priests++;
+    else if (INFANTRY.has(u.cls)) c.infantry++;
     else if (ARCHERS.has(u.cls)) c.archers++;
     else if (RIDERS.has(u.cls)) c.riders++;
   }

@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M13 AI v2 in progress (M13.1–4 done; the adjacent ladder meets the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M13 AI v2 in progress (M13.1–5 done; the adjacent ladder meets the Done gates). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m12 (verify ~135 s); verify:full at the M12 exit 699 s (audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 1.9 ms, s9pk, 452 unit + 119 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-8 water AI gate (M13.7). KI-7 closed (M13.1).
-- **Next up:** M13.5 priests, siege, the Iron Age.
+- **Next up:** M13.6 civilization strategies, then M13.7 water (the last hard gate: 6–7/12, needs 11).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -739,8 +739,15 @@ of island/Narrows games decided in 2 h (11/12).
       explored the hunt goes to the map cell seen longest ago (a Granary built in an explored corner hid all game).
       Quick wars **4/4** decided (was 3/4); ladder unchanged or better (hard>moderate 49). KI-9 re-measured (hills
       on: 7/8 decided within 60 min). Tests: age deadlock (seed 101), hunt (seed 14).
-- [ ] **M13.5 Priests, siege, the Iron Age.** Temples and priests (heal the army, convert elephants and siege,
-      Monotheism/Fanaticism), stone throwers → catapults escorted against buildings, Iron Age line upgrades.
+- [x] **M13.5 Priests, siege, the Iron Age.** Priests per level (Moderate 1, Hard 2, Hardest 3) from a Temple
+      (Hard+ build one in the Bronze Age after the Government Center), paid from gold — minus the Iron Age's 800 —
+      the pile every computer floated. They convert the most valuable enemy soldier within 9 tiles (price × health,
+      so elephants, siege and riders first), heal wounded soldiers, or keep up with the army. The upgrade programme
+      adds the Temple (Astrology, Mysticism for Hard; Polytheism, Fanaticism, Medicine, Afterlife for Hardest) and
+      Aristocracy for the Centurion line. Siege and Iron-age lines were already in (stone throwers per level,
+      Catapult, Phalanx/Centurion, heavy cavalry…); Heavy Catapult waits on Siegecraft (the AI mines no stone).
+      16 Hard-vs-Moderate games: 27 conversions. Ladder holds (moderate>easy 50 → 52, moderate>easiest 59 → 60,
+      hard>moderate 49); wars 4/4. `MatchResult.conversions`; test: seed 103 Hard converts and researches Astrology.
 - [ ] **M13.6 Civilization strategies.** Plans weighted by civ bonuses and trees (archer civs, cavalry civs,
       elephants, chariots, academy civs, priests), skipping what a civ lacks.
 - [ ] **M13.7 Water.** ≥ 90% of island/Narrows 1v1s decided in 2 h (KI-8, D42): bigger coordinated landings, siege
