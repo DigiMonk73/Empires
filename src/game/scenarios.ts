@@ -206,6 +206,31 @@ function fort(): SimConfig {
   };
 }
 
+/** Siege for review (M7.3): every engine facing an enemy camp across the field, and a Siege Workshop. */
+function siege(): SimConfig {
+  const engines = ['stoneThrower', 'catapult', 'heavyCatapult', 'ballista', 'helepolis'];
+  return {
+    victory: 'none',
+    seed: 6,
+    map: { w: 32, h: 32 },
+    players: [{ civ: 'greek' }, { civ: 'egyptian' }],
+    startingResources: 'deathmatch',
+    scenario: {
+      buildings: [
+        { type: 'siegeWorkshop', owner: 1, tx: 3, ty: 3 },
+        { type: 'townCenter', owner: 2, tx: 22, ty: 14 },
+        { type: 'house', owner: 2, tx: 20, ty: 10 },
+        { type: 'house', owner: 2, tx: 23, ty: 20 },
+        { type: 'barracks', owner: 2, tx: 26, ty: 9 },
+      ],
+      units: [
+        ...engines.map((type, i) => ({ type, owner: 1, x: 8.5 + (i % 3) * 1.6, y: 10.5 + i * 2.2 })),
+        ...[0, 1, 2].map((i) => ({ type: 'clubman', owner: 2, x: 19.5 + i * 0.8, y: 16.5 })),
+      ],
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -241,6 +266,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   village,
   raid,
   fort,
+  siege,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

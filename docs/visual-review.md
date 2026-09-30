@@ -2,6 +2,14 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M7.3 · siege-park, siege-volley (new)
+- Side-on the torsion engines read at once (cocked arm, frame, spoked wheels, team cloth); head-on the first
+  cut looked like a chair (tall rectangular stop-bar frame) — fixed with a leaning A-frame and braces. Three
+  sizes/finishes separate Stone Thrower / Catapult / Heavy Catapult; the ballista carts read as crossbows, the
+  helepolis with its double bow and mantlet. Units 4.
+- Should-fix (M9): stones in flight are small grey dots — give them a shadow and a little size; the workshop
+  yard is fine at zoom 1 but plain at 2.
+
 ## 2026-09-29 · M7.2 · fort, fort-closeup, wall-drag, wall-built (new); economy-placing-house
 - Walls join cleanly along both tile axes, around corners and into closed squares at all three levels; back arms
   sit behind posts, front arms in front. Dragged diagonals read as stepped runs (inherent to a tile grid; the

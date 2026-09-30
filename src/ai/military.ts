@@ -27,12 +27,12 @@ const NEXT_AGE: Record<number, string> = { 1: 'toolAge', 2: 'bronzeAge' };
  * minutes), whether a rush is allowed, and the pause between pushes (ticks). Like the original, the easier
  * computers are passive early — a 9-minute clubman rush is not "easiest".
  */
-const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: boolean; patience: number }> = {
-  easiest: { scale: 0.5, firstPush: 18, rush: false, patience: 1800 },
-  easy: { scale: 0.7, firstPush: 14, rush: false, patience: 1200 },
-  moderate: { scale: 1, firstPush: 0, rush: true, patience: 600 },
-  hard: { scale: 1.15, firstPush: 0, rush: true, patience: 400 },
-  hardest: { scale: 1.3, firstPush: 0, rush: true, patience: 300 },
+const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: boolean; patience: number; siege: number }> = {
+  easiest: { scale: 0.5, firstPush: 18, rush: false, patience: 1800, siege: 0 },
+  easy: { scale: 0.7, firstPush: 14, rush: false, patience: 1200, siege: 1 },
+  moderate: { scale: 1, firstPush: 0, rush: true, patience: 600, siege: 2 },
+  hard: { scale: 1.15, firstPush: 0, rush: true, patience: 400, siege: 3 },
+  hardest: { scale: 1.3, firstPush: 0, rush: true, patience: 300, siege: 4 },
 };
 
 export interface MilitaryState {
@@ -54,6 +54,11 @@ export class MilitaryBrain {
     this.war = WAR[level];
     const rush = rng.chance(0.5); // drawn at every level so the AI's random stream doesn't depend on it
     this.plan = rush && this.war.rush ? 'rush' : 'boom';
+  }
+
+  /** Bronze Age, an Archery Range standing, and no Siege Workshop yet (levels that field siege). */
+  wantsWorkshop(ai: AiPlayer, s: Snapshot): boolean {
+    return this.war.siege > 0 && s.me.age >= 3 && ai.has(s, 'archeryRange', true).length > 0 && !ai.has(s, 'siegeWorkshop').length;
   }
 
   /** Soldiers wanted in the current age. */
@@ -92,6 +97,11 @@ export class MilitaryBrain {
   private buildings(ai: AiPlayer, s: Snapshot, cmds: Command[], attacked: boolean): void {
     const tc = s.tc;
     if (!tc) return;
+    // Bronze Age: a Siege Workshop first — stone throwers raze what swords only scratch (buildings take ×0.2).
+    if (this.wantsWorkshop(ai, s)) {
+      if (!ai.isPending(s, 'siegeWorkshop')) ai.build(s, cmds, 'siegeWorkshop', tc.x, tc.y, 7, 13, 1);
+      return;
+    }
     // A rush wants its Barracks early; anyone attacked without one needs it now.
     if ((this.plan === 'rush' || attacked) && s.villagers.length >= (attacked ? 5 : 9) && !ai.has(s, 'barracks').length && !ai.isPending(s, 'barracks')) {
       ai.build(s, cmds, 'barracks', tc.x, tc.y, 6, 12, 1);
@@ -104,7 +114,9 @@ export class MilitaryBrain {
     }
     if (this.plan === 'rush' && s.me.age >= 2 && ai.has(s, 'barracks').length === 1 && !ai.isPending(s, 'barracks') && s.villagers.length >= 18) {
       ai.build(s, cmds, 'barracks', tc.x, tc.y, 7, 13, 1);
+      return;
     }
+
   }
 
   private research(s: Snapshot, cmds: Command[]): void {
@@ -118,8 +130,12 @@ export class MilitaryBrain {
     // Attacked: match the raiders and then some, whatever the plan (the economy is worth nothing dead).
     const want = Math.max(this.wanted(s.me.age), threats ? threats + 3 : 0);
     let have = army.length;
+    let siege = army.filter((u) => u.cls === 'siege').length;
     for (const b of s.buildings) {
-      if (!b.done || b.queue >= 2 || have >= want || s.me.pop >= s.me.popCap) continue;
+      const workshop = b.type === 'siegeWorkshop';
+      if (!b.done || b.queue >= 2 || s.me.pop >= s.me.popCap) continue;
+      // Siege is counted on its own: a few engines per level, on top of the army.
+      if (workshop ? siege >= this.war.siege : have >= want) continue;
       const unit = this.pick(s, b.type, have);
       if (!unit || s.v.trainBlocker(b.h, unit) || !s.v.canAfford(s.v.cost(unit))) continue;
       // Keep food for the next age / villagers while booming.
@@ -134,7 +150,8 @@ export class MilitaryBrain {
         if (s.me.res[0]! - u[0]! < (c.food ?? 0) && s.me.res[0]! >= (c.food ?? 0) * 0.4) continue;
       }
       cmds.push({ t: 'train', bld: b.h, unit });
-      have++;
+      if (workshop) siege++;
+      else have++;
     }
   }
 
@@ -147,6 +164,8 @@ export class MilitaryBrain {
         return 'bowman';
       case 'stable':
         return s.me.age >= 3 && s.v.canAfford(s.v.cost('cavalry')) ? 'cavalry' : 'scout';
+      case 'siegeWorkshop':
+        return s.me.age >= 4 && n % 2 ? 'ballista' : 'stoneThrower';
       default:
         return null;
     }

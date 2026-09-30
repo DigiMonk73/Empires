@@ -152,3 +152,32 @@ test('tower: a Watch Tower shoots an intruder from its platform', async ({ page 
   expect((await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h)).not.toContain(v.h);
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('siege: every engine and the Siege Workshop, then a bombardment of the enemy camp', async ({ page }, info) => {
+  await openGame(page, 'scenario=siege&fog=0&paused=1');
+  await page.evaluate(() => {
+    const api = window.__empires!;
+    for (const t of ['toolAge', 'bronzeAge', 'ironAge']) api.grantTech(1, t);
+    api.camera.setZoom(1.8);
+    api.camera.centerOn(9.5, 14);
+  });
+  await frames(page);
+  await snap(page, info, 'siege-park');
+  const engines = (await page.evaluate(() => window.__empires!.query.units(1))).map((u) => u.h);
+  const tc = await page.evaluate(() => window.__empires!.buildingAt(23, 15));
+  await page.evaluate(([ids, h]) => window.__empires!.issue(1, { t: 'act', ids: ids!, h: h! }), [engines, tc] as const);
+  let stones = 0;
+  for (let i = 0; i < 400 && stones < 2; i++) {
+    await page.evaluate(() => window.__empires!.step(1));
+    stones = (await page.evaluate(() => window.__empires!.query.missiles())).length;
+  }
+  expect(stones).toBeGreaterThanOrEqual(2);
+  await page.evaluate(() => window.__empires!.step(3));
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1.2);
+    window.__empires!.camera.centerOn(15, 14);
+  });
+  await frames(page);
+  await snap(page, info, 'siege-volley');
+  expect(pageErrors(page)).toEqual([]);
+});

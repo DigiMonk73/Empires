@@ -327,11 +327,19 @@ export function attackSystem(w: World): void {
       continue;
     }
     if (d < st.minRange) {
-      // Too close for siege to fire (min range): self-given orders give up; commanded ones wait.
-      if (o.auto) finish(w, s);
-      else {
-        w.paths[s] = [];
-        o.windup = 0;
+      // Too close for siege to fire (min range): self-given orders give up; commanded ones back off to firing
+      // distance, straight away from the target (a few tries, then give up as unreachable).
+      o.windup = 0;
+      if (o.auto || (o.stall = (o.stall ?? 0) + 1) > 60) {
+        finish(w, s);
+        continue;
+      }
+      if (!w.paths[s]?.length) {
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const back = st.minRange - d + 0.6;
+        const bx = Math.min(w.map.w - 0.5, Math.max(0.5, e.x[s]! - (dx / len) * back));
+        const by = Math.min(w.map.h - 0.5, Math.max(0.5, e.y[s]! - (dy / len) * back));
+        w.paths[s] = [Math.round(bx * 256) / 256, Math.round(by * 256) / 256];
       }
       continue;
     }
@@ -511,6 +519,7 @@ export function projectileSystem(w: World): void {
     if (blast > 0) {
       // Stones burst where they land: everyone near the impact point is hurt, own units included (mil:2).
       splash(w, e.slotOf(p.src), p.owner, p.type, p.x1, p.y1, blast, -1, true, 0.5, p.x0, p.y0);
+      if (TYPES[p.type]!.unit?.tags.includes('fellsTrees')) fellTrees(w, p.x1, p.y1, blast);
       continue;
     }
     if (t < 0) continue;
@@ -538,6 +547,20 @@ export function projectileSystem(w: World): void {
  * (stones); otherwise only hostiles (trample). Damage tapers linearly to `edge` × full at the rim. `skip` is a
  * victim already hit directly. Order is slot order — deterministic.
  */
+/** A Heavy Catapult's stone knocks down the trees it lands among (mil:1a "kills trees"). */
+function fellTrees(w: World, x: number, y: number, radius: number): void {
+  const r2 = radius * radius;
+  for (let ty = Math.max(0, Math.floor(y - radius)); ty <= Math.min(w.map.h - 1, Math.floor(y + radius)); ty++) {
+    for (let tx = Math.max(0, Math.floor(x - radius)); tx <= Math.min(w.map.w - 1, Math.floor(x + radius)); tx++) {
+      const i = w.map.resAt[ty * w.map.w + tx]! - 1;
+      if (i < 0 || RESOURCE_KINDS[w.res.kind[i]!]!.job !== 'wood') continue;
+      const dx = tx + 0.5 - x;
+      const dy = ty + 0.5 - y;
+      if (dx * dx + dy * dy <= r2) depleteNode(w, i);
+    }
+  }
+}
+
 export function splash(w: World, attacker: number, owner: number, type: number, x: number, y: number, radius: number, skip: number, friendly: boolean, edge: number, fromX = x, fromY = y): void {
   const e = w.ents;
   const atk = w.stats(owner, type).atk;

@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M7.3 siege (Siege Workshop, stone thrower and ballista lines, AI uses siege to raze).
+- **Next up:** M7.4 Iron Age + army lines (swordsmen, academy hoplites, archer/cavalry/chariot/camel/elephant lines; AI Iron Age).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -304,8 +304,15 @@ each one *work* in the sim, UI and AI, one slice at a time.
       renderer, arms toward the back behind the post; Sentry, Guard and Ballista towers; wall icons. Views rebuild
       when research changes an entity's type — which also fixes upgraded units (e.g. Battle Axe) keeping their old
       sprite since M5. `?scenario=fort` for review. Tests: walls.test.ts; e2e fort, walls-by-mouse.
-- [ ] **M7.3 Siege.** Siege Workshop; Stone Thrower → Catapult → Heavy Catapult (blast, friendly fire, min range),
-      Ballista → Helepolis; Engineering/Ballistics effects; art. AI builds siege for razing.
+- [x] **M7.3 Siege.** Siege Workshop (K) trains Stone Throwers (C) and Ballistae (B); Catapult/Heavy Catapult/
+      Helepolis upgrades in the field. Sim already had blast/friendly fire/min range; new: the Heavy Catapult
+      fells trees in its blast, and a commanded engine too close to its target backs off to firing distance
+      (it used to wait forever). Art: torsion engines (arm whips up against an A-frame stop bar on the 0.35 s
+      release, stone in the cup, rolling spoked wheels; three sizes/finishes) and ballista/helepolis crossbow
+      carts; the workshop yard (shed, half-built engine, treadwheel crane). AI: Siege Workshop first in the
+      Bronze Age (wood reserved from farms), 0–4 engines by level. _Found:_ in wars the AI reaches Bronze at
+      24–31 min, so its siege arrives late and rarely fires — wartime economy is M13 work. `?scenario=siege`;
+      tests siege.test.ts; e2e siege.
 - [ ] **M7.4 Iron Age + army lines.** Iron Age advance; Short → Broad → Long Swordsman → Legion; Academy
       Hoplite → Phalanx → Centurion; archer, cavalry, chariot, camel, elephant lines; per-unit upgrades in the
       field; art (kit composition). AI trains Iron-age units.

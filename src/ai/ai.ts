@@ -381,6 +381,7 @@ export class AiPlayer {
     // second Tool Age building): don't spend its wood on fields.
     if (s.me.res[0]! > this.ageFood(s) + 600) return;
     if (s.me.age === 2 && !this.has(s, 'archeryRange').length && !this.has(s, 'stable').length && s.me.res[1]! < 150 + 75) return;
+    if (this.military.wantsWorkshop(this, s) && s.me.res[1]! < 200 + 75) return; // the Siege Workshop's wood
     const hub = this.has(s, 'granary', true)[0] ?? s.tc;
     if (hub) this.build(s, cmds, 'farm', hub.x, hub.y, 3, 8, 1);
   }

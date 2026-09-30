@@ -54,7 +54,7 @@ const BUILD_KEYS: Record<string, string> = {
 };
 
 /** Unit training hotkeys per building (mil:5). */
-const TRAIN_KEYS: Record<string, string> = { villager: 'C', clubman: 'T', slinger: 'L', shortSwordsman: 'Z', bowman: 'T', scout: 'T' };
+const TRAIN_KEYS: Record<string, string> = { villager: 'C', clubman: 'T', slinger: 'L', shortSwordsman: 'Z', bowman: 'T', scout: 'T', stoneThrower: 'C', ballista: 'B' };
 
 export function computeCommands(w: World, player: number, selected: readonly number[], page: 'main' | 'build'): CommandButton[] {
   const e = w.ents;
