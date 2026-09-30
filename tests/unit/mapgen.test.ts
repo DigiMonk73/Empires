@@ -114,4 +114,19 @@ describe('map generation (econ:8)', () => {
     expect(b.scenario).toEqual(a.scenario);
     expect(c.map.ascii).not.toEqual(a.map.ascii);
   });
+
+  it('alligators lie on beaches and shallows of every map type, ≥ 14 tiles from every start (M14.5, econ:8)', () => {
+    for (const type of ['continental', 'inland', 'coastal', 'mediterranean', 'narrows', 'smallIslands', 'largeIslands', 'highland', 'hillCountry'] as const) {
+      const m = generateMap({ seed: 5, type, size: 'medium', players: [{ civ: 'greek' }, { civ: 'egyptian' }], alligators: true });
+      const gators = m.scenario!.units!.filter((u) => u.type === 'alligator');
+      expect(gators.length, type).toBeGreaterThanOrEqual(2);
+      for (const a of gators) {
+        const ch = m.map.ascii![Math.floor(a.y)]![Math.floor(a.x)];
+        expect(['b', ','], type).toContain(ch);
+        for (const [sx, sy] of m.starts) expect(Math.hypot(Math.floor(a.x) - sx - 1.5, Math.floor(a.y) - sy - 1.5), type).toBeGreaterThanOrEqual(14);
+      }
+      // Off by default until KI-10 is settled.
+      expect(generateMap({ seed: 5, type, size: 'medium', players: [{ civ: 'greek' }, { civ: 'egyptian' }] }).scenario!.units!.some((u) => u.type === 'alligator'), type).toBe(false);
+    }
+  });
 });

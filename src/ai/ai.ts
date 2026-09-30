@@ -248,12 +248,12 @@ export class AiPlayer {
   }
 
   /**
-   * Lions pick off villagers one at a time (working villagers don't fight back): gang up on any lion near our
-   * villagers or buildings with the four nearest villagers — it's 100 food afterwards.
+   * Lions and alligators pick off villagers one at a time (working villagers don't fight back): gang up on any near
+   * our villagers or buildings with the four nearest villagers — it's 100 food afterwards.
    */
   private predators(s: Snapshot, cmds: Command[]): void {
     for (const lion of s.game) {
-      if (lion.type !== 'lion') continue;
+      if (lion.type !== 'lion' && lion.type !== 'alligator') continue;
       const near = s.villagers.some((u) => dist(u.x, u.y, lion.x, lion.y) < 12) || s.buildings.some((b) => dist(b.x, b.y, lion.x, lion.y) < 12);
       if (!near) continue;
       const on = s.villagers.filter((u) => u.order === 'attack' && u.target === lion.h).length;

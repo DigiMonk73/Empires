@@ -17,6 +17,12 @@ export const GEN_MAP_TYPES: readonly GenMapType[] = ['continental', 'inland', 'c
 /** Water-heavy maps use the water template's resource distances (econ:8, dat maps 4, 0, 8). */
 const WATERY: ReadonlySet<GenMapType> = new Set(['narrows', 'smallIslands', 'largeIslands']);
 
+/**
+ * Alligators on generated maps (M14.5). Off for now — KI-10: they reshuffle AI games into the tiny-island wood
+ * stalemate (water 11/12 → 7/12) and tip Hard > Moderate, which sat on its gate, under it. On after M14.6.
+ */
+export const GATORS_ON = false;
+
 export interface MapGenOptions {
   seed: number;
   type: GenMapType;
@@ -28,6 +34,8 @@ export interface MapGenOptions {
   hills?: boolean;
   /** 5 Artifacts and 5 Ruins (the Standard victory; econ:7 "5 Artifacts and 5 Ruins, or none"). */
   relics?: boolean;
+  /** Place alligators even while GATORS_ON is off (tests, `?scenario=map&gators=1`). */
+  alligators?: boolean;
 }
 
 interface Grid {
@@ -631,6 +639,23 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     }
     // (The marks only kept them apart; the ground under them is as it was.)
     for (const [i, ch] of marks) g.c[i] = ch;
+  }
+
+  // Alligators (M14.5, econ:8 "alligators on shallows and beaches"): lone ones on beach or shallows ≥ 18 tiles from
+  // every start (≥ 14 where the far shore runs out, as on Coastal) and ≥ 6 apart, about 5 on a Medium map — from
+  // their own random stream, like the relics.
+  const ar = new Rng(o.seed ^ 0xa119, STREAM.mapgen);
+  const gators: [number, number][] = [];
+  const gatorGoal = GATORS_ON || o.alligators ? Math.max(2, Math.round(5 * scale)) : 0;
+  for (const dMin of [18, 14]) {
+    for (let tries = 0; gators.length < gatorGoal && tries < gatorGoal * 300; tries++) {
+      const x = 1 + ar.int(W - 2);
+      const y = 1 + ar.int(W - 2);
+      const ch = at(g, x, y);
+      if ((ch !== 'b' && ch !== ',') || !far(x, y, dMin) || gators.some(([gx, gy]) => Math.abs(gx - x) + Math.abs(gy - y) < 6)) continue;
+      gators.push([x, y]);
+      units.push({ type: 'alligator', owner: 0, x: x + 0.5, y: y + 0.5 });
+    }
   }
 
   const ascii: string[] = [];

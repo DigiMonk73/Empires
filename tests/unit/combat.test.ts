@@ -236,6 +236,30 @@ describe('auto-acquire and retaliation (mil:2)', () => {
     expect(w.orders[e.slotOf(lion!)]?.[0]).toMatchObject({ k: 'attack', h: of('villager', 1)[0], auto: true });
   });
 
+  it('alligators spit at villagers from 2 tiles, and are hunted for 100 food (M14.5, econ:1.1)', () => {
+    const { of, step, w, e, events, sim } = setup([
+      { type: 'villager', owner: 1, x: 10.5, y: 10.5 },
+      { type: 'alligator', owner: 0, x: 13, y: 10.5 },
+    ]);
+    const vil = of('villager', 1)[0]!;
+    const hp0 = e.hp[e.slotOf(vil)]!;
+    step(20 * 6);
+    // A missile weapon: it stays out of reach and the villager loses hit points to its spit.
+    expect(events.some((x) => x.t === 'strike' && x.h === of('alligator', 0)[0])).toBe(true);
+    expect(e.hp[e.slotOf(vil)]!).toBeLessThan(hp0);
+    expect(w.projectiles.length + events.filter((x) => x.t === 'impact').length).toBeGreaterThan(0);
+    void sim;
+    // Hunted: three villagers kill it (one alone, already hurt, loses) and its carcass holds 100 food.
+    const h = setup([0, 1, 2].map((i) => ({ type: 'villager', owner: 1, x: 10.5, y: 9.5 + i })).concat([{ type: 'alligator', owner: 0, x: 16.5, y: 10.5 }]));
+    const gator = h.of('alligator', 0)[0]!;
+    h.step(1, [{ player: 1, cmd: { t: 'act', ids: h.of('villager', 1), h: gator } }]);
+    h.step(20 * 20);
+    expect(h.of('alligator', 0)).toEqual([]);
+    expect(h.of('villager', 1).length).toBe(3);
+    // No drop site here: the food is in their hands.
+    expect(h.of('villager', 1).reduce((a, v) => a + h.e.carryAmt[h.e.slotOf(v)]!, 0)).toBeGreaterThan(0);
+  });
+
   it('stance commands round-trip through the codec', () => {
     const cmds = [{ player: 1, cmd: { t: 'stance' as const, ids: [3, 9], stand: true } }];
     expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);

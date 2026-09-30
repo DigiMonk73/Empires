@@ -510,6 +510,7 @@ function randomMap(p: URLSearchParams): SimConfig {
     players: Array.from({ length: n }, (_, i) => ({ civ: civs[i % civs.length]! })),
     hills: p.get('hills') === '1',
     relics: p.get('relics') === '1',
+    alligators: p.get('gators') === '1',
   });
 }
 

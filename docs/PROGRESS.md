@@ -18,8 +18,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14.5 alligators on shallows and beaches, then M14.6 AI relic/ruin/Wonder play (+ later starting ages, Nomad).
+- **Open issues:** KI-10 alligators vs the AI gates (placement off until M14.6), KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
+- **Next up:** M14.6 AI: first KI-10 (island wood stalemate, ladder margins → turn alligators on), then relic/ruin/Wonder play, later starting ages, Nomad.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -823,9 +823,17 @@ of island/Narrows games decided in 2 h (11/12).
       missing items — stats compiler, starting stockpiles, train / research / build checks, starting ages, save
       restore, the tech-tree screen ("(Full Tech Tree)"). Lobby checkbox (the civ panel says "No civilization
       bonuses"), URL `ftt=1`. Tests: `full-tech-tree.test.ts` (5) + the lobby e2e.
-- [ ] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1).
+- [~] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1).
+      _Built, placement off (KI-10):_ mapgen places lone alligators on beach/shallows ≥ 18 (then 14) tiles from
+      every start, ≥ 6 apart, ~5 per Medium map, from their own RNG stream (every type/size gets them); predators
+      ignore ships (a land animal spitting at triremes); the computers gang up on alligators like lions. Placing
+      them failed three AI gates (water 7/12, Hard > Moderate 43/64, Moderate > Easy 47/64 — reshuffled games, the
+      island wood stalemate), so `GATORS_ON` is off until M14.6; `?scenario=map&gators=1` shows them. Tests: a
+      spit + hunt combat test, a mapgen test (with the option; none without).
 - [ ] **M14.6 AI relic, ruin and Wonder play.** Claim and hold the objects near home; race the countdowns (attack
       an enemy Wonder or the holder of the objects first); Hard+ build a Wonder when rich in the Iron Age.
+      **Before that (KI-10):** the tiny-island wood stalemate (both sides out of wood, frozen to 2 h) and a wider
+      Hard > Moderate / Moderate > Easy margin (48 and 49 of 64 sat on the gate), then `GATORS_ON` and re-measure.
       Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army

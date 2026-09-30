@@ -32,3 +32,11 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   _Re-measured at M13.4_ (AI v2 finishes wars better: 4/4 flat): with hills on, 8 Moderate 1v1s are decided
   5/8 within 45 min but **7/8 within 60 min**, and the whole 7-pairing ladder still meets the Done gates — so
   option (a) would now pass. Still the user's call; hills stay off until then.
+- **KI-10 · must · alligators vs the AI gates** (M14.5, 2026-09-30). Alligators on beaches (econ:8) are built —
+  data, art, spit, hunting, the computers gang up on them like lions, predators ignore ships — but placing them
+  on generated maps reshuffles AI games enough to fail three Done gates on the full suite (`--full --adjacent`):
+  water decided 11/12 → 7/12 (five games fall into the known tiny-island wood stalemate: both sides out of wood
+  by ~40 min, no farms or transports, frozen to 2 h — e.g. smallIslands seed 307), Hard > Moderate 48 → 43/64 and
+  Moderate > Easy 49 → 47/64 (both were at or near the 48 gate; ~1.5σ of seed noise). Alligators hit few units
+  (≤ 15 strikes in a 40-min game). So `GATORS_ON` is off (`?scenario=map&gators=1` shows them); M14.6 fixes the
+  stalemate (wood on islands) and widens the ladder margins, then turns them on and re-measures.

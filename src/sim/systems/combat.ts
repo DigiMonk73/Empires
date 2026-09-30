@@ -1,3 +1,4 @@
+import { MOVE_WATER } from '../../data/terrain.ts';
 import { ARMOR_CLASS } from '../../data/types.ts';
 import { HUNTER_ATTACK } from '../../data/units.ts';
 import type { ProjectileDef } from '../../data/types.ts';
@@ -249,7 +250,7 @@ export function targetSystem(w: World): void {
     let bestD = Infinity;
     w.grid.forEachNear(x, y, look + 0.6, (j) => {
       if (j === s || !e.alive[j] || e.kind[j] !== EKind.unit) return;
-      if (lion ? e.owner[j] === 0 : !autoHostile(w, s, j) || e.owner[j] === 0) return; // soldiers ignore wildlife
+      if (lion ? e.owner[j] === 0 || TYPES[e.type[j]!]!.moveClass === MOVE_WATER : !autoHostile(w, s, j) || e.owner[j] === 0) return; // soldiers ignore wildlife; predators, ships
       if (!lion && !w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)]) return;
       const d = edgeDist(w, s, j);
       if (d > look || d > bestD || (d === bestD && j > best)) return;
