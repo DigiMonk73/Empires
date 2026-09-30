@@ -205,3 +205,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   Hard > Easy 46/64 (72%). With 64 games the shortfall is real, so as agreed the Hard > Easy pairing is reported
   but not gated until M13 (AI v2), and m7 was tagged on the other two. The 0.7.0 StartOS package is skipped: M8
   is nearly done, so the next package is 0.8.0 at the M8 exit.
+- **D42 — The water-map AI gate moves to M13** (2026-09-30; the user's choice on KI-8). M8's exit asked for ≥ 90%
+  of AI island games decided; at the M8 exit the full suite's 12 island/Narrows 1v1s decide 7 in 2 h (every part
+  of the naval AI works; finishing an island war needs strategy — bigger coordinated waves, siege carried over,
+  hunting stray ships). The suite still plays and reports them (`WATER_GATED` in ai-suite); M13 (AI v2, whose Done
+  definition already includes "wins island maps via transports") turns the gate back on. m8 is tagged on the
+  rest of verify:full.
