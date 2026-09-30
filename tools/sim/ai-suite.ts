@@ -48,9 +48,12 @@ const DEFERRED = new Set<string>();
 const LADDER_MIN = (pair: string): number => (pair === 'hardest>hard' ? 0.65 : 0.75);
 const WATER_TYPES = ['smallIslands', 'largeIslands', 'narrows'] as const;
 const water: Case[] = [];
-// 48 games on seeds nobody tuned against (D55): the 12 of M8–M13 (301–312) had been fixed one by one and read
-// 11/12 while fresh seeds were decided 65% of the time.
-if (FULL) for (let k = 0; k < 48; k++) water.push({ seed: 401 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
+// The gate: 48 held-out games (501–548) nobody diagnoses (D55, D56). The 12 of M8–M13 (301–312) had been fixed
+// one by one and read 11/12 while fresh seeds were decided 65% of the time; 401–448 became the development set
+// M14.6 dissected (46/48 there, 38/48 held out) — reported, not gated.
+const WATER_DEV = 48;
+if (FULL) for (let k = 0; k < 48; k++) water.push({ seed: 501 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
+if (FULL) for (let k = 0; k < WATER_DEV; k++) water.push({ seed: 401 + k, type: WATER_TYPES[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
 
 const fails: string[] = [];
 let crashes = 0;
@@ -143,11 +146,14 @@ const WATER_GATED = true;
 let waterLine = '';
 if (FULL && want('water')) {
   let won = 0;
+  let devWon = 0;
   const times: number[] = [];
+  const held = water.length - WATER_DEV;
   for (const [k, c] of water.entries()) {
     const r = got(waterJobs[k]!, c);
     if (!r) continue;
-    if (r.winner) {
+    if (r.winner && k >= held) devWon++;
+    else if (r.winner) {
       won++;
       times.push(r.ticks);
     }
@@ -156,8 +162,8 @@ if (FULL && want('water')) {
     if (process.argv.includes('--verbose')) console.log(`  water ${c.type} ${c.size} seed ${c.seed} ${c.levels.join('/')}: ${r.winner ? `P${r.winner.join('+')} wins at ${fmt(r.ticks)}` : 'undecided at 2:00:00'}`);
   }
   times.sort((a, b) => a - b);
-  waterLine = ` · water decided ${won}/${water.length}${times.length ? ` (median ${fmt(times[times.length >> 1]!)})` : ''}${WATER_GATED ? '' : ' (gate: M13)'}`;
-  if (WATER_GATED && won < Math.ceil(water.length * 0.9)) fails.push(`water maps: only ${won}/${water.length} decided in 2 h`);
+  waterLine = ` · water decided ${won}/${held} held out${times.length ? ` (median ${fmt(times[times.length >> 1]!)})` : ''}, ${devWon}/${WATER_DEV} dev${WATER_GATED ? '' : ' (gate: M13)'}`;
+  if (WATER_GATED && won < Math.ceil(held * 0.9)) fails.push(`water maps: only ${won}/${held} held-out games decided in 2 h`);
 }
 // Hard-vs-Hard length and Hard's idle villagers (every Hard seat in the ladder and the duels).
 let duelLine = '';

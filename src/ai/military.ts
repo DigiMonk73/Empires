@@ -2,7 +2,7 @@ import type { AiLevel } from '../data/setup.ts';
 import { TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
 import type { Command } from '../sim/commands/types.ts';
 import type { Rng } from '../sim/math/rng.ts';
-import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
+import type { OwnBuilding, OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
 import { afford, dist, type AiPlayer, type Snapshot } from './ai.ts';
 import { Tactics, worth, type Danger, type Sighting } from './tactics.ts';
 import { styleOf } from './civStyle.ts';
@@ -26,6 +26,8 @@ const NON_MILITARY = new Set(['villager', 'fishingShip', 'tradeShip', 'transport
 const AT_SEA = new Set(['warship']);
 /** Raiders villagers can gang up on three to one: slow enough to catch, weak enough to beat (not riders, not hoplites). */
 const MILITIA_VS = new Set(['infantry', 'footArcher', 'slinger', 'siege']);
+/** Soldiers that can shoot a ship off the coast. */
+const RANGED = new Set(['footArcher', 'mountedArcher', 'slinger', 'siege']);
 /** Line upgrades the AI researches, per building, in order (econ:5). */
 const LINE_TECHS: [string, string[]][] = [
   ['barracks', ['battleAxe', 'shortSword', 'broadSword', 'longSword', 'legion']],
@@ -64,6 +66,8 @@ export interface MilitaryState {
   dangers?: Danger[];
   /** When each of the 36 sweep cells was last in sight (M13.4). */
   cellSeen?: number[];
+  /** Our buildings' hit points at the last think (on an island: spotting attackers out of sight, M14.6b). */
+  bldHp?: [number, number][];
 }
 
 export class MilitaryBrain {
@@ -94,7 +98,7 @@ export class MilitaryBrain {
   }
 
   save(): MilitaryState {
-    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet], cellSeen: [...this.cellSeen], ...(this.war.tactics ? this.tactics.save() : {}) };
+    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet], cellSeen: [...this.cellSeen], bldHp: [...this.bldHp], ...(this.war.tactics ? this.tactics.save() : {}) };
   }
 
   restore(st: MilitaryState): void {
@@ -104,16 +108,40 @@ export class MilitaryBrain {
     this.rallySet = new Set(st.rallySet);
     this.tactics.restore(st.seen, st.dangers);
     this.cellSeen = st.cellSeen ? [...st.cellSeen] : new Array<number>(36).fill(0);
+    this.bldHp = new Map(st.bldHp ?? []);
   }
 
   /** On an island (the naval AI's verdict, refreshed each think). */
   private island = false;
+  private bldHp = new Map<number, number>();
+
+  /**
+   * On an island, once the enemy has no buildings we know of: a building of ours losing hit points with no enemy
+   * in sight near it — warships shooting from beyond its sight. The ranged soldiers go and look (a beaten side's last galleys razed a winner's coast unseen
+   * while its bowmen stood at home, and kept the game open to the 2-hour mark: M14.6b).
+   */
+  private unseen(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: SeenEntity[]): void {
+    let hit: OwnBuilding | null = null;
+    for (const b of s.buildings) {
+      const was = this.bldHp.get(b.h);
+      if (b.done && was !== undefined && b.hp < was && !threats.some((o) => dist(o.x, o.y, b.x, b.y) < 10)) hit ??= b;
+    }
+    this.bldHp = new Map(s.buildings.filter((b) => b.done).map((b) => [b.h, b.hp]));
+    // Only once the enemy has no buildings we know of (a beaten side's last ships): mid-game it pulled the bowmen
+    // off every invasion whenever a raid scratched a house (the water gate 43 → 39/48).
+    if (!hit || this.enemies(s).some((o) => o.building)) return;
+    const ranged = army.filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && RANGED.has(u.cls));
+    if (!ranged.length) return;
+    for (const u of ranged) s.busy.add(u.h);
+    cmds.push({ t: 'move', ids: ranged.map((u) => u.h), x: Math.round(hit.x * 4) / 4, y: Math.round(hit.y * 4) / 4, am: true });
+  }
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
     this.island = ai.naval.onIsland;
     this.noteSeen(s);
     const army = s.units.filter((u) => !NON_MILITARY.has(u.cls) && !AT_SEA.has(u.cls));
     const threats = this.threats(s);
+    if (this.island) this.unseen(s, cmds, army, threats);
     this.buildings(ai, s, cmds, threats.length > 0);
     this.research(s, cmds);
     this.train(s, cmds, army, threats.length, ai.overdue(s) ? ai.ageFood(s) : 0, ai.naval.landCap(s), ai.naval.popReserve(s));

@@ -121,7 +121,7 @@ export class NavalBrain {
     const foes = s.v
       .others()
       .filter((o) => o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY)
-      .filter((o) => s.v.seaReachable(sea, o.x - 1.5, o.y - 1.5, o.x + 1.5, o.y + 1.5))
+      .filter((o) => s.v.seaReachable(sea, o.x - 5, o.y - 5, o.x + 5, o.y + 5)) // (in a warship's reach from the water)
       .sort((a, b) => dist(a.x, a.y, x0, y0) - dist(b.x, b.y, x0, y0) || a.h - b.h);
     const ids = ships.map((u) => u.h);
     for (const h of ids) s.busy.add(h);

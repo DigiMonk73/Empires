@@ -48,6 +48,8 @@ export interface OwnBuilding {
   stock: number;
   /** Farmer handle working it (farms), or -1. */
   farmer: number;
+  /** Hit points now (M14.6b: the AI notices a building under fire it can't see the attacker of). */
+  hp: number;
 }
 
 export interface SeenEntity {
@@ -192,6 +194,7 @@ export class PlayerView {
         housed: this.w.prod[s]?.housed ?? false,
         stock: e.stock[s]!,
         farmer: fo?.k === 'farm' && fo.h === e.handleOf(s) ? e.handleOf(farmer) : -1,
+        hp: e.hp[s]!,
       });
     }
     return out;

@@ -331,3 +331,8 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   31/48 (65%) by the same code. The gate keeps its 90% bar and now counts the 48 fresh seeds — stricter, not
   relaxed — and they are not to be tuned against one by one (diagnose, fix the cause, re-measure all 48). After
   the M14.6a island fixes: 40/48 (83%); the gate fails honestly until the water AI clears 44/48.
+- **D56 — Water gate: held-out seeds** (2026-09-30, M14.6b). Diagnosing games one by one fits the seeds you look
+  at: M14.6 took the 48 of D55 (401–448) from 31 to 46/48 while 48 untouched seeds (501–548) went from 34 to
+  38/48. So the gate counts only 501–548 — never traced, never dissected — and 401–448 are the development set
+  (reported beside it). A fix is kept when the held-out count doesn't fall. The bar stays 90%; it fails honestly
+  at 38/48 (79%) until the water AI earns it.

@@ -46,5 +46,7 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   was already busy); a woodline could also grow over a Town Center on ~2% of island starts. Fixed; the water gate
   now counts 48 fresh seeds (D55): 31/48 → 40/48 (83%) → 41/48 (M14.6b: the landed army's hunt, stranded troops
   fetched, docks on the open sea) → 43/48 (last stands, affordable units, no saving for an unreachable age).
+  Measured on held-out seeds (D56) the water AI is at 38/48 (79%; M13 34/48). With alligators on, held-out water
+  is 41/48 but Hard > Moderate drops to 41/64 (three runs at 41–43 vs 48 off) — a land effect to find.
   Still under 90%,
   and Hard > Moderate still sits on 48/64 — alligators stay off.

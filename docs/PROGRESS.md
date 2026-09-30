@@ -851,6 +851,14 @@ of island/Narrows games decided in 2 h (11/12).
         raise. Land games unchanged (ladder identical).
         Left (402, 404, 414, 441, 444): mostly the winner out of wood at home with its transports sunk — it can't
         reach trees elsewhere nor build ships for the loser's last warships; Hard mirrors on Small islands.
+        Then the last stand reaches targets within 5 tiles of the water, and once the enemy has no buildings
+        left an island computer sends its ranged soldiers to a building losing hit points with no enemy in sight
+        (galleys firing from beyond its sight) — only then: mid-game it pulled bowmen off every invasion
+        (the dev set 43 → 39). Dev set 46/48 — but **held out (501–548, D56) 38/48**, M13's code 34/48: the gate
+        now counts the held-out seeds and fails honestly at 79%.
+        Alligators on (same code): held-out water 41/48, but Hard > Moderate 41/64 and 1v1 wars 1/4 — three
+        measurements at 41–43 against 48 off: a real land effect, not noise. Next: find it (Hard's villagers vs
+        alligators? hunting by the shore?).
       Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army
