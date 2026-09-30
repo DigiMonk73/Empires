@@ -231,6 +231,19 @@ function siege(): SimConfig {
   };
 }
 
+/** Every land unit in ranks for art review (M7.4): infantry, archers, mounted, siege — player 1 facing player 2. */
+function army(): SimConfig {
+  const rows = [
+    ['clubman', 'axeman', 'shortSwordsman', 'broadSwordsman', 'longSwordsman', 'legion'],
+    ['hoplite', 'phalanx', 'centurion', 'slinger', 'priest'],
+    ['bowman', 'improvedBowman', 'compositeBowman', 'chariotArcher', 'horseArcher', 'heavyHorseArcher', 'elephantArcher'],
+    ['scout', 'cavalry', 'heavyCavalry', 'cataphract', 'camel', 'chariot', 'scytheChariot', 'warElephant', 'armoredElephant'],
+  ];
+  const units = rows.flatMap((row, r) => row.map((type, i) => ({ type, owner: 1, x: 6.5 + i * 1.6, y: 6.5 + r * 2.4 })));
+  units.push(...rows[0]!.map((type, i) => ({ type, owner: 2, x: 6.5 + i * 1.6, y: 18.5 })));
+  return { victory: 'none', seed: 12, map: { w: 32, h: 32 }, players: [{ civ: 'greek' }, { civ: 'roman' }], scenario: { units } };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -267,6 +280,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   raid,
   fort,
   siege,
+  army,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };

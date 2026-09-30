@@ -9,13 +9,13 @@ import type { ClipDef, ModelDef } from './types.ts';
  * (t = 0.33 s), matching the sim's 7-tick windup (D26); the last frame is a ready stance, held until the next
  * swing starts.
  */
-const STONE_HEAD: MatSpec = { tex: 'rock', color: 0x8a8580, rough: 0.9, repeat: 2 };
-const STRING: MatSpec = { tex: 'plain', color: 0xe8e0c8, rough: 1 };
-const FEATHER: MatSpec = { tex: 'plain', color: 0xf0ece0, rough: 1 };
+export const STONE_HEAD: MatSpec = { tex: 'rock', color: 0x8a8580, rough: 0.9, repeat: 2 };
+export const STRING: MatSpec = { tex: 'plain', color: 0xe8e0c8, rough: 1 };
+export const FEATHER: MatSpec = { tex: 'plain', color: 0xf0ece0, rough: 1 };
 
-const ATTACK = { frames: 10, fps: 12, hit: 4 / 9 } as const;
+export const ATTACK = { frames: 10, fps: 12, hit: 4 / 9 } as const;
 
-function clip(frames: number, fps: number, loop: boolean, pose: (t: number) => Pose, props?: (t: number) => readonly string[], markers?: Record<string, number>): ClipDef {
+export function clip(frames: number, fps: number, loop: boolean, pose: (t: number) => Pose, props?: (t: number) => readonly string[], markers?: Record<string, number>): ClipDef {
   return {
     frames,
     fps,
@@ -29,7 +29,7 @@ function clip(frames: number, fps: number, loop: boolean, pose: (t: number) => P
 }
 
 /** Standard kit around a weapon-specific attack; `props` chooses what is in hand per clip and time. */
-function soldierClips(attack: (t: number) => Pose, props?: { idle: readonly string[]; attack?: (t: number) => readonly string[] }, hold: Pose = {}): Record<string, ClipDef> {
+export function soldierClips(attack: (t: number) => Pose, props?: { idle: readonly string[]; attack?: (t: number) => readonly string[] }, hold: Pose = {}): Record<string, ClipDef> {
   const always = props ? () => props.idle : undefined;
   return {
     idle: clip(6, 4, true, (t) => ({ ...idlePose(t), ...ready, ...hold }), always),
@@ -40,9 +40,9 @@ function soldierClips(attack: (t: number) => Pose, props?: { idle: readonly stri
 }
 
 /** Weapon held ready in front: right forearm raised a little. */
-const ready: Pose = { armR: [0.15, 0, 0.35], foreR: [0, 0, 0.7] };
+export const ready: Pose = { armR: [0.15, 0, 0.35], foreR: [0, 0, 0.7] };
 
-const stance = (lean: number): Pose => ({ legL: [0, 0, 0.3], legR: [0, 0, -0.25], shinL: [0, 0, -0.12], shinR: [0, 0, -0.05], hipY: HIP_Y - 0.015, lean });
+export const stance = (lean: number): Pose => ({ legL: [0, 0, 0.3], legR: [0, 0, -0.25], shinL: [0, 0, -0.12], shinR: [0, 0, -0.05], hipY: HIP_Y - 0.015, lean });
 
 /** One-handed overhead blow (club, axe): wind up behind the head, smash down at t = 0.44, recover to ready. */
 function overhead(t: number): Pose {
@@ -75,7 +75,7 @@ function sling(t: number): Pose {
 }
 
 /** Bow: raise the bow arm, draw to the cheek, loose at t = 0.44 (hand flicks back), lower. */
-function bow(t: number): Pose {
+export function bow(t: number): Pose {
   const raise = ease(t, 0, 0.18) * (1 - ease(t, 0.6, 1));
   const draw = ease(t, 0.12, 0.4) * (1 - ease(t, 0.44, 0.5));
   const flick = ease(t, 0.44, 0.5) * (1 - ease(t, 0.6, 1));
@@ -91,12 +91,12 @@ function bow(t: number): Pose {
 }
 
 // ── Kit pieces ──────────────────────────────────────────────────────────────────────────────────────────────
-const belt: NodeSpec = { geom: cyl(0.1, 0.1, 0.035, 10), mat: 'leather', t: [0, 0.035, 0] };
+export const belt: NodeSpec = { geom: cyl(0.1, 0.1, 0.035, 10), mat: 'leather', t: [0, 0.035, 0] };
 /**
  * One-handed weapons sit 0.9 rad off the forearm line: pointing at the target at the moment of impact, cocked
  * behind the head at the top of the wind-up, and raised in the ready stance. Blades lead on local −X (D-art).
  */
-const GRIP = 0.9;
+export const GRIP = 0.9;
 const club: NodeSpec[] = [
   { r: [0, 0, GRIP], children: [
     { geom: cyl(0.03, 0.014, 0.3, 7), mat: 'wood', t: [0.005, -0.13, 0] },
@@ -116,7 +116,7 @@ const slingCord: NodeSpec[] = [
     { geom: sphere(0.022, 6), mat: 'leather', t: [0, -0.23, 0] },
   ] },
 ];
-const bowStave: NodeSpec[] = [
+export const bowStave: NodeSpec[] = [
   // A short self bow across the left fist: its long axis on the hand's local X, so it stands upright while the
   // arm is raised to shoot; limbs bend toward the archer, string on the near side.
   { r: [0, 0, Math.PI / 2], children: [
@@ -125,13 +125,13 @@ const bowStave: NodeSpec[] = [
     { geom: cyl(0.003, 0.003, 0.56, 4), mat: STRING, t: [-0.035, 0, 0] },
   ] },
 ];
-const nockedArrow: NodeSpec[] = [
+export const nockedArrow: NodeSpec[] = [
   { name: 'prop:arrow', children: [
     { geom: cyl(0.005, 0.005, 0.36, 4), mat: 'wood', t: [0, -0.02, 0.0], r: [Math.PI / 2, 0, 0] },
     { geom: cone(0.011, 0.04, 4), mat: STONE_HEAD, t: [0, -0.02, -0.19], r: [-Math.PI / 2, 0, 0] },
   ] },
 ];
-const quiver: NodeSpec = {
+export const quiver: NodeSpec = {
   t: [-0.1, 0.18, 0.04],
   r: [0.35, 0, -0.3],
   children: [
@@ -140,7 +140,7 @@ const quiver: NodeSpec = {
   ],
 };
 const stonePouch: NodeSpec = { geom: sphere(0.045, 7), mat: 'leather', t: [0.03, -0.02, 0.1], s: [1, 1.2, 0.8] };
-const leatherCap: NodeSpec = { geom: sphere(0.074, 10), mat: 'leather', t: [-0.005, 0.085, 0], s: [1, 0.62, 1] };
+export const leatherCap: NodeSpec = { geom: sphere(0.074, 10), mat: 'leather', t: [-0.005, 0.085, 0], s: [1, 0.62, 1] };
 const headband: NodeSpec = { geom: cyl(0.072, 0.072, 0.02, 12), mat: 'team', t: [0, 0.075, 0] };
 const shoulderPelt: NodeSpec = { geom: sphere(0.1, 9), mat: { tex: 'hair', color: 0x6a4a2a, rough: 1, repeat: 3 }, t: [0.0, 0.25, 0.05], s: [1, 0.45, 1.25] };
 

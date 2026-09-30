@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M7.4b · army, army-clash (new)
+- Infantry lines read as upgrades at a glance (more metal, bigger shields, longer blades, crests). Fixed during
+  review: the Legion was a team-coloured blob (tunic, skirt and scutum all team) and its scutum lay sideways
+  (hung off a level forearm) — leather skirt, and the scutum turned upright. Units 4.
+- Mounted units and priests are still placeholder shapes (M7.4c, M7.5).
+
 ## 2026-09-29 · M7.3 · siege-park, siege-volley (new)
 - Side-on the torsion engines read at once (cocked arm, frame, spoked wheels, team cloth); head-on the first
   cut looked like a chair (tall rectangular stop-bar frame) — fixed with a leaning A-frame and braces. Three

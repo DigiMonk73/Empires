@@ -181,3 +181,25 @@ test('siege: every engine and the Siege Workshop, then a bombardment of the enem
   await snap(page, info, 'siege-volley');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('army: every land unit in ranks (art review), then the infantry clash', async ({ page }, info) => {
+  await openGame(page, 'scenario=army&fog=0&paused=1');
+  await page.evaluate(() => {
+    window.__empires!.camera.setZoom(1.6);
+    window.__empires!.camera.centerOn(11, 11.5);
+  });
+  await frames(page);
+  await snap(page, info, 'army');
+  // The front ranks close and fight: swords, spears and shields in their attack clips.
+  const p1 = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.y < 9).map((u) => u.h);
+  const p2 = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
+  await page.evaluate(([a, b]) => {
+    window.__empires!.issue(1, { t: 'move', ids: a!, x: 11, y: 12.5, am: true });
+    window.__empires!.issue(2, { t: 'move', ids: b!, x: 11, y: 12.5, am: true });
+  }, [p1, p2] as const);
+  await page.evaluate(() => window.__empires!.step(20 * 6));
+  await page.evaluate(() => window.__empires!.camera.centerOn(11, 12.5));
+  await frames(page);
+  await snap(page, info, 'army-clash');
+  expect(pageErrors(page)).toEqual([]);
+});
