@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13).
-- **Next up:** M8.8c AI transports (invade across water), then M8.8d water AI suite (exit gate ≥ 90% island games decided); then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
+- **Next up:** M8.8d water AI suite (exit gate ≥ 90% island games decided); then the M8 exit: verify:full, tag m8, submodule bump + s9pk 0.8.0 (no VM check at M8).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -442,8 +442,15 @@ Ships already train at the Dock and path on water (their own move class and regi
       the land army is a guard of 4 until transports, villagers lean to wood. Also: a hunting army now splits into
       groups of three (a last villager hid for 10 min). Small Islands (Hard, 35 min): both fleets fight (15:9 lost).
       Test: ai.test.ts "warships".
-- [ ] **M8.8c AI transports.** When no enemy building is reachable by land: build transports, load an army at
-      the shore, land it on the enemy coast and attack; repeat waves.
+- [x] **M8.8c AI transports.** When every known enemy building (Docks aside) stands on other land: transports
+      (1 in the Tool Age, 2 from the Bronze Age) wait at our nearest shore, board idle soldiers once half a wave is
+      ready, sail together when full (or after 60–90 s), land beside the nearest enemy building and come back;
+      the land military holds its own waves meanwhile (landed troops still take the nearest buildings), keeps
+      pop free for missing transports, and the island guard cap lifts only while a transport is afloat. "Island"
+      now also means other big land across the water (Narrows, team islands), with the Dock on our nearest shore.
+      Sim: boarding from up to ~1.9 tiles (a second transport rides a tile off the beach). Found and fixed on the
+      way: a hemmed-in enemy building read as "across the sea" and stopped the land war. Land suite unchanged
+      (3/4, same games). Test: ai.test.ts "invasions".
 - [ ] **M8.8d Water AI suite.** Island/Narrows matches in the AI suite: no crashes, ≥ 90% decided (exit gate).
 - _Exit:_ ≥ 90% AI island games decided; naval screenshots reviewed.
 

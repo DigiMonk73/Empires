@@ -94,9 +94,9 @@ export class MilitaryBrain {
     const threats = this.threats(s);
     this.buildings(ai, s, cmds, threats.length > 0);
     this.research(s, cmds);
-    this.train(s, cmds, army, threats.length, ai.overdue(s) ? ai.ageFood(s) : 0, ai.naval.landCap(s));
+    this.train(s, cmds, army, threats.length, ai.overdue(s) ? ai.ageFood(s) : 0, ai.naval.landCap(s), ai.naval.popReserve(s));
     this.rally(s, cmds);
-    if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army);
+    if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army, ai.naval.invading);
   }
 
   /** Enemy fighters in our base (within 14 tiles of our buildings) or on our villagers at a far woodline. */
@@ -149,7 +149,7 @@ export class MilitaryBrain {
     }
   }
 
-  private train(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: number, overdueFood: number, landCap: number): void {
+  private train(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: number, overdueFood: number, landCap: number, popReserve: number): void {
     // Attacked: match the raiders and then some, whatever the plan (the economy is worth nothing dead). On an
     // island the land army stays a home guard until transports can carry it (the naval AI says how many).
     const want = Math.max(Math.min(this.wanted(s.me.age), landCap), threats ? threats + 3 : 0);
@@ -157,7 +157,7 @@ export class MilitaryBrain {
     let siege = army.filter((u) => u.cls === 'siege').length;
     for (const b of s.buildings) {
       const workshop = b.type === 'siegeWorkshop';
-      if (!b.done || b.queue >= 2 || s.me.pop >= s.me.popCap) continue;
+      if (!b.done || b.queue >= 2 || s.me.pop + popReserve >= s.me.popCap) continue;
       // Siege is counted on its own: a few engines per level, on top of the army.
       if (workshop ? siege >= this.war.siege : have >= want) continue;
       const unit = this.pick(s, b.type, b.h, workshop ? siege : have);
@@ -272,12 +272,12 @@ export class MilitaryBrain {
     }
     if (!army.length) return false;
     const t = threats[0]!;
-    const free = army.filter((u) => u.order !== 'attack');
+    const free = army.filter((u) => u.order !== 'attack' && !s.busy.has(u.h));
     if (free.length) cmds.push({ t: 'move', ids: free.map((u) => u.h), x: Math.round(t.x * 4) / 4, y: Math.round(t.y * 4) / 4, am: true });
     return true;
   }
 
-  private attack(s: Snapshot, cmds: Command[], army: OwnUnit[]): void {
+  private attack(s: Snapshot, cmds: Command[], army: OwnUnit[], invading = false): void {
     if (s.v.tick < this.war.firstPush * 1200) return;
     // Troops already standing in an enemy base with no one to fight: straight on to the next building (no
     // waiting for the next push), spread so that no more than four swing at one.
@@ -286,7 +286,7 @@ export class MilitaryBrain {
     for (const u of army) if (u.order === 'attack') on.set(u.target, (on.get(u.target) ?? 0) + 1);
     const idle: OwnUnit[] = [];
     for (const u of army) {
-      if (!u.idle) continue;
+      if (!u.idle || s.busy.has(u.h)) continue; // (the naval AI may have them boarding)
       let best: SeenEntity | null = null;
       let bd = 12;
       for (const o of buildings) {
@@ -300,7 +300,8 @@ export class MilitaryBrain {
         on.set(best.h, (on.get(best.h) ?? 0) + 1);
       } else idle.push(u);
     }
-    if (s.v.tick - this.lastPush < this.war.patience) return;
+    // Across the water the naval AI ferries the waves; landed troops still take the nearest buildings (above).
+    if (invading || s.v.tick - this.lastPush < this.war.patience) return;
     const waveAt = Math.min(WAVE[this.plan][s.me.age] ?? 99, Math.max(1, this.wanted(s.me.age)));
     const out = army.length - army.filter((u) => u.idle).length;
     // A wave leaves when enough are ready. Reinforcements join only a wave that is still strong — pairs

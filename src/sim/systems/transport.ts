@@ -120,7 +120,9 @@ export function transportSystem(w: World): void {
         finish(w, s);
         continue;
       }
-      if (edgeDist(w, s, t) <= REACH + 0.4) {
+      // Step aboard from the beach — or across one tile of shallows to a transport riding a tile off it (two
+      // transports can't both sit on the tile that touches land).
+      if (edgeDist(w, s, t) <= REACH + 1) {
         board(w, s, t);
         continue;
       }

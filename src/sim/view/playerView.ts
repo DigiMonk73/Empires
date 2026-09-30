@@ -21,12 +21,14 @@ export interface OwnUnit {
   idle: boolean;
   /** Head order kind ('gather', 'build', 'farm', 'attack', 'move'…) or null. */
   order: string | null;
-  /** Gather/farm target: resource node index or building handle; build target handle. */
+  /** Gather/farm target: resource node index or building handle; build, board or repair target handle. */
   target: number;
   /** Job of what it is carrying / working ('wood', 'forage', …) or null. */
   job: string | null;
   carry: number;
   act: number;
+  /** Transports: units aboard. */
+  aboard: number;
 }
 
 export interface OwnBuilding {
@@ -113,7 +115,7 @@ export class PlayerView {
       if (!e.alive[s] || e.kind[s] !== EKind.unit || e.owner[s] !== this.player) continue;
       const t = TYPES[e.type[s]!]!;
       const o = this.w.orders[s]?.[0];
-      const target = !o ? -1 : o.k === 'gather' ? o.res : o.k === 'build' || o.k === 'farm' || o.k === 'attack' ? o.h : -1;
+      const target = !o ? -1 : o.k === 'gather' ? o.res : o.k === 'build' || o.k === 'farm' || o.k === 'attack' || o.k === 'board' || o.k === 'repair' ? o.h : -1;
       out.push({
         h: e.handleOf(s),
         type: t.id,
@@ -127,6 +129,7 @@ export class PlayerView {
         job: JOBS[(e.carryJob[s] ?? 0) - 1] ?? null,
         carry: e.carryAmt[s]!,
         act: e.act[s]!,
+        aboard: this.w.cargo[s]?.length ?? 0,
       });
     }
     return out;
@@ -212,11 +215,16 @@ export class PlayerView {
     return false;
   }
 
-  /** Tiles in land region `label` (a full scan: callers ask once and remember). */
-  landSize(label: number): number {
-    let n = 0;
-    for (const l of this.w.pathing.regions.labels(1)) if (l === label) n++;
-    return n;
+  /** Tiles in land region `label`, and in all land (a full scan: callers ask once and remember). */
+  landSize(label: number): { region: number; all: number } {
+    let region = 0;
+    let all = 0;
+    for (const l of this.w.pathing.regions.labels(1)) {
+      if (!l) continue;
+      all++;
+      if (l === label) region++;
+    }
+    return { region, all };
   }
 
   /**

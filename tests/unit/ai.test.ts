@@ -96,21 +96,45 @@ describe('AI at sea: warships (M8.8b)', () => {
     const ais = [1, 2].map((p) => new AiPlayer(p, 'hard', 3 * 31 + p, {}));
     const views = [1, 2].map((p) => new PlayerView(w, p));
     const peak = [0, 0];
-    let maxLand = 0;
+    let maxLand = 0; // before either knows where the other lives (then the army grows for the invasion)
     let sunk = 0;
     for (let t = 1; t <= 20 * 60 * 22; t++) {
       sim.step(ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd }))));
       for (const ev of sim.drainEvents()) if (ev.t === 'died' && TYPES[ev.type]!.unit?.tags.includes('ship')) sunk++;
       if (t % 200) continue;
+      const scouting = ais.every((a) => !a.naval.invading);
       views.forEach((v, i) => {
         const u = v.ownUnits();
         peak[i] = Math.max(peak[i]!, u.filter((x) => x.cls === 'warship').length);
-        maxLand = Math.max(maxLand, u.filter((x) => !['villager', 'fishingShip', 'warship', 'transport', 'tradeShip', 'priest'].includes(x.cls)).length);
+        if (scouting) maxLand = Math.max(maxLand, u.filter((x) => !['villager', 'fishingShip', 'warship', 'transport', 'tradeShip', 'priest'].includes(x.cls)).length);
       });
     }
     expect(peak[0]).toBeGreaterThanOrEqual(2);
     expect(peak[1]).toBeGreaterThanOrEqual(2);
     expect(maxLand).toBeLessThanOrEqual(8); // a guard of 4 (+ a few answering a landing)
     expect(sunk).toBeGreaterThan(0); // they met at sea
+  });
+});
+
+describe('AI at sea: invasions (M8.8c)', () => {
+  it('once the enemy is found across the water, transports land an army on its island', () => {
+    const cfg = generateMap({ seed: 3, type: 'smallIslands', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
+    const sim = Sim.create({ ...cfg, players: cfg.players.map((p) => ({ ...p, ai: 'hard' as const })) });
+    const w = sim.world;
+    const ais = [1, 2].map((p) => new AiPlayer(p, 'hard', 3 * 31 + p, {}));
+    const views = [1, 2].map((p) => new PlayerView(w, p));
+    // Each player's island: the land region beside its Town Center.
+    const island = cfg.starts.map(([x, y]) => views[0]!.region(1, x + 4, y + 1));
+    let landed = 0;
+    for (let t = 1; t <= 20 * 60 * 40 && !landed; t++) {
+      sim.step(ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd }))));
+      sim.drainEvents();
+      if (t % 100) continue;
+      views.forEach((v, i) => {
+        for (const u of v.ownUnits()) if (u.cls !== 'villager' && v.region(1, Math.floor(u.x), Math.floor(u.y)) === island[1 - i]) landed = t;
+      });
+    }
+    expect(island[0]).not.toBe(island[1]);
+    expect(landed).toBeGreaterThan(0);
   });
 });
