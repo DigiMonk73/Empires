@@ -32,9 +32,13 @@ export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
 const SHARES: Record<number, [number, number, number, number]> = {
   1: [0.62, 0.38, 0, 0],
   2: [0.58, 0.32, 0.1, 0], // Bronze costs food: lean on it (econ:9 "1300 food by 12–14 min")
-  3: [0.45, 0.3, 0.2, 0.05],
-  4: [0.42, 0.28, 0.22, 0.08],
+  // No stone: nothing the AI builds needs it yet (towers and walls come with AI v2, M13) — it only piled up.
+  3: [0.47, 0.33, 0.2, 0],
+  4: [0.45, 0.3, 0.25, 0],
 };
+
+/** The age advance researched from each age (index = current age). */
+const NEXT_AGE_TECH: (string | null)[] = [null, 'toolAge', 'bronzeAge', 'ironAge', null];
 
 const FOOD_JOBS = new Set(['forage', 'farm', 'hunt', 'fish']);
 const RES_OF_JOB: Record<string, number> = { forage: 0, farm: 0, hunt: 0, fish: 0, wood: 1, gold: 2, stone: 3 };
@@ -278,14 +282,15 @@ export class AiPlayer {
    * food goes to the age before new villagers or soldiers — replacing losses one by one can stall a game forever.
    */
   overdue(s: Snapshot): boolean {
-    const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
+    const tech = NEXT_AGE_TECH[s.me.age];
     if (!tech || s.v.researching(tech)) return false;
-    return s.v.tick > (s.me.age === 1 ? this.p.toolBy : this.p.toolBy + 10) * 60 * 20 && s.villagers.length >= 12;
+    const by = this.p.toolBy + [0, 0, 10, 22][s.me.age]!; // Tool, then Bronze 10 min later, Iron 22
+    return s.v.tick > by * 60 * 20 && s.villagers.length >= 12;
   }
 
   /** Food the next age costs (0 when there is none to take). */
   ageFood(s: Snapshot): number {
-    const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
+    const tech = NEXT_AGE_TECH[s.me.age];
     return tech ? (TECH_BY_ID.get(tech)!.cost as Partial<Record<string, number>>).food ?? 0 : 0;
   }
 
@@ -345,12 +350,20 @@ export class AiPlayer {
     if (s.me.age >= 2 && this.has(s, 'market').length && !this.has(s, 'archeryRange').length && !this.isPending(s, 'archeryRange')) {
       if (this.build(s, cmds, 'archeryRange', tc.x, tc.y, 7, 13, 1)) return;
     }
+    // Bronze Age: the Iron Age needs two of Temple / Government Center / Siege Workshop / Academy (econ:3).
+    if (s.me.age >= 3 && !this.has(s, 'governmentCenter').length && !this.isPending(s, 'governmentCenter')) {
+      if (this.build(s, cmds, 'governmentCenter', tc.x, tc.y, 6, 12, 2)) return;
+    }
+    const second = this.has(s, 'stable', true).length ? 'academy' : 'temple';
+    if (s.me.age >= 3 && this.has(s, 'governmentCenter', true).length && !this.has(s, second).length && !this.isPending(s, second)) {
+      if (this.build(s, cmds, second, tc.x, tc.y, 7, 13, 1)) return;
+    }
   }
 
   private ageUp(s: Snapshot, cmds: Command[]): void {
     const tc = s.tc;
     if (!tc || tc.queue > 0) return;
-    const tech = s.me.age === 1 ? 'toolAge' : s.me.age === 2 ? 'bronzeAge' : null;
+    const tech = NEXT_AGE_TECH[s.me.age];
     if (!tech || s.v.researching(tech)) return;
     // Boom to the villager target first — but under pressure (losses), go anyway once the clock says so.
     if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !this.overdue(s)) return;

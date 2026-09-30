@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M7.4 Iron Age + army lines (swordsmen, academy hoplites, archer/cavalry/chariot/camel/elephant lines; AI Iron Age).
+- **Next up:** M7.4b infantry art (swordsmen, hoplites, archer upgrades), then M7.4c mounted art.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -313,9 +313,18 @@ each one *work* in the sim, UI and AI, one slice at a time.
       Bronze Age (wood reserved from farms), 0–4 engines by level. _Found:_ in wars the AI reaches Bronze at
       24–31 min, so its siege arrives late and rarely fires — wartime economy is M13 work. `?scenario=siege`;
       tests siege.test.ts; e2e siege.
-- [ ] **M7.4 Iron Age + army lines.** Iron Age advance; Short → Broad → Long Swordsman → Legion; Academy
-      Hoplite → Phalanx → Centurion; archer, cavalry, chariot, camel, elephant lines; per-unit upgrades in the
-      field; art (kit composition). AI trains Iron-age units.
+- [x] **M7.4a Iron Age + army lines (sim, UI, AI).** A data-driven test proves every land unit becomes
+      trainable once its age and techs are in (for a civ that has it — no civ has the whole tree) and every unit
+      upgrade converts the field and production (34 cases, all green first time: the sim was already right).
+      UI: civ-missing units hidden; the original's training hotkeys. AI: Government Center + Academy/Temple in
+      Bronze for the Iron Age, Iron advance (own deadline), best unit of each line the civ has (chariots,
+      elephants, horse archers…), line upgrades queued between soldiers, no stone share (it only piled up).
+      Iron in peaceful games 22–36 min; test: a Hard AI given Iron + buildings fields Iron-age units and
+      researches Iron upgrades. Full ladder 12/16, 12/16, 15/16 before the last tweaks (gate 12/16) — margin
+      is thin; quick 8/8 after. In wars AIs reach Iron ~40 min and usually win before using it.
+- [ ] **M7.4b Infantry art.** Swordsman line, Hoplite line, Improved/Composite Bowman, priests' later M7.5.
+- [ ] **M7.4c Mounted art.** Cavalry line, Camel, Chariot line, Horse Archer line, Chariot Archer, War/Armored
+      Elephant, Elephant Archer (horse rig + chariot cart + the elephant quad rig).
 - [ ] **M7.5 Temple + priests.** Conversion (odds, range, faith, resistances), healing, rejuvenation; temple techs
       (Astrology, Mysticism, Polytheism, Afterlife, Monotheism, Fanaticism, Jihad, Medicine, Martyrdom).
 - [ ] **M7.6 Economy + civic techs.** Market (Wheel, Woodworking line, mining, Domestication/Plow/Irrigation,

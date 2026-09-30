@@ -54,7 +54,13 @@ const BUILD_KEYS: Record<string, string> = {
 };
 
 /** Unit training hotkeys per building (mil:5). */
-const TRAIN_KEYS: Record<string, string> = { villager: 'C', clubman: 'T', slinger: 'L', shortSwordsman: 'Z', bowman: 'T', scout: 'T', stoneThrower: 'C', ballista: 'B' };
+const TRAIN_KEYS: Record<string, string> = {
+  villager: 'C',
+  clubman: 'T', slinger: 'L', shortSwordsman: 'Z',
+  bowman: 'T', improvedBowman: 'A', chariotArcher: 'R', horseArcher: 'C', elephantArcher: 'E',
+  scout: 'T', chariot: 'R', cavalry: 'C', camel: 'L', warElephant: 'E',
+  hoplite: 'T', priest: 'T', stoneThrower: 'C', ballista: 'B',
+};
 
 export function computeCommands(w: World, player: number, selected: readonly number[], page: 'main' | 'build'): CommandButton[] {
   const e = w.ents;
@@ -113,6 +119,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
     const def = TYPES[e.type[b]!]!.building!;
     for (const unit of def.trains ?? []) {
       const why = trainBlocker(w, player, b, unit);
+      if (why === 'not available to this civilization') continue; // missing from this civ's tree (econ:6.2)
       if (why && why !== 'building not ready' && UNIT_BY_ID.get(unit)!.age > p.stats.age + 1) continue;
       const ti = producedType(w, player, unit);
       const cost = w.stats(player, ti).cost;

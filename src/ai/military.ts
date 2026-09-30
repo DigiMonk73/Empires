@@ -18,9 +18,17 @@ export type Plan = 'rush' | 'boom';
 const ARMY: Record<Plan, number[]> = { rush: [0, 6, 14, 18, 22], boom: [0, 3, 8, 18, 22] };
 /** Soldiers ready before a wave goes out. */
 const WAVE: Record<Plan, number[]> = { rush: [0, 6, 8, 10, 12], boom: [0, 99, 99, 12, 14] };
-const NON_MILITARY = new Set(['villager', 'fishingShip', 'tradeShip', 'transport']);
+const NON_MILITARY = new Set(['villager', 'fishingShip', 'tradeShip', 'transport', 'priest']);
+/** Line upgrades the AI researches, per building, in order (econ:5). */
+const LINE_TECHS: [string, string[]][] = [
+  ['barracks', ['battleAxe', 'shortSword', 'broadSword', 'longSword', 'legion']],
+  ['archeryRange', ['improvedBow', 'compositeBow', 'heavyHorseArcher']],
+  ['stable', ['heavyCavalry', 'scytheChariot', 'armoredElephant', 'cataphract']],
+  ['academy', ['phalanx', 'centurion']],
+  ['siegeWorkshop', ['catapult']],
+];
 /** Ages the AI advances to (AiPlayer.ageUp); saving food for one it never researches would starve the army. */
-const NEXT_AGE: Record<number, string> = { 1: 'toolAge', 2: 'bronzeAge' };
+const NEXT_AGE: Record<number, string> = { 1: 'toolAge', 2: 'bronzeAge', 3: 'ironAge' };
 
 /**
  * How the levels differ at war (besides thinking speed and economy): army size, the earliest first push (game
@@ -119,10 +127,21 @@ export class MilitaryBrain {
 
   }
 
+  /**
+   * Line upgrades in order, slotted into a military building's queue between soldiers (research shares the
+   * production queue, and these buildings are rarely idle), when the bank covers them with food to spare. The
+   * expensive RoR capstones (Legion, Cataphract, Centurion) wait for a rich bank.
+   */
   private research(s: Snapshot, cmds: Command[]): void {
-    const barracks = s.buildings.find((b) => b.type === 'barracks' && b.done && b.queue === 0);
-    if (barracks && s.me.age >= 2 && !s.me.techs.includes('battleAxe') && !s.v.researching('battleAxe') && !s.v.researchBlocker(barracks.h, 'battleAxe')) {
-      cmds.push({ t: 'research', bld: barracks.h, tech: 'battleAxe' });
+    for (const [bld, techs] of LINE_TECHS) {
+      const b = s.buildings.find((x) => x.type === bld && x.done && x.queue < 4);
+      if (!b) continue;
+      const tech = techs.find((t) => !s.me.techs.includes(t) && !s.v.researching(t) && !s.v.researchBlocker(b.h, t));
+      if (!tech) continue;
+      const c = TECH_BY_ID.get(tech)!.cost as Partial<Record<string, number>>;
+      const spare = (c.food ?? 0) > 1000 ? 1500 : 150;
+      if (s.me.res[0]! - (c.food ?? 0) < spare || s.me.res[2]! < (c.gold ?? 0)) continue;
+      cmds.push({ t: 'research', bld: b.h, tech });
     }
   }
 
@@ -136,7 +155,7 @@ export class MilitaryBrain {
       if (!b.done || b.queue >= 2 || s.me.pop >= s.me.popCap) continue;
       // Siege is counted on its own: a few engines per level, on top of the army.
       if (workshop ? siege >= this.war.siege : have >= want) continue;
-      const unit = this.pick(s, b.type, have);
+      const unit = this.pick(s, b.type, b.h, workshop ? siege : have);
       if (!unit || s.v.trainBlocker(b.h, unit) || !s.v.canAfford(s.v.cost(unit))) continue;
       // Keep food for the next age / villagers while booming.
       if (!threats && this.plan === 'boom' && s.me.age < 3 && s.me.res[0]! < 150) continue;
@@ -156,19 +175,27 @@ export class MilitaryBrain {
   }
 
   /** Which unit a building trains now: a mix that answers archers with slingers. */
-  private pick(s: Snapshot, building: string, n: number): string | null {
-    switch (building) {
-      case 'barracks':
-        return s.me.age >= 2 && n % 3 === 2 ? 'slinger' : 'clubman';
-      case 'archeryRange':
-        return 'bowman';
-      case 'stable':
-        return s.me.age >= 3 && s.v.canAfford(s.v.cost('cavalry')) ? 'cavalry' : 'scout';
-      case 'siegeWorkshop':
-        return s.me.age >= 4 && n % 2 ? 'ballista' : 'stoneThrower';
-      default:
-        return null;
-    }
+  /** Which unit a building trains now: the best of each line it can (a mix that answers archers with slingers). */
+  private pick(s: Snapshot, building: string, bh: number, n: number): string | null {
+    const options: string[] = (() => {
+      switch (building) {
+        case 'barracks':
+          return s.me.age >= 2 && n % 3 === 2 ? ['slinger', 'clubman'] : ['shortSwordsman', 'clubman'];
+        case 'archeryRange':
+          // Mounted archers alternate with foot archers where the civ has them.
+          return n % 2 ? ['horseArcher', 'chariotArcher', 'improvedBowman', 'bowman'] : ['improvedBowman', 'bowman'];
+        case 'stable':
+          // The civ's strongest line first (the tree decides: econ:6.2), then whatever it has.
+          return s.me.age >= 3 ? ['cavalry', 'chariot', 'warElephant', 'camel', 'scout'] : ['scout'];
+        case 'academy':
+          return ['hoplite'];
+        case 'siegeWorkshop':
+          return s.me.age >= 4 && n % 2 ? ['ballista', 'stoneThrower'] : ['stoneThrower'];
+        default:
+          return [];
+      }
+    })();
+    return options.find((u) => !s.v.trainBlocker(bh, u)) ?? null;
   }
 
   /** New military buildings send their troops to a gathering point in front of the Town Center. */
@@ -179,7 +206,7 @@ export class MilitaryBrain {
     const len = dist(gx, gy, tc.x, tc.y) || 1;
     const rx = Math.round((tc.x + ((gx - tc.x) / len) * 6) * 4) / 4;
     const ry = Math.round((tc.y + ((gy - tc.y) / len) * 6) * 4) / 4;
-    const blds = s.buildings.filter((b) => b.done && !this.rallySet.has(b.h) && ['barracks', 'archeryRange', 'stable'].includes(b.type));
+    const blds = s.buildings.filter((b) => b.done && !this.rallySet.has(b.h) && ['barracks', 'archeryRange', 'stable', 'academy', 'siegeWorkshop'].includes(b.type));
     if (!blds.length) return;
     for (const b of blds) this.rallySet.add(b.h);
     cmds.push({ t: 'rally', blds: blds.map((b) => b.h), x: rx, y: ry });
