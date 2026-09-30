@@ -55,10 +55,29 @@ describe('AI v2 fixes (M13.4)', () => {
     }
   });
 
-  it('a won war is finished: the hunt finds a building put up where it had already looked', () => {
-    // Seed 14 (inland): the last Granary stood in an explored corner; the sweep skipped explored ground.
-    const r = runMatch({ seed: 14, type: 'inland', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 45 });
-    expect(r.winner).not.toBeNull();
+  it('a won war is finished: the army hunts down the last building in explored ground', () => {
+    // M13.4: a lone Granary in an explored corner kept won wars open past the hour. (Was a fixed-seed war — seed 14
+    // — until the maps changed under it, D59; this scene guards finishing a won war on any map.)
+    const sim = Sim.create({
+      seed: 3,
+      map: { w: 48, h: 48 },
+      victory: 'conquest',
+      revealMap: true,
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }, { type: 'granary', owner: 2, tx: 42, ty: 42 }],
+        units: [...Array.from({ length: 8 }, (_, i) => ({ type: 'axeman', owner: 1, x: 9.5 + (i % 4), y: 9.5 + Math.floor(i / 4) })), ...[0, 1, 2].map((i) => ({ type: 'villager', owner: 1, x: 5 + i, y: 9 }))],
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([1000, 1000, 500, 200]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    for (let t = 0; t < 20 * 60 * 6 && w.players[2]!.defeated === null; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    expect(w.players[2]!.defeated).not.toBeNull();
   });
 });
 

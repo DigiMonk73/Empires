@@ -510,8 +510,9 @@ export class MilitaryBrain {
     // Across the water the naval AI ferries the waves; landed troops still take the nearest buildings (above).
     if (invading || s.v.tick - this.lastPush < this.war.patience) return;
     let waveAt = Math.min(WAVE[this.plan][s.me.age] ?? 99, Math.max(1, this.wanted(s.me.age)));
-    // A later starting age with the population full: the army we have is the wave (it could never grow to one).
-    if (s.v.startingAge() !== 'default' && s.me.pop >= s.me.popCap - 1) waveAt = Math.min(waveAt, Math.max(3, army.length));
+    // The population full at the game's limit: the army we have is the wave — it can never grow to one (an Iron
+    // start filled 50 with villagers; a won Moderate mirror stood 16 minutes with 11 idle soldiers, M14.6).
+    if (s.me.pop >= s.me.popCap - 1 && s.me.popCap >= s.v.popLimit()) waveAt = Math.min(waveAt, Math.max(3, army.length));
     const out = army.length - army.filter((u) => u.idle).length;
     // A wave leaves when enough are ready. Reinforcements join only a wave that is still strong — pairs
     // trickling into an enemy base die one by one; otherwise they wait at the rally point for the next wave.

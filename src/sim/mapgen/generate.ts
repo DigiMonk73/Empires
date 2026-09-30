@@ -18,10 +18,11 @@ export const GEN_MAP_TYPES: readonly GenMapType[] = ['continental', 'inland', 'c
 const WATERY: ReadonlySet<GenMapType> = new Set(['narrows', 'smallIslands', 'largeIslands']);
 
 /**
- * Alligators on generated maps (M14.5). Off for now — KI-10: they reshuffle AI games into the tiny-island wood
- * stalemate (water 11/12 → 7/12) and tip Hard > Moderate, which sat on its gate, under it. On after M14.6.
+ * Alligators on generated maps (M14.5). Off from M14.5 to M14.6 (KI-10: they tipped the AI gates, which sat on
+ * their bars); on once the AI's predator response, island play and war endings were fixed — every land gate passes
+ * with them (D59).
  */
-export const GATORS_ON = false;
+export const GATORS_ON = true;
 
 export interface MapGenOptions {
   seed: number;

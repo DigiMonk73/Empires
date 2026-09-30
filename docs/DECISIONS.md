@@ -362,3 +362,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   the AI's lion/alligator response no longer re-sends the villagers already fighting (the bug that crippled
   whichever side had a lion near home, and so ended mirrors early). Measured together: 1v1 wars 21/24 in 60 min;
   Hard > Moderate 44/64 — under its 48 — the next AI task, not a gate to move.
+- **D59 — Alligators on; war endings** (2026-09-30, M14.6; closes KI-10). Three AI fixes made the land gates hold
+  with alligators on generated maps: the predator response no longer pulls villagers already fighting (two lions
+  ping-ponged a village to death), an army at a full population pushes with what it has (a won mirror stood 16
+  minutes with 11 idle soldiers waiting for a wave it had no room to train), and a Dock the army can walk to is not
+  "across the water" (a won continental war waited 10 minutes for transports). Full suite with alligators: 1v1 wars
+  23/24, Hard > Moderate 49/64, every ladder pairing passes; water held out 39/48 as without them. `GATORS_ON` on.

@@ -381,7 +381,11 @@ export class NavalBrain {
     // reachable: a wrong "across the sea" verdict would stop the land war).
     const across = (o: (typeof foes)[number]) => {
       const l = this.landOf(s, o.x, o.y);
-      return l !== 0 && l !== home;
+      if (l === 0 || l === home) return false;
+      // A Dock our soldiers can walk up to is on our side, whatever speck of shore it touches (M14.6: a won
+      // continental war stood 10 minutes, the army waiting for transports to reach a last Dock it could walk to).
+      if (o.type === 'dock' && s.v.reachable(tc.x + tc.size / 2 + 0.5, tc.y, o.x - 1.5, o.y - 1.5, o.x + 1.5, o.y + 1.5)) return false;
+      return true;
     };
     // (Docks stand at the water's edge, where the nearest land can be a stray speck: judge by other buildings.)
     const judged = foes.some((o) => o.type !== 'dock') ? foes.filter((o) => o.type !== 'dock') : foes;

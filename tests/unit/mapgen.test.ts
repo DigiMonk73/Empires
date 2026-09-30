@@ -125,8 +125,8 @@ describe('map generation (econ:8)', () => {
         expect(['b', ','], type).toContain(ch);
         for (const [sx, sy] of m.starts) expect(Math.hypot(Math.floor(a.x) - sx - 1.5, Math.floor(a.y) - sy - 1.5), type).toBeGreaterThanOrEqual(14);
       }
-      // Off by default until KI-10 is settled.
-      expect(generateMap({ seed: 5, type, size: 'medium', players: [{ civ: 'greek' }, { civ: 'egyptian' }] }).scenario!.units!.some((u) => u.type === 'alligator'), type).toBe(false);
+      // On by default since D59.
+      expect(generateMap({ seed: 5, type, size: 'medium', players: [{ civ: 'greek' }, { civ: 'egyptian' }] }).scenario!.units!.some((u) => u.type === 'alligator'), type).toBe(true);
     }
   });
 

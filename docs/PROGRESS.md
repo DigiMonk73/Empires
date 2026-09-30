@@ -18,8 +18,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
-- **Open issues:** KI-10 alligators vs the AI gates (placement off; Hard > Moderate 44/64 with hills), KI-9/KI-11 closed (D58: 60-min 1v1s, hills on, predator fix), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** Hard > Moderate 47/64 (48) and 1v1 wars ending (19/24; with alligators 49/64 but 16/24) — then alligators on (KI-10), Nomad, the M14 exit.
+- **Open issues:** water AI 39/48 held out (gate 44, D56); KI-9/KI-10/KI-11 closed (D58, D59), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
+- **Next up:** Nomad start, then the M14 exit (verify:full — water is the one gate still failing, 39/48 held out).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -823,7 +823,7 @@ of island/Narrows games decided in 2 h (11/12).
       missing items — stats compiler, starting stockpiles, train / research / build checks, starting ages, save
       restore, the tech-tree screen ("(Full Tech Tree)"). Lobby checkbox (the civ panel says "No civilization
       bonuses"), URL `ftt=1`. Tests: `full-tech-tree.test.ts` (5) + the lobby e2e.
-- [~] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1).
+- [x] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1). _On since D59._
       _Built, placement off (KI-10):_ mapgen places lone alligators on beach/shallows ≥ 18 (then 14) tiles from
       every start, ≥ 6 apart, ~5 per Medium map, from their own RNG stream (every type/size gets them); predators
       ignore ships (a land animal spitting at triremes); the computers gang up on alligators like lions. Placing
@@ -856,6 +856,9 @@ of island/Narrows games decided in 2 h (11/12).
       at 1.2×; tactics off cost 4–5 games (they help). Full suite: alligators off — Hard > Moderate 47/64 (48),
       wars 19/24; alligators on — 49/64, wars 16/24. Both margins sit on their gates: next, make wars end (the
       mirrors) and widen Hard's edge.
+      _War endings (D59):_ a full population pushes with the army it has (all games, not only late starts), and a
+      Dock the army can walk to is not "across the water". Dev mirrors 20 → 23/24. Full suite with alligators on:
+      wars 23/24, Hard > Moderate 49/64, ladder all pass; water held out 39/48 — alligators on (KI-10 closed).
       **Before that (KI-10):** the tiny-island wood stalemate (both sides out of wood, frozen to 2 h) and a wider
       Hard > Moderate / Moderate > Easy margin (48 and 49 of 64 sat on the gate), then `GATORS_ON` and re-measure.
       - [x] **M14.6a Island wood.** Tiny water maps: forests from 10 tiles (was 14; half a land map's wood) with a
