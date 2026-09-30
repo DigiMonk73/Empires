@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M7.4c · army (mounted rows)
+- Every mounted unit reads at zoom 1.6: the three cavalry steps by horse coat and barding, camel, horse
+  archers, chariots with crew and rolling wheels (scythes visible), elephants with mahout / scale / howdah and
+  clearly bigger than horses. Units 4. Priests are the last placeholder (M7.5).
+
 ## 2026-09-29 · M7.4b · army, army-clash (new)
 - Infantry lines read as upgrades at a glance (more metal, bigger shields, longer blades, crests). Fixed during
   review: the Legion was a team-coloured blob (tunic, skirt and scutum all team) and its scutum lay sideways

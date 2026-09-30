@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M7.4c mounted art (horse rig riders, chariots, camels, elephants).
+- **Next up:** M7.5 Temple + priests (conversion, healing, faith, temple techs; priest art).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -327,8 +327,11 @@ each one *work* in the sim, UI and AI, one slice at a time.
       scutum), hoplite line (Corinthian helm, hoplon, overhand spear → Phalanx bigger → Centurion transverse crest
       and cloak), Improved (feathered cap) and Composite (recurved horn bow) Bowmen; sword thrust and spear stab
       clips on the shared timing. `?scenario=army` shows every land unit in ranks.
-- [ ] **M7.4c Mounted art.** Cavalry line, Camel, Chariot line, Horse Archer line, Chariot Archer, War/Armored
-      Elephant, Elephant Archer (horse rig + chariot cart + the elephant quad rig).
+- [x] **M7.4c Mounted art.** `src/art/models/mounted.ts`: a general mount factory (quadruped + rider riding
+      its back) for the cavalry line (bay → grey with caparison → black scale-barded Cataphract), camel (hump,
+      turbaned rider), horse archers (bow draw from the saddle), war/armored elephant (mahout on the neck, scale
+      barding) and elephant archer (howdah); chariots are horse + two-wheeled cart (rolling spoked wheels, team
+      side panels) + standing crewman, scythes on the Scythe Chariot's hubs, an archer for the Chariot Archer.
 - [ ] **M7.5 Temple + priests.** Conversion (odds, range, faith, resistances), healing, rejuvenation; temple techs
       (Astrology, Mysticism, Polytheism, Afterlife, Monotheism, Fanaticism, Jihad, Medicine, Martyrdom).
 - [ ] **M7.6 Economy + civic techs.** Market (Wheel, Woodworking line, mining, Domestication/Plow/Irrigation,

@@ -92,7 +92,7 @@ const TRUNK: NodeSpec = {
     },
   ],
 };
-const ELEPHANT_OPTS: QuadOpts = {
+export const ELEPHANT_OPTS: QuadOpts = {
   mat: ELEPHANT,
   bodyLen: 0.48,
   bodyR: 0.27,
@@ -117,14 +117,19 @@ const ELEPHANT_OPTS: QuadOpts = {
   tail: [{ geom: cyl(0.015, 0.01, 0.28, 5), mat: ELEPHANT, t: [0, -0.14, 0], r: [0, 0, 0.25] }],
 };
 
-function elephant(): THREE.Object3D {
+/** The elephant's quadruped spec (shared with the war elephants). */
+export function elephantSpec(): NodeSpec {
   const spec = quadruped(ELEPHANT_OPTS);
   // Shoulder hump and a sloping rump break up the capsule silhouette.
   spec.children![0]!.children!.push(
     { geom: sphere(0.28, 12), mat: ELEPHANT, t: [0.16, 0.06, 0], s: [1, 1.05, 0.9] },
     { geom: sphere(0.24, 12), mat: ELEPHANT, t: [-0.2, -0.01, 0], s: [1, 1, 0.92] },
   );
-  return build(spec);
+  return spec;
+}
+
+function elephant(): THREE.Object3D {
+  return build(elephantSpec());
 }
 
 const ELEPHANT_CLIPS = clips(ELEPHANT_OPTS, {
