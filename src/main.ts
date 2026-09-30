@@ -19,6 +19,7 @@ import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
 import { installUiTextures } from './ui/textures.ts';
+import { setWaterTime } from './render/terrainMesh.ts';
 import { archOf } from './render/arch.ts';
 import { groundHeight } from './render/ground.ts';
 import { buildResults, formatClock } from './ui/results.ts';
@@ -226,6 +227,8 @@ async function boot(): Promise<void> {
     const tl = camera.screenToIso(0, 0);
     const br = camera.screenToIso(app.canvas.clientWidth, app.canvas.clientHeight);
     wr.cull(tl.x, tl.y, br.x, br.y);
+    // Water moves with real time; a frozen render clock (screenshots) pins it to game time.
+    setWaterTime(frozen ? (session.sim.tick + alpha) / 20 : performance.now() / 1000);
     wr.update(alpha, session.localPlayer);
     selection.prune((h) => world.ents.valid(h));
     wr.drawOverlays(selection.list, session.localPlayer, alpha);

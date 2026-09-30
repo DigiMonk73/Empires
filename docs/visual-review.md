@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10.4 · harbor zoomed, coastal (artifacts/m10)
+- Water has life: turquoise over the shallows darkening to navy offshore, drifting ripples, foam lines washing
+  on the beaches, the Dock, boats and fish schools sitting in it rather than on a flat colour. First try's
+  sparkles were a busy white speckle → sparser and fainter. Water 4. The harbor's straight deep-water column
+  shows a hard diagonal (scenario layout; generated maps have natural edges).
+
 ## 2026-09-30 · M10.3 · coastal, desert (artifacts/m10), palm/pine sheets
 - Coasts now have real beaches: an irregular sand band follows every shoreline (Coastal, the Continental rim,
   lakes, ponds) instead of the old green-blue haze; desert patches read warm gold, distinct from pale beach;

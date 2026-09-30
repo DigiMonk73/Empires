@@ -38,9 +38,11 @@ in vec2 aPosition;
 in vec3 aColor;
 in vec2 aWorld;
 in vec4 aSurf; // x: slope shade, y: shore sand, z: grassiness, w: sandiness
+in vec2 aWater; // x: water share, y: depth (0 shallows … 1 deep)
 out vec3 vColor;
 out vec2 vWorld;
 out vec4 vSurf;
+out vec2 vWater;
 uniform mat3 uProjectionMatrix;
 uniform mat3 uWorldTransformMatrix;
 uniform mat3 uTransformMatrix;
@@ -50,6 +52,7 @@ void main() {
   vColor = aColor;
   vWorld = aWorld;
   vSurf = aSurf;
+  vWater = aWater;
 }`;
 
 const FRAGMENT = /* glsl */ `
@@ -57,6 +60,8 @@ precision highp float;
 in vec3 vColor;
 in vec2 vWorld;
 in vec4 vSurf;
+in vec2 vWater;
+uniform float uTime;
 out vec4 finalColor;
 const vec3 SAND = vec3(0.886, 0.835, 0.64);
 float hash(vec2 p) {
@@ -82,14 +87,38 @@ void main() {
   float ripple = sin((vWorld.x * 0.8 + vWorld.y * 1.4) * 8.0 + vnoise(vWorld * 2.1) * 5.0);
   float detail = 1.0 + vSurf.z * (1.0 - band) * (blades - 0.5) * 0.12 + max(vSurf.w, band) * ripple * 0.035;
   vec3 c = base * vSurf.x * detail * (0.86 + 0.26 * n) * (0.96 + 0.08 * grain);
+  // Water (M10.4): a depth ramp from turquoise shallows to dark deeps, two ripple layers drifting against each
+  // other, sparkles, and bands of foam washing in along the shore.
+  if (vWater.x > 0.01) {
+    vec2 p = vWorld;
+    float w1 = vnoise(p * 1.2 + vec2(uTime * 0.06, uTime * 0.035));
+    float w2 = vnoise(p * 3.3 - vec2(uTime * 0.08, -uTime * 0.05));
+    float waves = w1 * 0.6 + w2 * 0.4;
+    vec3 wc = mix(vec3(0.36, 0.66, 0.70), vec3(0.08, 0.25, 0.43), vWater.y);
+    wc *= 0.9 + 0.2 * waves;
+    float sparkle = smoothstep(0.86, 0.96, vnoise(p * 8.5 + vec2(uTime * 0.23, uTime * 0.15)) * vnoise(p * 3.7 - uTime * 0.1) * 1.6);
+    wc += sparkle * 0.08;
+    float edge = 1.0 - smoothstep(0.6, 1.0, vWater.x);
+    float wash = sin((1.0 - vWater.x) * 16.0 - uTime * 1.3 + waves * 3.0) * 0.5 + 0.5;
+    float foam = edge * smoothstep(0.62, 0.92, wash) * (0.6 + 0.4 * nb);
+    wc = mix(wc, vec3(0.93, 0.96, 0.95), foam * 0.7);
+    c = mix(c, wc, smoothstep(0.3, 0.62, vWater.x + (nb - 0.5) * 0.35));
+  }
   finalColor = vec4(c, 1.0);
 }`;
 
 let sharedShader: Shader | null = null;
 function terrainShader(): Shader {
-  if (!sharedShader) sharedShader = Shader.from({ gl: { vertex: VERTEX, fragment: FRAGMENT }, resources: {} });
+  if (!sharedShader) sharedShader = Shader.from({ gl: { vertex: VERTEX, fragment: FRAGMENT }, resources: { waterUniforms: { uTime: { value: 0, type: 'f32' } } } });
   return sharedShader;
 }
+
+/** Water animation time in seconds (M10.4). */
+export function setWaterTime(t: number): void {
+  if (sharedShader) (sharedShader.resources.waterUniforms as { uniforms: { uTime: number } }).uniforms.uTime = t;
+}
+
+const DEPTH: Record<string, number> = { shallows: 0.1, water: 0.55, deepWater: 1 };
 
 function rgb(c: number): [number, number, number] {
   return [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];
@@ -103,6 +132,12 @@ function tileColor(map: TileMap, tx: number, ty: number, out: [number, number, n
   out[0] = r;
   out[1] = g;
   out[2] = b;
+}
+
+function tileId(map: TileMap, tx: number, ty: number): string {
+  const x = Math.min(map.w - 1, Math.max(0, tx));
+  const y = Math.min(map.h - 1, Math.max(0, ty));
+  return TERRAINS[map.terrain[y * map.w + x]!]!.id;
 }
 
 /** Surface class of tile (tx, ty) for the shader's detail and the shore band (clamped to the map). */
@@ -143,6 +178,7 @@ export class TerrainLayer {
     const col = new Float32Array(vw * vh * 3);
     const wld = new Float32Array(vw * vh * 2);
     const srf = new Float32Array(vw * vh * 4);
+    const wat = new Float32Array(vw * vh * 2);
     const a: [number, number, number] = [0, 0, 0];
     const acc = [0, 0, 0];
     for (let j = 0; j < vh; j++) {
@@ -163,6 +199,7 @@ export class TerrainLayer {
         let grass = 0;
         let sand = 0;
         let wet = 0;
+        let depth = 0;
         for (const y of ys) for (const x of xs) {
           tileColor(map, x, y, a);
           acc[0] += a[0];
@@ -171,7 +208,10 @@ export class TerrainLayer {
           const k = tileKind(map, x, y);
           if (k === 'grass') grass++;
           else if (k === 'sand') sand++;
-          else if (k === 'water') wet++;
+          else if (k === 'water') {
+            wet++;
+            depth += DEPTH[tileId(map, x, y)] ?? 0.5;
+          }
         }
         const n = xs.length * ys.length;
         col[v * 3] = acc[0] / n;
@@ -181,6 +221,8 @@ export class TerrainLayer {
         srf[v * 4 + 1] = wet === n ? 0 : wet > 0 ? 0.85 : waterNear(map, wx, wy) ? 0.5 : 0;
         srf[v * 4 + 2] = grass / n;
         srf[v * 4 + 3] = sand / n;
+        wat[v * 2] = wet / n;
+        wat[v * 2 + 1] = wet ? depth / wet : 0;
       }
     }
     const idx = new Uint32Array((vw - 1) * (vh - 1) * 6);
@@ -202,6 +244,7 @@ export class TerrainLayer {
         aColor: { buffer: col, format: 'float32x3' },
         aWorld: { buffer: wld, format: 'float32x2' },
         aSurf: { buffer: srf, format: 'float32x4' },
+        aWater: { buffer: wat, format: 'float32x2' },
       },
       indexBuffer: idx,
     });
