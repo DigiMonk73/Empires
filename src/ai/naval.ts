@@ -79,7 +79,10 @@ export class NavalBrain {
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
     const tc = s.tc;
-    if (!tc) return;
+    if (!tc) {
+      if (!s.buildings.length) this.lastStand(s, cmds);
+      return;
+    }
     if (this.island === null) {
       // An island: our land is small, or other big land lies across the water (Narrows, team islands) — either
       // way the enemy may be reachable only by sea.
@@ -103,6 +106,34 @@ export class NavalBrain {
       this.warships(ai, s, cmds);
       this.invade(ai, s, cmds);
     }
+  }
+
+  /**
+   * A beaten side's last warships (no buildings left) sail at the nearest enemy they can reach — the winner's
+   * archers and towers finish them there. Adrift, they kept three won water games open to the 2-hour mark: the
+   * winner had no navy (or no villagers, or no wood) to hunt them (M14.6b).
+   */
+  private lastStand(s: Snapshot, cmds: Command[]): void {
+    const ships = s.units.filter((u) => u.cls === 'warship' && u.idle && !s.busy.has(u.h));
+    if (!ships.length) return;
+    const [x0, y0] = [ships[0]!.x, ships[0]!.y];
+    const sea = s.v.region(2, Math.floor(x0), Math.floor(y0));
+    const foes = s.v
+      .others()
+      .filter((o) => o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY)
+      .filter((o) => s.v.seaReachable(sea, o.x - 1.5, o.y - 1.5, o.x + 1.5, o.y + 1.5))
+      .sort((a, b) => dist(a.x, a.y, x0, y0) - dist(b.x, b.y, x0, y0) || a.h - b.h);
+    const ids = ships.map((u) => u.h);
+    for (const h of ids) s.busy.add(h);
+    if (foes.length) {
+      cmds.push({ t: 'act', ids, h: foes[0]!.h });
+      return;
+    }
+    // Nothing in reach from the water: off the enemy shore nearest its buildings, to fight whatever comes down to it.
+    const known = s.v.others().filter((o) => o.building && o.owner > 0 && o.cls !== 'relic' && s.v.stanceTo(o.owner) === ENEMY);
+    const at = known.length ? this.anyBeach(s, known[0]!.x, known[0]!.y, this.landOf(s, known[0]!.x, known[0]!.y), sea) : null;
+    const [x, y] = at ?? [s.v.mapW / 2, s.v.mapH / 2];
+    if (dist(x, y, x0, y0) > 3) cmds.push({ t: 'move', ids, x: Math.round(x * 4) / 4, y: Math.round(y * 4) / 4, am: true });
   }
 
   /** Sailing armies across (the land military holds its own waves meanwhile). */

@@ -45,5 +45,6 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   sunk transport, and the "scrap a fishing boat for a transport at full population" rule never fired (every boat
   was already busy); a woodline could also grow over a Town Center on ~2% of island starts. Fixed; the water gate
   now counts 48 fresh seeds (D55): 31/48 → 40/48 (83%) → 41/48 (M14.6b: the landed army's hunt, stranded troops
-  fetched, docks on the open sea). Still under 90%,
+  fetched, docks on the open sea) → 43/48 (last stands, affordable units, no saving for an unreachable age).
+  Still under 90%,
   and Hard > Moderate still sits on 48/64 — alligators stay off.

@@ -106,7 +106,11 @@ export class MilitaryBrain {
     this.cellSeen = st.cellSeen ? [...st.cellSeen] : new Array<number>(36).fill(0);
   }
 
+  /** On an island (the naval AI's verdict, refreshed each think). */
+  private island = false;
+
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
+    this.island = ai.naval.onIsland;
     this.noteSeen(s);
     const army = s.units.filter((u) => !NON_MILITARY.has(u.cls) && !AT_SEA.has(u.cls));
     const threats = this.threats(s);
@@ -281,6 +285,11 @@ export class MilitaryBrain {
     // Attacked: match the raiders and then some, whatever the plan (the economy is worth nothing dead). On an
     // island the land army stays a home guard until transports can carry it (the naval AI says how many).
     const want = Math.max(Math.min(this.wanted(s.me.age), landCap), threats ? threats + 3 : 0);
+    // An island out of wood can't raise the buildings the next age needs: saving food for it starved the army of a
+    // Tiny-island game for an hour (M14.6b). Then soldiers take the food.
+    const next0 = NEXT_AGE[s.me.age];
+    const ageStuck = this.island && !!next0 && !!s.tc && s.me.res[1]! < 100 && /^requires \d of/.test(s.v.researchBlocker(s.tc.h, next0) ?? '');
+    if (ageStuck) overdueFood = 0;
     let have = army.length;
     let siege = army.filter((u) => u.cls === 'siege').length;
     let priests = s.units.filter((u) => u.cls === 'priest').length;
@@ -306,7 +315,7 @@ export class MilitaryBrain {
       if (!threats && overdueFood && s.me.res[0]! - s.v.cost(unit)[0]! < overdueFood) continue;
       // Saving for the next age: soldiers only from what's left over (the age comes first, econ:9).
       const next = NEXT_AGE[s.me.age];
-      if (!threats && next && !s.me.techs.includes(next) && !s.v.researching(next)) {
+      if (!threats && !ageStuck && next && !s.me.techs.includes(next) && !s.v.researching(next)) {
         const c = TECH_BY_ID.get(next)!.cost as Partial<Record<string, number>>;
         const u = s.v.cost(unit);
         if (s.me.res[0]! - u[0]! < (c.food ?? 0) && s.me.res[0]! >= (c.food ?? 0) * 0.4) continue;
@@ -341,6 +350,13 @@ export class MilitaryBrain {
           return [];
       }
     })();
+    // On an island whose wood or stone has run out, the first of the line we can pay for (slingers need stone,
+    // bowmen wood: a Tiny-island game sat an hour with 22 idle villagers, 2000 food and 3600 gold — M14.6b).
+    // (Land maps keep waiting for the preferred unit: their ladder is tuned on it.)
+    if (this.island) {
+      const paid = options.find((u) => !s.v.trainBlocker(bh, u) && afford(s, s.v.cost(u)));
+      if (paid) return paid;
+    }
     return options.find((u) => !s.v.trainBlocker(bh, u)) ?? null;
   }
 

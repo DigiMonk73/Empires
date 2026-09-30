@@ -845,8 +845,12 @@ of island/Narrows games decided in 2 h (11/12).
         no enemy while enemy buildings are known elsewhere wait to be fetched and the transports board them there;
         an inland target lands at the nearest beach of its land, however far; the target is a building on known
         land (not a Storage Pit lost in a forest); Docks go on the open sea and transports come from a Dock on it.
-        Left: 419 (both sides out of wood, Tiny), 441 (a beaten enemy's last warships, the winner has no navy),
-        402/410/414/426/434 (Hard mirrors on Small islands that grind on).
+        Then 43/48: a beaten side's last warships make a last stand at the enemy shore (they drifted, and nobody
+        could sink them); on an island a building trains the first unit of its line we can pay for (slingers
+        wanted stone nobody had); an island out of wood stops saving food for an age whose buildings it can't
+        raise. Land games unchanged (ladder identical).
+        Left (402, 404, 414, 441, 444): mostly the winner out of wood at home with its transports sunk — it can't
+        reach trees elsewhere nor build ships for the loser's last warships; Hard mirrors on Small islands.
       Also (found in M14.3): **later starting ages** — the computers build up as from the Stone Age; at an Iron Age
       start (Moderate vs Hard, 50 min) gold floats (~2000 by 19 min) while food and wood run dry, armies stay small,
       villager idle rises to ~30% after 20 min and 3 of 8 test wars were undecided. Tune the gather mix and army
