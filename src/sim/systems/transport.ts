@@ -86,13 +86,20 @@ function landCargo(w: World, t: number): number {
   const cy = e.y[t]!;
   const used = new Set<number>();
   let landed = 0;
+  // Beside the transport; if the water it reached is a little way off the beach, up to 4 tiles.
+  let reach = LAND_RADIUS;
   while (cargo.length) {
+    const r2 = reach * reach;
     const i = nearestTile(w.map.w, w.map.h, Math.floor(cx), Math.floor(cy), (tx, ty) => {
       if (used.has(ty * w.map.w + tx) || !w.map.passable(tx, ty, MOVE_LAND)) return false;
       const dx = tx + 0.5 - cx;
       const dy = ty + 0.5 - cy;
-      return dx * dx + dy * dy <= LAND_RADIUS * LAND_RADIUS;
+      return dx * dx + dy * dy <= r2;
     });
+    if (i < 0 && reach < 4 && !landed) {
+      reach = 4;
+      continue;
+    }
     if (i < 0) break;
     used.add(i);
     const c = cargo.shift()!;

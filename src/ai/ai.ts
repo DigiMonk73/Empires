@@ -276,10 +276,10 @@ export class AiPlayer {
     const tc = s.tc;
     if (!tc || tc.queue >= 2) return;
     // An island's population goes to boats and warships too: villagers stop at 26 there (26 + 10 fishers + a
-    // guard of 4 + a fleet of 8 fits the 50).
-    const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.onIsland ? 26 : Infinity);
+    // guard of 4 + a fleet of 8 fits the 50), 22 while an invasion needs the room for its army.
+    const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.villagerCap());
     if (s.villagers.length + tc.queue >= target) return;
-    if (s.me.pop + tc.queue >= s.me.popCap) return;
+    if (s.me.pop + tc.queue + this.naval.popReserve(s) >= s.me.popCap) return; // (room for missing transports)
     if (!s.v.canAfford(s.v.cost('villager'))) return;
     if (s.v.trainBlocker(tc.h, 'villager')) return;
     if (this.overdue(s) && s.me.res[0]! < this.ageFood(s) + 50) return; // the age first
@@ -308,7 +308,8 @@ export class AiPlayer {
     if (building || s.me.popCap >= 50 || this.isPending(s, 'house')) return;
     const queued = s.tc?.queue ?? 0;
     if (s.me.popCap - s.me.pop - queued > 2) return;
-    if (s.tc) this.build(s, cmds, 'house', s.tc.x, s.tc.y, 4, 9, 1);
+    // Near the Town Center; on a cramped island start, anywhere within 16.
+    if (s.tc && !this.build(s, cmds, 'house', s.tc.x, s.tc.y, 4, 9, 1)) this.build(s, cmds, 'house', s.tc.x, s.tc.y, 3, 16, 1);
   }
 
   /** Drop sites and the buildings the age advances need (econ:3, econ:9). */
@@ -440,11 +441,16 @@ export class AiPlayer {
       sh[1] = sh[1]! - 0.2;
       sh[0] = sh[0]! + 0.2;
     }
+    // Wood floating while gold is short (Bronze-age soldiers want gold): a share of the woodcutters mine.
+    if (s.me.age >= 3 && s.me.res[2]! < 150 && s.me.res[1]! > 800 && sh[1]! > 0.2) {
+      sh[1] = sh[1]! - 0.15;
+      sh[2] = sh[2]! + 0.15;
+    }
     // An island lives off its fishing boats and builds its fleet from wood: villagers lean to wood, gold only for
     // upgrades (M8.8b — food and gold piled up while the Docks waited for wood).
     if (this.naval.onIsland) {
       const f = Math.min(0.15, sh[0]! - 0.25);
-      const g = Math.max(0, sh[2]! - 0.1);
+      const g = s.me.res[2]! > 600 ? Math.max(0, sh[2]! - 0.05) : 0; // gold only while the bank is thin
       sh[0] = sh[0]! - Math.max(0, f);
       sh[2] = sh[2]! - g;
       sh[1] = sh[1]! + Math.max(0, f) + g;
@@ -580,7 +586,9 @@ export class AiPlayer {
   build(s: Snapshot, cmds: Command[], type: string, x: number, y: number, minD: number, maxD: number, nBuilders: number): boolean {
     if (!s.v.canBuild(type) || !s.v.canAfford(s.v.cost(type))) return false;
     const size = type === 'house' || type === 'watchTower' ? 2 : 3;
-    const spot = this.findSpot(s, type, size, x, y, minD, maxD);
+    // On a cramped island start the usual spot may not exist: anywhere within 18 of the Town Center will do
+    // (an island once sat in the Stone Age for two hours, its Tool-age buildings unplaceable).
+    const spot = this.findSpot(s, type, size, x, y, minD, maxD) ?? (this.naval.onIsland && s.tc ? this.findSpot(s, type, size, s.tc.x, s.tc.y, 3, 18) : null);
     if (!spot) return false;
     const pool = s.villagers.filter((u) => !s.busy.has(u.h) && (this.exploreDone || u.h !== this.explorer) && u.order !== 'build');
     pool.sort((a, b) => rank(a) - rank(b) || dist(a.x, a.y, spot[0], spot[1]) - dist(b.x, b.y, spot[0], spot[1]) || a.h - b.h);

@@ -240,13 +240,15 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
       return;
     }
     // Islands: one per player (Small), one per team (Large; one per player when every team is one player).
+    // Starts a little in from the edge so their islands can be big enough to live on (a 10-tile island on a
+    // tiny map ran out of wood in the Stone Age).
     const large = o.type === 'largeIslands';
-    placeStarts(rr, W * (large ? 0.3 : 0.32));
-    const gap = n > 1 ? 2 * W * 0.32 * sinStep(Math.floor(TRIG_STEPS / (2 * n))) : W;
-    // Each start's island is at most 40% of the way to its neighbour, so open water always separates them.
-    const ring = W * (large ? 0.3 : 0.32);
-    // …and keeps 3 tiles of sea to the map's edge (an island touching it would cut the sea in two).
-    const own = Math.min(W * (large ? 0.2 : 0.17), gap * 0.4, W / 2 - ring - 3);
+    const ring = W * (large ? 0.28 : 0.26);
+    placeStarts(rr, ring);
+    const gap = n > 1 ? 2 * ring * sinStep(Math.floor(TRIG_STEPS / (2 * n))) : W;
+    // Each start's island is at most 40% of the way to its neighbour, so open water always separates them,
+    // and keeps 3 tiles of sea to the map's edge (an island touching it would cut the sea in two).
+    const own = Math.min(W * (large ? 0.23 : 0.19), gap * 0.4, W / 2 - ring - 3);
     for (const [sx, sy] of starts) islands.push({ x: sx + 1.5, y: sy + 1.5, r: own });
     if (large) {
       // Large Islands: teammates' islands are joined by a land bridge into one island per team.
@@ -288,7 +290,13 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   type Offset = { d: number; a: number; kind: string; count: number };
   const rel = (dMin: number, dMax: number, kind: string, count: number): Offset => ({ d: dMin + r.float() * (dMax - dMin), a: r.int(TRIG_STEPS), kind, count });
   // Islands pull everything inside the smallest start island (so every player gets the same).
-  const cap = <T extends { d: number }>(x: T): T => ({ ...x, d: Math.min(x.d, islandR - 3) });
+  // A cluster pulled in to 17–23 tiles would straddle the 20-tile personal zone — inside for one player, out for
+  // another as the rotation rounds — so it comes in to 17, inside for everyone.
+  const cap = <T extends { d: number }>(x: T): T => {
+    let d = Math.min(x.d, islandR - 3);
+    if (d < x.d && d > 17 && d < 23) d = 17;
+    return { ...x, d };
+  };
   const layout: Offset[] = (WATERY.has(o.type)
     ? [
         // Water template (econ:8): stone 2×7 at 10–35, gold 9 at 14–18 and 9 at 20–40, berries 7 ± 1 at 7–16 and
@@ -300,6 +308,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
         rel(22, 28, 'G', 9),
         rel(16, 24, 'B', 6),
         rel(12, 18, 'F', 55),
+        rel(10, 18, 'F', 40), // a second woodline: the islands' other forests are out of reach
       ]
     : [
         rel(7, 13, 'B', 6 + r.int(3)), // berries 7 ± 1 at 7–16
@@ -312,7 +321,8 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   ).map(cap);
   const gazelles = cap({ d: 10 + r.float() * 8, a: r.int(TRIG_STEPS), n: 4 + r.int(5) });
   const trees: { d: number; a: number }[] = [];
-  for (let i = 10 + r.int(6); i > 0; i--) trees.push(cap({ d: 8 + r.float() * 14, a: r.int(TRIG_STEPS) }));
+  // (Fewer on the water template's small islands: pulled in, 10–15 trees filled the ring where houses go.)
+  for (let i = WATERY.has(o.type) ? 4 + r.int(3) : 10 + r.int(6); i > 0; i--) trees.push(cap({ d: 8 + r.float() * 14, a: r.int(TRIG_STEPS) }));
   const clusterOk = (x: number, y: number): boolean => {
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!isOpen(at(g, x + dx, y + dy))) return false;
     return true;

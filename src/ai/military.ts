@@ -99,11 +99,19 @@ export class MilitaryBrain {
     if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army, ai.naval.invading);
   }
 
-  /** Enemy fighters in our base (within 14 tiles of our buildings) or on our villagers at a far woodline. */
+  /**
+   * Enemy fighters in our base (within 14 tiles of our buildings) or on our villagers at a far woodline — on the
+   * same land: an army across a strait can't reach us, and counting it made both sides of the Narrows fill their
+   * population with soldiers before a transport could be built.
+   */
   private threats(s: Snapshot): SeenEntity[] {
-    return this.enemies(s).filter(
-      (o) => !o.building && !NON_MILITARY.has(o.cls) && !AT_SEA.has(o.cls) && (s.buildings.some((b) => dist(b.x, b.y, o.x, o.y) < 14) || s.villagers.some((u) => dist(u.x, u.y, o.x, o.y) < 7)),
-    );
+    return this.enemies(s).filter((o) => {
+      if (o.building || NON_MILITARY.has(o.cls) || AT_SEA.has(o.cls)) return false;
+      const near = s.buildings.some((b) => dist(b.x, b.y, o.x, o.y) < 14) || s.villagers.some((u) => dist(u.x, u.y, o.x, o.y) < 7);
+      if (!near) return false;
+      const land = landAt(s, o.x, o.y);
+      return !land || s.buildings.some((b) => dist(b.x, b.y, o.x, o.y) < 14 && landAt(s, b.x, b.y) === land) || s.villagers.some((u) => dist(u.x, u.y, o.x, o.y) < 7 && landAt(s, u.x, u.y) === land);
+    });
   }
 
   private buildings(ai: AiPlayer, s: Snapshot, cmds: Command[], attacked: boolean): void {
@@ -329,4 +337,18 @@ export class MilitaryBrain {
     const [gx, gy] = this.enemyGuess(s);
     cmds.push({ t: 'move', ids: idle.map((u) => u.h), x: Math.round(gx * 4) / 4, y: Math.round(gy * 4) / 4, am: true });
   }
+}
+
+/** The land region at or next to (x, y) (a building's own tiles are impassable); 0 if none within 3 tiles. */
+function landAt(s: Snapshot, x: number, y: number): number {
+  for (let r = 0; r <= 3; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const l = s.v.region(1, Math.floor(x) + dx, Math.floor(y) + dy);
+        if (l) return l;
+      }
+    }
+  }
+  return 0;
 }

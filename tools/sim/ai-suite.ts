@@ -97,6 +97,30 @@ for (const [strong, weak] of ladderPairs) {
   ladder.push(`${strong}>${weak} ${ok}/${n}${deferred ? ' (gate: M13)' : ''}`);
   if (ok < Math.ceil(n * 0.75) && !deferred) fails.push(`ladder ${strong}>${weak} only ${ok}/${n}`);
 }
+// Water maps (M8.8d, the M8 exit gate): island and Narrows 1v1s must be decided (≥ 90%) within 120 min — the
+// AI has to find the enemy by sea and ferry armies over. Full runs only.
+let waterLine = '';
+if (FULL) {
+  const water: Case[] = [];
+  const types = ['smallIslands', 'largeIslands', 'narrows'] as const;
+  for (let k = 0; k < 12; k++) water.push({ seed: 301 + k, type: types[k % 3]! as never, size: k % 2 ? 'small' : 'tiny', levels: k % 2 ? ['hard', 'hard'] : ['moderate', 'moderate'] });
+  let won = 0;
+  const times: number[] = [];
+  for (const c of water) {
+    const r = run(c, 120, false);
+    if (!r) continue;
+    if (r.winner) {
+      won++;
+      times.push(r.ticks);
+    }
+    stuck += r.stuckUnits;
+    units += r.unitsSeen;
+    if (process.argv.includes('--verbose')) console.log(`  water ${c.type} ${c.size} seed ${c.seed} ${c.levels.join('/')}: ${r.winner ? `P${r.winner.join('+')} wins at ${fmt(r.ticks)}` : 'undecided at 2:00:00'}`);
+  }
+  times.sort((a, b) => a - b);
+  waterLine = ` · water decided ${won}/${water.length}${times.length ? ` (median ${fmt(times[times.length >> 1]!)})` : ''}`;
+  if (won < Math.ceil(water.length * 0.9)) fails.push(`water maps: only ${won}/${water.length} decided in 2 h`);
+}
 const idle = idles.reduce((a, b) => a + b, 0) / Math.max(1, idles.length);
 const stuckPct = (100 * stuck) / Math.max(1, units);
 if (idle > 5) fails.push(`idle ${idle.toFixed(1)}%`);
@@ -105,7 +129,7 @@ if (stuckPct > 1) fails.push(`stuck ${stuckPct.toFixed(2)}%`);
 lengths = lengths.sort((a, b) => a - b);
 const median = lengths.length ? lengths[Math.floor(lengths.length / 2)]! : 0;
 console.log(
-  `ai suite ${timing.length}+${war.length}+${ladderPairs.length * ladderSeeds.length * 2} matches in ${((performance.now() - t0) / 1000).toFixed(1)} s: worst Tool ${fmt(worstTool)} Bronze ${fmt(worstBronze)} · idle ${idle.toFixed(1)}% · 1v1 wars decided ${decided}/${duels} (median ${fmt(median)}) · ladder ${ladder.join(', ')} · stuck ${stuckPct.toFixed(2)}% · crashes ${crashes}`,
+  `ai suite ${timing.length}+${war.length}+${ladderPairs.length * ladderSeeds.length * 2} matches in ${((performance.now() - t0) / 1000).toFixed(1)} s: worst Tool ${fmt(worstTool)} Bronze ${fmt(worstBronze)} · idle ${idle.toFixed(1)}% · 1v1 wars decided ${decided}/${duels} (median ${fmt(median)}) · ladder ${ladder.join(', ')}${waterLine} · stuck ${stuckPct.toFixed(2)}% · crashes ${crashes}`,
 );
 if (process.argv.includes('--record')) {
   const file = 'docs/metrics/ai.csv';
