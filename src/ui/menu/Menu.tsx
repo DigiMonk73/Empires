@@ -139,6 +139,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
           ))}
         </tbody>
       </table>
+      <CivInfo civ={s.players[0]!.civ} />
       <div class="menu-buttons row">
         <button onClick={addPlayer} disabled={s.players.length >= 8}>
           Add player
@@ -148,6 +149,24 @@ function Skirmish({ onBack }: { onBack: () => void }) {
           Start Game
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Your civilization's bonuses (and what its tree lacks), as the original's civ screen summarised them. */
+function CivInfo({ civ }: { civ: string }) {
+  const c = CIVS.find((x) => x.id === civ);
+  if (!c) return null;
+  const missing = c.disabled.units.length + c.disabled.buildings.length + c.disabled.techs.length;
+  return (
+    <div class="civ-info" data-testid="civ-info">
+      <div class="civ-name">{c.name}</div>
+      <ul>
+        {c.bonusText.map((b) => (
+          <li>{b}</li>
+        ))}
+      </ul>
+      <div class="civ-missing">{missing ? `${missing} items missing from its tech tree (see the tech tree in game).` : 'Full tech tree.'}</div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.6.0 verified on the test VM at M6 (play, save/load, restart, reinstall; backup/restore unverified — KI-3). Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-6 baked art 115 MB (WebP + lazy loading before M9).
-- **Next up:** M7.8 civilizations (all 16: bonuses + disabled items enforced, civ picker shows bonuses), M7.9 tech-tree screen, then M7 exit.
+- **Next up:** M7.9 tech-tree screen, then M7 exit (verify:full, tag m7, submodule bump + s9pk).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -358,8 +358,10 @@ each one *work* in the sim, UI and AI, one slice at a time.
       platform, peristyle temple, tiled roof with gilded ridge and acroteria, a gilded colossus), 5×5 site and
       rubble. Fixed in review: pediments stood up as giant sails (shared `pediment()` helper — the temple had
       the same bug); a gold roof blew out in the sun. `?scenario=wonder`. Wonder victory + map reveal: M14.
-- [ ] **M7.8 Civilizations.** All 16 civs' bonuses and disabled items enforced (train/build/research blockers),
-      civ picker shows bonuses; tests per civ.
+- [x] **M7.8 Civilizations.** civs.test.ts: all 16 civs — every bonus changes what it names against a player
+      without bonuses (stat, work/carry, player value, flag, starting stockpile), and every unit, building and
+      technology missing from its tree is refused (34 tests; the sim was already right). Skirmish setup shows
+      your civilization's bonuses and how much of the tree it lacks. Architecture sets per civ: M9.
 - [ ] **M7.9 Tech-tree screen.** Per-civ tree (ages × buildings), researched/available/disabled states.
 - _Exit:_ 100% research rows implemented + tested; AI uses Iron-age units.
 

@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M7.8 · menu-skirmish
+- Setup shows the chosen civilization's bonuses and how many items its tree lacks, in the panel's style.
+
 ## 2026-09-30 · M7.7 · wonder (new)
 - A standing Wonder and one rising from its 5×5 site. Fixed during review: the pediments (cones squashed the
   wrong way) stood up as huge grey sails above the roof — now a shared, correctly oriented pediment helper
