@@ -1,11 +1,12 @@
-import type * as THREE from 'three';
-import { box, build, cone, cyl, gable, lumpy, pyramid, seeded, sphere, type MatName, type MatSpec, type NodeSpec, type Vec3 } from '../dsl/model.ts';
+import * as THREE from 'three';
+import { box, build, cone, cyl, gable, lumpy, material, pyramid, seeded, sphere, type MatName, type MatSpec, type NodeSpec, type Vec3 } from '../dsl/model.ts';
 import { archeryRange, banner, barracks, bin, firePit, granary, heap, house, logPile, post, sack, stable, storagePit, townCenter } from './buildings.ts';
 
 /**
- * Buildings through the ages (one architecture set for M6; the other four in M9). Variant v0 is the look of the
+ * The Greek-style set through the ages (the other four sets are kits in arch/, D43). Variant v0 is the look of the
  * building's own age; each later age rebuilds it: Stone huts → Tool mudbrick halls under thatch → Bronze stone
- * and plaster with red-tile roofs and columns. The renderer picks the variant from the owner's current age.
+ * and plaster with red-tile roofs and columns → Iron: the same dressed with friezes, gilding and statues. The
+ * renderer picks the variant from the owner's current age.
  */
 const LIMEWASH: MatSpec = { tex: 'plaster', color: 0xe9dfc8, rough: 0.9, repeat: 1.2 };
 const TILE: MatName = 'rooftile';
@@ -252,18 +253,124 @@ const academy = (): THREE.Object3D =>
     ],
   });
 
+// ── Iron Age (M9.6b) ─────────────────────────────────────────────────────────────────────────────────────
+// The Iron-age Greek town is the Bronze one dressed: painted friezes under the eaves, gilded finials on the roofs,
+// bronze statues, a fountain in the market square.
+const GILT: MatSpec = { tex: 'metal', color: 0xdcb458, rough: 0.45, metal: 0.4, repeat: 2 };
+const PAINT_RED: MatSpec = { tex: 'plain', color: 0xa83a2a, rough: 0.8 };
+const PAINT_BLUE: MatSpec = { tex: 'plain', color: 0x2c5a9a, rough: 0.8 };
+const WATER_I: MatSpec = { tex: 'plain', color: 0x4a86a8, rough: 0.15 };
+
+/** A painted meander band on a face: red with blue keys, along X at z (or along Z at x). */
+function frieze(cx: number, cz: number, len: number, y: number, alongX: boolean): NodeSpec[] {
+  const out: NodeSpec[] = [{ geom: alongX ? box(len, 0.07, 0.012) : box(0.012, 0.07, len), mat: PAINT_RED, t: [cx, y, cz] }];
+  const n = Math.max(3, Math.round(len / 0.12));
+  for (let i = 0; i < n; i++) {
+    const c = -len / 2 + ((i + 0.5) * len) / n;
+    out.push({ geom: alongX ? box(0.04, 0.04, 0.014) : box(0.014, 0.04, 0.04), mat: PAINT_BLUE, t: alongX ? [cx + c, y, cz + 0.002] : [cx + 0.002, y, cz + c] });
+  }
+  return out;
+}
+
+const finial = (x: number, y: number, z: number, s = 1): NodeSpec => ({ t: [x, y, z], s, children: [{ geom: sphere(0.035, 8), mat: GILT, t: [0, 0.03, 0] }, { geom: cone(0.022, 0.1, 6), mat: GILT, t: [0, 0.1, 0] }] });
+
+/** A robed bronze figure raising a torch, on a marble plinth. */
+function torchStatue(x: number, z: number, y = 0, s = 1): NodeSpec {
+  return {
+    t: [x, y, z],
+    s,
+    children: [
+      { geom: box(0.24, 0.26, 0.24), mat: MARBLE, t: [0, 0.13, 0] },
+      { geom: cyl(0.045, 0.075, 0.3, 8), mat: BRONZE_STATUE, t: [0, 0.41, 0] },
+      { geom: sphere(0.04, 8), mat: BRONZE_STATUE, t: [0, 0.6, 0] },
+      { geom: cyl(0.015, 0.015, 0.2, 5), mat: BRONZE_STATUE, t: [0.04, 0.62, 0], r: [0, 0, -0.25] },
+      { geom: cone(0.03, 0.07, 6), mat: GILT, t: [0.07, 0.74, 0] },
+    ],
+  };
+}
+
+/** A bronze archer drawing a bow toward +X. */
+function archerStatue(x: number, z: number, s = 1): NodeSpec {
+  return {
+    t: [x, 0, z],
+    s,
+    children: [
+      { geom: box(0.24, 0.22, 0.24), mat: MARBLE, t: [0, 0.11, 0] },
+      { geom: cyl(0.02, 0.02, 0.2, 6), mat: BRONZE_STATUE, t: [-0.02, 0.32, 0.03], r: [0.15, 0, 0] },
+      { geom: cyl(0.02, 0.02, 0.2, 6), mat: BRONZE_STATUE, t: [0.03, 0.32, -0.03], r: [-0.15, 0, 0] },
+      { geom: cyl(0.045, 0.04, 0.18, 8), mat: BRONZE_STATUE, t: [0, 0.5, 0] },
+      { geom: sphere(0.035, 8), mat: BRONZE_STATUE, t: [0, 0.63, 0] },
+      { geom: cyl(0.012, 0.012, 0.16, 5), mat: BRONZE_STATUE, t: [0.08, 0.54, 0], r: [0, 0, Math.PI / 2] },
+      { geom: new THREE.TorusGeometry(0.13, 0.008, 4, 10, Math.PI), mat: BRONZE_STATUE, t: [0.16, 0.54, 0], r: [0, Math.PI / 2, -Math.PI / 2] },
+    ],
+  };
+}
+
+/** A bronze horse rearing on a plinth. */
+function horseStatue(x: number, z: number, s = 1): NodeSpec {
+  const leg = (lx: number, lz: number, rz: number): NodeSpec => ({ geom: cyl(0.016, 0.012, 0.18, 5), mat: BRONZE_STATUE, t: [lx, 0.33, lz], r: [0, 0, rz] });
+  return {
+    t: [x, 0, z],
+    s,
+    children: [
+      { geom: box(0.4, 0.22, 0.2), mat: MARBLE, t: [0, 0.11, 0] },
+      { geom: capsuleLike(0.06, 0.2), mat: BRONZE_STATUE, t: [0, 0.46, 0], r: [0, 0, Math.PI / 2 + 0.35] },
+      leg(-0.08, 0.04, 0.1), leg(-0.08, -0.04, -0.1), leg(0.1, 0.04, 0.9), leg(0.1, -0.04, 0.7),
+      { geom: cyl(0.03, 0.045, 0.16, 6), mat: BRONZE_STATUE, t: [0.12, 0.58, 0], r: [0, 0, -0.5] },
+      { geom: box(0.12, 0.05, 0.05), mat: BRONZE_STATUE, t: [0.19, 0.66, 0], r: [0, 0, -0.4] },
+      { geom: cyl(0.01, 0.02, 0.14, 5), mat: BRONZE_STATUE, t: [-0.15, 0.4, 0], r: [0, 0, 1.0] },
+    ],
+  };
+}
+const capsuleLike = (r: number, len: number): THREE.BufferGeometry => new THREE.CapsuleGeometry(r, len, 4, 8);
+
+/** A fountain: a round basin with a column spout and water. */
+function fountain(x: number, z: number): NodeSpec {
+  return { t: [x, 0, z], children: [{ geom: cyl(0.24, 0.26, 0.1, 16), mat: MARBLE, t: [0, 0.05, 0] }, { geom: cyl(0.21, 0.21, 0.02, 16), mat: WATER_I, t: [0, 0.095, 0] }, { geom: cyl(0.04, 0.05, 0.28, 8), mat: MARBLE, t: [0, 0.2, 0] }, { geom: cyl(0.09, 0.05, 0.04, 10), mat: MARBLE, t: [0, 0.35, 0] }, { geom: sphere(0.03, 6), mat: GILT, t: [0, 0.39, 0] }] };
+}
+
+const IRON_MARBLE: MatSpec = { tex: 'plaster', color: 0xf6f2ea, rough: 0.5, repeat: 1.5 };
+const ASHLAR: MatSpec = { tex: 'stoneBlocks', color: 0xe6dcc8, rough: 0.8, repeat: 1.6 };
+
+/** The Iron-age look: the Bronze building refaced (limewash → marble, grey stone → warm ashlar) plus ornaments. */
+function iron(bronze: () => THREE.Object3D, extras: NodeSpec[]): () => THREE.Object3D {
+  return () => {
+    const o = bronze();
+    const swap = new Map([
+      [material(LIMEWASH), material(IRON_MARBLE)],
+      [material('stone'), material(ASHLAR)],
+    ]);
+    o.traverse((m) => {
+      if (m instanceof THREE.Mesh && swap.has(m.material as THREE.MeshStandardMaterial)) m.material = swap.get(m.material as THREE.MeshStandardMaterial)!;
+    });
+    o.add(build({ children: extras }));
+    return o;
+  };
+}
+
+const houseIron = iron(houseBronze, [finial(-0.12, 0.84, -0.12), ...frieze(-0.12, 0.386, 1.2, 0.35, true), ...frieze(0.486, -0.12, 1.0, 0.35, false), torchStatue(0.8, 0.8, 0, 0.55)]);
+const townCenterIron = iron(townCenterBronze, [finial(-0.3, 1.37, -0.35, 1.3), finial(0.95, 1.39, -0.95), ...frieze(0.605, -0.35, 1.4, 0.68, false), ...frieze(-0.3, 0.355, 1.8, 0.68, true), torchStatue(0.85, 0.85, 0, 0.9)]);
+const barracksIron = iron(barracksBronze, [finial(-0.2, 1.06, -0.35), ...frieze(0.806, -0.35, 1.1, 0.47, false), hopliteStatue(-0.7, 0.95)]);
+const granaryIron = iron(granaryBronze, [finial(-0.55, 1.15, -0.5), finial(0.55, 1.0, -0.6), finial(-0.6, 0.94, 0.6), torchStatue(1.0, 0.25, 0.08, 0.7)]);
+const storageIron = iron(storageBronze, [finial(-0.3, 0.84, -0.35), ...frieze(-0.3, 0.206, 1.7, 0.35, true), ...frieze(0.556, -0.35, 1.1, 0.35, false)]);
+const rangeIron = iron(rangeBronze, [finial(-0.5, 0.89, -0.75), ...frieze(0.406, -0.75, 0.8, 0.4, false), archerStatue(-0.75, 0.55, 0.9)]);
+const stableIron = iron(stableBronze, [finial(-0.1, 0.94, -0.75), ...frieze(1.056, -0.75, 1.0, 0.4, false), ...frieze(-0.1, -0.244, 2.3, 0.4, true), horseStatue(0.45, 0.45, 0.9)]);
+const marketIron = iron(marketBronze, [finial(-0.45, 0.89, -0.8), ...frieze(0.306, -0.8, 0.8, 0.4, false), fountain(-0.3, 0.2)]);
+const governmentIron = iron(governmentCenter, [finial(0.7, 1.42, -0.3), finial(-1.1, 1.42, -0.3), torchStatue(1.0, 0.3, 0.12, 0.75), torchStatue(0.3, 1.0, 0.12, 0.75)]);
+const academyIron = iron(academy, [finial(-0.15, 1.1, -1.0), finial(-1.02, 0.97, 0.2), ...frieze(0.35, -0.648, 1.3, 0.63, true)]);
+
 /** Variant builders by age step from the building's own age (0 = its age, 1 = next …). */
 export const AGED: Record<string, (() => THREE.Object3D)[]> = {
-  house: [house, houseTool, houseBronze],
-  townCenter: [townCenter, townCenterTool, townCenterBronze],
-  barracks: [barracks, barracksTool, barracksBronze],
-  granary: [granary, granaryTool, granaryBronze],
-  storagePit: [storagePit, storageTool, storageBronze],
-  archeryRange: [archeryRange, rangeBronze],
-  stable: [stable, stableBronze],
-  market: [marketTool, marketBronze],
-  governmentCenter: [governmentCenter],
-  academy: [academy],
+  house: [house, houseTool, houseBronze, houseIron],
+  townCenter: [townCenter, townCenterTool, townCenterBronze, townCenterIron],
+  barracks: [barracks, barracksTool, barracksBronze, barracksIron],
+  granary: [granary, granaryTool, granaryBronze, granaryIron],
+  storagePit: [storagePit, storageTool, storageBronze, storageIron],
+  archeryRange: [archeryRange, rangeBronze, rangeIron],
+  stable: [stable, stableBronze, stableIron],
+  market: [marketTool, marketBronze, marketIron],
+  governmentCenter: [governmentCenter, governmentIron],
+  academy: [academy, academyIron],
 };
 
 void bin;

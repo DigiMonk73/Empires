@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.6b · Greek contact sheets (Iron variants); verify shots ≤ 0.26%
+- Greek Iron Age: the Bronze buildings refaced in bright marble and warm ashlar, red-and-blue meander friezes
+  under the team band, gilded finials, a bronze hoplite (Barracks), archer (Range), horse (Stable), torch-bearers
+  (Town Center, Granary, Government Center) and a market fountain. Reads as "richer Bronze"; the Town Center is
+  the weakest step (should-fix, M9.9). Must-fix fixed: the friezes first sat inside the team band.
+
 ## 2026-09-30 · M9.6 · Roman contact sheets (13 buildings × ages); verify shots ≤ 0.17% (re-bake only)
 - Roman set: Palatine huts with crossed ridge poles (Stone); stucco on tufa under wide terracotta gables (Tool);
   red brick, arched openings, pedimented gable ends and pier arcades (Bronze); marble with pilasters, bronze-tiled
