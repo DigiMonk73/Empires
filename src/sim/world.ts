@@ -57,12 +57,29 @@ export interface SimConfig {
   scenario?: ScenarioSpec;
   /** Starting stockpile setting (econ:1.5); default 'default' = 200 food, 200 wood, 150 stone. */
   startingResources?: StartingResources;
-  /** Victory condition (econ:7): 'conquest' (default) or 'none' (sandbox/review scenarios never end). */
-  victory?: 'conquest' | 'none';
+  /**
+   * Victory condition (econ:7): 'standard' — conquest, or a Wonder / all Artifacts / all Ruins held for 2000 years
+   * (M14.2); 'conquest' (the default here: tests, the AI suite); 'none' (sandbox/review scenarios never end).
+   */
+  victory?: VictoryMode;
   /** "Reveal Map" option: the whole map starts explored (units in unwatched areas stay hidden). */
   revealMap?: boolean;
   /** Population limit (default 50; RoR allows 25–200). */
   popCap?: number;
+}
+
+export type VictoryMode = 'standard' | 'conquest' | 'none';
+export type WinHow = 'conquest' | 'wonder' | 'artifacts' | 'ruins';
+
+/**
+ * A running Standard-victory countdown (M14.2): a finished Wonder (`h` its handle), or every Artifact or every Ruin
+ * held by one side (`player` the first holder, `h` 0). Won at tick `end` unless it is stopped first.
+ */
+export interface Countdown {
+  kind: 'wonder' | 'artifacts' | 'ruins';
+  player: number;
+  h: number;
+  end: number;
 }
 
 export interface PlayerState {
@@ -177,7 +194,11 @@ export type SimEvent =
   | { t: 'farmDepleted'; h: number; player: number }
   | { t: 'researched'; player: number; tech: string }
   | { t: 'defeated'; player: number }
-  | { t: 'victory'; team: number; players: number[] }
+  /** The game is won; `by` is the countdown's holder for a Standard win (0 for conquest). */
+  | { t: 'victory'; team: number; players: number[]; how: WinHow; by: number }
+  /** A Standard-victory countdown started or stopped (M14.2). */
+  | { t: 'countdown'; kind: Countdown['kind']; player: number; end: number }
+  | { t: 'countdownStopped'; kind: Countdown['kind']; player: number }
   | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number }
@@ -210,7 +231,9 @@ export class World {
   /** Resource-node indices of carcasses that are still rotting. */
   carcasses: number[] = [];
   /** Set when one team is left standing (conquest). The game may continue afterwards. */
-  gameOver: { tick: number; team: number; winners: number[] } | null = null;
+  gameOver: { tick: number; team: number; winners: number[]; how?: WinHow } | null = null;
+  /** Standard-victory countdowns running (M14.2), in the order they started. */
+  countdowns: Countdown[] = [];
   /** Arrows, spears and stones in flight (cold data, launch order). */
   projectiles: Projectile[] = [];
   /** Per-building production queues and rally points (cold data). */
@@ -231,7 +254,7 @@ export class World {
   moveStats = { movingTicks: 0, blockedTicks: 0, gaveUp: 0, repaths: 0, directPaths: 0, sharedPaths: 0 };
 
   /** Victory condition from the config (econ:7). */
-  readonly victory: 'conquest' | 'none';
+  readonly victory: VictoryMode;
 
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;

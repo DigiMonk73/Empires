@@ -392,6 +392,30 @@ function relicsScene(): SimConfig {
 }
 
 /**
+ * Standard victory (M14.2): our finished Wonder and player 2's hold on both Artifacts run their clocks at the upper
+ * right; the Ruins are still free.
+ */
+function countdownScene(): SimConfig {
+  return {
+    victory: 'standard',
+    seed: 31,
+    map: { w: 40, h: 40 },
+    players: [{ civ: 'greek' }, { civ: 'persian' }],
+    scenario: {
+      buildings: [
+        { type: 'wonder', owner: 1, tx: 8, ty: 8 },
+        { type: 'townCenter', owner: 1, tx: 3, ty: 16 },
+        { type: 'townCenter', owner: 2, tx: 32, ty: 30 },
+        { type: 'artifact', owner: 2, tx: 18, ty: 10 },
+        { type: 'artifact', owner: 2, tx: 22, ty: 16 },
+        { type: 'ruins', owner: 0, tx: 16, ty: 20 },
+      ],
+      units: [{ type: 'scout', owner: 2, x: 23.5, y: 18 }],
+    },
+  };
+}
+
+/**
  * Art gallery (M9): every building of one civilization (`civ`, default greek) and the wild animals, laid out for
  * review. The owner's age decides the building variants (grant ages with `__empires.grantTech`).
  */
@@ -504,6 +528,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   wonder: wonderScene,
   diplomacy: diplomacyScene,
   relics: relicsScene,
+  countdowns: countdownScene,
   gallery,
   hills: hillsScene,
   battle: () => battleConfig(1),

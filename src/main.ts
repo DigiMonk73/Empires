@@ -31,6 +31,7 @@ import { effect } from '@preact/signals';
 import { archOf } from './render/arch.ts';
 import { groundHeight } from './render/ground.ts';
 import { buildResults, formatClock } from './ui/results.ts';
+import { syncClocks, winLine } from './ui/clocks.ts';
 import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { AudioHooks } from './audio/hooks.ts';
@@ -90,8 +91,11 @@ async function boot(): Promise<void> {
   session.onEvents((ev) => {
     const me = session.localPlayer;
     for (const x of ev) {
-      if (x.t === 'defeated' && x.player === me && !hud.outcome.value) hud.outcome.value = { kind: 'defeat', at: formatClock(world.tick) };
-      if (x.t === 'victory') hud.outcome.value = { kind: x.players.includes(me) ? 'victory' : 'defeat', at: formatClock(world.tick) };
+      if (x.t === 'defeated' && x.player === me && !hud.outcome.value) hud.outcome.value = { kind: 'defeat', at: formatClock(world.tick), why: 'Your civilization has fallen.' };
+      if (x.t === 'victory') {
+        const won = x.players.includes(me);
+        hud.outcome.value = { kind: won ? 'victory' : 'defeat', at: formatClock(world.tick), why: winLine(x.how, won, x.by, me) };
+      }
     }
   });
   cameraRoot.addChild(wr.root);
@@ -378,6 +382,7 @@ async function boot(): Promise<void> {
       notifier?.update();
       if (hud.diplomacy.value) hud.diplomacy.value = diplomacyView(world, session.localPlayer);
       if (hud.scores.value && hudTick % 10 === 0) hud.scores.value = scoreList(); // once a second
+      if (hudTick % 5 === 0) syncClocks(world, session.localPlayer); // a year is 10 ticks
       refreshCommands();
     }
     frameMs = t.deltaMS;

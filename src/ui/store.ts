@@ -36,8 +36,10 @@ export interface ResultRow extends ScoreLine {
 }
 
 export const hud = {
-  /** Game over from the local player's point of view (null while playing). */
-  outcome: signal<{ kind: 'victory' | 'defeat'; at: string } | null>(null),
+  /** Game over from the local player's point of view (null while playing); `why` is the line under the title. */
+  outcome: signal<{ kind: 'victory' | 'defeat'; at: string; why: string } | null>(null),
+  /** Standard-victory countdowns at the upper right, in their owners' colours (M14.2). */
+  clocks: signal<{ key: string; text: string; color: string }[]>([]),
   /** In-game menu open (pauses the game). */
   menuOpen: signal(false),
   speed: signal(1),

@@ -47,6 +47,7 @@ export function hashBreakdown(w: World): Record<string, number> {
   }
   for (const pj of w.projectiles) oh.str(JSON.stringify(pj));
   if (w.gameOver) oh.str(JSON.stringify(w.gameOver));
+  for (const c of w.countdowns) oh.str(JSON.stringify(c));
   const parts = { tick: w.tick, ents, res, map, players: ph.digest(), rng: rh.digest(), orders: oh.digest(), fog: fh.digest() };
   const all = new Hasher();
   for (const v of [parts.tick, parts.ents, parts.res, parts.map, parts.players, parts.rng, parts.orders, parts.fog]) all.u32(v);

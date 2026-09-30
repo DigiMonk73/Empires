@@ -42,6 +42,8 @@ interface Header {
   /** `stance` / `alliedVictory`: since M12.3 (older saves derive them from the teams). */
   players: { id: number; civ: string; team: number; res: number[]; techs: string[]; defeated: number | null; tally: Tally; stance?: number[]; alliedVictory?: boolean }[];
   gameOver: World['gameOver'];
+  /** Standard-victory clocks (M14.2; absent in older saves). */
+  countdowns?: World['countdowns'];
   rng: Record<string, RngState>;
   ents: { cap: number; top: number; count: number; free: number[] };
   res: { count: number; carcasses: number[] };
@@ -98,6 +100,7 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     tick: w.tick,
     players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res], techs: [...p.techs], defeated: p.defeated, tally: structuredCloneTally(p.tally), stance: [...p.stance], alliedVictory: p.alliedVictory })),
     gameOver: w.gameOver ? { ...w.gameOver, winners: [...w.gameOver.winners] } : null,
+    countdowns: w.countdowns.map((c) => ({ ...c })),
     rng: {
       combat: w.rng.combat.getState(),
       conversion: w.rng.conversion.getState(),
@@ -173,6 +176,7 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
     pl.alliedVictory = p.alliedVictory ?? true;
   });
   w.gameOver = header.gameOver ? { ...header.gameOver, winners: [...header.gameOver.winners] } : null;
+  w.countdowns = (header.countdowns ?? []).map((c) => ({ ...c }));
   w.rng.combat.setState(header.rng.combat!);
   w.rng.conversion.setState(header.rng.conversion!);
   w.rng.animals.setState(header.rng.animals!);

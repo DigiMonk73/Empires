@@ -625,6 +625,11 @@
   font-weight: 700;
   text-shadow: 0 0 3px #000, 1px 1px 1px #000, -1px -1px 1px #000;
 }
+.clock-row {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
 .time-line {
   color: #efe2c0;
   margin-bottom: 4px;

@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14.2 Standard victory (Wonder / all Artifacts / all Ruins countdowns), then M14.3 setup options.
+- **Next up:** M14.3 setup options (victory incl. Score / Time Limit, starting age, population, Full Tech Tree, reveal) in the lobby.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -800,9 +800,15 @@ of island/Narrows games decided in 2 h (11/12).
       off-white when unclaimed). Notices + sounds; views rebuild on an owner change (also fixes converted units
       keeping their old team colour). `?scenario=relics`, `?scenario=map&relics=1`; `ownerOf` debug hook.
       Tests: `relics.test.ts` (6) + `relics.spec.ts`. Skirmish games get them with the Standard victory (M14.2/3).
-- [ ] **M14.2 Standard victory.** A completed Wonder, or all Artifacts or all Ruins held by one side, starts a
+- [x] **M14.2 Standard victory.** A completed Wonder, or all Artifacts or all Ruins held by one side, starts a
       2000-year countdown (1000 s at speed 1.0, econ:7) — upper-right in the owner's colour, announced to all;
       losing the Wonder or one object stops it. Victory at zero, like conquest.
+      _Done:_ `victory: 'standard'` (D52): `World.countdowns` (saved, hashed; old saves load with none), one clock per
+      finished Wonder and per relic kind held by one side (mutual allies), checked once a second in
+      `systems/victory.ts`; `countdown` / `countdownStopped` events; victory carries `how` and `by`. HUD: clocks at
+      the upper right in years (`ui/clocks.ts`), notices, sounds, and the game-over line says how the game was won.
+      Skirmish setup `victory` (default Standard, `win=` in the URL; places the relics). `?scenario=countdowns`.
+      Tests: `standard-victory.test.ts` (6) + an e2e that runs a Wonder to victory. The lobby selector: M14.3.
 - [ ] **M14.3 Setup options.** Victory: Standard / Conquest / Score (target) / Time Limit (minutes); starting age
       (Default, Tool, Bronze, Iron, Post-Iron); population limit 25–200; Full Tech Tree; reveal map; the lobby and
       the sim config; score and time-limit endings.

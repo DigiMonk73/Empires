@@ -20,7 +20,9 @@ export const EVENT_SOUNDS: Record<SimEvent['t'], string> = {
   researched: 'trained, or the fanfare for an age (own)',
   housed: 'alert (own, at most every 8 s)',
   defeated: 'defeat (own)',
-  victory: 'fanfare (own side)',
+  victory: 'fanfare (own side); defeat when another side wins by a countdown',
+  countdown: 'built chime when our clock starts, alert when another side\'s does',
+  countdownStopped: 'silent (the message says it)',
   rejected: 'deny (own orders, at most every 0.5 s)',
   deposit: 'coins when a trade load of gold comes in (own)',
   depleted: 'silent — the gatherers move on by themselves',
@@ -310,6 +312,11 @@ export class AudioHooks {
           break;
         case 'victory':
           if (x.players.includes(me)) this.a.play('fanfare');
+          else if (x.how !== 'conquest' && this.c.world.players[me]?.defeated === null) this.a.play('defeat');
+          break;
+        case 'countdown':
+          if (x.player === me || allied(this.c.world, me, x.player)) this.a.play('built', 0, 0.7);
+          else this.a.play('alert', 0, 0.7);
           break;
       }
     }

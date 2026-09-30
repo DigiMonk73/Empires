@@ -63,13 +63,22 @@ function TopBar() {
   );
 }
 
-/** The score list (F4 / S, M12.6) and the F11 line (time, speed, population) at the upper right. */
+/**
+ * The upper right: Standard-victory countdowns (M14.2, always shown while one runs), the F11 line (time, speed,
+ * population) and the score list (F4 / S, M12.6).
+ */
 function ScoreBoard() {
   const list = hud.scores.value;
   const line = hud.timeLine.value;
-  if (!list && !line) return null;
+  const clocks = hud.clocks.value;
+  if (!list && !line && !clocks.length) return null;
   return (
     <div class="scoreboard" data-testid="scoreboard">
+      {clocks.map((c) => (
+        <div class="clock-row" data-testid={`clock-${c.key}`} style={{ color: c.color }}>
+          {c.text}
+        </div>
+      ))}
       {line && (
         <div class="time-line" data-testid="time-line">
           {hud.clock.value} · {hud.speed.value.toFixed(1)}× · Pop {hud.pop.value}/{hud.popCap.value}
@@ -263,7 +272,9 @@ function GameOver() {
     <div class="gameover" data-testid="gameover">
       <div class="gameover-panel">
         <div class={`gameover-title ${o.kind}`}>{o.kind === 'victory' ? 'Victory' : 'Defeat'}</div>
-        <div class="gameover-sub">{o.kind === 'victory' ? 'Your enemies have been conquered.' : 'Your civilization has fallen.'} ({o.at})</div>
+        <div class="gameover-sub">
+          {o.why} ({o.at})
+        </div>
         <div class="gameover-buttons">
           <button data-testid="show-results" onClick={() => hudActions.showResults()}>Results</button>
           <button data-testid="keep-watching" onClick={() => (hud.outcome.value = null)}>Keep watching</button>

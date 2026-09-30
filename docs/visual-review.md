@@ -2,6 +2,14 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M14.2 · countdowns (new); ai-base, victory*, results-timeline re-shot (Standard skirmishes)
+- The clocks at the upper right in Cinzel, one line each ("You · Wonder · 1998", "Player 2 · All Artifacts ·
+  1998"), in the owner's colour lightened a third (the raw blue was dark over unexplored ground); the notice at the
+  upper left. HUD 4.
+- Skirmish shots changed because skirmishes now default to Standard: 5 + 5 relics on the map (unclaimed Ruins at
+  the bottom of ai-base, off-white), so the games play out a little differently; the victory game still ends by
+  conquest (27:42). No regressions seen.
+
 ## 2026-09-30 · M14.1 · relics (new, chromium + webkit); ruins + artifact contact sheets
 - Broken marble colonnade on a cracked 2×2 pavement; gold idol on a stepped pedestal with a team-coloured cloth.
   Contact sheets read at 1×; the idol's gold needed low metalness (the baker has no environment to reflect).

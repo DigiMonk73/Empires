@@ -295,3 +295,15 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   to 13 / 9 / 6 where the land runs out, and on the crowded island maps (8 players on Tiny) on a 4×4 islet raised
   in open water — so there are always 5 + 5. They draw from their own random stream: a seed's map is otherwise
   the same with or without them. They appear with the Standard victory (M14.2) and `?scenario=map&relics=1`.
+- **D52 — Standard victory** (2026-09-30, M14.2; econ:7, mil:5). Standard = conquest, or one of three clocks of
+  2000 years run out: a finished Wonder (one clock per Wonder), every Artifact, or every Ruin held by one side.
+  2000 years = 1000 s at speed 1.0 (fandom's 16:40; `VICTORY.secondsPerYear` 0.5, still `verify: true` — the
+  manual says "about 15 minutes"), so 20000 ticks and one "year" per 10 ticks; the clock counts years down at
+  the upper right in the owner's colour. A side is players who are mutual allies; its clock is the first holder's
+  and survives trades within the side; any other change (the Wonder destroyed, one object lost or never taken,
+  its holder defeated) stops it, and a new hold starts over from 2000. Checked once a second with conquest. When a
+  clock runs out its holder wins together with the standing players who are its mutual allies, if all tick
+  Allied Victory; the rest are not marked defeated (their scores stay). Several clocks ending on the same check:
+  the one started first wins. Skirmishes default to Standard (the original's default), which places the 5 + 5
+  relics; `?win=conquest` turns both off. The AI suite and tests keep conquest until the computers play for the
+  clocks (M14.6).

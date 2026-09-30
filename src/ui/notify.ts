@@ -7,6 +7,13 @@ import { TECH_BY_ID } from '../data/index.ts';
 import { RESOURCES } from '../data/types.ts';
 import { allied } from '../sim/rules/diplomacy.ts';
 
+/** A player's colour, lightened a third toward white so it reads on dark ground (messages, clocks). */
+export function lightColor(p: number): string {
+  const hex = PLAYER_COLORS[(p - 1 + PLAYER_COLORS.length) % PLAYER_COLORS.length]!.hex;
+  const ch = (sh: number) => Math.round(((hex >> sh) & 255) * 0.67 + 255 * 0.33);
+  return `rgb(${ch(16)}, ${ch(8)}, ${ch(0)})`;
+}
+
 /**
  * Notifications (M12.1): the messages at the upper left (research §5 "Messages appear at upper-left") and the
  * minimap pings that go with them — ages reached by anyone, our units or buildings under attack out of sight,
@@ -63,11 +70,8 @@ export class Notifier {
     return p === this.c.player() ? 'You' : `Player ${p}`;
   }
 
-  /** A player's colour, lightened a third toward white so it reads on dark ground. */
   private color(p: number): string {
-    const hex = PLAYER_COLORS[(p - 1 + PLAYER_COLORS.length) % PLAYER_COLORS.length]!.hex;
-    const ch = (sh: number) => Math.round(((hex >> sh) & 255) * 0.67 + 255 * 0.33);
-    return `rgb(${ch(16)}, ${ch(8)}, ${ch(0)})`;
+    return lightColor(p);
   }
 
   /** Post a message. `key` + `gap` throttle repeats (in ticks); `ping` also flashes the spot on the minimap. */
@@ -166,8 +170,19 @@ export class Notifier {
           else this.post(`Player ${x.to} has taken your ${name}.`, { color: WARN, x: x.x, y: x.y, ping: '#ff3a2a' });
           break;
         }
+        case 'countdown': {
+          if (x.kind === 'wonder') break; // 'built' has announced it
+          const set = x.kind === 'artifacts' ? 'Artifacts' : 'Ruins';
+          this.post(`${this.name(x.player)} ${x.player === me ? 'hold' : 'holds'} all the ${set}: 2000 years to victory.`, { color: this.color(x.player), ping: '#ffe070' });
+          break;
+        }
+        case 'countdownStopped': {
+          const what = x.kind === 'wonder' ? 'Wonder has fallen' : `hold on the ${x.kind === 'artifacts' ? 'Artifacts' : 'Ruins'} is broken`;
+          this.post(`${x.player === me ? 'Your' : `Player ${x.player}’s`} ${what}: the countdown stops.`, { color: this.color(x.player) });
+          break;
+        }
         case 'defeated':
-          if (x.player !== me)this.post(`Player ${x.player} has been defeated.`, { color: this.color(x.player) });
+          if (x.player !== me) this.post(`Player ${x.player} has been defeated.`, { color: this.color(x.player) });
           break;
         case 'built': {
           const s = e.slotOf(x.h);
