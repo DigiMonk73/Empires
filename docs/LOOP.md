@@ -32,7 +32,9 @@ truth**, not conversation memory, because context gets summarized.
 8. **Commit.** `git commit -m "M<n>.<k>: <summary>"` ending with the line
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Local only — never push, never add remotes.
 9. **Milestone end.** Commit, run `npm run verify:full`, and only when it is green tag `m<n>` and bump the
-   `empires-startos` submodule (its `make` runs inside verify:full, so re-run it after the bump). Never chain
+   `empires-startos` submodule (its `make` runs inside verify:full, so re-run it after the bump). **Commit the
+   bump before `make`:** the s9pk rule depends on the package repo's git HEAD, not the submodule's files, so an
+   uncommitted bump leaves the old `.s9pk` "up to date" (check its timestamp and `Git:` line). Never chain
    tagging onto a command whose failure could be masked (e.g. by `| tail`).
    At M0, M6 and M15 run the StartOS VM protocol (below). Send the user a short push notification summary;
    at M6 and M15 invite a playtest.
