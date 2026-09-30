@@ -4,6 +4,8 @@ import { CIVS } from '../../data/civs.ts';
 import { MAP_SIZES, type MapSizeId, type StartingResources } from '../../data/setup.ts';
 import { AI_LEVELS, DEFAULT_SETUP, setupToQuery, type SkirmishPlayer, type SkirmishSetup } from '../../game/skirmish.ts';
 import { playerColor } from '../../render/worldRenderer.ts';
+import { SaveList } from '../saves/SaveList.tsx';
+import { loadQuery } from '../../game/saveGame.ts';
 import './menu.css';
 
 /**
@@ -15,7 +17,7 @@ const cap = (s: string): string => s[0]!.toUpperCase() + s.slice(1);
 const SIZES = Object.keys(MAP_SIZES) as MapSizeId[];
 const RESOURCES: StartingResources[] = ['default', 'medium', 'high', 'deathmatch'];
 
-function MainMenu({ onSkirmish }: { onSkirmish: () => void }) {
+function MainMenu({ onSkirmish, onLoad }: { onSkirmish: () => void; onLoad: () => void }) {
   return (
     <div class="menu-main" data-testid="main-menu">
       <h1 class="menu-title">Empires</h1>
@@ -24,7 +26,7 @@ function MainMenu({ onSkirmish }: { onSkirmish: () => void }) {
         <button data-testid="menu-skirmish" onClick={onSkirmish}>
           Skirmish
         </button>
-        <button disabled title="Coming soon">
+        <button data-testid="menu-loadgame" onClick={onLoad}>
           Load Game
         </button>
         <button disabled title="Coming soon">
@@ -73,6 +75,18 @@ function Skirmish({ onBack }: { onBack: () => void }) {
               <option value={r}>{r === 'deathmatch' ? 'Death Match' : cap(r)}</option>
             ))}
           </select>
+        </label>
+        <label title="The same seed and settings make the same map">
+          Map seed
+          <input
+            type="number"
+            class="seed"
+            data-testid="setup-seed"
+            min={1}
+            max={99999}
+            value={s.seed}
+            onInput={(e) => upd({ seed: Math.max(1, Math.min(99999, Math.floor(Number((e.target as HTMLInputElement).value)) || 1)) })}
+          />
         </label>
         <label class="check">
           <input type="checkbox" checked={s.reveal} onChange={(e) => upd({ reveal: (e.target as HTMLInputElement).checked })} /> Reveal map
@@ -138,8 +152,15 @@ function Skirmish({ onBack }: { onBack: () => void }) {
 }
 
 function Menu() {
-  const [screen, setScreen] = useState<'main' | 'skirmish'>('main');
-  return <div class="menu">{screen === 'main' ? <MainMenu onSkirmish={() => setScreen('skirmish')} /> : <Skirmish onBack={() => setScreen('main')} />}</div>;
+  const [screen, setScreen] = useState<'main' | 'skirmish' | 'load'>('main');
+  const back = () => setScreen('main');
+  return (
+    <div class="menu">
+      {screen === 'main' && <MainMenu onSkirmish={() => setScreen('skirmish')} onLoad={() => setScreen('load')} />}
+      {screen === 'skirmish' && <Skirmish onBack={back} />}
+      {screen === 'load' && <SaveList mode="load" onLoad={(id) => (location.search = loadQuery(id, new URLSearchParams(location.search)))} onClose={back} />}
+    </div>
+  );
 }
 
 export function mountMenu(el: HTMLElement): void {

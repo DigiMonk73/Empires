@@ -135,3 +135,8 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   player's seat: panned by screen x, gain 1/(1 + 5·off-screen distance), silent beyond ¾ of a screen or under
   fog (own buildings excepted). Voice chatter is limited to one line per 0.6 s, work sounds to one per 90 ms per
   kind, voices to 4 at once per sound and 24 total. The macOS voices are licensed for personal use only (KI-5).
+- **D32 — Saved games** (2026-09-29, M6.9). A save = the sim's save bytes (D1: everything that shapes future
+  ticks) + each computer player's `AiState` (RNG, memories, plan) + camera/speed, stored in IndexedDB. Loading
+  reloads the page with `?load=<id>` so a loaded game boots exactly like a new one. Saves from another
+  `SIM_VERSION` refuse to load (no migrations until M15). No in-memory fallback: when storage is blocked,
+  saving says so. StartOS server-side saves (`/data`) come with M12.

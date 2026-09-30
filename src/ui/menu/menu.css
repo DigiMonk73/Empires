@@ -108,6 +108,22 @@
   border-radius: 3px;
   padding: 4px 6px;
 }
+.menu input.seed {
+  font: inherit;
+  font-size: 15px;
+  width: 90px;
+  color: #f4e6c8;
+  background: #2a2119;
+  border: 1px solid #8a6c3a;
+  border-radius: 3px;
+  padding: 2px 6px;
+  box-sizing: border-box;
+  height: 30px;
+}
+.menu input.seed:focus {
+  outline: 1px solid #e0b45a;
+  border-color: #e0b45a;
+}
 .menu-players {
   width: 100%;
   border-collapse: collapse;

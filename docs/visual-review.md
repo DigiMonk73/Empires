@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.9 · saves-save (new), menu-skirmish
+- Save dialog matches the game's panels (bronze frame, Cinzel title); the list shows name, map, age, game
+  clock and date; "Game saved." confirms. Readability 4, HUD 4.
+- Skirmish setup gains "Map seed" (fixed 4242 in the test so the shot is stable); focus rings recoloured gold.
+
 ## 2026-09-29 · M6.8 · no new screenshots (audio); ai-base, battle re-checked
 - Audio changes nothing on screen. The 19 shots that moved did so because tests now start paused (`paused=1`)
   instead of running a load-dependent number of real-time ticks before `pause(true)`; ai-base and battle

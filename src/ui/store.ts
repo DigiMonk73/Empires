@@ -36,6 +36,10 @@ export const hud = {
   menuOpen: signal(false),
   speed: signal(1),
   muted: signal(false),
+  /** Saved-games dialog over the game menu. */
+  saveDialog: signal<'save' | 'load' | null>(null),
+  /** Suggested name for a new save ("Inland · tiny — 12:30"). */
+  saveName: signal(''),
   /** Post-game results (null = screen closed). */
   results: signal<ResultRow[] | null>(null),
   res: signal<[number, number, number, number]>([0, 0, 0, 0]),
@@ -63,6 +67,8 @@ export const hudActions: {
   setMenu(open: boolean): void;
   setSpeed(v: number): void;
   setMuted(m: boolean): void;
+  saveGame(name: string, overwrite: string | null): Promise<void>;
+  loadGame(id: string): void;
   resign(): void;
   restart(): void;
   quit(): void;
@@ -71,6 +77,8 @@ export const hudActions: {
   setMenu: () => {},
   setSpeed: () => {},
   setMuted: () => {},
+  saveGame: async () => {},
+  loadGame: () => {},
   resign: () => {},
   restart: () => {},
   quit: () => {},

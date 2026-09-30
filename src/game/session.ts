@@ -1,7 +1,8 @@
 import { Sim, type Command, type SimConfig, type SimEvent } from '../sim/index.ts';
 import { TICK_SECONDS } from '../sim/time.ts';
 import { LocalRouter, type CommandRouter } from './router.ts';
-import { AiPlayer } from '../ai/ai.ts';
+import { AiPlayer, type AiState } from '../ai/ai.ts';
+import type { AiLevel } from '../data/setup.ts';
 import { PlayerView } from '../sim/view/playerView.ts';
 
 /** Max ticks simulated per frame when catching up (avoids a death spiral after a stall). */
@@ -25,8 +26,10 @@ export class GameSession {
   /** Computer players (config `ai`), each with its own fog-filtered view. */
   private ais: { ai: AiPlayer; view: PlayerView }[] = [];
 
-  constructor(config: SimConfig, localPlayer = 1, router: CommandRouter = new LocalRouter()) {
-    this.sim = Sim.create(config);
+  /** A new game from `config`, or a loaded one from a restored `Sim` (then call `restoreAis`). */
+  constructor(config: SimConfig | Sim, localPlayer = 1, router: CommandRouter = new LocalRouter()) {
+    this.sim = config instanceof Sim ? config : Sim.create(config);
+    config = this.sim.config;
     // Commands pass through a tap (unit acknowledgements, later replays) on their way to the real router.
     this.router = {
       submit: (player, cmd) => {
@@ -39,6 +42,22 @@ export class GameSession {
     config.players.forEach((p, i) => {
       if (p.ai && i + 1 !== localPlayer) this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i), view: new PlayerView(this.sim.world, i + 1) });
     });
+  }
+
+  /** Hand a player to a computer opponent (tests and demos: the local player "autoplays"). */
+  addAi(player: number, level: AiLevel): void {
+    if (this.ais.some(({ ai }) => ai.player === player)) return;
+    this.ais.push({ ai: new AiPlayer(player, level, this.sim.config.seed * 31 + player - 1), view: new PlayerView(this.sim.world, player) });
+    this.ais.sort((a, b) => a.ai.player - b.ai.player);
+  }
+
+  /** The computer players' memories, for a saved game. */
+  aiStates(): { player: number; state: AiState }[] {
+    return this.ais.map(({ ai }) => ({ player: ai.player, state: ai.save() }));
+  }
+
+  restoreAis(states: readonly { player: number; state: AiState }[]): void {
+    for (const { player, state } of states) this.ais.find(({ ai }) => ai.player === player)?.ai.restore(state);
   }
 
   onEvents(fn: (ev: readonly SimEvent[]) => void): void {

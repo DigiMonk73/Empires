@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.8 done (mapgen, victory, menus, AI, AI suite, age art, audio). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.9 done (mapgen, victory, menus, AI, AI suite, age art, audio, save/load). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -17,7 +17,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
-- **Next up:** M6.9 save/load (game menu, IndexedDB) + menu→victory e2e, then M6 exit: verify:full, tag m6, submodule bump, StartOS VM checkpoint, playtest invite.
+- **Next up:** M6.10 AI ladder (Hardest currently loses to Easiest — threat response, far food, ladder gate, menu→victory e2e), then M6 exit: verify:full, tag m6, submodule bump, StartOS VM checkpoint, playtest invite.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -260,8 +260,18 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       `impact`), work sounds on the baked clip's hit frame, voices on select and order, all panned by screen
       x, faded off-screen and silent under fog; out-of-sight attack horn. Debug `audioStats`; unit + e2e tests;
       `assets/LICENSES.md` (voice licence → KI-5). Tests start paused (`paused=1`): steadier screenshots.
-- [ ] **M6.9 Save/load UI + e2e.** Save/load from the in-game menu (IndexedDB; server `/data` on StartOS
-      later), e2e menu → skirmish → victory; StartOS VM checkpoint (install, play, restart); user playtest.
+- [x] **M6.9 Save/load.** Save Game / Load Game in the in-game menu, Load Game on the main menu
+      (`src/ui/saves/SaveList.tsx`; IndexedDB via `src/platform/saves.ts`; loading reloads with `?load=<id>`).
+      A save is the sim's own bytes + the computer players' memories (`AiPlayer.save/restore`) + camera and
+      speed: a loaded game plays on tick-for-tick like the original (unit test with two AIs; e2e through the
+      UI in both browsers). Also: map seed field in skirmish setup; debug `autoplay(level)`.
+      _Found:_ Hardest loses to Easiest (boom never answers a rush; Stone-Age food stall) → M6.10.
+- [ ] **M6.10 AI ladder.** Threat response (train to match raiders regardless of plan, villager militia),
+      far-food use (explore for food, second granary at remote berries/herds), don't over-boom scarce Stone-Age
+      food; AI-suite ladder gate (Hardest beats Easiest, Hard beats Easy on 4 seeds); e2e menu → skirmish →
+      victory (autoplay Hardest vs Easiest). WIP patch: `artifacts/tmp/ai-behaviour-wip.patch`.
+- [ ] **M6 exit.** verify:full, tag m6, submodule bump, StartOS VM checkpoint (install, play, save/load,
+      restart); user playtest.
 - _Exit:_ e2e menu→victory; AI suite no crashes; Moderate Tool ≤ 12:00, Bronze ≤ 24:00; idle ≤ 5%; stuck ≤ 1%.
 
 ## M7 — Full land tech tree

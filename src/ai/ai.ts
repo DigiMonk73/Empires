@@ -1,8 +1,8 @@
 import type { AiLevel } from '../data/setup.ts';
 import type { Command } from '../sim/commands/types.ts';
-import { Rng, STREAM } from '../sim/math/rng.ts';
+import { Rng, STREAM, type RngState } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
-import { MilitaryBrain } from './military.ts';
+import { MilitaryBrain, type MilitaryState } from './military.ts';
 
 /**
  * Computer player (D10): reads only its PlayerView (fog-filtered) and answers with ordinary Commands, like a human
@@ -56,6 +56,18 @@ export interface Snapshot {
   game: { h: number; type: string; x: number; y: number }[];
 }
 
+/** Everything an AiPlayer remembers, as plain JSON (saved games): restoring it resumes the same decisions. */
+export interface AiState {
+  rng: RngState;
+  pending: [string, number][];
+  explorer: number;
+  exploreDone: boolean;
+  loops: number;
+  lastRebalance: number;
+  game: { h: number; type: string; x: number; y: number }[];
+  military: MilitaryState;
+}
+
 export class AiPlayer {
   readonly player: number;
   readonly level: AiLevel;
@@ -81,6 +93,30 @@ export class AiPlayer {
     this.rng = new Rng(seed, STREAM.aiBase + player);
     this.military = new MilitaryBrain(this.rng, level);
     this.peaceful = !!opts.peaceful;
+  }
+
+  save(): AiState {
+    return {
+      rng: this.rng.getState(),
+      pending: [...this.pending],
+      explorer: this.explorer,
+      exploreDone: this.exploreDone,
+      loops: this.loops,
+      lastRebalance: this.lastRebalance,
+      game: [...this.game.values()].map((g) => ({ ...g })),
+      military: this.military.save(),
+    };
+  }
+
+  restore(st: AiState): void {
+    this.rng.setState(st.rng);
+    this.pending = new Map(st.pending);
+    this.explorer = st.explorer;
+    this.exploreDone = st.exploreDone;
+    this.loops = st.loops;
+    this.lastRebalance = st.lastRebalance;
+    this.game = new Map(st.game.map((g) => [g.h, { ...g }]));
+    this.military.restore(st.military);
   }
 
   /** Called every tick; decides every `think` ticks (staggered by player). Returns commands for this tick. */

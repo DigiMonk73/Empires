@@ -1,6 +1,7 @@
 import { hud, hudActions, type SelInfo } from '../store.ts';
 import { iconStyle } from '../icons.ts';
 import type { CommandButton } from '../commands.ts';
+import { SaveList } from '../saves/SaveList.tsx';
 
 const RES = [
   { key: 'food', label: 'Food', color: '#d84a3a' },
@@ -267,6 +268,17 @@ function Results() {
 /** In-game menu (pauses the game): resume, game speed, restart, resign, quit to the main menu. */
 function GameMenu() {
   if (!hud.menuOpen.value) return null;
+  const dialog = hud.saveDialog.value;
+  if (dialog)
+    return (
+      <SaveList
+        mode={dialog}
+        defaultName={hud.saveName.value}
+        onSave={(name, overwrite) => hudActions.saveGame(name, overwrite)}
+        onLoad={(id) => hudActions.loadGame(id)}
+        onClose={() => (hud.saveDialog.value = null)}
+      />
+    );
   return (
     <div class="gameover" data-testid="game-menu">
       <div class="gameover-panel">
@@ -287,6 +299,8 @@ function GameMenu() {
         </div>
         <div class="gameover-buttons column">
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
+          <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
+          <button data-testid="menu-load" onClick={() => (hud.saveDialog.value = 'load')}>Load Game</button>
           <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>
           <button data-testid="menu-resign" onClick={() => hudActions.resign()}>Resign</button>
           <button data-testid="menu-quit" onClick={() => hudActions.quit()}>Quit to main menu</button>

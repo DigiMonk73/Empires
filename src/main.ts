@@ -22,6 +22,8 @@ import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { AudioHooks } from './audio/hooks.ts';
+import { loadQuery, loadSession, saveSession, type SavedGame } from './game/saveGame.ts';
+import { saves } from './platform/saves.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -37,11 +39,18 @@ async function boot(): Promise<void> {
   });
   host.appendChild(app.canvas);
 
-  // No scenario in the URL (and not a test/smoke run): the main menu, over a live village backdrop.
-  const menuMode = !params.has('scenario') && !params.has('smoke') && !params.has('debug');
+  // A saved game (`?load=<id>`), a scenario, or — with neither (and not a test/smoke run) — the main menu over a
+  // live village backdrop.
+  let loaded: SavedGame | null = null;
+  if (params.has('load')) {
+    loaded = await saves.get(params.get('load')!);
+    if (!loaded) throw new Error('That saved game no longer exists.');
+  }
+  const menuMode = !loaded && !params.has('scenario') && !params.has('smoke') && !params.has('debug');
   const scenario = menuMode ? SCENARIOS.village! : (SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!);
-  const session = new GameSession(scenario(params));
-  if (params.get('scenario') === 'skirmish') session.speed = Number(params.get('speed') ?? 1) || 1;
+  const session = loaded ? loadSession(loaded) : new GameSession(scenario(params));
+  if (!loaded && params.get('scenario') === 'skirmish') session.speed = Number(params.get('speed') ?? 1) || 1;
+  const kind = loaded ? loaded.kind : gameKind(params);
   // Tests: start paused so screenshots don't depend on how many ticks ran in real time before the test paused.
   if (params.get('paused') === '1') session.paused = true;
   const world = session.sim.world;
@@ -76,7 +85,10 @@ async function boot(): Promise<void> {
   app.stage.addChild(screenLayer);
 
   const tc = findFirst(world, 1, 'townCenter');
-  if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 1);
+  if (loaded) {
+    camera.setZoom(loaded.camera.zoom);
+    camera.centerOnWorld(loaded.camera.x, loaded.camera.y);
+  } else if (tc >= 0) camera.centerOnWorld(world.ents.x[tc]!, world.ents.y[tc]! + 1);
   else camera.centerOnWorld(world.map.w / 2, world.map.h / 2);
   camera.apply();
 
@@ -101,7 +113,24 @@ async function boot(): Promise<void> {
   hudActions.perform = (a) => input.perform(a);
   hudActions.setMenu = (open) => {
     hud.menuOpen.value = open;
+    hud.saveDialog.value = null;
+    hud.saveName.value = `${kind} — ${formatClock(world.tick)}`;
     session.paused = open;
+  };
+  hudActions.saveGame = async (name, overwrite) => {
+    const vc = camera.viewCenter();
+    const at = camera.screenToWorld(vc.x, vc.y);
+    const save = saveSession(session, {
+      id: overwrite ?? `g${Date.now().toString(36)}`,
+      name,
+      kind,
+      savedAt: Date.now(),
+      camera: { x: at.x, y: at.y, zoom: camera.zoom },
+    });
+    await saves.put(save);
+  };
+  hudActions.loadGame = (id) => {
+    location.search = loadQuery(id, params);
   };
   hudActions.setSpeed = (v) => {
     session.speed = v;
@@ -277,6 +306,7 @@ async function boot(): Promise<void> {
       return h >= 0 && world.ents.slotOf(h) >= 0 ? h : null;
     },
     grantTech: (player, tech) => completeResearch(world, player, tech),
+    autoplay: (level) => session.addAi(session.localPlayer, level),
     audioStats: () => ({ ready: audio.ready, muted: audio.muted, played: { ...audio.stats } }),
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {
@@ -349,6 +379,14 @@ function wireAudio(session: GameSession, world: GameSession['sim']['world'], wr:
     if (set) audio.ack(set, 'select');
   });
   return audio;
+}
+
+/** What kind of game this is, for the saved-games list. */
+function gameKind(params: URLSearchParams): string {
+  const sc = params.get('scenario') ?? 'demo';
+  if (sc !== 'skirmish') return sc[0]!.toUpperCase() + sc.slice(1);
+  const type = params.get('type') ?? 'continental';
+  return `${type[0]!.toUpperCase()}${type.slice(1)} · ${params.get('size') ?? 'small'}`;
 }
 
 function findFirst(world: GameSession['sim']['world'], owner: number, typeId: string): number {

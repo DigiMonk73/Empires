@@ -21,8 +21,15 @@ const WAVE: Record<Plan, number[]> = { rush: [0, 6, 8, 10, 12], boom: [0, 99, 99
 const NON_MILITARY = new Set(['villager', 'fishingShip', 'tradeShip', 'transport']);
 const NEXT_AGE: Record<number, string> = { 1: 'toolAge', 2: 'bronzeAge', 3: 'ironAge' };
 
+export interface MilitaryState {
+  plan: Plan;
+  lastPush: number;
+  sweep: number;
+  rallySet: number[];
+}
+
 export class MilitaryBrain {
-  readonly plan: Plan;
+  plan: Plan;
   private lastPush = -9999;
   /** Search pattern cursor (6×6 grid of waypoints) for hunting down the last enemies. */
   private sweep = 0;
@@ -33,6 +40,17 @@ export class MilitaryBrain {
     this.plan = rng.chance(0.5) ? 'rush' : 'boom';
     // Easier levels wait longer between pushes.
     this.patience = { easiest: 1800, easy: 1200, moderate: 600, hard: 400, hardest: 300 }[level];
+  }
+
+  save(): MilitaryState {
+    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet] };
+  }
+
+  restore(st: MilitaryState): void {
+    this.plan = st.plan;
+    this.lastPush = st.lastPush;
+    this.sweep = st.sweep;
+    this.rallySet = new Set(st.rallySet);
   }
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {

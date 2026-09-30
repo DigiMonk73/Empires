@@ -14,6 +14,7 @@ test('main menu → skirmish setup → game → in-game menu → resign → defe
   await expect(page.getByTestId('skirmish-setup')).toBeVisible();
   await page.getByTestId('setup-type').selectOption('inland');
   await page.getByTestId('setup-size').selectOption('tiny');
+  await page.getByTestId('setup-seed').fill('4242'); // a fixed seed keeps the screenshot stable
   await snap(page, info, 'menu-skirmish');
   await page.getByTestId('setup-start').click();
   await page.waitForURL(/scenario=skirmish/);

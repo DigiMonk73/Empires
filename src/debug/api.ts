@@ -43,6 +43,8 @@ export interface EmpiresDebugApi {
   buildingAt(tx: number, ty: number): number | null;
   /** Test/review only: give a player a technology instantly (e.g. an age), applying its effects. */
   grantTech(player: number, tech: string): void;
+  /** Test/demo only: a computer player takes over the local player. */
+  autoplay(level: 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest'): void;
   /** Sounds started so far, by name (counted even before the AudioContext exists). */
   audioStats(): { ready: boolean; muted: boolean; played: Record<string, number> };
   /** Submit a command as a player (test setup; normal play goes through input). */
