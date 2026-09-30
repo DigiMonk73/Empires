@@ -1,5 +1,5 @@
 import { RESOURCES } from '../data/types.ts';
-import { STARTING_RESOURCES, type StartingResources } from '../data/setup.ts';
+import { STARTING_RESOURCES, type AiLevel, type StartingResources } from '../data/setup.ts';
 import { terrainIndex } from '../data/terrain.ts';
 import { Act, EKind, EntityStore } from './core/entities.ts';
 import { ResourceStore } from './core/resources.ts';
@@ -16,7 +16,7 @@ import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.t
 import { populationSystem } from './systems/population.ts';
 import type { Production, Rally } from './systems/production.ts';
 
-export type AiLevel = 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest';
+export type { AiLevel };
 
 export interface PlayerSetup {
   civ: string;

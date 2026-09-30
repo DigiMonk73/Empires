@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.4 · ai-base (new)
+- The computer's base at 8:00 reads like the original's AI: TC ringed by houses, granary, storage pit at the
+  woodline, barracks, villagers spread over wood/food. Composition 4.
+- Fixed: an abandoned foundation (builder lost) now gets a new builder.
+
 ## 2026-09-29 · M6.3 · menu-main, menu-skirmish (new)
 - "Empires" in Cinzel over the living village (farmers hoeing, woodcutters), dimmed at the edges; bronze-framed
   buttons. Skirmish panel matches the HUD style; player colour swatches. Menus 4.

@@ -1,6 +1,8 @@
 import { Sim, type SimConfig, type SimEvent } from '../sim/index.ts';
 import { TICK_SECONDS } from '../sim/time.ts';
 import { LocalRouter, type CommandRouter } from './router.ts';
+import { AiPlayer } from '../ai/ai.ts';
+import { PlayerView } from '../sim/view/playerView.ts';
 
 /** Max ticks simulated per frame when catching up (avoids a death spiral after a stall). */
 const MAX_CATCH_UP = 5;
@@ -19,10 +21,16 @@ export class GameSession {
   private acc = 0;
   private listeners: ((ev: readonly SimEvent[]) => void)[] = [];
 
+  /** Computer players (config `ai`), each with its own fog-filtered view. */
+  private ais: { ai: AiPlayer; view: PlayerView }[] = [];
+
   constructor(config: SimConfig, localPlayer = 1, router: CommandRouter = new LocalRouter()) {
     this.sim = Sim.create(config);
     this.router = router;
     this.localPlayer = localPlayer;
+    config.players.forEach((p, i) => {
+      if (p.ai && i + 1 !== localPlayer) this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i), view: new PlayerView(this.sim.world, i + 1) });
+    });
   }
 
   onEvents(fn: (ev: readonly SimEvent[]) => void): void {
@@ -45,6 +53,8 @@ export class GameSession {
 
   /** Advance exactly one tick (tests, stepping while paused). */
   stepOnce(): void {
+    // AI decisions go through the router like any player's input (D10).
+    for (const { ai, view } of this.ais) for (const cmd of ai.think(view)) this.router.submit(ai.player, cmd);
     this.sim.step(this.router.collect(this.sim.tick));
     const ev = this.sim.drainEvents();
     if (ev.length) for (const l of this.listeners) l(ev);

@@ -65,3 +65,6 @@ export const SCORE = {
   technology: { perTech: 2, mostTechs: 50, firstBronze: 25, firstIron: 25 },
   other: { eliminated: -100, perWonder: 100 },
 } as const;
+
+/** Computer player difficulty levels (mil:8 names are unverified: Easiest … Hardest). */
+export type AiLevel = 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest';

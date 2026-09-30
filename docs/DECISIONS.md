@@ -116,3 +116,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   edge lies within the radius of the impact point — own units included (mil:2) — scaled linearly from 100% at
   the centre to 50% at the rim (`verify`: the original's falloff curve). Trample (`trample` radius) hits hostile
   units near the melee target at 100% (friendly trample unverified → off). Siege can't fire inside minRange.
+- **D29 — AI architecture** (2026-09-29, M6.4). The AI imports only `sim/view` (PlayerView: its own entities in
+  full, enemy units in sight, enemy buildings explored, resources on explored tiles), `sim/commands`, rules and
+  math; it keeps its own RNG stream (STREAM.aiBase + player). It runs in the session before each tick and submits
+  through the router like a human, so AI games save, replay and would lockstep like any other input. Levels
+  differ by decision interval (4–40 ticks) and villager targets per age; no resource bonuses (the Hardest-AI
+  bonus is unverified). Headless matches (`game/aiMatch.ts`) drive the AI suite.

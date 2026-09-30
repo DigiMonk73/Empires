@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.3 done (mapgen, victory + results, menus). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.4 done (mapgen, victory, menus, AI economy). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,8 +16,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M6.4 AI v1 economy (build order, gathering, houses, age-ups), then M6.5 AI military.
-- **Playable now:** open `/` → main menu → Skirmish (opponents idle until M6.4); `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
+- **Next up:** M6.5 AI military (army by age, rush/boom plans, attack waves, defence), then M6.6 AI suite.
+- **Playable now:** open `/` → main menu → Skirmish vs a computer that builds its economy (no army yet); `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
 
@@ -224,9 +224,13 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       2–8 players: civ, team, Computer difficulty) → URL (`game/skirmish.ts`) + reload; in-game menu (pauses:
       resume, game speed 1.0/1.5/2.0, restart, resign — `resign` command codec 12 — quit to main menu).
       Players carry `ai` levels in SimConfig for the AI controllers (M6.4).
-- [ ] **M6.4 AI v1 — economy.** `src/ai/` controller issuing Commands through the router, seeing only its
-      fog-filtered view: build-order executor (villagers, houses on time, granary/storage pit, gather
-      allocation food/wood/gold/stone, farms when berries run out), age up Tool → Bronze (econ:9 timings).
+- [x] **M6.4 AI v1 — economy.** `src/sim/view/playerView.ts` (fog-filtered knowledge: own units/buildings,
+      visible enemies, explored resources, placement/cost/blocker queries) and `src/ai/ai.ts` (AiPlayer: thinks
+      every 4–40 ticks by level, returns Commands through the router): opening scout loop (+ wider loops when a
+      needed resource is unknown), villagers to a per-age target, houses on time, granary at berries, pit at
+      the woodline / far mines, barracks → market → archery range, age-ups, farms after berries, hunting,
+      share-based gatherer allocation (30 → 60 → map-wide search) + 20 s rebalance, orphaned foundations
+      finished. `game/aiMatch.ts` headless matches: Moderate Tool 9:09–11:25, Bronze 14:40–19:40, idle ≤ 0.2%.
 - [ ] **M6.5 AI v1 — military.** Barracks/Range/Stable, army composition by age, rush vs boom plans, attack
       waves (attack-move to the enemy base), defence (pull army home when attacked), scouting.
 - [ ] **M6.6 AI suite.** Headless AI-vs-AI matches (`tools/sim/ai-suite.ts`, verify + full ladder): no crashes,
