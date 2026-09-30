@@ -128,3 +128,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   finishing weakened players in free-for-alls, which only have to run without crashing (AI v2, M13). Units
   blocked > 5 s must stay ≤ 1%. Attack orders now give up after 20 failed approaches to an unreachable target
   (a real bug for human players too).
+- **D31 — Audio basics** (2026-09-29, M6.8). Effects are synthesised into AudioBuffers at startup (D13) —
+  nothing on disk, deterministic seeds; voices are pre-rendered WAVs (D12) because `say` exists only on macOS.
+  The sim reports `strike` (swing lands / missile released) and `impact` events; like every event they are not
+  hashed and cost the headless runners nothing (they drain events each tick). Sounds are heard from the local
+  player's seat: panned by screen x, gain 1/(1 + 5·off-screen distance), silent beyond ¾ of a screen or under
+  fog (own buildings excepted). Voice chatter is limited to one line per 0.6 s, work sounds to one per 90 ms per
+  kind, voices to 4 at once per sound and 24 total. The macOS voices are licensed for personal use only (KI-5).

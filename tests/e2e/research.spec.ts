@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('research by mouse: select the Town Center, advance to the Tool Age', async ({ page }, info) => {
-  await openGame(page, 'scenario=village&fog=0');
+  await openGame(page, 'scenario=village&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const tc = await page.evaluate(() => window.__empires!.buildingAt(15, 15));
   await page.evaluate(() => window.__empires!.camera.centerOn(15.5, 15.5));

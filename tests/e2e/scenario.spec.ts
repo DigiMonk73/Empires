@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openGame, pageErrors, snap } from './helpers.ts';
 
 test('demo scenario renders the sim and units move on command', async ({ page }, info) => {
-  await openGame(page, 'scenario=demo');
+  await openGame(page, 'scenario=demo&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   await snap(page, info, 'demo-start');
   const units = await page.evaluate(() => window.__empires!.query.units(1));

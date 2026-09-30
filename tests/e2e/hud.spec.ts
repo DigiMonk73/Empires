@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openGame, pageErrors, snap } from './helpers.ts';
 
 test('HUD shows stockpile, population, clock, and the selection', async ({ page }, info) => {
-  await openGame(page, 'scenario=demo');
+  await openGame(page, 'scenario=demo&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   await expect(page.getByTestId('res-food')).toHaveText('200');
   await expect(page.getByTestId('res-wood')).toHaveText('200');

@@ -17,6 +17,7 @@ export function runTrace(cfg: SimConfig, ticks: number, fuzzSeed: number, fuzzEv
   for (let t = 0; t < ticks; t++) {
     sim.step(fz.commands(sim));
     if (onTick) onTick(sim);
+    sim.drainEvents();
     if (sim.tick % every === 0) trace.push(sim.hash());
   }
   return { trace, final: sim.hash(), ticks };

@@ -279,6 +279,12 @@ function GameMenu() {
             </button>
           ))}
         </div>
+        <div class="gameover-sub">
+          Sound:{' '}
+          <button class={`speed${hud.muted.value ? '' : ' on'}`} data-testid="menu-sound" onClick={() => hudActions.setMuted(!hud.muted.value)}>
+            {hud.muted.value ? 'Off' : 'On'}
+          </button>
+        </div>
         <div class="gameover-buttons column">
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
           <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>

@@ -72,6 +72,7 @@ export function runBattle(seed = 1, maxTicks = 20 * 300, clock: () => number = (
     const t0 = clock();
     sim.step(cmds);
     times.push(clock() - t0);
+    sim.drainEvents();
     for (let s = 0; s < e.top; s++) if (e.alive[s] && e.kind[s] === EKind.unit && e.stuck[s]! > 100) stuck.add(s);
     if (t % 100 === 0) trace.push(sim.hash());
     if (!alive(1) || !alive(2)) break;

@@ -1,0 +1,23 @@
+{
+  "villager": [
+    "villager/select1.wav",
+    "villager/select2.wav",
+    "villager/ack1.wav",
+    "villager/ack2.wav",
+    "villager/ack3.wav",
+    "villager/work1.wav"
+  ],
+  "soldier": [
+    "soldier/select1.wav",
+    "soldier/select2.wav",
+    "soldier/ack1.wav",
+    "soldier/ack2.wav",
+    "soldier/ack3.wav",
+    "soldier/attack1.wav"
+  ],
+  "death": [
+    "death/die1.wav",
+    "death/die2.wav",
+    "death/die3.wav"
+  ]
+}

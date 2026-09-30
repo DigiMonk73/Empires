@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('raid: clubmen kill villagers (corpses) and raze a house (rubble)', async ({ page }, info) => {
-  await openGame(page, 'scenario=raid&fog=0');
+  await openGame(page, 'scenario=raid&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const club = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'clubman').map((u) => u.h);
   const vills = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
@@ -40,7 +40,7 @@ test('raid: clubmen kill villagers (corpses) and raze a house (rubble)', async (
 });
 
 test('volley: bowmen shoot arrows that arc to their target', async ({ page }, info) => {
-  await openGame(page, 'scenario=raid&fog=0');
+  await openGame(page, 'scenario=raid&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const bows = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'bowman').map((u) => u.h);
   const vills = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);
@@ -63,7 +63,7 @@ test('volley: bowmen shoot arrows that arc to their target', async ({ page }, in
 });
 
 test('raid base: stable, range, tower and mounted scouts', async ({ page }, info) => {
-  await openGame(page, 'scenario=raid&fog=0');
+  await openGame(page, 'scenario=raid&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   await page.evaluate(() => {
     window.__empires!.camera.setZoom(1.3);
@@ -75,7 +75,7 @@ test('raid base: stable, range, tower and mounted scouts', async ({ page }, info
 });
 
 test('attack-move by mouse: box-select clubmen, A, click beyond the enemy camp', async ({ page }) => {
-  await openGame(page, 'scenario=raid&fog=0');
+  await openGame(page, 'scenario=raid&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   await page.evaluate(() => {
     window.__empires!.camera.setZoom(1);
@@ -105,7 +105,7 @@ test('attack-move by mouse: box-select clubmen, A, click beyond the enemy camp',
 });
 
 test('battle: two armies clash (20v20 mid-fight)', async ({ page }, info) => {
-  await openGame(page, 'scenario=battle&fog=0');
+  await openGame(page, 'scenario=battle&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const a = (await page.evaluate(() => window.__empires!.query.units(1))).map((u) => u.h);
   const b = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);

@@ -2,6 +2,16 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.8 · no new screenshots (audio); ai-base, battle re-checked
+- Audio changes nothing on screen. The 19 shots that moved did so because tests now start paused (`paused=1`)
+  instead of running a load-dependent number of real-time ticks before `pause(true)`; ai-base and battle
+  re-checked and correct. A second run on an unchanged tree now changes 7 shots (the menu backdrop drifts by
+  wall clock; raid/fog-scouted/work-overview ≤ 0.08%), down from 14.
+- Audio review (no ears in the loop): `node tools/sfx.ts` prints length, peak and RMS for every effect and
+  writes WAVs to `artifacts/audio/sfx/` for the playtest. All peak at −3 dBFS and end ≥ 20 dB down (unit test);
+  the first cut of the fanfare and defeat sting stopped mid-note (clicks) and the alert was a gated square
+  (−7 dB RMS, harsh) — fixed with a release fade, longer tails and a softer horn call.
+
 ## 2026-09-29 · M6.7 · village-tool, village-bronze (new), aged contact sheets
 - Ages read at a glance: Stone huts → Tool mudbrick halls under thatch → Bronze limewash and stone under red tile
   with colonnades and domed silos; foundations rise in the current age's style. Buildings 4, style coherence 4.

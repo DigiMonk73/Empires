@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('fog hides the enemy until scouted; explored ground stays dimmed', async ({ page }, info) => {
-  await openGame(page, 'scenario=demo');
+  await openGame(page, 'scenario=demo&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const enemy = (await page.evaluate(() => window.__empires!.query.units(2)))[0]!;
   // Keep the enemy camp still (Stand Ground) so the scout isn't chased — this test is about fog, not fighting.
@@ -31,7 +31,7 @@ test('fog hides the enemy until scouted; explored ground stays dimmed', async ({
 });
 
 test('?fog=0 shows everything', async ({ page }, info) => {
-  await openGame(page, 'scenario=demo&fog=0');
+  await openGame(page, 'scenario=demo&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const enemy = (await page.evaluate(() => window.__empires!.query.units(2)))[0]!;
   // Keep the enemy camp still (Stand Ground) so the scout isn't chased — this test is about fog, not fighting.

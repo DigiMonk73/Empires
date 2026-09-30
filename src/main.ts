@@ -20,6 +20,8 @@ import { hud, hudActions } from './ui/store.ts';
 import { setIconArt } from './ui/icons.ts';
 import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
+import { AudioEngine } from './audio/engine.ts';
+import { AudioHooks } from './audio/hooks.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -40,6 +42,8 @@ async function boot(): Promise<void> {
   const scenario = menuMode ? SCENARIOS.village! : (SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!);
   const session = new GameSession(scenario(params));
   if (params.get('scenario') === 'skirmish') session.speed = Number(params.get('speed') ?? 1) || 1;
+  // Tests: start paused so screenshots don't depend on how many ticks ran in real time before the test paused.
+  if (params.get('paused') === '1') session.paused = true;
   const world = session.sim.world;
 
   const cameraRoot = new Container();
@@ -67,6 +71,7 @@ async function boot(): Promise<void> {
     insetBottom: 170,
   });
   const selection = new Selection();
+  const audio = wireAudio(session, world, wr, camera, selection, app, menuMode);
   const screenLayer = new Graphics();
   app.stage.addChild(screenLayer);
 
@@ -111,6 +116,15 @@ async function boot(): Promise<void> {
     location.search = '';
   };
   hud.speed.value = session.speed;
+  hudActions.setMuted = (m) => {
+    audio.setMuted(m);
+    hud.muted.value = m;
+    try {
+      localStorage.setItem('empires.muted', m ? '1' : '0');
+    } catch {
+      /* private mode: the choice lasts this session */
+    }
+  };
   hudActions.showResults = () => {
     hud.results.value = buildResults(world);
   };
@@ -263,6 +277,7 @@ async function boot(): Promise<void> {
       return h >= 0 && world.ents.slotOf(h) >= 0 ? h : null;
     },
     grantTech: (player, tech) => completeResearch(world, player, tech),
+    audioStats: () => ({ ready: audio.ready, muted: audio.muted, played: { ...audio.stats } }),
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {
       session.paused = on;
@@ -286,6 +301,54 @@ async function boot(): Promise<void> {
   if (params.get('smoke') === '1' && isTauri()) {
     await runTauriSmokeTest(app, () => ({ ...renderStats() }));
   }
+}
+
+/**
+ * Sound (M6.8): the engine starts on the first click or key (browsers' autoplay rule); sim events, work-clip hit
+ * frames, selections and orders are heard from the local player's seat. The menu backdrop is silent except UI clicks.
+ */
+function wireAudio(session: GameSession, world: GameSession['sim']['world'], wr: WorldRenderer, camera: Camera, selection: Selection, app: Application, menuMode: boolean): AudioEngine {
+  const audio = new AudioEngine();
+  let muted = false;
+  try {
+    muted = localStorage.getItem('empires.muted') === '1';
+  } catch {
+    /* storage blocked: default on */
+  }
+  audio.setMuted(muted);
+  hud.muted.value = muted;
+  audio.armOnGesture();
+  document.getElementById('hud')?.addEventListener('click', (e) => {
+    if (e.target instanceof Element && e.target.closest('button')) audio.play('click', 0, 0.5);
+  });
+  if (menuMode) return audio;
+  const me = session.localPlayer;
+  const sounds = new AudioHooks(audio, {
+    world,
+    player: () => me,
+    toScreen: (x, y) => camera.worldToScreen(x, y),
+    viewSize: () => ({ w: app.canvas.clientWidth, h: app.canvas.clientHeight }),
+    visible: (tx, ty) => wr.fog.isVisible(me, tx, ty),
+  });
+  session.onEvents((ev) => sounds.onEvents(ev));
+  wr.onClipHit = (clip, x, y) => sounds.onClipHit(clip, x, y);
+  let works = 0;
+  session.onCommand((p, cmd) => {
+    if (p !== me || !('ids' in cmd) || cmd.t === 'stop' || cmd.t === 'stance') return;
+    const set = sounds.voiceFor(cmd.ids);
+    if (!set) return;
+    const fight = (cmd.t === 'move' && !!cmd.am) || (set === 'soldier' && cmd.t === 'act');
+    audio.ack(set, fight ? 'attack' : set === 'villager' && cmd.t !== 'move' && works++ % 3 === 0 ? 'work' : 'ack');
+  });
+  let prev = new Set<number>();
+  selection.onChange(() => {
+    const now = selection.list;
+    const fresh = now.some((h) => !prev.has(h));
+    prev = new Set(now);
+    const set = fresh ? sounds.voiceFor(now) : null;
+    if (set) audio.ack(set, 'select');
+  });
+  return audio;
 }
 
 function findFirst(world: GameSession['sim']['world'], owner: number, typeId: string): number {

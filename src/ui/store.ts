@@ -35,6 +35,7 @@ export const hud = {
   /** In-game menu open (pauses the game). */
   menuOpen: signal(false),
   speed: signal(1),
+  muted: signal(false),
   /** Post-game results (null = screen closed). */
   results: signal<ResultRow[] | null>(null),
   res: signal<[number, number, number, number]>([0, 0, 0, 0]),
@@ -61,6 +62,7 @@ export const hudActions: {
   showResults(): void;
   setMenu(open: boolean): void;
   setSpeed(v: number): void;
+  setMuted(m: boolean): void;
   resign(): void;
   restart(): void;
   quit(): void;
@@ -68,6 +70,7 @@ export const hudActions: {
   showResults: () => {},
   setMenu: () => {},
   setSpeed: () => {},
+  setMuted: () => {},
   resign: () => {},
   restart: () => {},
   quit: () => {},

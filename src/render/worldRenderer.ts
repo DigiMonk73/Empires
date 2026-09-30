@@ -90,6 +90,8 @@ export class WorldRenderer {
   /** Visible terrain chunks after the last cull (≈ terrain draw calls). */
   terrainDrawCalls = 0;
   private resViews: (Sprite | undefined)[] = [];
+  /** Called when a work clip reaches its baked 'hit' frame (audio). */
+  onClipHit: ((clip: string, x: number, y: number) => void) | null = null;
 
   private readonly art: BakedArt | null;
 
@@ -257,6 +259,11 @@ export class WorldRenderer {
     f = clip.loop ? f % clip.frames : Math.min(f, clip.frames - 1);
     const key = `${meta.clips[clipName] ? clipName : 'idle'}/${dir}/${f}`;
     if (key === v.lastKey) return;
+    // The tool lands on this frame: tell the audio (visible units only).
+    const hitAt = clip.markers?.hit;
+    if (hitAt !== undefined && this.onClipHit && v.root.visible && f === Math.floor(hitAt * clip.frames) && !v.lastKey.endsWith(`/${f}`)) {
+      this.onClipHit(clipName, e.x[slot]!, e.y[slot]!);
+    }
     v.lastKey = key;
     const fr = this.art!.frame(v.model!, key);
     if (!fr) return;

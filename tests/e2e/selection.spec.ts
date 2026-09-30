@@ -13,7 +13,7 @@ async function screenOf(page: Page, h: number): Promise<{ x: number; y: number }
 }
 
 test('click, box, double-click, groups, and right-click move — all by real input', async ({ page }, info) => {
-  await openGame(page, 'scenario=demo');
+  await openGame(page, 'scenario=demo&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const vs = await villagers(page);
   expect(vs.length).toBe(8);

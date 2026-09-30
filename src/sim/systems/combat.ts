@@ -345,6 +345,7 @@ export function attackSystem(w: World): void {
       }
       if (o.windup > 0) {
         if (--o.windup === 0) {
+          w.events.push({ t: 'strike', h: e.handleOf(s), tgt: e.handleOf(t), type: e.type[s]!, x: e.x[s]!, y: e.y[s]!, missile: !!st.missile, building });
           if (st.missile) launch(w, s, t, st.missile, o.hunt);
           else {
             const tx = e.x[t]!;
@@ -453,6 +454,7 @@ export function projectileSystem(w: World): void {
     }
     const t = e.slotOf(p.target);
     const blast = w.stats(p.owner, p.type).blastRadius;
+    w.events.push({ t: 'impact', type: p.type, x: p.x1, y: p.y1, hit: t >= 0 });
     if (blast > 0) {
       // Stones burst where they land: everyone near the impact point is hurt, own units included (mil:2).
       splash(w, e.slotOf(p.src), p.owner, p.type, p.x1, p.y1, blast, -1, true, 0.5, p.x0, p.y0);

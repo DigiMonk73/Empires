@@ -11,3 +11,7 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   invocation in the connector settings before M9 (menu/loading art, emblems); until then use code-made art.
 - **KI-3 · should · StartOS backup/restore unverified** — the test VM has no backup target, so the
   backup → restore round-trip (verify-on-startos §7) has not run. Needs a target on the box (user) before M6/M15.
+- **KI-5 · should · public/audio/voices licence** — the voice lines are rendered with macOS built-in voices,
+  whose licence covers personal, non-commercial projects only (see `assets/LICENSES.md`). Fine for this build;
+  before any public or commercial release, re-record them (the user's own voice, or a CC0/CC-BY TTS voice such
+  as a permissively licensed Piper model) with `tools/voices.ts`.

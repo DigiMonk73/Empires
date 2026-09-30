@@ -16,7 +16,7 @@ async function boxSelectAll(page: Page, hs: number[]) {
 }
 
 test('economy by mouse: build a house with B→E, gather berries by right-click, train 5 villagers', async ({ page }, info) => {
-  await openGame(page, 'scenario=start&fog=0');
+  await openGame(page, 'scenario=start&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   let vs = await villagers(page);
   expect(vs.length).toBe(3);

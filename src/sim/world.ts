@@ -153,7 +153,11 @@ export type SimEvent =
   | { t: 'victory'; team: number; players: number[] }
   | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
-  | { t: 'stuck'; h: number };
+  | { t: 'stuck'; h: number }
+  /** A swing lands or a missile is released (render/audio only). */
+  | { t: 'strike'; h: number; tgt: number; type: number; x: number; y: number; missile: boolean; building: boolean }
+  /** A missile comes down (hit or not). */
+  | { t: 'impact'; type: number; x: number; y: number; hit: boolean };
 
 /** All simulation state. Systems mutate it; nothing else does (see sim/index.ts). */
 export class World {

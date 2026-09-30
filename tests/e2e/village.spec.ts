@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('village: economy buildings, farm stages, foundations rising', async ({ page }, info) => {
-  await openGame(page, 'scenario=village&fog=0');
+  await openGame(page, 'scenario=village&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const vs = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'villager').map((u) => u.h);
   const tree = await page.evaluate(() => window.__empires!.query.resourceAt(22, 5));
@@ -35,7 +35,7 @@ test('village: economy buildings, farm stages, foundations rising', async ({ pag
 });
 
 test('village through the ages: Tool mudbrick, Bronze stone and tile', async ({ page }, info) => {
-  await openGame(page, 'scenario=village&fog=0');
+  await openGame(page, 'scenario=village&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   await page.evaluate(() => {
     window.__empires!.camera.setZoom(1);

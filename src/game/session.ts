@@ -1,4 +1,4 @@
-import { Sim, type SimConfig, type SimEvent } from '../sim/index.ts';
+import { Sim, type Command, type SimConfig, type SimEvent } from '../sim/index.ts';
 import { TICK_SECONDS } from '../sim/time.ts';
 import { LocalRouter, type CommandRouter } from './router.ts';
 import { AiPlayer } from '../ai/ai.ts';
@@ -20,13 +20,21 @@ export class GameSession {
   paused = false;
   private acc = 0;
   private listeners: ((ev: readonly SimEvent[]) => void)[] = [];
+  private cmdListeners: ((player: number, cmd: Command) => void)[] = [];
 
   /** Computer players (config `ai`), each with its own fog-filtered view. */
   private ais: { ai: AiPlayer; view: PlayerView }[] = [];
 
   constructor(config: SimConfig, localPlayer = 1, router: CommandRouter = new LocalRouter()) {
     this.sim = Sim.create(config);
-    this.router = router;
+    // Commands pass through a tap (unit acknowledgements, later replays) on their way to the real router.
+    this.router = {
+      submit: (player, cmd) => {
+        router.submit(player, cmd);
+        for (const l of this.cmdListeners) l(player, cmd);
+      },
+      collect: (tick) => router.collect(tick),
+    };
     this.localPlayer = localPlayer;
     config.players.forEach((p, i) => {
       if (p.ai && i + 1 !== localPlayer) this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i), view: new PlayerView(this.sim.world, i + 1) });
@@ -35,6 +43,11 @@ export class GameSession {
 
   onEvents(fn: (ev: readonly SimEvent[]) => void): void {
     this.listeners.push(fn);
+  }
+
+  /** Every command submitted (any player), as it is submitted. */
+  onCommand(fn: (player: number, cmd: Command) => void): void {
+    this.cmdListeners.push(fn);
   }
 
   /** Advance by real elapsed seconds; returns alpha ∈ [0,1) for interpolating between the last two ticks. */

@@ -32,6 +32,7 @@ for (let t = 0; t < ticks; t++) {
   const t0 = performance.now();
   sim.step(cmds);
   times.push(performance.now() - t0);
+  sim.drainEvents();
   for (let s = 0; s < e.top; s++) if (e.stuck[s]! > 100) longStuck.add(s);
 }
 const sorted = [...times].sort((a, b) => a - b);

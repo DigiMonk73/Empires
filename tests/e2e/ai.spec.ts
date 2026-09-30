@@ -3,7 +3,7 @@ import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('a Moderate computer player builds up its base (8 game minutes)', async ({ page }, info) => {
   test.setTimeout(90_000);
-  await openGame(page, 'scenario=skirmish&type=continental&size=tiny&seed=4&p=greek.1.human,egyptian.2.moderate&fog=0');
+  await openGame(page, 'scenario=skirmish&type=continental&size=tiny&seed=4&p=greek.1.human,egyptian.2.moderate&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   for (let m = 0; m < 8; m++) await page.evaluate(() => window.__empires!.step(1200));
   const units = await page.evaluate(() => window.__empires!.query.units(2));

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('a battle to the end: game-over banner, then the results table', async ({ page }, info) => {
-  await openGame(page, 'scenario=battle&fog=0');
+  await openGame(page, 'scenario=battle&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const a = (await page.evaluate(() => window.__empires!.query.units(1))).map((u) => u.h);
   const b = (await page.evaluate(() => window.__empires!.query.units(2))).map((u) => u.h);

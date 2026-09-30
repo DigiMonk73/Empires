@@ -62,6 +62,7 @@ export function runMatch(o: MatchOptions): MatchResult {
     const cmds = ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd })));
     const t0 = o.clock?.() ?? 0;
     sim.step(cmds);
+    sim.drainEvents(); // nobody listens headless; don't let them pile up
     maxTickMs = Math.max(maxTickMs, (o.clock?.() ?? 0) - t0);
     if (t % 20 === 0) {
       const e = w.ents;

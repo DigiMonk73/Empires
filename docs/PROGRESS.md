@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1–M6.7 done (mapgen, victory, menus, AI, AI suite, age art). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.8 done (mapgen, victory, menus, AI, AI suite, age art, audio). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -15,8 +15,9 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   combat (`systems/combat.ts`): attack units/buildings, damage formula incl. buildings ×0.2, windup, dodgeable
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
-- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M6.8 audio basics (synth SFX + `say` voice acks), M6.9 save/load + menu→victory e2e + StartOS checkpoint.
+- **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
+- **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only).
+- **Next up:** M6.9 save/load (game menu, IndexedDB) + menu→victory e2e, then M6 exit: verify:full, tag m6, submodule bump, StartOS VM checkpoint, playtest invite.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -251,8 +252,14 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       new Market (stalls with awnings → stone colonnade) and Government Center. Renderer picks the variant
       from the owner's age minus the building's age (farms keep crop stages; placement ghost matches);
       debug `grantTech`; village-tool / village-bronze screenshots.
-- [ ] **M6.8 Audio basics.** WebAudio synth SFX (chop, mine, hammer, clash, bow, death, collapse, UI clicks),
-      voice acknowledgements baked from macOS `say` (D12) per civ culture, mixer + mute.
+- [x] **M6.8 Audio basics.** 18 effects synthesised at runtime (`src/audio/synth.ts`: chop, mine, hoe,
+      hammer, clash, club, bow, sling, arrow hit, thud, collapse, built/trained chimes, age fanfare, defeat,
+      alert horn, UI click); 15 voice lines from macOS `say` (`tools/voices.ts`: Greek villagers, Latin
+      soldiers, deaths). `AudioEngine` (lazy context on first gesture, sfx/voice buses, per-sound and total
+      voice limits, mute in the game menu, remembered). `AudioHooks`: sim events (new render-only `strike` /
+      `impact`), work sounds on the baked clip's hit frame, voices on select and order, all panned by screen
+      x, faded off-screen and silent under fog; out-of-sight attack horn. Debug `audioStats`; unit + e2e tests;
+      `assets/LICENSES.md` (voice licence → KI-5). Tests start paused (`paused=1`): steadier screenshots.
 - [ ] **M6.9 Save/load UI + e2e.** Save/load from the in-game menu (IndexedDB; server `/data` on StartOS
       later), e2e menu → skirmish → victory; StartOS VM checkpoint (install, play, restart); user playtest.
 - _Exit:_ e2e menu→victory; AI suite no crashes; Moderate Tool ≤ 12:00, Bronze ≤ 24:00; idle ≤ 5%; stuck ≤ 1%.

@@ -13,7 +13,7 @@ async function stepUntil(page: Page, h: number, re: RegExp, max = 2400): Promise
 }
 
 test('villagers play the right work and carry clips', async ({ page }, info) => {
-  await openGame(page, 'scenario=start&fog=0');
+  await openGame(page, 'scenario=start&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const vs = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.type === 'villager').map((u) => u.h);
   const gazelle = (await page.evaluate(() => window.__empires!.query.units(0))).find((u) => u.type === 'gazelle')!.h;

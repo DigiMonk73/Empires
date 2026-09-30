@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openGame, pageErrors, snap } from './helpers.ts';
 
 test('minimap: click moves the camera, right-click moves the selection', async ({ page }, info) => {
-  await openGame(page, 'scenario=demo');
+  await openGame(page, 'scenario=demo&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   await page.waitForTimeout(300); // let the minimap draw
   await snap(page, info, 'minimap-start');

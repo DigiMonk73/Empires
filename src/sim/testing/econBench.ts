@@ -164,6 +164,7 @@ export function runEconBench(minutes = 8): EconBenchResult {
   for (let t = 0; t < ticks; t++) {
     const acts = vills.map((s) => e.act[s]!);
     sim.step();
+    sim.drainEvents();
     for (let k = 0; k < vills.length; k++) {
       const s = vills[k]!;
       if (!e.alive[s]) continue;
