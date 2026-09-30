@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M12.1 · notify-attack (new), priest-converted, siege-volley, village-bronze (+ age/defeat texts elsewhere)
+- Messages sit at the upper left under the top bar in Alegreya with a black halo: legible on grass and on the black
+  of unexplored ground; each in its player's colour lightened a third (ours blue, Player 2 red), warnings coral.
+  The attack ping (red rings) reads on the minimap beside the enemy base. Scenes that grant ages at start now show
+  "You have advanced to…" lines — correct behaviour. A CSS fade-in caught mid-way made the first snapshot dim →
+  removed (screenshots must not depend on real time). UI 4.
+
 ## 2026-09-30 · M11.4 · menu-options (new)
 - Options on the main menu: Sound on/off and four sliders (Master, Music, Effects, Voices) with their values, on
   the stone panel; sliders grey out while sound is off. UI 4.

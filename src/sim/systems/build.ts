@@ -1,4 +1,5 @@
 import { CIV_BY_ID } from '../../data/index.ts';
+import { RESOURCES } from '../../data/types.ts';
 import { MOVE_WATER, TERRAINS } from '../../data/terrain.ts';
 import { Act, EKind } from '../core/entities.ts';
 import { NO_ENTITY } from '../core/handles.ts';
@@ -95,6 +96,13 @@ export function canAfford(w: World, player: number, cost: readonly number[]): bo
   return cost.every((c, i) => r[i]! >= c - 1e-9);
 }
 
+/** Why a cost can't be paid, naming the first resource short ('not enough wood'), or null when it can. */
+export function shortfall(w: World, player: number, cost: readonly number[]): string | null {
+  const r = w.players[player]!.res;
+  for (let i = 0; i < 4; i++) if (r[i]! < cost[i]! - 1e-9) return `not enough ${RESOURCES[i]}`;
+  return null;
+}
+
 export function pay(w: World, player: number, cost: readonly number[], sign = 1): void {
   const r = w.players[player]!.res;
   for (let i = 0; i < 4; i++) r[i] = r[i]! - sign * cost[i]!;
@@ -129,8 +137,9 @@ export function placeFoundation(w: World, player: number, typeIdx: number, tx: n
     return NO_ENTITY;
   }
   const cost = w.stats(player, typeIdx).cost;
-  if (!canAfford(w, player, cost)) {
-    w.events.push({ t: 'rejected', player, reason: 'not enough resources' });
+  const short = shortfall(w, player, cost);
+  if (short) {
+    w.events.push({ t: 'rejected', player, reason: short });
     return NO_ENTITY;
   }
   pay(w, player, cost);

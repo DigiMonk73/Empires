@@ -72,7 +72,7 @@ describe('construction', () => {
     expect(p.res[1]).toBe(200);
     p.res[1] = 10;
     sim.step([{ player: 1, cmd: { t: 'build', ids, type: 'house', tx: 12, ty: 12 } }]);
-    expect(sim.drainEvents().some((e) => e.t === 'rejected' && e.reason === 'not enough resources')).toBe(true);
+    expect(sim.drainEvents().some((e) => e.t === 'rejected' && e.reason === 'not enough wood')).toBe(true);
   });
 
   it('units standing on a new foundation are nudged off', () => {

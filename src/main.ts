@@ -15,6 +15,7 @@ import { Minimap } from './render/minimap.ts';
 import { quantize } from './sim/commands/types.ts';
 import { BakedArt } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
+import { Notifier, notes } from './ui/notify.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
@@ -188,8 +189,33 @@ async function boot(): Promise<void> {
     camera.centerOnWorld(world.ents.x[s]!, world.ents.y[s]!);
     camera.apply();
   };
+  hudActions.jumpTo = (x, y) => {
+    camera.centerOnWorld(x, y);
+    camera.apply();
+  };
+  // Notifications (M12.1): messages at the upper left, pings on the minimap; Home cycles through their places.
+  const notifier = menuMode
+    ? null
+    : new Notifier({
+        world,
+        player: () => session.localPlayer,
+        onScreen: (x, y) => {
+          const p = camera.worldToScreen(x, y);
+          return p.x >= 0 && p.x <= app.canvas.clientWidth && p.y >= 36 && p.y <= app.canvas.clientHeight - 170;
+        },
+        ping: (x, y, color) => minimap.ping(x, y, color),
+      });
+  if (notifier) session.onEvents((ev) => notifier.onEvents(ev));
   window.addEventListener('keydown', (e) => {
-    if (e.key === '.' && !(e.target instanceof HTMLInputElement)) hudActions.nextIdle();
+    if (e.target instanceof HTMLInputElement) return;
+    if (e.key === '.') hudActions.nextIdle();
+    if (e.key === 'Home' && notifier) {
+      const c = notifier.nextCue();
+      if (c) {
+        e.preventDefault();
+        hudActions.jumpTo(c.x, c.y);
+      }
+    }
   });
   selection.onChange(() => {
     if (!input.ownUnits().length) input.cancelPlacement();
@@ -234,6 +260,7 @@ async function boot(): Promise<void> {
       lastHudSync = hudTick;
       lastSelVersion = selection.version;
       syncHud(world, session.localPlayer, selection.list);
+      notifier?.update();
       refreshCommands();
     }
     frameMs = t.deltaMS;
@@ -337,6 +364,7 @@ async function boot(): Promise<void> {
       if (s >= 0) world.ents.hp[s] = hp;
     },
     autoplay: (level) => session.addAi(session.localPlayer, level),
+    notifications: () => ({ texts: notes.value.map((n) => n.text), pings: minimap.activePings }),
     audioStats: () => ({ ready: audio.ready, muted: audio.muted, played: { ...audio.stats }, music: audio.musicStats }),
     issue: (player, cmd) => session.router.submit(player, cmd),
     pause: (on) => {

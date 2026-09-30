@@ -40,6 +40,8 @@ export class Minimap {
   player = 1;
   fogEnabled = true;
   onRightClick: ((wx: number, wy: number) => void) | null = null;
+  /** Flashing spots (M12.1): rings that grow and fade over PING_TICKS of game time. */
+  private pings: { x: number; y: number; color: string; tick: number }[] = [];
 
   constructor(slot: HTMLElement, world: World, camera: Camera, viewSize: () => { w: number; h: number }) {
     this.world = world;
@@ -157,10 +159,22 @@ export class Minimap {
     this.resVersion = this.world.map.passVersion;
   }
 
-  /** Redraw units, buildings and the camera frame (throttled to ~4 Hz unless forced). */
+  /** Flash world point (x, y) — an attack, a Wonder (research §6: "its location flashes on the minimap"). */
+  ping(x: number, y: number, color: string): void {
+    this.pings.push({ x, y, color, tick: this.world.tick });
+    if (this.pings.length > 8) this.pings.shift();
+  }
+
+  /** Pings still showing (tests). */
+  get activePings(): number {
+    return this.pings.filter((p) => this.world.tick - p.tick < PING_TICKS).length;
+  }
+
+  /** Redraw units, buildings and the camera frame (throttled to ~4 Hz, ~20 Hz while a ping shows, unless forced). */
   draw(force = false): void {
     const now = performance.now();
-    if (!force && now - this.lastDraw < 250) return;
+    this.pings = this.pings.filter((p) => this.world.tick - p.tick < PING_TICKS);
+    if (!force && now - this.lastDraw < (this.pings.length ? 50 : 250)) return;
     this.lastDraw = now;
     if (this.resVersion !== this.world.map.passVersion) {
       const c = this.base.getContext('2d')!;
@@ -209,5 +223,25 @@ export class Minimap {
     corners.forEach((p, i) => (i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)));
     c.closePath();
     c.stroke();
+    // Pings: three rings shrinking onto the spot, repeating, fading out.
+    for (const p of this.pings) {
+      const age = (this.world.tick - p.tick) / PING_TICKS;
+      const at = this.toMini(p.x, p.y);
+      c.strokeStyle = p.color;
+      for (let k = 0; k < 2; k++) {
+        const f = (age * 3 + k * 0.5) % 1;
+        c.globalAlpha = (1 - age) * (0.4 + 0.6 * f);
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.arc(at.x, at.y, 3 + (1 - f) * 12, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.globalAlpha = 1;
+      c.fillStyle = p.color;
+      c.fillRect(at.x - 1.5, at.y - 1.5, 3, 3);
+    }
   }
 }
+
+/** How long a ping flashes: 3 s of game time. */
+const PING_TICKS = 60;

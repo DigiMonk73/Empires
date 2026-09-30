@@ -2,7 +2,7 @@ import { BUILDINGS, TECHS, TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
 import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES, buildingTypeIndex } from '../sim/rules/registry.ts';
-import { buildingAvailable, canAfford } from '../sim/systems/build.ts';
+import { buildingAvailable, canAfford, shortfall } from '../sim/systems/build.ts';
 import { isVillager } from '../sim/systems/gather.ts';
 import { MAX_QUEUE, currentBuilding, producedType, researchBlocker, trainBlocker } from '../sim/systems/production.ts';
 import type { World } from '../sim/world.ts';
@@ -92,7 +92,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
         hotkey: key,
         icon: cur,
         cost: [...cost] as [number, number, number, number],
-        disabled: !avail.ok ? avail.reason : !canAfford(w, player, cost) ? 'not enough resources' : null,
+        disabled: !avail.ok ? avail.reason : shortfall(w, player, cost),
         action: { kind: 'place', building: b.id },
       });
     }
@@ -151,7 +151,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
         hotkey: TRAIN_KEYS[unit] ?? '',
         icon: TYPES[ti]!.id,
         cost: [...cost] as [number, number, number, number],
-        disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : !canAfford(w, player, cost) ? 'not enough resources' : null),
+        disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : shortfall(w, player, cost)),
         action: { kind: 'train', bld: e.handleOf(b), unit },
       });
     }
@@ -170,7 +170,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
         icon: techIcon(tech.id),
         glyph: techGlyph(tech.id),
         cost,
-        disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : !canAfford(w, player, cost) ? 'not enough resources' : null),
+        disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : shortfall(w, player, cost)),
         action: { kind: 'research', bld: e.handleOf(b), tech: tech.id },
       });
     }

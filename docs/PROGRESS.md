@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M12 UI & QoL in progress (M12.1 done). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m11 (verify ~127 s without a re-bake); verify:full at the M11 exit 1123 s (audio check, Docker both arches 126 MB, Tauri smoke render avg 1.9 ms, s9pk, 428 unit + 103 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M12 UI & QoL completeness — expand into tasks (menus, diplomacy/tribute, post-game graphs, options, hotkey presets, Classic preset, notifications, autosave).
+- **Next up:** M12.2 options, hotkey presets, Classic preset (M12.1 notifications done).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -626,8 +626,34 @@ fog-aware hooks, a mute toggle. No music.
   Tag `m11`.
 
 ## M12 — UI & QoL completeness
-- all menus; diplomacy/tribute; post-game graphs; options; hotkey presets; Classic preset; notifications;
-  autosave; optional server saves in /data.
+- [x] **M12.1 Notifications.** `ui/notify.ts` (`Notifier`): messages at the upper left (research §5), timed in game
+      ticks (10 s; a paused game or a frozen screenshot keeps them), at most 6 — every player's ages ("Player 2
+      has advanced to the Tool Age."; ours "You have…"), our villagers/soldiers/ships/buildings under attack out
+      of sight (once per 20 s, or 5 s when the fight moved > 12 tiles), conversions both ways, other players'
+      defeats, Wonders started (everyone is told, research §6 — noticed from new foundations) and completed,
+      housing / population limit, refused orders. Refusals now name the short resource (`shortfall()` in
+      build.ts: "Not enough wood."; the command tooltips too). Minimap pings (rings, 3 s of game time; red for
+      attacks, gold for Wonders). **Home** (RoR "jump to the last sound cue") cycles the camera through the
+      last five placed messages; clicking a placed message jumps there. `notify.test.ts` (5), e2e `notify.spec`.
+- [ ] **M12.2 Options, hotkeys, Classic preset.** Options screen (main menu + game menu): scroll speed, edge scroll,
+      default game speed, the QoL toggles (rally points, idle-villager button, attack-move, shift-queue, zoom,
+      always-on pop counter, multi-select grid) with a one-click **Classic** preset (all off) — saved in
+      localStorage and applied live; hotkey presets **Classic** (the original's letters) and **Grid** (QWE/ASD/ZXC
+      by button position); a hotkey reference (F1). Tests: each toggle's effect, preset round-trip, e2e.
+- [ ] **M12.3 Diplomacy and tribute.** Sim: per-player stances Ally / Neutral / Enemy (commands `stance`,
+      `tribute`), `hostile()` from stances (Neutral: fight soldiers and buildings, leave villagers — research §5),
+      allied vision after Writing, allied victory; tribute needs a Market, 25% fee until Coinage/Palmyran
+      (`TRIBUTE`, econ:1.5), tribute counts in the score (econ ÷ 60). AI keeps its team play; accepts nothing.
+      Diplomacy dialog (top bar) with the tribute sliders; message on tribute received. Sim + e2e tests.
+- [ ] **M12.4 Post-game graphs.** Sample each player's score parts, population, military and gathered
+      resources every 30 s of game time (UI side, from the sim's tallies) → SVG line graphs on the results
+      screen (tabs: Score, Population, Military, Economy) and a timeline of ages. e2e + screenshot.
+- [ ] **M12.5 Autosave + server saves.** Autosave every 5 min of game time (one rolling slot, plus on quit)
+      in IndexedDB; the Load list shows it. Optional server saves: `serve.mjs` `GET/PUT/DELETE /api/saves` under
+      `DATA_DIR` (`/data` in the StartOS image; size-capped, id-checked); the save dialog offers "on this
+      device" / "on the server" when the server answers. Tests: server unit test, e2e round-trip.
+- [ ] **M12.6 Menus: Help, Credits, scores.** Help (controls, hotkeys, rules summary), Credits (fonts, voices,
+      tools — `assets/LICENSES.md`), the F4 score list and F11 clock/speed/population toggles in game.
 - _Exit:_ ≥ 40 e2e scenarios green in both browsers.
 
 ## M13 — AI v2 ladder

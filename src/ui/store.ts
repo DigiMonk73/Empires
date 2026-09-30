@@ -71,6 +71,8 @@ export const hudActions: {
   perform(a: Action): void;
   cancelQueue(index: number): void;
   nextIdle(): void;
+  /** Center the camera on a world point (a message's location). */
+  jumpTo(x: number, y: number): void;
   showResults(): void;
   setMenu(open: boolean): void;
   setSpeed(v: number): void;
@@ -95,4 +97,5 @@ export const hudActions: {
   perform: () => {},
   cancelQueue: () => {},
   nextIdle: () => {},
+  jumpTo: () => {},
 };

@@ -5,7 +5,7 @@ import { EKind } from '../core/entities.ts';
 import { nearestTile } from '../path/service.ts';
 import { TYPES, buildingTypeIndex, unitTypeIndex } from '../rules/registry.ts';
 import type { World } from '../world.ts';
-import { canAfford, pay } from './build.ts';
+import { canAfford, pay, shortfall } from './build.ts';
 import { startGather } from './gather.ts';
 
 /**
@@ -82,7 +82,7 @@ export function queueResearch(w: World, player: number, bh: number, techId: stri
   if (b < 0) return;
   const why = researchBlocker(w, player, b, techId);
   const cost = techCost(techId);
-  const reason = why ?? ((w.prod[b]?.items.length ?? 0) >= MAX_QUEUE ? 'queue is full' : !canAfford(w, player, cost) ? 'not enough resources' : null);
+  const reason = why ?? ((w.prod[b]?.items.length ?? 0) >= MAX_QUEUE ? 'queue is full' : shortfall(w, player, cost));
   if (reason) {
     w.events.push({ t: 'rejected', player, reason });
     return;
@@ -178,8 +178,9 @@ export function queueUnit(w: World, player: number, bh: number, unitId: string, 
       w.events.push({ t: 'rejected', player, reason: 'queue is full' });
       break;
     }
-    if (!canAfford(w, player, cost)) {
-      w.events.push({ t: 'rejected', player, reason: 'not enough resources' });
+    const short = shortfall(w, player, cost);
+    if (short) {
+      w.events.push({ t: 'rejected', player, reason: short });
       break;
     }
     pay(w, player, cost);

@@ -5,6 +5,7 @@ import { VolumeControls } from '../options/VolumeControls.tsx';
 import type { CommandButton } from '../commands.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { TechTree } from '../techtree/TechTree.tsx';
+import { notes } from '../notify.ts';
 
 const RES = [
   { key: 'food', label: 'Food', color: '#d84a3a' },
@@ -49,6 +50,27 @@ function TopBar() {
           Menu
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Messages at the upper left (M12.1); a placed one jumps the camera there when clicked. */
+function Messages() {
+  const list = notes.value;
+  if (!list.length) return null;
+  return (
+    <div class="messages" data-testid="messages">
+      {list.map((n) => (
+        <div
+          key={n.id}
+          class={`message${n.at ? ' placed' : ''}`}
+          style={{ color: n.color }}
+          data-testid="message"
+          onClick={n.at ? () => hudActions.jumpTo(n.at!.x, n.at!.y) : undefined}
+        >
+          {n.text}
+        </div>
+      ))}
     </div>
   );
 }
@@ -327,6 +349,7 @@ export function Hud() {
       <GameOver />
       <Results />
       <TopBar />
+      <Messages />
       <div class="hud-bottom" data-testid="bottom-panel">
         <div class="panel sel-panel">{sel.length === 0 ? <div class="sel-empty" /> : sel.length === 1 ? <SinglePanel s={sel[0]!} /> : <MultiPanel list={sel} />}</div>
         <div class="panel cmd-panel">
