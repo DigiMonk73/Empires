@@ -3,7 +3,9 @@ import { ResourceStore } from '../core/resources.ts';
 import type { RngState } from '../math/rng.ts';
 import type { PathRequest } from '../path/service.ts';
 import { SIM_VERSION } from '../version.ts';
-import { World, type Order, type Projectile, type SimConfig } from '../world.ts';
+import { World, type Order, type Projectile, type SimConfig, type Tally } from '../world.ts';
+
+const structuredCloneTally = (t: Tally): Tally => ({ ...t, gathered: [...t.gathered], ageTick: [...t.ageTick] });
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { populationSystem } from '../systems/population.ts';
 import type { Production, Rally } from '../systems/production.ts';
@@ -28,7 +30,8 @@ interface Header {
   simVersion: string;
   config: SimConfig;
   tick: number;
-  players: { id: number; civ: string; team: number; res: number[]; techs: string[] }[];
+  players: { id: number; civ: string; team: number; res: number[]; techs: string[]; defeated: number | null; tally: Tally }[];
+  gameOver: World['gameOver'];
   rng: Record<string, RngState>;
   ents: { cap: number; top: number; count: number; free: number[] };
   res: { count: number; carcasses: number[] };
@@ -80,7 +83,8 @@ export function serializeWorld(w: World, config: SimConfig): Uint8Array {
     simVersion: SIM_VERSION,
     config,
     tick: w.tick,
-    players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res], techs: [...p.techs] })),
+    players: w.players.map((p) => ({ id: p.id, civ: p.civ, team: p.team, res: [...p.res], techs: [...p.techs], defeated: p.defeated, tally: structuredCloneTally(p.tally) })),
+    gameOver: w.gameOver ? { ...w.gameOver, winners: [...w.gameOver.winners] } : null,
     rng: {
       combat: w.rng.combat.getState(),
       conversion: w.rng.conversion.getState(),
@@ -147,7 +151,10 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
     pl.res.set(p.res);
     pl.techs = [...p.techs];
     pl.stats = compilePlayerStats(p.civ, pl.techs);
+    pl.defeated = p.defeated;
+    pl.tally = structuredCloneTally(p.tally);
   });
+  w.gameOver = header.gameOver ? { ...header.gameOver, winners: [...header.gameOver.winners] } : null;
   w.rng.combat.setState(header.rng.combat!);
   w.rng.conversion.setState(header.rng.conversion!);
   w.rng.animals.setState(header.rng.animals!);

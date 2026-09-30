@@ -7,6 +7,7 @@ import { populationSystem } from './systems/population.ts';
 import { gatherSystem } from './systems/gather.ts';
 import { buildSystem } from './systems/build.ts';
 import { productionSystem } from './systems/production.ts';
+import { victorySystem } from './systems/victory.ts';
 import { farmSystem } from './systems/farm.ts';
 import { attackSystem, decaySystem, projectileSystem, targetSystem } from './systems/combat.ts';
 import { World, type SimConfig, type SimEvent } from './world.ts';
@@ -67,6 +68,7 @@ export class Sim {
     fogSystem(w);
     targetSystem(w); // after separation (fresh unit grid) and fog (sight)
     populationSystem(w);
+    victorySystem(w);
     w.tick++;
   }
 

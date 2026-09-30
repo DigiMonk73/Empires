@@ -331,3 +331,106 @@
   color: #fff;
   text-shadow: 0 1px 2px #000;
 }
+
+/* ── Game over + results ─────────────────────────────────────────────────────────────── */
+.gameover,
+.results {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 8, 6, 0.45);
+  pointer-events: auto;
+  z-index: 20;
+}
+.gameover-panel,
+.results-panel {
+  background: linear-gradient(#3a2f24, #241c15);
+  border: 2px solid #b08a4a;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 28px 40px;
+  text-align: center;
+  color: #efe2c4;
+}
+.gameover-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 56px;
+  letter-spacing: 4px;
+}
+.gameover-title.victory {
+  color: #f2d27a;
+}
+.gameover-title.defeat {
+  color: #d8826a;
+}
+.gameover-sub {
+  margin: 8px 0 20px;
+  opacity: 0.85;
+}
+.gameover-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 18px;
+}
+.gameover-buttons button {
+  font: inherit;
+  color: #f4e6c8;
+  background: #5a4630;
+  border: 1px solid #b08a4a;
+  border-radius: 4px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+.gameover-buttons button:hover {
+  background: #6e573c;
+}
+.results-panel {
+  min-width: 720px;
+  max-width: 92vw;
+}
+.results-panel h2 {
+  font-family: 'Cinzel', Georgia, serif;
+  margin: 0 0 14px;
+  color: #f2d27a;
+}
+.results-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.results-panel th,
+.results-panel td {
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(176, 138, 74, 0.3);
+  text-align: right;
+}
+.results-panel th:first-child,
+.results-panel td:first-child {
+  text-align: left;
+}
+.results-panel th {
+  color: #cdb487;
+  font-weight: normal;
+}
+.results-panel tr.winner td:first-child::after {
+  content: ' ★';
+  color: #f2d27a;
+}
+.results-panel .total {
+  font-weight: bold;
+  color: #f2d27a;
+}
+.results-panel .civ {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  vertical-align: -1px;
+}

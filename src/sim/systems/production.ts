@@ -132,6 +132,7 @@ export function completeResearch(w: World, player: number, techId: string): void
     if (e.kind[s] === EKind.building && e.build[s]! < 1) continue;
     if (newMax > oldMax) e.hp[s] = e.hp[s]! + (newMax - oldMax);
   }
+  if (p.stats.age > before.age) p.tally.ageTick[p.stats.age] = w.tick;
   w.events.push({ t: 'researched', player, tech: techId });
 }
 

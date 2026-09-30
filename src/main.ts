@@ -17,6 +17,7 @@ import { idleVillagers, syncHud } from './ui/sync.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
 import { setIconArt } from './ui/icons.ts';
+import { buildResults, formatClock } from './ui/results.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -42,6 +43,14 @@ async function boot(): Promise<void> {
   setIconArt(art);
   const wr = new WorldRenderer(app.renderer, world, art);
   session.onEvents((ev) => wr.onEvents(ev));
+  // Game over, from the local player's point of view.
+  session.onEvents((ev) => {
+    const me = session.localPlayer;
+    for (const x of ev) {
+      if (x.t === 'defeated' && x.player === me && !hud.outcome.value) hud.outcome.value = { kind: 'defeat', at: formatClock(world.tick) };
+      if (x.t === 'victory') hud.outcome.value = { kind: x.players.includes(me) ? 'victory' : 'defeat', at: formatClock(world.tick) };
+    }
+  });
   cameraRoot.addChild(wr.root);
 
   const camera = new Camera(cameraRoot, app.canvas, {
@@ -76,6 +85,9 @@ async function boot(): Promise<void> {
   };
   input.onUiChange = refreshCommands;
   hudActions.perform = (a) => input.perform(a);
+  hudActions.showResults = () => {
+    hud.results.value = buildResults(world);
+  };
   hudActions.cancelQueue = (i) => {
     const b = input.ownBuildings()[0];
     if (b !== undefined) session.router.submit(session.localPlayer, { t: 'cancelTrain', bld: b, index: i });

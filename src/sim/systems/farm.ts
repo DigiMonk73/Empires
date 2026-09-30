@@ -148,6 +148,7 @@ export function farmSystem(w: World): void {
     if (Math.sqrt(dx * dx + dy * dy) <= REACH) {
       const p = w.players[e.owner[s]!]!;
       p.res[0] = p.res[0]! + e.carryAmt[s]!;
+      p.tally.gathered[0] = p.tally.gathered[0]! + e.carryAmt[s]!;
       w.events.push({ t: 'deposit', player: p.id, res: 0, amount: e.carryAmt[s]! });
       e.carryAmt[s] = 0;
       e.carryJob[s] = 0;

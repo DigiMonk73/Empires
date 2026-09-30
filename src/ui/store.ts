@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Action, CommandButton } from './commands.ts';
+import type { ScoreLine } from '../sim/rules/score.ts';
 
 /** HUD view-model, refreshed from the simulation ~10×/s (never every frame). */
 export interface SelInfo {
@@ -18,7 +19,21 @@ export interface SelInfo {
   building?: number;
 }
 
+/** One player's row on the post-game screen. */
+export interface ResultRow extends ScoreLine {
+  name: string;
+  civ: string;
+  color: string;
+  gathered: number[];
+  ages: string[];
+  winner: boolean;
+}
+
 export const hud = {
+  /** Game over from the local player's point of view (null while playing). */
+  outcome: signal<{ kind: 'victory' | 'defeat'; at: string } | null>(null),
+  /** Post-game results (null = screen closed). */
+  results: signal<ResultRow[] | null>(null),
   res: signal<[number, number, number, number]>([0, 0, 0, 0]),
   pop: signal(0),
   popCap: signal(0),
@@ -36,7 +51,8 @@ export const hud = {
 };
 
 /** Wired by main: what HUD buttons do. */
-export const hudActions: { perform(a: Action): void; cancelQueue(index: number): void; nextIdle(): void } = {
+export const hudActions: { perform(a: Action): void; cancelQueue(index: number): void; nextIdle(): void; showResults(): void } = {
+  showResults: () => {},
   perform: () => {},
   cancelQueue: () => {},
   nextIdle: () => {},

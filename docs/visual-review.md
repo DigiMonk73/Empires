@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-29 · M6.2 · gameover, results (new)
+- Victory/Defeat banner in Cinzel over the dimmed map; Results panel in the HUD's bronze-on-stone style with the
+  score by category (winner starred) and a tallies table. HUD 4.
+- Should-fix (M12): graphs over time and per-age breakdowns like the original's post-game timeline.
+
 ## 2026-09-29 · M6.1 · map-continental, map-inland (new)
 - Generated starts read like the original's: TC + 3 villagers in a clearing, berries/gold/stone at a walk, a
   woodline, scattered trees, gazelle herds, elephants and lions further out; coastline + beach (Continental),

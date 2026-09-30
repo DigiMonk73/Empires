@@ -76,9 +76,22 @@ export const WINDUP_TICKS = 7;
  * queue (unverified for 1.0 — D25). The sim forgets the dead at once; corpses and rubble are the renderer's
  * (from the `died` / `destroyed` events). Returns the carcass node, or −1.
  */
-export function kill(w: World, s: number): number {
+export function kill(w: World, s: number, by = -1): number {
   const e = w.ents;
   const t = TYPES[e.type[s]!]!;
+  // Tallies for the score: kills/razes to the killer, losses to the owner (Gaia keeps none).
+  const owner = e.owner[s]!;
+  const building = e.kind[s] === EKind.building;
+  if (owner > 0) {
+    const ot = w.players[owner]!.tally;
+    if (building) ot.buildingsLost++;
+    else ot.losses++;
+  }
+  if (by > 0 && by !== owner && owner > 0) {
+    const bt = w.players[by]!.tally;
+    if (building) bt.razed++;
+    else bt.kills++;
+  }
   let carcass = -1;
   if (t.animal) {
     const kind = resourceKindIndex(`carcass:${t.animal.id}`);
@@ -104,13 +117,21 @@ export function kill(w: World, s: number): number {
 }
 
 /** Apply damage from `attacker` to `target`; handles death and animal reactions. */
-export function hit(w: World, attacker: number, target: number, amount: number, fromX = attacker >= 0 ? w.ents.x[attacker]! : w.ents.x[target]!, fromY = attacker >= 0 ? w.ents.y[attacker]! : w.ents.y[target]!): void {
+export function hit(
+  w: World,
+  attacker: number,
+  target: number,
+  amount: number,
+  fromX = attacker >= 0 ? w.ents.x[attacker]! : w.ents.x[target]!,
+  fromY = attacker >= 0 ? w.ents.y[attacker]! : w.ents.y[target]!,
+  by = attacker >= 0 ? w.ents.owner[attacker]! : -1,
+): void {
   const e = w.ents;
   e.hp[target] = e.hp[target]! - amount;
   const t = TYPES[e.type[target]!]!;
   if (e.hp[target]! <= 0) {
     const huntersTarget = e.handleOf(target);
-    const carcass = kill(w, target);
+    const carcass = kill(w, target, by);
     // Villagers hunting this animal switch to butchering its carcass.
     if (carcass >= 0) {
       for (let s = 0; s < e.top; s++) {
@@ -443,7 +464,7 @@ export function projectileSystem(w: World): void {
     if (!on) continue;
     const atk = p.hunt ? HUNT_ATK : w.stats(p.owner, p.type).atk;
     const src = e.slotOf(p.src);
-    hit(w, src, t, damageBetween(atk, w.stats(e.owner[t]!, e.type[t]!).arm, e.kind[t] === EKind.building), p.x0, p.y0);
+    hit(w, src, t, damageBetween(atk, w.stats(e.owner[t]!, e.type[t]!).arm, e.kind[t] === EKind.building), p.x0, p.y0, p.owner);
   }
   list.length = k;
 }
@@ -497,7 +518,7 @@ export function splash(w: World, attacker: number, owner: number, type: number, 
     if (d > radius) continue;
     const k = 1 - (1 - edge) * (d / radius);
     const dmg = damageBetween(atk, w.stats(e.owner[j]!, e.type[j]!).arm, e.kind[j] === EKind.building) * k;
-    hit(w, attacker >= 0 && e.alive[attacker] ? attacker : -1, j, dmg, fromX, fromY);
+    hit(w, attacker >= 0 && e.alive[attacker] ? attacker : -1, j, dmg, fromX, fromY, owner);
   }
 }
 

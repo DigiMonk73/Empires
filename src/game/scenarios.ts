@@ -45,7 +45,7 @@ function demo(): SimConfig {
       { type: 'gazelle', owner: 0, x: 7.3, y: 13.1 },
     ],
   };
-  return { seed: 7, map: { w: W, h: W, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'egyptian' }], scenario: units };
+  return { victory: 'none', seed: 7, map: { w: W, h: W, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'egyptian' }], scenario: units };
 }
 
 /** A standard game start (econ:1.5, econ:8): Town Center, 3 villagers, berries, trees, gold and stone nearby. */
@@ -70,6 +70,7 @@ function start(): SimConfig {
     rows.push(row);
   }
   return {
+    victory: 'none',
     seed: 11,
     map: { w: W, h: W, ascii: rows },
     players: [{ civ: 'greek' }, { civ: 'egyptian' }],
@@ -108,6 +109,7 @@ function village(): SimConfig {
     rows.push(row);
   }
   return {
+    victory: 'none',
     seed: 5,
     map: { w: W, h: W, ascii: rows },
     players: [{ civ: 'greek' }, { civ: 'egyptian' }],
@@ -144,6 +146,7 @@ function village(): SimConfig {
 function raid(): SimConfig {
   const W = 32;
   return {
+    victory: 'none',
     seed: 9,
     map: { w: W, h: W },
     players: [{ civ: 'greek' }, { civ: 'egyptian' }],
@@ -178,7 +181,7 @@ function crowd(n: number): SimConfig {
     y: 10.5 + Math.floor(i / 40) * 1.6,
   }));
   // Allies, so the crowd stays a render benchmark rather than a battle.
-  return { seed: 3, map: { w: W, h: W }, players: [{ civ: 'greek', team: 1 }, { civ: 'persian', team: 1 }], scenario: { units } };
+  return { seed: 3, victory: 'none', map: { w: W, h: W }, players: [{ civ: 'greek', team: 1 }, { civ: 'persian', team: 1 }], scenario: { units } };
 }
 
 /** A generated random map: ?scenario=map&type=continental|inland&size=tiny…gigantic&seed=N&players=N. */

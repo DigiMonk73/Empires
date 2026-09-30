@@ -49,6 +49,8 @@ export interface SimConfig {
   scenario?: ScenarioSpec;
   /** Starting stockpile setting (econ:1.5); default 'default' = 200 food, 200 wood, 150 stone. */
   startingResources?: StartingResources;
+  /** Victory condition (econ:7): 'conquest' (default) or 'none' (sandbox/review scenarios never end). */
+  victory?: 'conquest' | 'none';
   /** "Reveal Map" option: the whole map starts explored (units in unwatched areas stay hidden). */
   revealMap?: boolean;
   /** Population limit (default 50; RoR allows 25–200). */
@@ -68,7 +70,25 @@ export interface PlayerState {
   /** Current population and housing (derived each tick). */
   pop: number;
   popCap: number;
+  /** Conquest (econ:7): set the tick a player has nothing left that counts. */
+  defeated: number | null;
+  /** Running tallies for the score and the post-game screen. */
+  tally: Tally;
 }
+
+export interface Tally {
+  kills: number;
+  losses: number;
+  razed: number;
+  buildingsLost: number;
+  /** Food, wood, gold, stone delivered. */
+  gathered: number[];
+  conversions: number;
+  /** Tick each age was reached (index = age; 0 = not yet). */
+  ageTick: number[];
+}
+
+export const newTally = (): Tally => ({ kills: 0, losses: 0, razed: 0, buildingsLost: 0, gathered: [0, 0, 0, 0], conversions: 0, ageTick: [0, 0, 0, 0, 0] });
 
 /**
  * A queued unit order. More kinds arrive with gathering, building and combat. A group move names a `leader`
@@ -125,6 +145,8 @@ export type SimEvent =
   | { t: 'destroyed'; h: number; owner: number; type: number; x: number; y: number; built: boolean }
   | { t: 'farmDepleted'; h: number; player: number }
   | { t: 'researched'; player: number; tech: string }
+  | { t: 'defeated'; player: number }
+  | { t: 'victory'; team: number; players: number[] }
   | { t: 'housed'; h: number; player: number }
   | { t: 'arrived'; h: number }
   | { t: 'stuck'; h: number };
@@ -144,6 +166,8 @@ export class World {
   paths: (number[] | undefined)[] = [];
   /** Resource-node indices of carcasses that are still rotting. */
   carcasses: number[] = [];
+  /** Set when one team is left standing (conquest). The game may continue afterwards. */
+  gameOver: { tick: number; team: number; winners: number[] } | null = null;
   /** Arrows, spears and stones in flight (cold data, launch order). */
   projectiles: Projectile[] = [];
   /** Per-building production queues and rally points (cold data). */
@@ -161,14 +185,18 @@ export class World {
   /** Movement metrics (not hashed): unit-ticks spent moving / blocked. */
   moveStats = { movingTicks: 0, blockedTicks: 0, gaveUp: 0, repaths: 0, directPaths: 0, sharedPaths: 0 };
 
+  /** Victory condition from the config (econ:7). */
+  readonly victory: 'conquest' | 'none';
+
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;
+    this.victory = cfg.victory ?? 'conquest';
     const fill = terrainIndex(cfg.map.terrain ?? 'grass');
     this.map = new TileMap(cfg.map.w, cfg.map.h, fill);
     this.ents = new EntityStore();
     this.res = new ResourceStore(cfg.map.w, cfg.map.h);
     this.popLimit = cfg.popCap ?? POPULATION.default;
-    const gaia: PlayerState = { id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length), techs: [], stats: compilePlayerStats('gaia'), pop: 0, popCap: 0 };
+    const gaia: PlayerState = { id: 0, civ: 'gaia', team: 0, res: new Float64Array(RESOURCES.length), techs: [], stats: compilePlayerStats('gaia'), pop: 0, popCap: 0, defeated: null, tally: newTally() };
     this.players = [gaia];
     const start = STARTING_RESOURCES[cfg.startingResources ?? 'default'];
     cfg.players.forEach((p, i) => {
@@ -180,7 +208,7 @@ export class World {
           res[k] = e.mode === 'add' ? res[k]! + e.v : e.mode === 'mul' ? res[k]! * e.v : e.v;
         }
       }
-      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0 });
+      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally() });
     });
     this.rng = {
       combat: new Rng(this.seed, STREAM.combat),

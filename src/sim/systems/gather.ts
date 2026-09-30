@@ -212,6 +212,7 @@ function deposit(w: World, s: number): void {
   const ri = RES_INDEX[job];
   const amount = e.carryAmt[s]! * (ri === 2 ? p.stats.goldYield : 1);
   p.res[ri] = p.res[ri]! + amount;
+  p.tally.gathered[ri] = p.tally.gathered[ri]! + amount;
   w.events.push({ t: 'deposit', player: p.id, res: ri, amount });
   e.carryAmt[s] = 0;
   e.carryJob[s] = 0;

@@ -167,10 +167,109 @@ function CommandGrid() {
   );
 }
 
+/** Victory / Defeat banner over the map; the game keeps running behind it. */
+function GameOver() {
+  const o = hud.outcome.value;
+  if (!o || hud.results.value) return null;
+  return (
+    <div class="gameover" data-testid="gameover">
+      <div class="gameover-panel">
+        <div class={`gameover-title ${o.kind}`}>{o.kind === 'victory' ? 'Victory' : 'Defeat'}</div>
+        <div class="gameover-sub">{o.kind === 'victory' ? 'Your enemies have been conquered.' : 'Your civilization has fallen.'} ({o.at})</div>
+        <div class="gameover-buttons">
+          <button data-testid="show-results" onClick={() => hudActions.showResults()}>Results</button>
+          <button data-testid="keep-watching" onClick={() => (hud.outcome.value = null)}>Keep watching</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Post-game: score by category, then the tallies behind it. */
+function Results() {
+  const rows = hud.results.value;
+  if (!rows) return null;
+  const res = ['Food', 'Wood', 'Gold', 'Stone'];
+  return (
+    <div class="results" data-testid="results">
+      <div class="results-panel">
+        <h2>Results</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Military</th>
+              <th>Economy</th>
+              <th>Religion</th>
+              <th>Technology</th>
+              <th>Other</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr class={r.winner ? 'winner' : ''} data-testid={`result-${r.player}`}>
+                <td>
+                  <span class="swatch" style={{ background: r.color }} /> {r.name} <span class="civ">{r.civ}</span>
+                </td>
+                <td>{r.military}</td>
+                <td>{r.economy}</td>
+                <td>{r.religion}</td>
+                <td>{r.technology}</td>
+                <td>{r.other}</td>
+                <td class="total">{r.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <table class="detail">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Killed</th>
+              <th>Lost</th>
+              <th>Razed</th>
+              {res.map((x) => (
+                <th>{x}</th>
+              ))}
+              <th>Tool</th>
+              <th>Bronze</th>
+              <th>Iron</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <td>
+                  <span class="swatch" style={{ background: r.color }} /> {r.name}
+                </td>
+                <td>{r.kills}</td>
+                <td>{r.losses}</td>
+                <td>{r.razed}</td>
+                {r.gathered.map((v) => (
+                  <td>{v}</td>
+                ))}
+                {r.ages.map((a) => (
+                  <td>{a}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div class="gameover-buttons">
+          <button data-testid="close-results" onClick={() => (hud.results.value = null)}>Back to the game</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Hud() {
   const sel = hud.selection.value;
   return (
     <div class="hud">
+      <GameOver />
+      <Results />
       <TopBar />
       <div class="hud-bottom" data-testid="bottom-panel">
         <div class="panel sel-panel">{sel.length === 0 ? <div class="sel-empty" /> : sel.length === 1 ? <SinglePanel s={sel[0]!} /> : <MultiPanel list={sel} />}</div>

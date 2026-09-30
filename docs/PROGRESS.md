@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M6 First playable skirmish — M6.1 mapgen done. M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
+- **Milestone:** M6 First playable skirmish — M6.1–M6.2 done (mapgen, victory + results). M5 Combat done (tag `m5`, s9pk 75 MB). M4 Economy done (tag `m4`, submodule bumped, s9pk rebuilt 63.9 MB).
 - **Last green commit:** m5 (verify ~35 s incl. economy + battle benchmarks; verify:full ~140 s: Docker 88 MB image w/ SwiftShader bake, Tauri, s9pk).
 - **Art:** baked villager (8 facings × 17 clips: idle/walk/die, 8 work clips, 6 carry-walks; 2 atlas pages),
   trees/mines/berries, Stone-age TC, house, granary, storage pit, barracks, dock, farm (4 stages), construction
@@ -16,7 +16,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   projectiles; corpses/rubble are render-only (`render/fx.ts`); sim 500 units p99 ~1.1 ms.
 - **StartOS (M0.7):** verified on the test VM (backup/restore unverified — KI-3). Next VM check: M6.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups.
-- **Next up:** M6.2 victory + game flow (conquest, defeat, post-game), then M6.3 menus.
+- **Next up:** M6.3 menus (main, skirmish setup, in-game), then M6.4–M6.5 AI v1.
 - **Playable now:** `?scenario=map&type=continental|inland&size=small&seed=N` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -213,9 +213,12 @@ _Rewritten every iteration. Keep ≤ 30 lines._
       (fair by construction): berries, near/far stone + gold, gazelles, 10–15 trees; map-wide extra clusters,
       elephant pairs, gazelle herds, lions, shore fish. Tests: 5 size/player combos — 1 TC + 3 villagers,
       zone resources within ±15%, wood nearby, one land region; deterministic. `?scenario=map&type=…&size=…`.
-- [ ] **M6.2 Victory + game flow.** Conquest (a player with no units/buildings left — walls excepted — is
-      defeated; last team standing wins), `defeated`/`victory` events, pause, game-over overlay, post-game
-      screen (score, units killed/lost, resources gathered, age times).
+- [x] **M6.2 Victory + game flow.** Conquest per econ:7 (villagers, military, warships, buildings count; trade/
+      transport/fishing boats and walls don't) checked each second → `defeated` / `victory` events,
+      `w.gameOver` (allies win together; `victory: 'none'` for sandbox scenarios); per-player tallies (kills,
+      losses, razed, lost buildings, gathered, age times) saved + hashed; manual score formula
+      (`rules/score.ts`); Victory/Defeat banner (game keeps running) and Results screen (score by category +
+      tallies).
 - [ ] **M6.3 Menus.** Main menu (Skirmish, Load, Options, Quit), skirmish setup (map type/size, players: civ,
       colour, team, AI difficulty; starting resources, reveal map), in-game menu (save/load, resign, quit).
 - [ ] **M6.4 AI v1 — economy.** `src/ai/` controller issuing Commands through the router, seeing only its
