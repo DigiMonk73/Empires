@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { box, build, cone, cyl, sphere, type MatSpec, type NodeSpec } from '../dsl/model.ts';
 import { diePose, ease, humanoid, idlePose, walkPose, type Pose } from '../dsl/rig.ts';
-import { banner } from './buildings.ts';
+import { banner, pediment } from './buildings.ts';
 import { clip } from './soldiers.ts';
 import type { ClipDef, ModelDef } from './types.ts';
 
@@ -80,7 +80,7 @@ function temple(): THREE.Object3D {
       { t: [0, roofY + 0.17, 0], children: [
         { geom: box(2.1, 0.04, 0.95), mat: 'rooftile', t: [0, 0.2, 0.4], r: [0.42, 0, 0] },
         { geom: box(2.1, 0.04, 0.95), mat: 'rooftile', t: [0, 0.2, -0.4], r: [-0.42, 0, 0] },
-        ...[-1.0, 1.0].map((x): NodeSpec => ({ geom: cone(0.86, 0.38, 3), mat: MARBLE, t: [x, 0.13, 0], r: [0, 0, Math.PI / 2], s: [1, 0.08, 1] })),
+        ...[-1.03, 1.03].map((x): NodeSpec => ({ t: [x, 0, 0], children: [pediment(1.62, 0.36, 0.06, MARBLE)] })),
       ] },
       // An altar with a flame bowl in front.
       { geom: box(0.3, 0.25, 0.3), mat: 'stone', t: [1.1, 0.12, 0.7] },

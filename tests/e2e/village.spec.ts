@@ -108,3 +108,15 @@ test('walls by mouse: Build → W, drag a line, villagers raise it segment by se
   expect(built).toBe(false);
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('wonder: a standing Wonder and one rising from its site', async ({ page }, info) => {
+  await openGame(page, 'scenario=wonder&fog=0&paused=1');
+  await page.evaluate(() => {
+    for (const t of ['toolAge', 'bronzeAge', 'ironAge']) window.__empires!.grantTech(1, t);
+    window.__empires!.camera.setZoom(0.9);
+    window.__empires!.camera.centerOn(12.5, 12.5);
+  });
+  await frames(page);
+  await snap(page, info, 'wonder');
+  expect(pageErrors(page)).toEqual([]);
+});

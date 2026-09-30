@@ -33,6 +33,15 @@ export function post(x: number, z: number, h: number): NodeSpec {
   return { geom: cyl(0.025, 0.03, h, 6), mat: 'wood', t: [x, h / 2, z] };
 }
 
+/**
+ * A triangular pediment standing in a gable end: `width` along Z (the roof's depth), `height` from base to apex,
+ * `thick` along X; base at y = 0. (A three-sided prism turned so its apex points up.)
+ */
+export function pediment(width: number, height: number, thick: number, mat: NodeSpec['mat']): NodeSpec {
+  const sz = height / 1.5; // the unit triangle runs from −0.5 (base) to +1 (apex)
+  return { r: [0, Math.PI / 2, 0], children: [{ geom: cyl(1, 1, 1, 3), mat, r: [-Math.PI / 2, 0, 0], s: [width / Math.sqrt(3), thick, sz], t: [0, 0.5 * sz, 0] }] };
+}
+
 export function banner(x: number, z: number, h: number): NodeSpec {
   return {
     t: [x, 0, z],
@@ -455,6 +464,8 @@ export const BUILDING_MODELS: ModelDef[] = [
   { id: 'rubble1', kind: 'building', footprint: 1, facings: 1, build: rubble(1) },
   { id: 'rubble2', kind: 'building', footprint: 2, facings: 1, build: rubble(2) },
   { id: 'rubble3', kind: 'building', footprint: 3, facings: 1, build: rubble(3) },
+  { id: 'rubble5', kind: 'building', footprint: 5, facings: 1, build: rubble(5) },
   { id: 'site2', kind: 'building', footprint: 2, facings: 1, build: site(2) },
   { id: 'site3', kind: 'building', footprint: 3, facings: 1, build: site(3) },
+  { id: 'site5', kind: 'building', footprint: 5, facings: 1, build: site(5) },
 ];

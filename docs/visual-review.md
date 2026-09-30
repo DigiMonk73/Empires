@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M7.7 · wonder (new)
+- A standing Wonder and one rising from its 5×5 site. Fixed during review: the pediments (cones squashed the
+  wrong way) stood up as huge grey sails above the roof — now a shared, correctly oriented pediment helper
+  (the temple had the same bug); the gold roof blew out to near-white in the sun — tiled roof, gilded ridge.
+  Buildings 4. Should-fix (M9): a taller, more monumental silhouette per architecture set.
+
 ## 2026-09-29 · M7.5 · priest-chant, priest-converted (new)
 - The chanting priest raises his staff with both arms; a gold ring pulses under the target; a flash marks the
   conversion. Robed priests with team stoles read clearly apart from soldiers. Units 4.

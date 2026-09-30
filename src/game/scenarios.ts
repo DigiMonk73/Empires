@@ -263,6 +263,25 @@ function templeScene(): SimConfig {
   };
 }
 
+/** The Wonder for review (M7.7): one standing, one rising with its builders. */
+function wonderScene(): SimConfig {
+  return {
+    victory: 'none',
+    seed: 17,
+    map: { w: 32, h: 32 },
+    players: [{ civ: 'greek' }, { civ: 'persian' }],
+    startingResources: 'deathmatch',
+    scenario: {
+      buildings: [
+        { type: 'wonder', owner: 1, tx: 6, ty: 6 },
+        { type: 'wonder', owner: 1, tx: 14, ty: 14, progress: 0.45 },
+        { type: 'townCenter', owner: 1, tx: 5, ty: 15 },
+      ],
+      units: Array.from({ length: 6 }, (_, i) => ({ type: 'villager', owner: 1, x: 13.5 + (i % 3) * 1.3, y: 20.2 + Math.floor(i / 3) })),
+    },
+  };
+}
+
 /** Many units on an open map, for render performance. */
 function crowd(n: number): SimConfig {
   const W = 96;
@@ -301,6 +320,7 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   siege,
   army,
   temple: templeScene,
+  wonder: wonderScene,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
 };
