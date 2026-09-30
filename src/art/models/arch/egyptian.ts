@@ -166,6 +166,31 @@ function columns(x0: number, x1: number, z: number, h: number, n: number, a: Age
   return out;
 }
 
+/** Open pavilion: palm posts under a reed mat (Stone), palm-log roof (Tool), stone slab and cornice (Bronze on). */
+function shed(w: number, d: number, h: number, a: Age, t: Vec3): NodeSpec {
+  const kids: NodeSpec[] = [];
+  const nx = Math.max(2, Math.round(w / 0.45) + 1);
+  const nz = Math.max(2, Math.round(d / 0.45) + 1);
+  const at = (i: number, n: number, len: number) => -len / 2 + 0.06 + (i * (len - 0.12)) / (n - 1);
+  const col = (x: number, z: number) => (a === 0 ? [post(x, z, h)] : column(x, z, h, a));
+  for (let i = 0; i < nx; i++) for (const z of [-d / 2 + 0.06, d / 2 - 0.06]) kids.push(...col(at(i, nx, w), z));
+  for (let j = 1; j < nz - 1; j++) for (const x of [-w / 2 + 0.06, w / 2 - 0.06]) kids.push(...col(x, at(j, nz, d)));
+  if (a <= 1) {
+    kids.push({ geom: box(w + 0.1, 0.04, d + 0.1), mat: a === 0 ? REED : PALM, t: [0, h + 0.02, 0] });
+    kids.push({ geom: box(w + 0.02, 0.03, d + 0.02), mat: a === 0 ? REED : MUD, t: [0, h + 0.055, 0] });
+    kids.push({ geom: box(w + 0.12, 0.04, 0.02), mat: 'team', t: [0, h + 0.01, d / 2 + 0.05] });
+  } else {
+    const stone = a === 3 ? SANDSTONE : LIMESTONE;
+    kids.push({ geom: box(w + 0.04, 0.08, d + 0.04), mat: stone, t: [0, h + 0.04, 0] });
+    kids.push({ geom: box(w + 0.06, 0.04, d + 0.06), mat: 'team', t: [0, h + 0.1, 0] });
+    kids.push({ geom: frustum(w + 0.04, 0.08, d + 0.04, -0.04), mat: stone, t: [0, h + 0.16, 0] });
+    kids.push({ geom: box(w + 0.13, 0.02, d + 0.13), mat: a === 3 ? GOLD : BLUE, t: [0, h + 0.2, 0] });
+    kids.push({ geom: box(w, 0.01, d), mat: WHITEWASH, t: [0, h + 0.206, 0] });
+  }
+  kids.push({ geom: box(w, 0.02, d), mat: a >= 2 ? (a === 3 ? SANDSTONE : LIMESTONE) : MUD, t: [0, 0.01, 0] });
+  return { t, children: kids };
+}
+
 function fence(x: number, z: number, len: number, alongX: boolean, a: Age, h = 0.16): NodeSpec {
   const g = (hh: number, th: number) => (alongX ? box(len, hh, th) : box(th, hh, len));
   if (a === 0) return { geom: g(h * 1.1, 0.05), mat: REED, t: [x, h * 0.55, z] };
@@ -290,6 +315,7 @@ export const EGYPTIAN: Kit = {
   hall,
   tower,
   columns,
+  shed,
   fence,
   podium,
   lift,

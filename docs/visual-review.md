@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.3 · Egyptian contact sheets; siege-volley, ai-base (0.3–0.6%)
+- Each building type now reads by shape: the Market is a stall square round a covered hall, the Archery Range a
+  long open gallery with targets, the Stable a stall lean-to over a fenced paddock, the Siege Workshop a tall open
+  shed with a crane wheel, the Barracks an L of halls round a drill yard. In play the red Egyptian barracks is an
+  L of reed huts. Range and Stable are still close cousins (gallery + end house) — the props tell them apart.
+
 ## 2026-09-30 · M9.2 · gallery egyptian × 4 ages, contact sheets; ai-base, raid, siege-volley (changed 1.5–2.2%)
 - Egyptian set: Stone oval reed-and-mud huts under reed domes and beehive silos; Tool whitewashed mudbrick with
   roof shades, jars and palm-log beam ends; Bronze battered limestone, blue cavetto cornices, clerestories,

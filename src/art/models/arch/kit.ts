@@ -39,6 +39,8 @@ export interface Kit {
   tower(w: number, h: number, a: Age, t: Vec3): NodeSpec;
   /** A portico: `n` columns along X from x0 to x1 at z, `h` tall, with their beam. */
   columns(x0: number, x1: number, z: number, h: number, n: number, a: Age): NodeSpec[];
+  /** An open pavilion: columns round a w×d floor under the set's roof, `h` to the eaves. */
+  shed(w: number, d: number, h: number, a: Age, t: Vec3): NodeSpec;
   /** A low enclosure (fence or wall) centred at (x, z). */
   fence(x: number, z: number, len: number, alongX: boolean, a: Age, h?: number): NodeSpec;
   /** A raised platform (Bronze on); null when the age builds on bare ground. Its top is `lift(a)`. */
@@ -176,49 +178,63 @@ export const RECIPES: Record<string, Recipe> = {
   barracks: {
     own: 0,
     footprint: 3,
+    // An L of halls round a drill yard: the long hall at the back, a wing down the left side.
     build: (k, a) => [
-      k.hall({ w: 1.9 + 0.05 * a, d: 1.0, h: 0.5 + 0.06 * a, a, doors: ['x', 'z'], windows: 3, t: [-0.2, 0, -0.4] }),
-      ...(a >= 2 ? k.columns(-1.0, 0.6, 0.3, 0.5, 5, a) : []),
-      weaponRack([0.95, 0, 0.55], Math.PI / 4),
-      dummy(-0.6, 0.95),
-      banner(1.3, 0.2, 0.75 + 0.08 * a),
-      banner(0.2, 1.3, 0.75 + 0.08 * a),
+      k.hall({ w: 1.95 + 0.05 * a, d: 0.9, h: 0.5 + 0.06 * a, a, doors: ['z'], windows: 3, t: [-0.2, 0, -0.9] }),
+      k.hall({ w: 0.75, d: 1.2, h: 0.44 + 0.05 * a, a, doors: ['x'], windows: 0, t: [-0.95, 0, 0.45], band: false, low: true }),
+      ...(a >= 2 ? k.columns(-0.45, 0.65, -0.35, 0.46, 4, a) : []),
+      weaponRack([0.95, 0, 0.1], Math.PI / 2),
+      dummy(0.2, 0.55),
+      dummy(0.75, 0.9),
+      k.fence(0.55, 1.38, 1.5, true, a, 0.14),
+      banner(1.3, -0.45, 0.75 + 0.08 * a),
+      banner(0.3, 1.3, 0.75 + 0.08 * a),
     ],
   },
   market: {
     own: 1,
     footprint: 3,
+    // A trading square: a covered hall of goods in the middle, stalls round it, the merchant's house behind.
     build: (k, a) => [
       k.podium(2.6, 2.6, a),
-      k.hall({ w: 1.4, d: 0.8, h: 0.5 + 0.05 * a, a, doors: ['x'], windows: 2, t: [-0.5, g(a, k), -0.8] }),
-      ...(a >= 2 ? k.columns(-1.15, 0.2, -0.28, 0.48, 4, a).map((n) => up(n, g(a, k))) : []),
-      stall(0.8, 0.2, k.awnings[0], 'berries'),
-      stall(0.2, 0.85, k.awnings[1], 'goldOre'),
-      stall(-0.75, 0.8, 'team', 'plaster', 0.2),
-      sack(0.25, -0.05),
+      k.hall({ w: 1.0, d: 0.7, h: 0.48 + 0.05 * a, a, doors: ['x'], windows: 1, t: [-0.85, g(a, k), -0.85], low: true }),
+      k.shed(1.1, 0.9, 0.5, a, [0.15, g(a, k), -0.1]),
+      sack(0.0, -0.2),
+      sack(0.25, 0.05, 0.9),
+      { geom: cyl(0.08, 0.06, 0.16, 10), mat: 'mudbrick', t: [0.4, g(a, k) + 0.08, -0.3] },
+      stall(1.05, -0.55, k.awnings[0], 'berries', Math.PI / 2),
+      stall(1.05, 0.55, k.awnings[1], 'goldOre', Math.PI / 2),
+      stall(0.15, 1.05, 'team', 'plaster'),
+      stall(-0.9, 0.9, k.awnings[0], { tex: 'cloth', color: 0x8a6a4a, rough: 1 }),
       banner(1.3, 1.3, 0.8),
     ].filter((n): n is NodeSpec => !!n),
   },
   archeryRange: {
     own: 1,
     footprint: 3,
+    // A long open shooting gallery along the back, the bowyer's house at its end, targets across the yard.
     build: (k, a) => [
-      k.hall({ w: 1.8, d: 0.8, h: 0.5 + 0.05 * a, a, doors: ['x'], windows: 3, t: [-0.5, 0, -0.75] }),
-      ...(a >= 2 ? k.columns(-1.3, 0.3, -0.25, 0.46, 5, a) : []),
+      k.shed(1.9, 0.6, 0.5 + 0.04 * a, a, [0.15, 0, -0.95]),
+      k.hall({ w: 0.7, d: 0.9, h: 0.5 + 0.05 * a, a, doors: ['x'], windows: 0, t: [-1.05, 0, -0.8], low: true }),
+      { t: [0.45, 0, -0.9], children: [{ geom: box(0.5, 0.2, 0.08), mat: 'wood', t: [0, 0.1, 0] }] },
       ...targets(),
+      post(-0.3, 0.3, 0.5),
       banner(-1.3, 1.25, 0.8),
     ],
   },
   stable: {
     own: 1,
     footprint: 3,
+    // Stalls under a lean-to along the back, a fodder hall at the end, a paddock with a trough in front.
     build: (k, a) => [
-      k.hall({ w: 2.3, d: 1.0, h: 0.52 + 0.04 * a, a, doors: ['x'], windows: 0, t: [-0.1, 0, -0.75] }),
-      ...[-0.95, -0.4, 0.15, 0.7].map((x): NodeSpec => ({ geom: box(0.3, 0.34, 0.04), mat: 'dirt', t: [x, 0.17, -0.235] })),
-      { geom: box(0.5, 0.12, 0.16), mat: 'stone', t: [-0.9, 0.06, 0.25] },
-      { geom: box(0.44, 0.02, 0.1), mat: WATER, t: [-0.9, 0.12, 0.25] },
-      k.fence(-0.1, 1.4, 2.6, true, a, 0.2),
-      k.fence(1.4, 0.67, 1.5, false, a, 0.2),
+      k.shed(1.8, 0.7, 0.46 + 0.04 * a, a, [0.2, 0, -0.95]),
+      ...[-0.45, 0.15, 0.75].map((x): NodeSpec => ({ geom: box(0.04, 0.26, 0.6), mat: 'planks', t: [x, 0.13, -0.95] })),
+      ...[-0.15, 0.45].map((x): NodeSpec => ({ geom: sphere(0.09, 8), mat: 'thatch', t: [x, 0.06, -1.0], s: [1.4, 0.7, 1.2] })),
+      k.hall({ w: 0.7, d: 1.0, h: 0.5 + 0.05 * a, a, doors: ['x'], windows: 0, t: [-1.05, 0, -0.75], low: true }),
+      { geom: box(0.5, 0.12, 0.16), mat: 'stone', t: [-0.5, 0.06, 0.35] },
+      { geom: box(0.44, 0.02, 0.1), mat: WATER, t: [-0.5, 0.12, 0.35] },
+      k.fence(0.05, 1.38, 2.6, true, a, 0.18),
+      k.fence(1.38, 0.3, 2.1, false, a, 0.18),
       banner(1.3, 1.3, 0.8),
     ],
   },
@@ -238,13 +254,19 @@ export const RECIPES: Record<string, Recipe> = {
   siegeWorkshop: {
     own: 2,
     footprint: 3,
+    // A tall open shed over an engine being built, a crane wheel in the yard, timber and shot.
     build: (k, a) => [
-      k.hall({ w: 1.5, d: 1.4, h: 0.72, a, doors: ['x', 'z'], windows: 0, t: [-0.5, 0, -0.5] }),
-      // A great wheel and a throwing arm lie in the yard, beside timber and shot.
-      { t: [0.75, 0, -0.7], children: [
+      k.shed(1.5, 1.4, 0.72, a, [-0.5, 0, -0.5]),
+      { t: [-0.5, 0, -0.5], children: [
+        { geom: box(0.7, 0.08, 0.4), mat: 'wood', t: [0, 0.14, 0] },
+        { geom: cyl(0.09, 0.09, 0.05, 10), mat: 'wood', t: [0.25, 0.09, 0.22], r: [Math.PI / 2, 0, 0] },
+        { geom: cyl(0.09, 0.09, 0.05, 10), mat: 'wood', t: [-0.25, 0.09, 0.22], r: [Math.PI / 2, 0, 0] },
+        { geom: box(0.06, 0.5, 0.06), mat: 'wood', t: [0.05, 0.4, 0], r: [0, 0, -0.5] },
+      ] },
+      { t: [0.8, 0, -0.75], children: [
         { geom: cyl(0.34, 0.34, 0.12, 16), mat: 'wood', t: [0, 0.38, 0], r: [Math.PI / 2, 0, 0] },
         { geom: cyl(0.26, 0.26, 0.13, 16), mat: 'planks', t: [0, 0.38, 0], r: [Math.PI / 2, 0, 0] },
-        { geom: box(0.06, 0.75, 0.06), mat: 'wood', t: [0.0, 0.38, 0.12] },
+        { geom: box(0.06, 1.0, 0.06), mat: 'wood', t: [0.1, 0.5, 0.12], r: [0, 0, -0.3] },
       ] },
       { geom: box(1.0, 0.07, 0.08), mat: 'wood', t: [-0.35, 0.05, 0.9], r: [0, 0.2, 0] },
       logPile(0.8, 0.55, 7, 91),

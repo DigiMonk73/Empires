@@ -3,8 +3,8 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1–M9.2 done: Academy, alligator, architecture kits + Egyptian set). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.2 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion in progress (M9.1–M9.3 done: Academy, alligator, architecture kits + Egyptian set, distinct building shapes). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.3 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
   get the Egyptian kit (`arch/`, D43), the other sets follow in M9.4–M9.6. Review tools:
@@ -18,7 +18,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9.3 distinct building silhouettes in the recipes, then the Babylonian, Asian and Roman kits.
+- **Next up:** M9.4 Babylonian kit (drafted in `arch/babylonian.ts`, not registered yet), then Asian and Roman.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -490,9 +490,10 @@ Macedonian, Palmyran, Roman.
       sandstone with gilding; a pyramid Wonder with a sphinx. `render/arch.ts` picks `<type>_<set>` for the
       owner's civ (renderer, build ghost, preload, selection portrait, build menu and tech-tree icons). Unit
       test `arch.test.ts`. Gallery egyptian × 4 ages reviewed.
-- [ ] **M9.3 Distinct silhouettes.** Make each building type read by shape, not only props: open-sided shed
-      (Siege Workshop), long portico (Archery Range), stalls under a lean-to (Stable), a stall square (Market),
-      a courtyard (Barracks); give the Egyptian set its missing Iron touches (colossi, painted gates).
+- [x] **M9.3 Distinct silhouettes.** A `shed` block (open pavilion under the set's roof) joins the Kit; the
+      Siege Workshop is an open engine shed, the Archery Range a long shooting gallery with the bowyer's house,
+      the Stable a stall lean-to over a paddock and trough, the Market a stall square round a covered hall, the
+      Barracks an L of halls round a drill yard. Egyptian sheds: reed mat → palm logs → stone slab and cornice.
 - [ ] **M9.4 Babylonian set.** Glazed blue brick with yellow bands, crenellated parapets, stepped terraces,
       lion reliefs, arched gates; a ziggurat Wonder.
 - [ ] **M9.5 Asian set.** Timber frames, red lacquer, curved tiled roofs with upturned eaves, stone bases,
