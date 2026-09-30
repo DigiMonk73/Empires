@@ -2,6 +2,16 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M9.2 · gallery egyptian × 4 ages, contact sheets; ai-base, raid, siege-volley (changed 1.5–2.2%)
+- Egyptian set: Stone oval reed-and-mud huts under reed domes and beehive silos; Tool whitewashed mudbrick with
+  roof shades, jars and palm-log beam ends; Bronze battered limestone, blue cavetto cornices, clerestories,
+  papyrus columns, a pylon temple with obelisks; Iron painted sandstone friezes, gilding, red-granite obelisks,
+  a pyramid Wonder with valley temple and sphinx. Distinct from the Greek set at a glance. Buildings 3.5–4.
+- In play: the AI's Egyptian Stone-age base (ai-base) and the raid camp now show the reed huts and silos with
+  red team bands. Must-fix fixed before commit: the podium's paint stripe covered its whole top; bare flat roofs.
+- Should-fix (M9.3): within a set the buildings are one block type with different props — Stable, Range, Siege
+  Workshop and Market need their own shapes.
+
 ## 2026-09-30 · M9.1 · contact-academy, alligator sheets, gallery (greek, Bronze)
 - Academy: an L of limewashed stoas under red tiles round a sanded yard, a verdigris hoplite on a marble plinth,
   a rack of team-blue shields and a straw practice post — reads as the Greek set's drill school. Building 4.

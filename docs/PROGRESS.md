@@ -3,10 +3,11 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M9 Art completion in progress (M9.1 done). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
-- **Last green commit:** M9.1 (verify ~100 s); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
+- **Milestone:** M9 Art completion in progress (M9.1–M9.2 done: Academy, alligator, architecture kits + Egyptian set). M8 done (tag `m8`, s9pk 0.8.0 checked on the StartOS VM; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Last green commit:** M9.2 (verify ~300 s with a full re-bake); verify:full at the M8 exit (Docker 120 MB, Tauri smoke, 392 unit + 97 e2e, ladder 32 maps).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
-  building set with age variants (`buildingAges.ts`) shared by all 16 civs until M9.2–M9.6. Review tools:
+  building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
+  get the Egyptian kit (`arch/`, D43), the other sets follow in M9.4–M9.6. Review tools:
   `node tools/frames.ts <model> out.png` (contact sheets), `node tools/gallery.ts <civs> <ages>` (every
   building + animals, `?scenario=gallery&civ=…`, after `npx vite build`) → `artifacts/gallery/`.
 - **Sim:** gather at research rates (wood 0.55/s, farm 0.45/s, fish 0.6/s verified), drop-site rules, depletion/
@@ -17,7 +18,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.8.0 on the test VM (M8: update from 0.6.0, health, restart, logs, headless play); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-1 icon, KI-2 AI images blocked, KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M9.2 architecture framework (per-civ building sets), then the Egyptian, Babylonian, Asian and Roman sets.
+- **Next up:** M9.3 distinct building silhouettes in the recipes, then the Babylonian, Asian and Roman kits.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -475,30 +476,35 @@ Ships already train at the Dock and path on water (their own move class and regi
 - _Exit:_ ≥ 90% AI island games decided; naval screenshots reviewed.
 
 ## M9 — Art completion
-Every unit has baked art; the Academy and the alligator don't; all 16 civilizations share one (Greek-style)
-building set. Architecture sets (civs.ts `arch`): Egyptian — Assyrian, Egyptian, Sumerian; Greek — Greek, Minoan,
+At M9's start every unit had baked art but the Academy and the alligator didn't, and all 16 civilizations shared
+one (Greek-style) building set. Architecture sets (civs.ts `arch`): Egyptian — Assyrian, Egyptian, Sumerian; Greek — Greek, Minoan,
 Phoenician; Babylonian — Babylonian, Hittite, Persian; Asian — Choson, Shang, Yamato; Roman — Carthaginian,
 Macedonian, Palmyran, Roman.
 - [x] **M9.1 Missing models.** The Academy (Greek set: an L of stoas round a drill yard, a bronze hoplite, a
       shield rack) and the alligator (sprawling walk, jaw snap, dies belly-up; new `scales` texture); a
       `?scenario=gallery` review scene and `tools/gallery.ts`. Contact sheets 3.5/5. The Academy's HUD icon now
       comes from its sprite. Alligators are not yet placed on maps → M14.
-- [ ] **M9.2 Architecture framework.** Building models per set (`<building>@<set>`, Greek the default): the baker
-      takes a set parameter, the renderer picks the owner's civ set (falls back to Greek), icons follow. Then one
-      building per set as a proof. _Accept:_ unit test of the lookup; a 5-civ screenshot.
-- [ ] **M9.3 Egyptian set.** Mud brick and limestone, flat roofs, battered walls, papyrus columns, obelisks — every
-      building by age.
-- [ ] **M9.4 Babylonian set.** Glazed brick, stepped terraces, crenellations, lion reliefs.
-- [ ] **M9.5 Asian set.** Timber frames, red lacquer, curved tiled roofs, stone bases.
-- [ ] **M9.6 Roman set.** Terracotta roofs, arches, marble porticoes, concrete domes.
-- [ ] **M9.7 A Wonder per set.** Pyramid (Egyptian), ziggurat (Babylonian), pagoda-temple (Asian), a domed
-      temple (Roman); the Greek temple stays.
-- [ ] **M9.8 Icons and portraits.** Baked tech icons (every research button: the upgraded unit, the tool, the
+- [x] **M9.2 Architecture framework + Egyptian set** (D43). `src/art/models/arch/kit.ts` (Kit interface, 13
+      building recipes, `setModels`) and `egyptian.ts`: reed-and-mud huts → whitewashed mudbrick with roof shades
+      → battered limestone with cavetto cornices, clerestories, papyrus columns, pylons and obelisks → painted
+      sandstone with gilding; a pyramid Wonder with a sphinx. `render/arch.ts` picks `<type>_<set>` for the
+      owner's civ (renderer, build ghost, preload, selection portrait, build menu and tech-tree icons). Unit
+      test `arch.test.ts`. Gallery egyptian × 4 ages reviewed.
+- [ ] **M9.3 Distinct silhouettes.** Make each building type read by shape, not only props: open-sided shed
+      (Siege Workshop), long portico (Archery Range), stalls under a lean-to (Stable), a stall square (Market),
+      a courtyard (Barracks); give the Egyptian set its missing Iron touches (colossi, painted gates).
+- [ ] **M9.4 Babylonian set.** Glazed blue brick with yellow bands, crenellated parapets, stepped terraces,
+      lion reliefs, arched gates; a ziggurat Wonder.
+- [ ] **M9.5 Asian set.** Timber frames, red lacquer, curved tiled roofs with upturned eaves, stone bases,
+      lanterns; a pagoda Wonder.
+- [ ] **M9.6 Roman set.** Terracotta roofs, arcades, brick and concrete, marble porticoes, domes; a domed
+      temple Wonder. Then the Greek set's Iron-age variants.
+- [ ] **M9.7 Icons and portraits.** Baked tech icons (every research button: the upgraded unit, the tool, the
       building, the armour piece), portraits for every unit and building in the selection panel.
-- [ ] **M9.9 UI dress.** Stone panel, bronze frame and parchment textures from the material library; civ
+- [ ] **M9.8 UI dress.** Stone panel, bronze frame and parchment textures from the material library; civ
       emblems and a loading screen drawn in code (AI images are blocked — KI-2).
-- [ ] **M9.10 Gallery and review.** A gallery scene of every model × facing/age/set; score each ≥ 4/5, fix what
-      falls short; budget check.
+- [ ] **M9.9 Gallery and review.** Every model × facing/age/set in the gallery; score each ≥ 4/5, fix what
+      falls short; budget check (atlases, boot metadata fetches).
 - _Exit:_ every gallery item ≥ 4/5; baked assets ≤ 150 MB.
 
 ## M10 — World polish

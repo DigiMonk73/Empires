@@ -211,3 +211,11 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   hunting stray ships). The suite still plays and reports them (`WATER_GATED` in ai-suite); M13 (AI v2, whose Done
   definition already includes "wins island maps via transports") turns the gate back on. m8 is tagged on the
   rest of verify:full.
+- **D43 — Architecture sets are kits over shared recipes** (2026-09-30, M9.2). Each set (Egyptian, Babylonian,
+  Asian, Roman) is a `Kit` in `src/art/models/arch/` — its materials and building blocks at each age (hall,
+  tower, columns, fence, podium, grain store, landmark, temple, Wonder) — and every building is one recipe in
+  `kit.ts` written against the Kit, so a set restyles all 13 buildings at once and a recipe fix reaches every
+  set. Models are `<building>_<set>` with one variant per age from the building's own age to Iron (four for
+  Stone-age buildings); the renderer, the build ghost and the icons pick the owner's set and fall back to the
+  hand-built Greek-style models (bare ids), which stay the Greek set. Docks, farms, towers, walls, construction
+  sites and rubble are shared by all sets for now. Each set adds ~0.5 MB of atlases.

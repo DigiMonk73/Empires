@@ -9,6 +9,7 @@ import { buildingArt, resourceArt, unitArt, type SpriteArt } from './placeholder
 import { TerrainLayer } from './terrainMesh.ts';
 import { FogLayer } from './fogLayer.ts';
 import type { ArtFrame, BakedArt } from './bakedArt.ts';
+import { archModelId, archOf } from './arch.ts';
 import { FxLayer } from './fx.ts';
 import type { SimEvent } from '../sim/world.ts';
 
@@ -261,10 +262,11 @@ export class WorldRenderer {
       this.objectLayer.addChild(root);
       return { handle: e.handleOf(slot), root, base, team, model: typeId, building: null, site: null, lastKey: '', type: e.type[slot]! };
     }
-    if (e.kind[slot] === EKind.building) {
-      const f = this.art?.frame(typeId, 'v0');
+    if (e.kind[slot] === EKind.building && this.art) {
+      const id = this.buildingModel(typeId, e.owner[slot]!);
+      const f = this.art.frame(id, 'v0');
       if (f) {
-        const meta = this.art!.meta(typeId)!;
+        const meta = this.art.meta(id)!;
         const root = new Container();
         const base = new Sprite(f.tex);
         base.anchor.set(f.anchorX, f.anchorY);
@@ -279,7 +281,7 @@ export class WorldRenderer {
           root.addChild(team);
         }
         this.objectLayer.addChild(root);
-        return { handle: e.handleOf(slot), root, base, team, model: null, building: typeId, site: null, lastKey: '', type: e.type[slot]! };
+        return { handle: e.handleOf(slot), root, base, team, model: null, building: id, site: null, lastKey: '', type: e.type[slot]! };
       }
     }
     const art = this.artFor(e.type[slot]!);
@@ -405,6 +407,11 @@ export class WorldRenderer {
     sp.texture = tex;
     sp.anchor.set(f.anchorX, ay);
     sp.scale.set(1 / scale);
+  }
+
+  /** A building's model in its owner's architecture set (the shared one if that set lacks it). */
+  private buildingModel(typeId: string, owner: number): string {
+    return archModelId(typeId, archOf(this.world.players[owner]?.civ), (id) => !!this.art?.meta(id));
   }
 
   /** Buildings are rebuilt in each later age (v0 = the building's own age). */
@@ -684,10 +691,11 @@ export class WorldRenderer {
         g.poly([p.x, p.y, p.x + 32, p.y + 16, p.x, p.y + 32, p.x - 32, p.y + 16]).fill({ color: ok ? 0x40ff60 : 0xff3030, alpha: 0.28 });
       }
     }
-    const meta = this.art?.meta(typeId);
+    const model = this.buildingModel(typeId, owner);
+    const meta = this.art?.meta(model);
     const bi = TYPES.findIndex((t) => t.id === typeId);
     const variant = meta && meta.variants > 1 && TYPES[bi]?.building && TYPES[bi]!.building!.kind !== 'farm' ? this.ageVariant(owner, TYPES[bi]!.building!.age, meta.variants) : 0;
-    const f = this.art?.frame(typeId, `v${variant}`);
+    const f = this.art?.frame(model, `v${variant}`);
     if (!this.ghostSprite) {
       this.ghostSprite = new Sprite();
       this.ghostSprite.alpha = 0.6;
@@ -697,7 +705,7 @@ export class WorldRenderer {
     if (f) {
       sp.texture = f.tex;
       sp.anchor.set(f.anchorX, f.anchorY);
-      sp.scale.set(1 / (this.art!.meta(typeId)!.scale));
+      sp.scale.set(1 / meta!.scale);
       worldToIso(tx + size / 2, ty + size / 2, 0, p);
       sp.position.set(p.x, p.y);
       sp.visible = true;

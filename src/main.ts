@@ -17,7 +17,8 @@ import { BakedArt } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
 import { computeCommands } from './ui/commands.ts';
 import { hud, hudActions } from './ui/store.ts';
-import { setIconArt } from './ui/icons.ts';
+import { setIconArch, setIconArt } from './ui/icons.ts';
+import { archOf } from './render/arch.ts';
 import { buildResults, formatClock } from './ui/results.ts';
 import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
@@ -64,10 +65,11 @@ async function boot(): Promise<void> {
   for (let s = 0; s < world.ents.top; s++) {
     if (!world.ents.alive[s]) continue;
     const id = TYPES[world.ents.type[s]!]!.id;
-    present.add(id).add(`${id}Post`).add(`${id}Arm`);
+    present.add(id).add(`${id}Post`).add(`${id}Arm`).add(`${id}_${archOf(world.players[world.ents.owner[s]!]?.civ)}`);
   }
   const art = params.get('art') === '0' ? null : await BakedArt.load('./baked/', (id, meta) => meta.kind === 'resource' || present.has(id) || /^(site|rubble)\d$/.test(id));
   setIconArt(art);
+  setIconArch(archOf(world.players[session.localPlayer]?.civ));
   const wr = new WorldRenderer(app.renderer, world, art);
   session.onEvents((ev) => wr.onEvents(ev));
   // Game over, from the local player's point of view.

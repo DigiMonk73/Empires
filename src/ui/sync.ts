@@ -4,6 +4,7 @@ import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
 import { playerColor } from '../render/worldRenderer.ts';
+import { archOf } from '../render/arch.ts';
 import { hud, type SelInfo } from './store.ts';
 import { queueOf } from './commands.ts';
 import { AGE_NAMES } from '../sim/systems/production.ts';
@@ -52,7 +53,7 @@ export function syncHud(world: World, player: number, selected: readonly number[
       arm: u ? classStr(u.arm, ['melee', 'pierce']) : '',
       range: u?.range ?? 0,
       isBuilding: e.kind[s] === EKind.building,
-      model: t.id,
+      model: e.kind[s] === EKind.building ? `${t.id}_${archOf(world.players[e.owner[s]!]?.civ)}` : t.id,
       ...(e.kind[s] === EKind.building ? { building: e.build[s]! } : {}),
       ...(u?.cls === 'priest' ? { faith: Math.floor(e.faith[s]!) } : {}),
     });

@@ -15,8 +15,8 @@ const STATE_TITLE: Record<ItemState, string> = {
   missing: 'Not in this civilization’s tree',
 };
 
-function Chip({ id, name, state, kind }: { id: string; name: string; state: ItemState; kind: string }) {
-  const st = kind === 'tech' ? null : iconStyle(id, 26);
+function Chip({ id, name, state, kind, arch }: { id: string; name: string; state: ItemState; kind: string; arch?: string | undefined }) {
+  const st = kind === 'tech' ? null : iconStyle(id, 26, arch);
   return (
     <div class={`tt-item ${state} ${kind}`} title={`${name} — ${STATE_TITLE[state]}`} data-testid={kind === 'tech' ? `tt-tech-${id}` : `tt-${id}`} data-state={state}>
       {st ? <span class="tt-icon" style={{ ...st, width: '26px', height: '26px' }} /> : <span class="tt-icon tt-glyph">{kind === 'tech' ? '⚙' : name.slice(0, 2)}</span>}
@@ -43,7 +43,7 @@ export function TechTree({ civ, columns, onClose }: { civ: string; columns: Tree
                 <th />
                 {columns.map((col) => (
                   <th>
-                    <span class="tt-bicon" style={{ ...(iconStyle(col.building, 34) ?? {}), width: '34px', height: '34px' }} />
+                    <span class="tt-bicon" style={{ ...(iconStyle(col.building, 34, c?.arch) ?? {}), width: '34px', height: '34px' }} />
                     <div>{col.name}</div>
                   </th>
                 ))}
@@ -56,7 +56,7 @@ export function TechTree({ civ, columns, onClose }: { civ: string; columns: Tree
                   {columns.map((col) => (
                     <td>
                       {col.ages[age]!.map((it) => (
-                        <Chip id={it.id} name={it.name} state={it.state} kind={it.kind} />
+                        <Chip id={it.id} name={it.name} state={it.state} kind={it.kind} arch={c?.arch} />
                       ))}
                     </td>
                   ))}
