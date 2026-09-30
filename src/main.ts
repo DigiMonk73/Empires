@@ -409,6 +409,7 @@ function wireAudio(session: GameSession, world: GameSession['sim']['world'], wr:
   wr.onClipHit = (clip, x, y) => sounds.onClipHit(clip, x, y);
   let works = 0;
   session.onCommand((p, cmd) => {
+    if (p === me && cmd.t === 'build') audio.play('place', 0, 0.7);
     if (p !== me || !('ids' in cmd) || cmd.t === 'stop' || cmd.t === 'stance') return;
     const set = sounds.voiceFor(cmd.ids);
     if (!set) return;

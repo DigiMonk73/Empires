@@ -7,7 +7,12 @@ export type SfxName =
   | 'clash' | 'club' | 'bow' | 'sling' | 'thunk'
   | 'collapse' | 'thud'
   | 'built' | 'trained' | 'fanfare' | 'defeat' | 'alert' | 'click'
-  | 'chant' | 'converted';
+  | 'chant' | 'converted'
+  // M11.1
+  | 'hooves' | 'neigh' | 'trumpet' | 'camel' | 'roar'
+  | 'launch' | 'crash' | 'twang'
+  | 'splash' | 'sink' | 'fish'
+  | 'heal' | 'coins' | 'fire' | 'place' | 'deny';
 
 type Gen = (t: number, i: number, noise: () => number) => number;
 
@@ -123,5 +128,78 @@ export function makeSfx(ctx: BaseAudioContext): Record<SfxName, AudioBuffer> {
     }, (x, r) => lowpass(x, r, 900)),
     // Converted: two bright bell partials.
     converted: render(ctx, 1.2, 20, (t) => (tone(1046.5, t) + 0.6 * tone(1568, t) + 0.3 * tone(2637, t)) * env(t, 0.003, 0.35)),
+    // ── M11.1 ────────────────────────────────────────────────────────────────────────────────────────────
+    // Hooves: a gallop's four beats on turf.
+    hooves: render(ctx, 0.5, 21, (t, _i, n) => {
+      let v = 0;
+      for (const at of [0, 0.07, 0.19, 0.26]) if (t >= at) v += (tone(95, t - at) * 0.8 + n() * 0.5) * env(t - at, 0.002, 0.025);
+      return v;
+    }, (x, r) => lowpass(x, r, 900)),
+    // A horse's whinny: a nasal tone sweeping up then shaking down, through a formant-ish filter.
+    neigh: render(ctx, 1.0, 22, (t, _i, n) => {
+      const f = t < 0.25 ? 500 + 900 * (t / 0.25) : 1400 - 700 * ((t - 0.25) / 0.75);
+      const shake = 1 + 0.06 * Math.sin(2 * Math.PI * (18 + 10 * t) * t);
+      return (saw(f * shake, t) * 0.5 + tone(f * shake, t) + 0.15 * n()) * env(t, 0.03, 0.35);
+    }, (x, r) => {
+      highpass(x, r, 350);
+      lowpass(x, r, 3200);
+    }),
+    // Elephant trumpet: a loud brassy blare with a rough growl, rising.
+    trumpet: render(ctx, 1.2, 23, (t, _i, n) => {
+      const f = 330 + 180 * Math.min(1, t / 0.4);
+      const growl = 1 + 0.25 * Math.sin(2 * Math.PI * 32 * t);
+      return (saw(f, t) * growl + 0.6 * saw(f * 1.5, t) + 0.2 * n()) * env(t, 0.05, 0.45);
+    }, (x, r) => lowpass(x, r, 2600)),
+    // Camel: a low, gargling bellow.
+    camel: render(ctx, 0.8, 24, (t, _i, n) => (saw(110 + 20 * Math.sin(t * 9), t) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 23 * t)) + 0.3 * n()) * env(t, 0.06, 0.3), (x, r) => lowpass(x, r, 700)),
+    // Lion roar: a noisy low rumble swelling and dying.
+    roar: render(ctx, 1.3, 25, (t, _i, n) => (n() * 0.8 + saw(90 - 20 * t, t) * 0.5) * Math.sin(Math.PI * Math.min(1, t / 1.3)) ** 1.4, (x, r) => {
+      lowpass(x, r, 500);
+      lowpass(x, r, 700);
+    }),
+    // Catapult launch: a creak of the winch, the arm's thump and the whoosh of the stone.
+    launch: render(ctx, 0.8, 26, (t, _i, n) => {
+      const creak = t < 0.15 ? saw(60 + 400 * t, t) * 0.4 * env(t, 0.01, 0.08) : 0;
+      const thump = t > 0.12 ? tone(65, t - 0.12) * env(t - 0.12, 0.003, 0.08) : 0;
+      const whoosh = t > 0.15 ? n() * Math.sin(Math.PI * Math.min(1, (t - 0.15) / 0.6)) * 0.5 : 0;
+      return creak + thump + whoosh;
+    }, (x, r) => lowpass(x, r, 1600)),
+    // A boulder landing: a heavy thud and scattering stone.
+    crash: render(ctx, 0.9, 27, (t, _i, n) => tone(55, t) * env(t, 0.002, 0.12) + n() * env(t, 0.002, 0.18) * 0.8 + (n() > 0.9 ? n() * env(t, 0.05, 0.25) : 0), (x, r) => lowpass(x, r, 1100)),
+    // Ballista: a heavy, low bowstring.
+    twang: pluck(ctx, 98, 0.6, 28),
+    // Splash: a burst of bright water noise.
+    splash: render(ctx, 0.6, 29, (t, _i, n) => n() * env(t, 0.004, 0.14) * (0.7 + 0.3 * Math.sin(t * 90)), (x, r) => {
+      highpass(x, r, 500);
+      lowpass(x, r, 5000);
+    }),
+    // A ship going down: timbers groaning, then a long gurgle.
+    sink: render(ctx, 2.2, 30, (t, _i, n) => {
+      const groan = saw(70 + 30 * Math.sin(t * 3), t) * env(t, 0.1, 0.5) * 0.6;
+      const bubbles = (n() > 0.985 ? 1 : 0) * tone(300 + 400 * Math.abs(n()), t) * env(t, 0.3, 1.2);
+      return groan + bubbles + n() * 0.25 * env(t, 0.05, 0.9);
+    }, (x, r) => lowpass(x, r, 1400)),
+    // Fishing: a small plop.
+    fish: render(ctx, 0.25, 31, (t, _i, n) => tone(420 - 900 * t, t) * env(t, 0.002, 0.04) + 0.4 * n() * env(t, 0.001, 0.03), (x, r) => lowpass(x, r, 2500)),
+    // A priest's healing: a soft rising chime.
+    heal: render(ctx, 1.0, 32, (t) => {
+      const note = (hz: number, at: number) => (t > at ? tone(hz, t - at) * env(t - at, 0.01, 0.3) : 0);
+      return note(784, 0) + note(988, 0.1) * 0.8 + note(1175, 0.2) * 0.6;
+    }),
+    // Coins: a few small metallic clinks.
+    coins: render(ctx, 0.5, 33, (t) => {
+      let v = 0;
+      for (const [at, hz] of [[0, 3200], [0.06, 4100], [0.11, 3600], [0.19, 4600]] as const) if (t >= at) v += (tone(hz, t - at) + 0.5 * tone(hz * 1.51, t - at)) * env(t - at, 0.001, 0.04);
+      return v;
+    }),
+    // Fire: a crackle over a soft roar.
+    fire: render(ctx, 1.4, 34, (t, _i, n) => n() * 0.25 + (n() > 0.97 ? n() * 1.2 : 0) * env(t % 0.35, 0.001, 0.01) * 4, (x, r) => lowpass(x, r, 2600)),
+    // Placing a building: a solid wooden knock.
+    place: render(ctx, 0.18, 35, (t, _i, n) => tone(180, t) * env(t, 0.002, 0.04) + tone(360, t) * 0.4 * env(t, 0.002, 0.03) + 0.2 * n() * env(t, 0.001, 0.01), (x, r) => lowpass(x, r, 2200)),
+    // A refused order: a short low double blip.
+    deny: render(ctx, 0.3, 36, (t) => {
+      const note = (at: number) => (t > at ? (tone(196, t - at) + 0.3 * saw(196, t - at)) * env(t - at, 0.004, 0.05) : 0);
+      return note(0) + note(0.12);
+    }, (x, r) => lowpass(x, r, 1500)),
   };
 }

@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M11 audio — expand into tasks (SFX library, voices, generative music, mixer, options).
+- **Next up:** M11.2 voices per culture (5 architecture sets × villager/soldier/priest/death).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -585,7 +585,25 @@ so far.
 - _Exit:_ screenshots ≥ 4/5; perf gates met. **Met** (M10.1b–M10.6 reviews, Highland re-scored 4 with beaches and water; Tauri render 3.1 ms avg). Tag `m10`. Hills on the standard maps wait on KI-9.
 
 ## M11 — Audio
-- SFX library; voices; generative music; mixer; options.
+M6.8 gave 20 synthesised effects (D31), `say` voices for villagers/soldiers/deaths (one culture), panning and
+fog-aware hooks, a mute toggle. No music.
+- [x] **M11.1 Effects library + coverage.** 16 new synthesised effects (36 in all): hooves, neigh, elephant
+      trumpet, camel, lion roar, catapult launch, boulder crash, ballista twang, splash, sinking, fishing plop,
+      heal chime, coins, fire crackle, placement knock, refusal blip. `hooks.ts` now maps by type: `MELEE` per
+      unit class (a `Record<UnitClass>` — the compiler checks every class), `missileSound`, `impactSound`
+      (stones crash, arrows thunk, water splashes), `deathSound` (people cry out; horses neigh, camels bellow,
+      elephants trumpet, lions roar, engines break, ships sink); `EVENT_SOUNDS` lists every sim event kind with
+      its sound or why it is silent. New cues: building placement, refused orders, trade gold, fishing, healing
+      (priest heal clip gains a hit marker), the nearest burning building crackles, hooves under charging
+      riders. `audio-coverage.test.ts`.
+- [ ] **M11.2 Voices per culture.** Villager, soldier, priest and death lines for each architecture set
+      (Egyptian, Greek, Babylonian, Asian, Roman) in invented words with the D12 voices; the owner's set speaks.
+- [ ] **M11.3 Generative music.** Pure-JS generator (renderable offline): plucked-string lyre, frame drum,
+      reed/ney, drones; modes per culture; peace/tension/battle moods from what the player sees; crossfades.
+- [ ] **M11.4 Mixer and options.** Master/music/effects/voices volumes and mute in the game menu and the main
+      menu's Options (persisted).
+- [ ] **M11.5 Audio review.** `tools/audio-check.ts`: every effect, voice and 10 min of music per culture and
+      mood rendered offline — peaks ≤ −1 dBFS, no music gap > 10 s, spectrogram PNGs reviewed.
 - _Exit:_ 100% event coverage; peaks ≤ −1 dBFS; no music gaps > 10 s; spectrograms reviewed.
 
 ## M12 — UI & QoL completeness

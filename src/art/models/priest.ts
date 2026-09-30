@@ -50,7 +50,7 @@ const PRIEST_CLIPS: Record<string, ClipDef> = {
   idle: clip(6, 4, true, (t) => ({ ...idlePose(t), armR: [0.15, 0, 0.3], foreR: [0, 0, 1.0] })),
   walk: clip(10, 10, true, (t) => ({ ...walkPose(t), armR: [0.15, 0, 0.3], foreR: [0, 0, 1.0] })),
   convert: clip(10, 8, true, chant, undefined, { hit: 0 }), // `hit` cues the chant sound each loop
-  heal: clip(8, 6, true, heal),
+  heal: clip(8, 6, true, heal, undefined, { hit: 0 }), // `hit` cues the healing chime each loop
   die: clip(10, 10, false, diePose),
 };
 
