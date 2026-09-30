@@ -432,8 +432,15 @@ Ships already train at the Dock and path on water (their own move class and regi
       exploring the sea when none is known. PlayerView: fish(), region(), seaReachable(), landSize(). Small
       Islands (peaceful, 20 min): Dock by 5 min, 12 boats; Coastal: only the coastal start fishes. Land-map AI
       suite: worst Bronze 19:41 → 18:17, wars decided 3/4 (gate ≥ 3/4). Test: ai.test.ts "at sea".
-- [ ] **M8.8b AI warships.** War Galley line from the Dock (plus Fishing Ship and the galley upgrades) on water
-      maps: guard the fishing grounds, sink enemy boats, raid docks and the enemy shore.
+- [x] **M8.8b AI warships.** Islands (and a coast once enemy warships appear) keep a fleet by age (island 4/6/8,
+      coast 2/3/4): warships guard the fishing grounds, answer enemy ships near home, raid enemy boats then Docks
+      once 2–4 are ready, and sweep the sea when none are known; Dock upgrades (Fishing Ship; the galley line
+      only with a fleet). Warships are not part of the land army or its threats. Found and fixed: a Dock trains
+      one unit type at a time, so replacing sunk fishing boats kept warships out (boats now wait while the fleet
+      is short); islands hit the 50 pop with 30+ villagers and a useless land army — island villagers stop at 26,
+      the land army is a guard of 4 until transports, villagers lean to wood. Also: a hunting army now splits into
+      groups of three (a last villager hid for 10 min). Small Islands (Hard, 35 min): both fleets fight (15:9 lost).
+      Test: ai.test.ts "warships".
 - [ ] **M8.8c AI transports.** When no enemy building is reachable by land: build transports, load an army at
       the shore, land it on the enemy coast and attack; repeat waves.
 - [ ] **M8.8d Water AI suite.** Island/Narrows matches in the AI suite: no crashes, ≥ 90% decided (exit gate).

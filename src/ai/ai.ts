@@ -275,7 +275,9 @@ export class AiPlayer {
   private trainVillagers(s: Snapshot, cmds: Command[]): void {
     const tc = s.tc;
     if (!tc || tc.queue >= 2) return;
-    const target = this.p.villagers[s.me.age] ?? 20;
+    // An island's population goes to boats and warships too: villagers stop at 26 there (26 + 10 fishers + a
+    // guard of 4 + a fleet of 8 fits the 50).
+    const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.onIsland ? 26 : Infinity);
     if (s.villagers.length + tc.queue >= target) return;
     if (s.me.pop + tc.queue >= s.me.popCap) return;
     if (!s.v.canAfford(s.v.cost('villager'))) return;
@@ -437,6 +439,15 @@ export class AiPlayer {
     } else if (wood > 900 && food < 300 && sh[1]! > 0.2) {
       sh[1] = sh[1]! - 0.2;
       sh[0] = sh[0]! + 0.2;
+    }
+    // An island lives off its fishing boats and builds its fleet from wood: villagers lean to wood, gold only for
+    // upgrades (M8.8b — food and gold piled up while the Docks waited for wood).
+    if (this.naval.onIsland) {
+      const f = Math.min(0.15, sh[0]! - 0.25);
+      const g = Math.max(0, sh[2]! - 0.1);
+      sh[0] = sh[0]! - Math.max(0, f);
+      sh[2] = sh[2]! - g;
+      sh[1] = sh[1]! + Math.max(0, f) + g;
     }
     return sh;
   }

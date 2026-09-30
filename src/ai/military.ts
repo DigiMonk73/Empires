@@ -19,6 +19,8 @@ const ARMY: Record<Plan, number[]> = { rush: [0, 6, 14, 18, 22], boom: [0, 3, 8,
 /** Soldiers ready before a wave goes out. */
 const WAVE: Record<Plan, number[]> = { rush: [0, 6, 8, 10, 12], boom: [0, 99, 99, 12, 14] };
 const NON_MILITARY = new Set(['villager', 'fishingShip', 'tradeShip', 'transport', 'priest']);
+/** Warships are the naval AI's (ai/naval.ts): not part of the land army, and not a threat the army can answer. */
+const AT_SEA = new Set(['warship']);
 /** Raiders villagers can gang up on three to one: slow enough to catch, weak enough to beat (not riders, not hoplites). */
 const MILITIA_VS = new Set(['infantry', 'footArcher', 'slinger', 'siege']);
 /** Line upgrades the AI researches, per building, in order (econ:5). */
@@ -88,11 +90,11 @@ export class MilitaryBrain {
   }
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
-    const army = s.units.filter((u) => !NON_MILITARY.has(u.cls));
+    const army = s.units.filter((u) => !NON_MILITARY.has(u.cls) && !AT_SEA.has(u.cls));
     const threats = this.threats(s);
     this.buildings(ai, s, cmds, threats.length > 0);
     this.research(s, cmds);
-    this.train(s, cmds, army, threats.length, ai.overdue(s) ? ai.ageFood(s) : 0);
+    this.train(s, cmds, army, threats.length, ai.overdue(s) ? ai.ageFood(s) : 0, ai.naval.landCap(s));
     this.rally(s, cmds);
     if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army);
   }
@@ -100,7 +102,7 @@ export class MilitaryBrain {
   /** Enemy fighters in our base (within 14 tiles of our buildings) or on our villagers at a far woodline. */
   private threats(s: Snapshot): SeenEntity[] {
     return this.enemies(s).filter(
-      (o) => !o.building && !NON_MILITARY.has(o.cls) && (s.buildings.some((b) => dist(b.x, b.y, o.x, o.y) < 14) || s.villagers.some((u) => dist(u.x, u.y, o.x, o.y) < 7)),
+      (o) => !o.building && !NON_MILITARY.has(o.cls) && !AT_SEA.has(o.cls) && (s.buildings.some((b) => dist(b.x, b.y, o.x, o.y) < 14) || s.villagers.some((u) => dist(u.x, u.y, o.x, o.y) < 7)),
     );
   }
 
@@ -147,9 +149,10 @@ export class MilitaryBrain {
     }
   }
 
-  private train(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: number, overdueFood: number): void {
-    // Attacked: match the raiders and then some, whatever the plan (the economy is worth nothing dead).
-    const want = Math.max(this.wanted(s.me.age), threats ? threats + 3 : 0);
+  private train(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: number, overdueFood: number, landCap: number): void {
+    // Attacked: match the raiders and then some, whatever the plan (the economy is worth nothing dead). On an
+    // island the land army stays a home guard until transports can carry it (the naval AI says how many).
+    const want = Math.max(Math.min(this.wanted(s.me.age), landCap), threats ? threats + 3 : 0);
     let have = army.length;
     let siege = army.filter((u) => u.cls === 'siege').length;
     for (const b of s.buildings) {
@@ -306,10 +309,23 @@ export class MilitaryBrain {
     const hunting = !buildings.length && s.v.tick > 20 * 60 * 20;
     if (!idle.length || (!hunting && idle.length < (out >= Math.ceil(waveAt / 2) ? 2 : waveAt))) return;
     this.lastPush = s.v.tick;
-    let [gx, gy] = this.enemyGuess(s);
     // Enemy units in sight but no buildings known (the last stragglers): chase them.
     const seen = this.enemies(s);
-    if (!buildings.length && seen.length) [gx, gy] = [seen[0]!.x, seen[0]!.y];
+    if (!buildings.length && seen.length) {
+      cmds.push({ t: 'move', ids: idle.map((u) => u.h), x: Math.round(seen[0]!.x * 4) / 4, y: Math.round(seen[0]!.y * 4) / 4, am: true });
+      return;
+    }
+    // Hunting the last of them with nothing in sight: split up — groups of three sweep different parts of the map
+    // (one army walking the sweep point by point let a lone villager hide for ten minutes).
+    if (hunting && idle.length > 3) {
+      for (let k = 0; k * 3 < idle.length; k++) {
+        const [gx, gy] = this.enemyGuess(s);
+        this.sweep = (this.sweep + 5) % 36; // the next group starts further round the grid
+        cmds.push({ t: 'move', ids: idle.slice(k * 3, k * 3 + 3).map((u) => u.h), x: Math.round(gx * 4) / 4, y: Math.round(gy * 4) / 4, am: true });
+      }
+      return;
+    }
+    const [gx, gy] = this.enemyGuess(s);
     cmds.push({ t: 'move', ids: idle.map((u) => u.h), x: Math.round(gx * 4) / 4, y: Math.round(gy * 4) / 4, am: true });
   }
 }
