@@ -157,3 +157,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   so it can be undone (`losMask`). Ballistics: a missile aims where a moving unit's last step carries it by the
   time the missile lands (flight = distance ÷ speed); buildings are never led. Line of sight in the fog is the
   owner's compiled stat (it used the type's base value until M7.6).
+- **D36 — Repair** (2026-09-30, M8.3; `verify:true`). Villagers repair their own finished, damaged buildings
+  (not farms), ships and siege weapons. One repairer restores HP at the repairer rate 0.4 (econ:1.2) against
+  the target's build or train time: full HP from zero in 2.5× that time; n repairers stack as builders do,
+  (n + 2) / 3. Buildings mend free (the research names a cost only for ships); ships and siege cost 50% of their
+  price pro rata to the HP restored (mil:1b says "a share" — 50% is the later games' rule), and repair pauses
+  while the player can't pay. A ship is repaired from the shore: out at sea it is out of reach. R, then
+  left-click, or right-click with villagers.

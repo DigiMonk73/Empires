@@ -120,3 +120,32 @@ test('wonder: a standing Wonder and one rising from its site', async ({ page }, 
   await snap(page, info, 'wonder');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('repair: right-click a damaged house with a villager, and R then click for a second one', async ({ page }, info) => {
+  await openGame(page, 'scenario=village&fog=0&paused=1');
+  const houses = await page.evaluate(() => [window.__empires!.buildingAt(11, 11)!, window.__empires!.buildingAt(14, 10)!]);
+  await page.evaluate((hs) => hs.forEach((h) => window.__empires!.setHp(h, 20)), houses);
+  await page.evaluate(() => window.__empires!.camera.centerOn(14, 13));
+  await frames(page);
+  // The villager near the woodline at (21.6, 6.2): select it, right-click the first house.
+  const v = (await page.evaluate(() => window.__empires!.query.units(1))).find((u) => Math.abs(u.x - 21.6) < 1 && Math.abs(u.y - 6.2) < 1)!;
+  const vp = await page.evaluate((h) => window.__empires!.entityScreenPos(h), v.h);
+  await page.mouse.click(vp!.x, vp!.y - 8);
+  await expect(page.getByTestId('cmd-repair')).toBeVisible();
+  const h1 = await page.evaluate(() => window.__empires!.worldToScreen(12, 12));
+  await page.mouse.click(h1.x, h1.y - 10, { button: 'right' });
+  await page.evaluate(() => window.__empires!.step(20 * 60)); // ~10 s walk + 55/75 × 20 s / 0.4 ≈ 37 s
+  await frames(page);
+  const hp1 = await page.evaluate((h) => window.__empires!.hpOf(h), houses[0]);
+  expect(hp1).toBe(75);
+  // Then R and a left-click on the second house.
+  await page.keyboard.press('r');
+  const h2 = await page.evaluate(() => window.__empires!.worldToScreen(15, 11));
+  await page.mouse.click(h2.x, h2.y - 10);
+  await page.evaluate(() => window.__empires!.step(20 * 8));
+  await frames(page);
+  await snap(page, info, 'repair');
+  await page.evaluate(() => window.__empires!.step(20 * 40));
+  expect(await page.evaluate((h) => window.__empires!.hpOf(h), houses[1])).toBe(75);
+  expect(pageErrors(page)).toEqual([]);
+});

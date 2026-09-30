@@ -45,6 +45,10 @@ export interface EmpiresDebugApi {
   buildingAt(tx: number, ty: number): number | null;
   /** Test/review only: give a player a technology instantly (e.g. an age), applying its effects. */
   grantTech(player: number, tech: string): void;
+  /** Test/review only: set an entity's hit points (e.g. to damage a building for a repair test). */
+  setHp(h: number, hp: number): void;
+  /** Hit points of any entity (building or unit), or null if it is gone. */
+  hpOf(h: number): number | null;
   /** Test/demo only: a computer player takes over the local player. */
   autoplay(level: 'easiest' | 'easy' | 'moderate' | 'hard' | 'hardest'): void;
   /** Sounds started so far, by name (counted even before the AudioContext exists). */

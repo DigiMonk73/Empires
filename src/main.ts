@@ -313,6 +313,14 @@ async function boot(): Promise<void> {
       return h >= 0 && world.ents.slotOf(h) >= 0 ? h : null;
     },
     grantTech: (player, tech) => completeResearch(world, player, tech),
+    hpOf: (h) => {
+      const s = world.ents.slotOf(h);
+      return s >= 0 ? world.ents.hp[s]! : null;
+    },
+    setHp: (h, hp) => {
+      const s = world.ents.slotOf(h);
+      if (s >= 0) world.ents.hp[s] = hp;
+    },
     autoplay: (level) => session.addAi(session.localPlayer, level),
     audioStats: () => ({ ready: audio.ready, muted: audio.muted, played: { ...audio.stats } }),
     issue: (player, cmd) => session.router.submit(player, cmd),

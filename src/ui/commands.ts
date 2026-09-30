@@ -18,6 +18,7 @@ export type Action =
   | { kind: 'research'; bld: number; tech: string }
   | { kind: 'stance'; stand: boolean }
   | { kind: 'attackMove' }
+  | { kind: 'repair' }
   | { kind: 'stop' };
 
 export interface CommandButton {
@@ -96,6 +97,8 @@ export function computeCommands(w: World, player: number, selected: readonly num
   }
   if (villagers.length) {
     out.push({ id: 'buildMenu', label: 'Build', hotkey: 'B', icon: 'house', cost: null, disabled: null, action: { kind: 'buildMenu' } });
+    // Repair (the original's R): then left-click an own damaged building, ship or siege weapon.
+    out.push({ id: 'repair', label: 'Repair', hotkey: 'R', icon: null, glyph: '⚒', cost: null, disabled: null, action: { kind: 'repair' } });
   }
   if (units.length) out.push({ id: 'stop', label: 'Stop', hotkey: 'S', icon: null, glyph: '✋', cost: null, disabled: null, action: { kind: 'stop' } });
   // Stand Ground (the original's only stance) for fighting units; the button shows whether it is on.

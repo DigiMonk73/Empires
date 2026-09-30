@@ -18,6 +18,7 @@ const CMD_RESEARCH = 10;
 const CMD_STANCE = 11;
 const CMD_RESIGN = 12;
 const CMD_DELETE = 13;
+const CMD_REPAIR = 14;
 
 class Writer {
   bytes: number[] = [];
@@ -114,7 +115,8 @@ function writeCommand(w: Writer, c: Command): void {
       w.uv(c.queue ? 1 : 0);
       return;
     case 'construct':
-      w.uv(CMD_CONSTRUCT);
+    case 'repair':
+      w.uv(c.t === 'construct' ? CMD_CONSTRUCT : CMD_REPAIR);
       w.ids(c.ids);
       w.uv(c.h);
       w.uv(c.queue ? 1 : 0);
@@ -230,6 +232,12 @@ function readCommand(r: Reader): Command {
       const h = r.uv();
       const queue = r.uv() === 1;
       return queue ? { t: 'construct', ids, h, queue } : { t: 'construct', ids, h };
+    }
+    case CMD_REPAIR: {
+      const ids = r.ids();
+      const h = r.uv();
+      const queue = r.uv() === 1;
+      return queue ? { t: 'repair', ids, h, queue } : { t: 'repair', ids, h };
     }
     default:
       throw new Error(`unknown command type ${t}`);

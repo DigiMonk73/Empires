@@ -3,6 +3,7 @@ import { TYPES } from '../rules/registry.ts';
 import type { World } from '../world.ts';
 import { quantize, type PlayerCommand } from './types.ts';
 import { isVillager, startGather } from '../systems/gather.ts';
+import { startRepair } from '../systems/repair.ts';
 import { RESOURCE_KINDS } from '../rules/registry.ts';
 import { placeFoundation, startConstruct } from '../systems/build.ts';
 import { cancelUnit, currentBuilding, queueResearch, queueUnit } from '../systems/production.ts';
@@ -140,6 +141,9 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       }
       case 'construct':
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) startConstruct(w, slot, cmd.h, !!cmd.queue);
+        break;
+      case 'repair':
+        for (const slot of ownedUnitSlots(w, player, cmd.ids)) startRepair(w, slot, cmd.h, !!cmd.queue);
         break;
       case 'act': {
         const t = w.ents.slotOf(cmd.h);

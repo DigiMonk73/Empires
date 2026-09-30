@@ -10,6 +10,7 @@ import { placementValid } from '../sim/systems/build.ts';
 import { currentBuilding } from '../sim/systems/production.ts';
 import { wallLine } from './wallLine.ts';
 import { isVillager } from '../sim/systems/gather.ts';
+import { repairable } from '../sim/systems/repair.ts';
 import type { Action, CommandButton } from '../ui/commands.ts';
 
 const DRAG_THRESHOLD = 5;
@@ -37,7 +38,7 @@ export class InputController {
   /** Press tile of a wall being dragged (walls are laid as a line from press to release). */
   private wallFrom: { tx: number; ty: number } | null = null;
   /** Armed by the Attack Move button (A): the next left-click on the ground issues it. */
-  targeting: 'attackMove' | null = null;
+  targeting: 'attackMove' | 'repair' | null = null;
   private pointer = { x: 0, y: 0 };
   /** Buttons currently on the grid (for hotkeys); set by the HUD sync. */
   buttons: CommandButton[] = [];
@@ -78,7 +79,8 @@ export class InputController {
       return;
     }
     if (this.targeting) {
-      if (e.button === 0) this.attackMove(p, e.shiftKey);
+      if (e.button === 0 && this.targeting === 'attackMove') this.attackMove(p, e.shiftKey);
+      else if (e.button === 0) this.repairAt(p, e.shiftKey);
       this.setTargeting(null);
       return;
     }
@@ -209,6 +211,15 @@ export class InputController {
       this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xff5a4a);
       return;
     }
+    // Villagers: right-click an own damaged building, ship or siege weapon to repair it (foundations and fields are
+    // handled below).
+    const menders = ids.filter((h) => isVillager(this.world, e.slotOf(h)));
+    if (menders.length && ts >= 0 && repairable(this.world, me, ts)) {
+      this.session.router.submit(me, { t: 'repair', ids: menders, h: target, queue });
+      this.wr.addMarker(e.x[ts]!, e.y[ts]!, 0xffd84a);
+      const rest = ids.filter((h) => !menders.includes(h));
+      if (!rest.length) return;
+    }
     // Priests: right-click a friendly unit to heal it (the sim ignores it for everyone else).
     const priests = ids.filter((h) => TYPES[e.type[e.slotOf(h)]!]!.unit?.cls === 'priest');
     if (priests.length && ts >= 0 && e.kind[ts] === EKind.unit && !enemy && e.owner[ts] !== 0 && ts !== e.slotOf(priests[0]!)) {
@@ -257,6 +268,9 @@ export class InputController {
         break;
       case 'research':
         this.session.router.submit(me, { t: 'research', bld: a.bld, tech: a.tech });
+        break;
+      case 'repair':
+        this.setTargeting('repair');
         break;
       case 'attackMove':
         this.setTargeting('attackMove');
@@ -386,7 +400,17 @@ export class InputController {
     }
   }
 
-  private setTargeting(mode: 'attackMove' | null): void {
+  /** Repair (R, then left-click): the selected villagers mend the own damaged building, ship or siege clicked. */
+  private repairAt(p: { x: number; y: number }, queue: boolean): void {
+    const target = this.wr.pick(p.x, p.y);
+    const villagers = this.ownUnits().filter((h) => isVillager(this.world, this.world.ents.slotOf(h)));
+    const t = this.world.ents.slotOf(target);
+    if (!villagers.length || !repairable(this.world, this.session.localPlayer, t)) return;
+    this.session.router.submit(this.session.localPlayer, { t: 'repair', ids: villagers, h: target, queue });
+    this.wr.addMarker(this.world.ents.x[t]!, this.world.ents.y[t]!, 0xffd84a);
+  }
+
+  private setTargeting(mode: 'attackMove' | 'repair' | null): void {
     this.targeting = mode;
     this.canvas.style.cursor = mode ? 'crosshair' : '';
   }

@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M8.3 · repair (new); villager command grids
+- The villager grid gains Repair (R, ⚒) between Build and Stop; a villager walks to a damaged house. Should-fix
+  (M10): a house at 20/75 HP looks untouched — damage fire/smoke below 75/50/25% (PLAN art pipeline) isn't
+  drawn yet, so the player can't see what needs repair without selecting it.
+
 ## 2026-09-30 · M8.2 · harbor-battle (new)
 - A selected War Galley (145/160) trades arrows with a red Scout Ship; the arrow in flight and the target ring
   read. Must-fix (M8.6): every ship is the same placeholder sailboat on a dark disc — a galley can't be told

@@ -132,6 +132,8 @@ export type Order =
   | { k: 'gather'; res: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Build foundation `h` (phase 0 = walking, 1 = building). */
   | { k: 'build'; h: number; phase: 0 | 1; retry: number }
+  /** Repair own damaged building, ship or siege weapon `h` (phase 0 = walking, 1 = mending). */
+  | { k: 'repair'; h: number; phase: 0 | 1; retry: number }
   /** Farm field `h` (phases as gather). */
   | { k: 'farm'; h: number; phase: 0 | 1 | 2; drop: number; retry: number }
   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
