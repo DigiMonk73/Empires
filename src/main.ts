@@ -273,6 +273,7 @@ async function boot(): Promise<void> {
       return a.length ? a[Math.floor(a.length * 0.95)]! : 0;
     })(),
     terrainDrawCalls: wr.terrainDrawCalls,
+    particles: wr.particles.count,
   });
   installDebugApi({
     version: '0.2.0',

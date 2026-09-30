@@ -81,6 +81,8 @@ export interface RenderStats {
   dpr: number;
   views: number;
   terrainDrawCalls: number;
+  /** Fire, smoke, dust and splash particles drawn last frame (M10.5). */
+  particles: number;
   /** p95 of full-frame CPU ms over the last ~600 frames. */
   cpuP95: number;
 }

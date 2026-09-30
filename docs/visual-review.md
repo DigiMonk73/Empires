@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M10.5 · fire (artifacts/m10), dust
+- Damaged buildings burn: orange flame tongues on the roof under dark smoke columns leaning downwind, more fires
+  as HP falls (the 15% granary has three). First try's additive flames blew out to white blobs → normal-blended
+  tongues with a faint additive glow. Dust behind moving riders is deliberately faint at game zoom. FX 4.
+- In verify (repair): the damaged house burns while a villager repairs it. Must-fix fixed: foundations still
+  rising (their HP grows with progress) burned too — only finished buildings burn now.
+
 ## 2026-09-30 · M10.4 · harbor zoomed, coastal (artifacts/m10)
 - Water has life: turquoise over the shallows darkening to navy offshore, drifting ripples, foam lines washing
   on the beaches, the Dock, boats and fish schools sitting in it rather than on a flat colour. First try's

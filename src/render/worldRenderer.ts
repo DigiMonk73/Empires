@@ -13,6 +13,7 @@ import type { ArtFrame, BakedArt } from './bakedArt.ts';
 import { archModelId, archOf } from './arch.ts';
 import { groundHeight } from './ground.ts';
 import { FxLayer } from './fx.ts';
+import { ParticleLayer } from './particles.ts';
 import type { SimEvent } from '../sim/world.ts';
 
 interface EntityView {
@@ -117,7 +118,8 @@ export class WorldRenderer {
     this.art = art;
     this.objectLayer.sortableChildren = true;
     this.fog = new FogLayer(world);
-    this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.missileGfx, this.fog.mesh, this.overlayLayer);
+    this.particles = new ParticleLayer(world, (x, y, out, above) => this.ground(x, y, out, above));
+    this.root.addChild(this.terrainLayer, this.decalLayer, this.objectLayer, this.missileGfx, this.particles.root, this.fog.mesh, this.overlayLayer);
     this.decalLayer.addChild(this.selGfx, this.markerGfx, this.ghostGfx, this.faithGfx);
     this.overlayLayer.addChild(this.hpGfx);
     this.buildTerrain();
@@ -127,9 +129,12 @@ export class WorldRenderer {
 
   /** Corpses and rubble: the renderer's view of deaths the sim has already forgotten. */
   readonly fx: FxLayer;
+  /** Fire, smoke, dust and splashes (M10.5). */
+  readonly particles: ParticleLayer;
 
   onEvents(events: readonly SimEvent[]): void {
     this.fx.onEvents(events);
+    this.particles.onEvents(events);
     for (const ev of events) if (ev.t === 'converted') this.flashes.push({ x: ev.x, y: ev.y, t0: this.world.tick });
   }
 
@@ -574,6 +579,7 @@ export class WorldRenderer {
       }
     }
     this.fx.update(alpha, (tx, ty) => this.fog.isVisible(player, tx, ty), (tx, ty) => this.fog.isExplored(player, tx, ty));
+    this.particles.update(alpha, (tx, ty) => this.fog.isVisible(player, tx, ty));
     this.drawMissiles(alpha, player);
     this.drawFaith(player, alpha);
     const r = this.world.res;

@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.9.0 on the test VM (M9 exit: update from 0.8.0 migrated, gzip + revalidation headers, headless play 14/14 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-7 Hard > Easy (M13), KI-8 water AI gate (M13).
-- **Next up:** M10.5 particles (building fire/smoke by HP, dust, splashes).
+- **Next up:** M10.6 fog edges and the M10 review (screenshots, perf), then the M10 exit.
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -572,8 +572,12 @@ so far.
       sparkles, and bands of foam washing in along every shore, edged by noise against the beach. `setWaterTime`
       runs it on real time, or on game time when the render clock is frozen (deterministic screenshots). Ships
       keep their baked foam rings and wakes; no separate waterline shadow was needed.
-- [ ] **M10.5 Particles.** Buildings burn and smoke below 75/50/25% HP; dust from marching feet and
-      collapsing buildings; splashes.
+- [x] **M10.5 Particles** (`render/particles.ts`, visual only, a pure function of game time so paused frames and
+      screenshots are stable). Buildings below 75/50/25% HP burn with one/two/three fires on the roof — flame
+      tongues yellow to orange-red over a glow, dark smoke rising, greying and leaning away; mounted units,
+      chariots, elephants and siege engines kick up dust as they move; a collapsing building billows dust and
+      smoke for 3 s; shots landing in water and ships going down splash. A pool of soft sprites between the
+      missiles and the fog; `renderStats().particles` counts them.
 - [ ] **M10.6 Fog and review.** Soft fog edges that ease in; the M10 screenshot review and perf check.
 - _Exit:_ screenshots ≥ 4/5; perf gates met.
 
