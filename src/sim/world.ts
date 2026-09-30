@@ -12,7 +12,7 @@ import { PathService } from './path/service.ts';
 import { UnitGrid } from './core/spatial.ts';
 import { PathGrid } from './path/grid.ts';
 import { compilePlayerStats, type PlayerStats } from './rules/playerStats.ts';
-import { CIV_BY_ID } from '../data/index.ts';
+import { civRules } from '../data/index.ts';
 import { POPULATION } from '../data/setup.ts';
 import { createFog, fogSystem, unstampLos, type FogState } from './systems/fog.ts';
 import { populationSystem } from './systems/population.ts';
@@ -69,6 +69,8 @@ export interface SimConfig {
   timeLimit?: number;
   /** Starting age (econ:7): the age advances — or for Post-Iron every technology — researched at the start. */
   startingAge?: StartingAge;
+  /** Full Tech Tree (M14.4, econ:6.4): every civilization has everything but the Fire Galley, and no bonuses. */
+  fullTechTree?: boolean;
   /** "Reveal Map" option: the whole map starts explored (units in unwatched areas stay hidden). */
   revealMap?: boolean;
   /** Population limit (default 50; RoR allows 25–200). */
@@ -264,12 +266,15 @@ export class World {
   readonly victory: VictoryMode;
   readonly scoreTarget: number;
   readonly timeLimitTicks: number;
+  /** Full Tech Tree game (config). */
+  readonly fullTechTree: boolean;
 
   constructor(cfg: SimConfig) {
     this.seed = cfg.seed | 0;
     this.victory = cfg.victory ?? 'conquest';
     this.scoreTarget = cfg.victory === 'score' ? (cfg.scoreTarget ?? 1000) : 0;
     this.timeLimitTicks = cfg.victory === 'time' ? (cfg.timeLimit ?? 60) * 60 * TICKS_PER_SECOND : 0;
+    this.fullTechTree = !!cfg.fullTechTree;
     const fill = terrainIndex(cfg.map.terrain ?? 'grass');
     this.map = new TileMap(cfg.map.w, cfg.map.h, fill);
     this.ents = new EntityStore();
@@ -281,7 +286,7 @@ export class World {
     cfg.players.forEach((p, i) => {
       const res = Float64Array.from(RESOURCES.map((r) => start[r]));
       // Civ starting-stockpile modifiers (e.g. Shang −40 food).
-      for (const e of CIV_BY_ID.get(p.civ)?.bonuses ?? []) {
+      for (const e of civRules(p.civ, this.fullTechTree).bonuses) {
         if (e.op === 'player' && e.attr.startsWith('start.')) {
           const k = RESOURCES.indexOf(e.attr.slice(6) as (typeof RESOURCES)[number]);
           res[k] = e.mode === 'add' ? res[k]! + e.v : e.mode === 'mul' ? res[k]! * e.v : e.v;
@@ -289,7 +294,7 @@ export class World {
       }
       // The Hardest computer's head start (D48).
       if (p.ai === 'hardest') RESOURCES.forEach((r, k) => (res[k] = res[k]! + HARDEST_BONUS[r]));
-      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true, ...(p.ai ? { ai: p.ai } : {}) });
+      this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ, [], this.fullTechTree), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true, ...(p.ai ? { ai: p.ai } : {}) });
     });
     const teams = this.players.map((p) => p.team);
     for (const p of this.players) p.stance = stancesFromTeams(p.id, teams);

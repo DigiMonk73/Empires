@@ -167,7 +167,7 @@ export function deserializeWorld(bytes: Uint8Array): { world: World; config: Sim
     pl.team = p.team;
     pl.res.set(p.res);
     pl.techs = [...p.techs];
-    pl.stats = compilePlayerStats(p.civ, pl.techs);
+    pl.stats = compilePlayerStats(p.civ, pl.techs, w.fullTechTree);
     pl.defeated = p.defeated;
     pl.tally = structuredCloneTally(p.tally);
     // Saves before M12.3 carry no stances: the teams give them, as for a new game.

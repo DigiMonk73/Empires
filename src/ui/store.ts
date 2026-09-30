@@ -63,7 +63,7 @@ export const hud = {
   /** Suggested name for a new save ("Inland · tiny — 12:30"). */
   saveName: signal(''),
   /** The tech tree overlay (civ + columns), null when closed. */
-  techTree: signal<{ civ: string; columns: TreeColumn[] } | null>(null),
+  techTree: signal<{ civ: string; columns: TreeColumn[]; full: boolean } | null>(null),
   /** Post-game results (null = screen closed), and the game's timeline for the graphs (M12.4). */
   results: signal<ResultRow[] | null>(null),
   timeline: signal<Timeline | null>(null),

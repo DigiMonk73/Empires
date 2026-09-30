@@ -1,4 +1,4 @@
-import { CIV_BY_ID } from '../../data/index.ts';
+import { civRules } from '../../data/index.ts';
 import { RESOURCES } from '../../data/types.ts';
 import { MOVE_WATER, TERRAINS } from '../../data/terrain.ts';
 import { Act, EKind } from '../core/entities.ts';
@@ -25,8 +25,7 @@ export function buildingAvailable(w: World, player: number, typeIdx: number): Pl
   if (!b) return { ok: false, reason: 'not a building' };
   const p = w.players[player]!;
   if (p.stats.age < b.age) return { ok: false, reason: `requires ${['', 'Stone', 'Tool', 'Bronze', 'Iron'][b.age]} Age` };
-  const civ = CIV_BY_ID.get(p.civ);
-  if (civ?.disabled.buildings.includes(b.id)) return { ok: false, reason: 'not available to this civilization' };
+  if (civRules(p.civ, w.fullTechTree).disabled.buildings.includes(b.id)) return { ok: false, reason: 'not available to this civilization' };
   if (b.startsEnabled === false && !p.stats.enabled.has(`building:${b.id}`)) return { ok: false, reason: 'requires research' };
   const e = w.ents;
   for (const req of b.requiresBuilding ?? []) {

@@ -474,7 +474,7 @@ export function Hud() {
           onClose={() => hudActions.showDiplomacy(false)}
         />
       )}
-      {hud.techTree.value && <TechTree civ={hud.techTree.value.civ} columns={hud.techTree.value.columns} onClose={() => (hud.techTree.value = null)} />}
+      {hud.techTree.value && <TechTree civ={hud.techTree.value.civ} columns={hud.techTree.value.columns} full={hud.techTree.value.full} onClose={() => (hud.techTree.value = null)} />}
       <GameOver />
       <Results />
       <TopBar />

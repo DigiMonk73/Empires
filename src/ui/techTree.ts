@@ -1,4 +1,4 @@
-import { BUILDINGS, CIV_BY_ID, TECHS, UNIT_BY_ID, UNITS } from '../data/index.ts';
+import { BUILDINGS, TECHS, UNIT_BY_ID, UNITS, civRules } from '../data/index.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
@@ -54,8 +54,8 @@ function lineRoot(id: string): string {
 /** Walls and towers are researched and built from the Granary in the original's tree. */
 const GRANARY_BUILDS = ['smallWall', 'mediumWall', 'fortification', 'watchTower', 'sentryTower', 'guardTower', 'ballistaTower'];
 
-export function techTree(civId: string, w?: World, player?: number): TreeColumn[] {
-  const civ = CIV_BY_ID.get(civId);
+export function techTree(civId: string, w?: World, player?: number, fullTechTree = w?.fullTechTree ?? false): TreeColumn[] {
+  const civ = civRules(civId, fullTechTree);
   const p = w && player !== undefined ? w.players[player] : undefined;
   const age = p?.stats.age ?? 0;
   const owned = new Set<string>();
@@ -66,10 +66,10 @@ export function techTree(civId: string, w?: World, player?: number): TreeColumn[
       owned.add(TYPES[e.type[s]!]!.id);
     }
   }
-  const techMissing = (t: string) => !!civ?.disabled.techs.includes(t);
+  const techMissing = (t: string) => !!civ.disabled.techs.includes(t);
   /** A unit is out of reach if it, anything earlier in its line, the tech that upgrades to it, or a tech it needs is missing. */
   const unitMissing = (id: string): boolean => {
-    if (civ?.disabled.units.includes(id)) return true;
+    if (civ.disabled.units.includes(id)) return true;
     const u = UNIT_BY_ID.get(id);
     if (u?.requires?.some(techMissing)) return true;
     if (u?.upgradeOf) {
@@ -79,7 +79,7 @@ export function techTree(civId: string, w?: World, player?: number): TreeColumn[
     return false;
   };
   const state = (kind: TreeItem['kind'], id: string, itemAge: number): ItemState => {
-    if (kind === 'unit' ? unitMissing(id) : kind === 'building' ? civ?.disabled.buildings.includes(id) : techMissing(id)) return 'missing';
+    if (kind === 'unit' ? unitMissing(id) : kind === 'building' ? civ.disabled.buildings.includes(id) : techMissing(id)) return 'missing';
     if (!p) return 'now';
     if (kind === 'tech' && p.techs.includes(id)) return 'done';
     if (kind === 'building' && owned.has(id)) return 'done';

@@ -38,7 +38,7 @@ test('main menu → skirmish setup → game → in-game menu → resign → defe
   void pageErrors;
 });
 
-test('skirmish setup options: Time Limit, a Bronze Age start and a population of 100 reach the game', async ({ page }) => {
+test('skirmish setup options: Time Limit, a Bronze Age start, a population of 100 and Full Tech Tree reach the game', async ({ page }) => {
   await page.goto('./?edgeScroll=0');
   await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('menu-skirmish').click();
@@ -48,8 +48,12 @@ test('skirmish setup options: Time Limit, a Bronze Age start and a population of
   await page.getByTestId('setup-age').selectOption('bronze');
   await page.getByTestId('setup-pop').selectOption('100');
   await page.getByTestId('setup-seed').fill('77');
+  await expect(page.getByTestId('civ-info')).not.toContainText('Full Tech Tree');
+  await page.getByTestId('setup-ftt').check();
+  await expect(page.getByTestId('civ-info')).toContainText('No civilization bonuses (Full Tech Tree)');
   await page.getByTestId('setup-start').click();
   await page.waitForURL(/win=time/);
+  expect(page.url()).toMatch(/ftt=1/);
   expect(page.url()).toMatch(/limit=30/);
   expect(page.url()).toMatch(/pop=100/);
   await page.waitForFunction(() => !!window.__empires);

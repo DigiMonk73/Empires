@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M14.4 · menu-skirmish (Full Tech Tree checkbox)
+- "Full Tech Tree" beside "Reveal map" on the first row; the panel widens a little (still inside 1280 CSS px) and
+  everything stays aligned. With it ticked the civ panel lists "No civilization bonuses (Full Tech Tree)" and
+  "everything but the Fire Galley" (checked by the lobby e2e). UI 4.
+
 ## 2026-09-30 · M14.3 · menu-skirmish (a second settings row)
 - Victory, Starting age and Population on a second row under Map / Size / Resources / Seed, same labels and
   selects; Target or Time limit appears beside Victory when chosen. Aligned, readable; the players table moves

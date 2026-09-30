@@ -27,7 +27,7 @@ function Chip({ id, name, state, kind, arch }: { id: string; name: string; state
   );
 }
 
-export function TechTree({ civ, columns, onClose }: { civ: string; columns: TreeColumn[]; onClose: () => void }) {
+export function TechTree({ civ, columns, full = false, onClose }: { civ: string; columns: TreeColumn[]; full?: boolean; onClose: () => void }) {
   const c = CIV_BY_ID.get(civ);
   return (
     <div class="tt" data-testid="tech-tree" onKeyDown={(e) => e.key === 'Escape' && onClose()}>
@@ -36,6 +36,7 @@ export function TechTree({ civ, columns, onClose }: { civ: string; columns: Tree
           <h2>
             <Emblem civ={civ} size={36} />
             Tech Tree — {c?.name ?? civ}
+            {full ? ' (Full Tech Tree)' : ''}
           </h2>
           <button data-testid="tech-tree-close" onClick={onClose}>
             Close

@@ -114,6 +114,9 @@ function Skirmish({ onBack }: { onBack: () => void }) {
         <label class="check">
           <input type="checkbox" checked={s.reveal} onChange={(e) => upd({ reveal: (e.target as HTMLInputElement).checked })} /> Reveal map
         </label>
+        <label class="check" title="Every civilization gets every unit, building and technology but the Fire Galley, and no bonuses">
+          <input type="checkbox" data-testid="setup-ftt" checked={s.fullTech} onChange={(e) => upd({ fullTech: (e.target as HTMLInputElement).checked })} /> Full Tech Tree
+        </label>
       </div>
       <div class="menu-row">
         <label title={VICTORY_HINTS[s.victory]}>
@@ -210,7 +213,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
           ))}
         </tbody>
       </table>
-      <CivInfo civ={s.players[0]!.civ} />
+      <CivInfo civ={s.players[0]!.civ} full={s.fullTech} />
       <div class="menu-buttons row">
         <button onClick={addPlayer} disabled={s.players.length >= 8}>
           Add player
@@ -224,28 +227,32 @@ function Skirmish({ onBack }: { onBack: () => void }) {
   );
 }
 
-/** Your civilization's bonuses (and what its tree lacks), as the original's civ screen summarised them. */
-function CivInfo({ civ }: { civ: string }) {
+/**
+ * Your civilization's bonuses (and what its tree lacks), as the original's civ screen summarised them — or, with
+ * Full Tech Tree, that every civilization has everything and no bonuses.
+ */
+function CivInfo({ civ, full }: { civ: string; full: boolean }) {
   const c = CIVS.find((x) => x.id === civ);
   const [tree, setTree] = useState(false);
   if (!c) return null;
   const missing = c.disabled.units.length + c.disabled.buildings.length + c.disabled.techs.length;
+  const bonuses = full ? ['No civilization bonuses (Full Tech Tree)'] : c.bonusText;
   return (
     <div class="civ-info" data-testid="civ-info">
       <Emblem civ={civ} size={64} class="emblem civ-emblem" />
       <div class="civ-name">{c.name}</div>
       <ul>
-        {c.bonusText.map((b) => (
+        {bonuses.map((b) => (
           <li>{b}</li>
         ))}
       </ul>
       <div class="civ-missing">
-        {missing ? `${missing} items missing from its tech tree. ` : 'Full tech tree. '}
+        {full ? 'Full Tech Tree: everything but the Fire Galley. ' : missing ? `${missing} items missing from its tech tree. ` : 'Full tech tree. '}
         <button class="small" data-testid="setup-tech-tree" onClick={() => setTree(true)}>
           Tech Tree
         </button>
       </div>
-      {tree && <TechTree civ={civ} columns={techTree(civ)} onClose={() => setTree(false)} />}
+      {tree && <TechTree civ={civ} columns={techTree(civ, undefined, undefined, full)} full={full} onClose={() => setTree(false)} />}
     </div>
   );
 }

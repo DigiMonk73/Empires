@@ -1,4 +1,4 @@
-import { CIV_BY_ID, TECH_BY_ID, TECHS, UNIT_BY_ID } from '../../data/index.ts';
+import { TECH_BY_ID, TECHS, UNIT_BY_ID, civRules } from '../../data/index.ts';
 import { compilePlayerStats } from '../rules/playerStats.ts';
 import { TICKS_PER_SECOND } from '../time.ts';
 import { EKind } from '../core/entities.ts';
@@ -40,7 +40,7 @@ export function trainBlocker(w: World, player: number, b: number, unitId: string
   const p = w.players[player]!;
   const current = p.stats.upgrades.get(unitId) ?? unitId;
   const def = UNIT_BY_ID.get(current)!;
-  if (CIV_BY_ID.get(p.civ)?.disabled.units.includes(unitId)) return 'not available to this civilization';
+  if (civRules(p.civ, w.fullTechTree).disabled.units.includes(unitId)) return 'not available to this civilization';
   if (p.stats.age < UNIT_BY_ID.get(unitId)!.age) return 'requires a later age';
   const needs = UNIT_BY_ID.get(unitId)!.requires ?? [];
   for (const t of needs) if (!p.techs.includes(t)) return `requires ${TECH_BY_ID.get(t)?.name ?? t}`;
@@ -57,7 +57,7 @@ export function researchBlocker(w: World, player: number, b: number, techId: str
   if (TYPES[e.type[b]!]!.building!.id !== tech.at) return 'not researched here';
   const p = w.players[player]!;
   if (p.techs.includes(techId)) return 'already researched';
-  if (CIV_BY_ID.get(p.civ)?.disabled.techs.includes(techId)) return 'not available to this civilization';
+  if (civRules(p.civ, w.fullTechTree).disabled.techs.includes(techId)) return 'not available to this civilization';
   if (p.stats.age < tech.age) return `requires the ${AGE_NAMES[tech.age]}`;
   for (const r of tech.requires ?? []) if (!p.techs.includes(r)) return `requires ${TECH_BY_ID.get(r)?.name ?? r}`;
   if (tech.requiresAnyBuildings) {
@@ -116,7 +116,7 @@ export function completeResearch(w: World, player: number, techId: string): void
   const p = w.players[player]!;
   const before = p.stats;
   p.techs.push(techId);
-  p.stats = compilePlayerStats(p.civ, p.techs);
+  p.stats = compilePlayerStats(p.civ, p.techs, w.fullTechTree);
   const e = w.ents;
   for (let s = 0; s < e.top; s++) {
     if (!e.alive[s] || e.owner[s] !== player) continue;

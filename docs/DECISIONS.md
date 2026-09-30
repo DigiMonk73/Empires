@@ -318,3 +318,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   changes (no extra villagers or buildings: the research names none). Nomad (no Town Center, fandom's single
   villager unverified) is not offered: the computers can't yet found a town, so it waits for M14.6. Population
   25–200 in steps of 25 (econ:2), default 50. The URL carries all of it (`win`, `target`, `limit`, `age`, `pop`).
+- **D54 — Full Tech Tree** (2026-09-30, M14.4; econ:6.4 "Full Tech Tree removes civ bonuses. In the original,
+  Fire Galleys are not available under Full Tech Tree"). A game-wide setting (`fullTechTree` in the config, the
+  lobby's checkbox, `ftt=1`): every player may build, train and research everything except the Fire Galley, and no
+  civilization bonus applies — the starting-stockpile ones (Shang −40 food) included. The civilization still sets
+  the look (architecture set, emblem, voices) and the computer's style (`civStyle.ts`). One helper,
+  `civRules(civ, fullTechTree)` in `data/index.ts`, is the only way the sim and the tech-tree screen read a
+  civilization's bonuses and missing items. With Post-Iron it researches every technology in the data.

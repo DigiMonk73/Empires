@@ -32,6 +32,8 @@ export interface SkirmishSetup {
   startingAge: StartingAge;
   /** Population limit (25–200, econ:2). */
   popCap: number;
+  /** Full Tech Tree (econ:6.4): everything for everyone but the Fire Galley, no civ bonuses. */
+  fullTech: boolean;
 }
 
 export const AI_LEVELS: readonly AiLevel[] = ['easiest', 'easy', 'moderate', 'hard', 'hardest'];
@@ -52,6 +54,7 @@ export const DEFAULT_SETUP: SkirmishSetup = {
   timeLimit: 60,
   startingAge: 'default',
   popCap: 50,
+  fullTech: false,
 };
 
 export function setupToQuery(s: SkirmishSetup): string {
@@ -70,6 +73,7 @@ export function setupToQuery(s: SkirmishSetup): string {
   if (s.victory === 'score') q.set('target', String(s.scoreTarget));
   if (s.victory === 'time') q.set('limit', String(s.timeLimit));
   if (s.reveal) q.set('reveal', '1');
+  if (s.fullTech) q.set('ftt', '1');
   return q.toString();
 }
 
@@ -95,6 +99,7 @@ export function setupFromQuery(q: URLSearchParams): SkirmishSetup {
     timeLimit: pick(q.get('limit'), TIME_LIMITS, DEFAULT_SETUP.timeLimit),
     startingAge: STARTING_AGES.some((a) => a.id === q.get('age')) ? (q.get('age') as StartingAge) : DEFAULT_SETUP.startingAge,
     popCap: pick(q.get('pop'), POP_LIMITS, DEFAULT_SETUP.popCap),
+    fullTech: q.get('ftt') === '1',
   };
 }
 
@@ -121,6 +126,7 @@ export function skirmishConfig(s: SkirmishSetup): SimConfig {
     ...(s.victory === 'time' ? { timeLimit: s.timeLimit } : {}),
     ...(s.startingAge !== 'default' ? { startingAge: s.startingAge } : {}),
     popCap: s.popCap,
+    ...(s.fullTech ? { fullTechTree: true } : {}),
     players: s.players.map((p) => ({ civ: p.civ, team: p.team, ...(p.controller !== 'human' ? { ai: p.controller } : {}) })),
   };
 }

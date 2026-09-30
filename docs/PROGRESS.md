@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only). KI-7 (M13.1) and KI-8 (M13.7) closed.
-- **Next up:** M14.4 Full Tech Tree (rules + the lobby toggle), then M14.5 alligators.
+- **Next up:** M14.5 alligators on shallows and beaches, then M14.6 AI relic/ruin/Wonder play (+ later starting ages, Nomad).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -818,7 +818,11 @@ of island/Narrows games decided in 2 h (11/12).
       limit, Starting age, Population); URL `win` `target` `limit` `age` `pop`. `runMatch({ startingAge })`. Tests:
       `setup-options.test.ts` (4) + a lobby e2e. Full Tech Tree moves to M14.4 with its rules; Nomad and the AI at
       later ages to M14.6.
-- [ ] **M14.4 Full Tech Tree.** Every civilization's tree complete, no civ bonuses; no Fire Galley (econ:6.4).
+- [x] **M14.4 Full Tech Tree.** Every civilization's tree complete, no civ bonuses; no Fire Galley (econ:6.4).
+      _Done:_ (D54) config `fullTechTree`; `civRules(civ, full)` (data/index.ts) is the one reader of bonuses and
+      missing items — stats compiler, starting stockpiles, train / research / build checks, starting ages, save
+      restore, the tech-tree screen ("(Full Tech Tree)"). Lobby checkbox (the civ panel says "No civilization
+      bonuses"), URL `ftt=1`. Tests: `full-tech-tree.test.ts` (5) + the lobby e2e.
 - [ ] **M14.5 Alligators** on shallows and beaches of every map (econ:8; the model exists since M9.1).
 - [ ] **M14.6 AI relic, ruin and Wonder play.** Claim and hold the objects near home; race the countdowns (attack
       an enemy Wonder or the holder of the objects first); Hard+ build a Wonder when rich in the Iron Age.

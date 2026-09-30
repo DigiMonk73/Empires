@@ -184,7 +184,7 @@ async function boot(): Promise<void> {
   hudActions.showTechTree = () => {
     const me = session.localPlayer;
     const civ = world.players[me]?.civ ?? 'greek';
-    hud.techTree.value = { civ, columns: techTree(civ, world, me) };
+    hud.techTree.value = { civ, columns: techTree(civ, world, me), full: world.fullTechTree };
   };
   hudActions.loadGame = (id, where) => {
     location.search = loadQuery(id, params, where);

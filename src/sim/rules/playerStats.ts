@@ -1,4 +1,4 @@
-import { CIV_BY_ID, TECH_BY_ID } from '../../data/index.ts';
+import { TECH_BY_ID, civRules } from '../../data/index.ts';
 import type { AttrPath, ClassValues, Effect, Job, PlayerFlag, Selector } from '../../data/types.ts';
 import { ARMOR_CLASS, RESOURCES } from '../../data/types.ts';
 import { VILLAGER_WORK } from '../../data/units.ts';
@@ -239,8 +239,11 @@ export function applyEffects(ps: PlayerStats, effects: readonly Effect[]): void 
   }
 }
 
-/** Compile a player's stats from civilization bonuses plus researched techs (in completion order). */
-export function compilePlayerStats(civ: string, techs: readonly string[] = []): PlayerStats {
+/**
+ * Compile a player's stats from civilization bonuses plus researched techs (in completion order); a Full Tech
+ * Tree game has no civilization bonuses.
+ */
+export function compilePlayerStats(civ: string, techs: readonly string[] = [], fullTechTree = false): PlayerStats {
   const work = {} as Record<Job, number>;
   const carry = {} as Record<Job, number>;
   for (const [job, rate] of Object.entries(VILLAGER_WORK.rate) as [Job, number][]) {
@@ -262,8 +265,7 @@ export function compilePlayerStats(civ: string, techs: readonly string[] = []): 
     upgrades: new Map(),
     age: 1,
   };
-  const c = CIV_BY_ID.get(civ);
-  if (c) applyEffects(ps, c.bonuses);
+  applyEffects(ps, civRules(civ, fullTechTree).bonuses);
   for (const id of techs) {
     const t = TECH_BY_ID.get(id);
     if (t) applyEffects(ps, t.effects);
