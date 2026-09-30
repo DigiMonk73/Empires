@@ -258,3 +258,19 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   its team play and does not answer diplomacy or tribute (its reactions — "turns hostile if attacked twice",
   research §7 — are M13 material). Team games play exactly as before; old saves load with stances from their
   teams (SIM_VERSION unchanged).
+- **D48 — The Hardest computer's head start** (2026-09-30, M13.2). The research names one cheat for the original
+  Hardest AI: extra resources (mil:7 "commonly +2000 of each", econ:7 "extra food, e.g. +2000"; both unverified).
+  We take the smaller reading: a Hardest computer starts with +2000 food (`HARDEST_BONUS`, `verify: true`), given
+  by the sim when the world is created from a config whose player is `ai: 'hardest'` (a human seat handed to an
+  AI later gets none). Measured: Hardest > Hard 31/64 → 63–64/64 on the 32-map ladder (the Done gate is 65%).
+  Saves keep their stockpiles, so SIM_VERSION is unchanged; a replay of an old Hardest game would diverge.
+- **D49 — AI v2: what separates the levels** (2026-09-30, M13.2). Traces of the 32-map ladder showed Hard and
+  Moderate winning exactly half of their mirror games — faster thinking and a bigger army cap changed nothing, and
+  both floated ~3000 unspent gold. Now: (1) an **upgrade programme** by tier (Easiest none … Hardest all — economy,
+  attack and armour), from spare resources only; Hard and Hardest also move miners off an unspent gold pile;
+  (2) **tactics** for Hard and Hardest — remember enemy soldiers seen (3 min), push only with 1.5× their worth
+  (units valued at price × health left), focus fire on the weakest enemy in reach (≤ 4 melee each), pull a wave
+  back home when it meets a force over 1.7× its own, and let villagers join a home fight their soldiers can't
+  win alone but can together; (3) **rush odds** by level (Moderate 50%, Hard and Hardest 75% — their rush won 77%
+  of traces, their boom 52%). One early Watch Tower for Hard was tried and cost more than it saved (41 → 35).
+  Result: hard>moderate 33 → 48/64, hard>easy 53 → 58, hardest>hard 31 → 64 (with D48).

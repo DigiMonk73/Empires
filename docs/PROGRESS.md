@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M13 AI v2 in progress (M13.1 done). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
+- **Milestone:** M13 AI v2 in progress (M13.1–2 done). M12 UI & QoL **done** (tag `m12`, s9pk 0.12.0). M11 Audio done (tag `m11`). M11 Audio **done** (tag `m11`, s9pk 0.11.0). M10 done (tag `m10`, 0.10.0). M9 done (tag `m9`, 0.9.0 checked on the StartOS VM). M8 done (tag `m8`; water AI gate → M13, D42). M7 done (tag `m7`; Hard > Easy → M13, D41).
 - **Last green commit:** m12 (verify ~135 s); verify:full at the M12 exit 699 s (audio check, Docker both arches 126 MB + server-save round trip, Tauri smoke render avg 1.9 ms, s9pk, 452 unit + 119 e2e, ladder 32 maps: hardest>easiest 55/64, hard>easy 53/64 → M13).
 - **Art:** every unit, animal and building has baked art (WebP atlases, lazy per model, ~60 MB); one Greek-style
   building set with age variants (`buildingAges.ts`); Egyptian-architecture civs (Egyptian, Assyrian, Sumerian)
@@ -19,7 +19,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **StartOS:** 0.12.0 on the test VM (M12 exit, the user's request: update from 0.9.0, health green, server saves in /data survive reinstall and restart, headless 20/20 + restart 2/2 in both browsers); backup/restore unverified — KI-3. Next VM check: M15.
 - **Audio:** synth SFX + `say` voices (M6.8); `node tools/sfx.ts` dumps effects to `artifacts/audio/sfx/`.
 - **Open issues:** KI-9 hills vs the AI war gate (**user decision**), KI-1 icon, KI-2 AI images (optional), KI-3 backups, KI-5 voice licence (personal use only), KI-8 water AI gate (M13.7). KI-7 closed (M13.1).
-- **Next up:** M13.2 stronger Hard and Hardest (hard>moderate 33/64, hardest>hard 31/64 at the M13.1 baseline).
+- **Next up:** M13.3 Easy over Easiest (45/64, needs 48).
 - **Playable now:** open `/` → main menu → Skirmish vs a computer that builds, rushes or booms, and attacks; `?scenario=map&…` (random map), `?scenario=battle` (20v20; A + click = attack-move), `?scenario=raid` (right-click enemies); `?scenario=start` — a real opening by mouse: build (B→letter, ghost), gather by right-click,
   train at the TC (C), rally points, idle-villager button (.).
 - **Notes:** metrics `docs/metrics/{history,econ,battle,ai}.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`.
@@ -711,11 +711,16 @@ of island/Narrows games decided in 2 h (11/12).
       suite with every pairing 148 s (was ~500 s without them). `--adjacent` adds the Done ladder's neighbouring
       pairs (reported, gated at the M13 exit); `--only timing,war,ladder,water` for tuning. verify:full runs
       `--full --adjacent`. **Hard > Easy is gated again** (53/64, KI-7 closed) and Moderate > Easy (50/64) joins.
-- [ ] **M13.2 Stronger Hard and Hardest.** Why does Hard only draw Moderate? Trace lost games (army value,
-      villagers lost, age times, idle, bank) and fix what the traces show: spending the bank, army composition
-      that counters what was scouted, focus fire and pulling back wounded units, attacking with the whole army,
-      defending villagers; the original's Hardest resource bonus (research §7: extra resources, amount unverified —
-      a DECISIONS entry). Target: hard>moderate and hardest>hard up to the gates.
+- [x] **M13.2 Stronger Hard and Hardest** (D48, D49). Traces (`artifacts/ladder-trace.ts`, `plan-trace.ts`,
+      `boom-trace.ts`; `MatchResult` now carries each player's techs and plan) showed the mirrors split 50/50,
+      games decided at 10–20 min when a rush broke an economy, and ~3000 unspent gold everywhere. Added
+      `ai/upgrades.ts` (upgrade programme by level tier), thrifty gold for Hard+, `ai/tactics.ts` (enemy memory,
+      push at 1.5× worth, focus fire, retreat, villager militia at home — saved in the AI state), rush odds by
+      level, and the Hardest head start (+2000 food, D48). Tried and backed out: army scale ×1.4/×1.7 (no change),
+      push/retreat thresholds (±2 games), one early tower (−6). Ladder: hard>moderate **48/64**, hardest>hard
+      **64/64**, hard>easy 58, hardest>easiest 64, moderate>easy 50, moderate>easiest 55; wars 3/4; timing and
+      idle unchanged. `ai-tactics.test.ts` (4); the M6.5 conquest test moved from seed 5 (now the one open game of
+      seeds 1–10) to seed 1.
 - [ ] **M13.3 Easy over Easiest.** Easiest a little slower and more passive (it already starts pushes at 18 min);
       Easy steadier (45 → ≥ 48 of 64).
 - [ ] **M13.4 Defence.** Towers by the Town Center and woodlines (Hard+), walls rarely (the original's habit),

@@ -6,7 +6,8 @@
  * Ladder (D33): the stronger level wins — or leads 1.5:1 on score at 60 min — in ≥ 75% of games, both seats.
  * --full adds more seeds, bigger maps, 3–4 player free-for-alls, and Hard > Easy, Moderate > Easiest.
  * --adjacent adds every neighbouring pair (Easy > Easiest … Hardest > Hard), the Done definition's ladder (M13).
- * --only timing,war,ladder,water runs just those sections (AI tuning). Matches run on worker threads (M13.1).
+ * --only timing,war,ladder,water runs just those sections; --pairs hard>moderate,… just those pairings (AI tuning).
+ * Matches run on worker threads (M13.1).
  */
 import { appendFileSync, existsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -35,6 +36,9 @@ const ladderPairs: [AiLevel, AiLevel][] = FULL ? [['hardest', 'easiest'], ['hard
 /** The Done definition's ladder: each level over the one below (Hardest > Hard needs 65%). Reported with --adjacent. */
 const ADJACENT_PAIRS: [AiLevel, AiLevel][] = [['easy', 'easiest'], ['moderate', 'easy'], ['hard', 'moderate'], ['hardest', 'hard']];
 if (ADJACENT) for (const pr of ADJACENT_PAIRS) if (!ladderPairs.some(([a, b]) => a === pr[0] && b === pr[1])) ladderPairs.push(pr);
+// --pairs hard>moderate,easy>easiest: just these pairings (tuning).
+const pairsArg = process.argv.indexOf('--pairs');
+if (pairsArg >= 0) ladderPairs.splice(0, ladderPairs.length, ...process.argv[pairsArg + 1]!.split(',').map((p) => p.split('>') as [AiLevel, AiLevel]));
 /**
  * Pairings reported but not gated yet: the adjacent ladder until the M13 exit. Hard > Easy (46/64 at M7, D41) is
  * gated again from M13.1 — 53/64 on 32 maps.

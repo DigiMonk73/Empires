@@ -4,6 +4,7 @@ import { Rng, STREAM, type RngState } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
 import { MilitaryBrain, type MilitaryState } from './military.ts';
 import { NavalBrain, type NavalState } from './naval.ts';
+import { upgrades } from './upgrades.ts';
 import { TECH_BY_ID } from '../data/index.ts';
 
 /**
@@ -15,6 +16,8 @@ import { TECH_BY_ID } from '../data/index.ts';
 interface LevelParams {
   /** Ticks between decisions. */
   think: number;
+  /** Moves miners off a gold pile nobody is spending (M13.2: every level floated ~3000 gold by 30 min). */
+  thrifty: boolean;
   /** Villager targets by age (index = age). */
   villagers: [number, number, number, number, number];
   /** Game minute by which the Tool Age is overdue (the Bronze Age: ten minutes later). */
@@ -22,11 +25,11 @@ interface LevelParams {
 }
 
 export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
-  easiest: { think: 40, villagers: [0, 12, 15, 18, 20], toolBy: 12 },
-  easy: { think: 20, villagers: [0, 16, 20, 24, 28], toolBy: 11 },
-  moderate: { think: 10, villagers: [0, 20, 26, 32, 36], toolBy: 10 }, // clicks Tool at ~20 villagers (econ:9)
-  hard: { think: 6, villagers: [0, 21, 30, 38, 44], toolBy: 9 },
-  hardest: { think: 4, villagers: [0, 21, 32, 42, 50], toolBy: 9 },
+  easiest: { think: 40, thrifty: false, villagers: [0, 12, 15, 18, 20], toolBy: 12 },
+  easy: { think: 20, thrifty: false, villagers: [0, 16, 20, 24, 28], toolBy: 11 },
+  moderate: { think: 10, thrifty: false, villagers: [0, 20, 26, 32, 36], toolBy: 10 }, // clicks Tool at ~20 villagers (econ:9)
+  hard: { think: 6, thrifty: true, villagers: [0, 21, 30, 38, 44], toolBy: 9 },
+  hardest: { think: 4, thrifty: true, villagers: [0, 21, 32, 42, 50], toolBy: 9 },
 };
 
 /** Target share of villagers per resource by age (food, wood, gold, stone). */
@@ -146,6 +149,7 @@ export class AiPlayer {
     this.houses(s, cmds);
     this.economyBuildings(s, cmds);
     this.ageUp(s, cmds);
+    upgrades(s, this.level, this.ageSaving(s), cmds);
     this.farms(s, cmds);
     this.naval.update(this, s, cmds);
     if (!this.peaceful) this.military.update(this, s, cmds);
@@ -297,6 +301,12 @@ export class AiPlayer {
     return s.v.tick > by * 60 * 20 && s.villagers.length >= 12;
   }
 
+  /** Food kept back for the next age while it isn't bought yet (0 once it is researching or there is none). */
+  ageSaving(s: Snapshot): number {
+    const tech = NEXT_AGE_TECH[s.me.age];
+    return tech && !s.v.researching(tech) ? this.ageFood(s) : 0;
+  }
+
   /** Food the next age costs (0 when there is none to take). */
   ageFood(s: Snapshot): number {
     const tech = NEXT_AGE_TECH[s.me.age];
@@ -445,6 +455,21 @@ export class AiPlayer {
     if (s.me.age >= 3 && s.me.res[2]! < 150 && s.me.res[1]! > 800 && sh[1]! > 0.2) {
       sh[1] = sh[1]! - 0.15;
       sh[2] = sh[2]! + 0.15;
+    }
+    // Stone for the towers the harder levels want (M13.4): a few miners until it is in.
+    if (this.military.stoneWanted(s) > 0 && sh[1]! > 0.15) {
+      sh[1] = sh[1]! - 0.08;
+      sh[3] = sh[3]! + 0.08;
+    }
+    // Gold piling up past what the next age needs (Iron: 800) while food or wood is short: most miners go to
+    // food and wood — the gold only buys soldiers and upgrades, and those wait for food (M13.2 traces).
+    const next = NEXT_AGE_TECH[s.me.age];
+    const ageGold = next && !s.v.researching(next) ? ((TECH_BY_ID.get(next)!.cost as Partial<Record<string, number>>).gold ?? 0) : 0;
+    if (this.p.thrifty && s.me.res[2]! > ageGold + 500 && (food < 400 || wood < 300) && sh[2]! > 0.05) {
+      const move = sh[2]! - 0.05;
+      sh[2] = 0.05;
+      if (food < 400) sh[0] = sh[0]! + (wood < 300 ? move * 0.6 : move);
+      if (wood < 300) sh[1] = sh[1]! + (food < 400 ? move * 0.4 : move);
     }
     // An island lives off its fishing boats and builds its fleet from wood: villagers lean to wood, gold only for
     // upgrades (M8.8b — food and gold piled up while the Docks waited for wood).

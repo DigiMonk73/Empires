@@ -1,6 +1,6 @@
 import { RESOURCES } from '../data/types.ts';
 import type { CargoUnit } from './systems/transport.ts';
-import { STARTING_RESOURCES, type AiLevel, type StartingResources } from '../data/setup.ts';
+import { HARDEST_BONUS, STARTING_RESOURCES, type AiLevel, type StartingResources } from '../data/setup.ts';
 import { terrainIndex } from '../data/terrain.ts';
 import { Act, EKind, EntityStore } from './core/entities.ts';
 import { ResourceStore } from './core/resources.ts';
@@ -23,7 +23,7 @@ export type { AiLevel };
 export interface PlayerSetup {
   civ: string;
   team?: number;
-  /** Computer player at this difficulty (the sim ignores it; the session starts an AI controller). */
+  /** Computer player at this difficulty (the session starts an AI controller; the sim gives Hardest its head start, D48). */
   ai?: AiLevel;
 }
 
@@ -245,6 +245,8 @@ export class World {
           res[k] = e.mode === 'add' ? res[k]! + e.v : e.mode === 'mul' ? res[k]! * e.v : e.v;
         }
       }
+      // The Hardest computer's head start (D48).
+      if (p.ai === 'hardest') RESOURCES.forEach((r, k) => (res[k] = res[k]! + HARDEST_BONUS[r]));
       this.players.push({ id: i + 1, civ: p.civ, team: p.team ?? i + 1, res, techs: [], stats: compilePlayerStats(p.civ), pop: 0, popCap: 0, defeated: null, tally: newTally(), stance: [], alliedVictory: true });
     });
     const teams = this.players.map((p) => p.team);

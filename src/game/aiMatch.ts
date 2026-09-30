@@ -42,6 +42,10 @@ export interface MatchResult {
   unitsSeen: number;
   maxTickMs: number;
   hash: number;
+  /** Each player's researched technologies at the end, in order (AI diagnostics, M13.2). */
+  techs: string[][];
+  /** Each computer's opening plan (rush / boom). */
+  plans: string[];
 }
 
 const isVillager = (w: Sim['world'], s: number): boolean => TYPES[w.ents.type[s]!]!.unit?.cls === 'villager';
@@ -96,6 +100,8 @@ export function runMatch(o: MatchOptions): MatchResult {
     unitsSeen: seen.size,
     maxTickMs,
     hash: sim.hash(),
+    techs: o.levels.map((_, i) => [...w.players[i + 1]!.techs]),
+    plans: ais.map((ai) => ai.military.plan),
   };
 }
 

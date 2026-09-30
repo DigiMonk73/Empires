@@ -12,6 +12,13 @@ export const STARTING_RESOURCES: Readonly<Record<StartingResources, Required<Cos
 };
 export const STARTING_SRC = { src: 'econ:1.5', verify: true, note: 'menu-order → switch-index mapping inferred' } as const;
 
+/**
+ * The Hardest computer's head start (D48): the original's only resource cheat (mil:7 "extra resources on Hardest",
+ * commonly +2000 of each; econ:7 "extra food, e.g. +2000"). The amount is unverified; we take the smaller reading.
+ */
+export const HARDEST_BONUS: Readonly<Required<Cost>> = { food: 2000, wood: 0, gold: 0, stone: 0 };
+export const HARDEST_BONUS_SRC = { src: 'mil:7,econ:7', verify: true } as const;
+
 export const START_UNITS = { townCenters: 1, villagers: 3, villagerRing: [2, 4] as const, src: 'econ:1.5,econ:8' } as const;
 
 export const POPULATION = { default: 50, min: 25, max: 200, house: 4, townCenter: 4, src: 'econ:2' } as const;

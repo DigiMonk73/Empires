@@ -4,6 +4,7 @@ import type { Command } from '../sim/commands/types.ts';
 import type { Rng } from '../sim/math/rng.ts';
 import type { OwnUnit, SeenEntity } from '../sim/view/playerView.ts';
 import { dist, type AiPlayer, type Snapshot } from './ai.ts';
+import { Tactics, type Sighting } from './tactics.ts';
 
 /**
  * AI military v1 (M6.5). Two plans, picked once per game: a *rush* (Barracks early, clubmen → axemen and
@@ -39,19 +40,24 @@ const NEXT_AGE: Record<number, string> = { 1: 'toolAge', 2: 'bronzeAge', 3: 'iro
  * minutes), whether a rush is allowed, and the pause between pushes (ticks). Like the original, the easier
  * computers are passive early — a 9-minute clubman rush is not "easiest".
  */
-const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: boolean; patience: number; siege: number }> = {
-  easiest: { scale: 0.5, firstPush: 18, rush: false, patience: 1800, siege: 0 },
-  easy: { scale: 0.7, firstPush: 14, rush: false, patience: 1200, siege: 1 },
-  moderate: { scale: 1, firstPush: 0, rush: true, patience: 600, siege: 2 },
-  hard: { scale: 1.15, firstPush: 0, rush: true, patience: 400, siege: 3 },
-  hardest: { scale: 1.3, firstPush: 0, rush: true, patience: 300, siege: 4 },
+const WAR: Record<AiLevel, { scale: number; firstPush: number; rush: number; patience: number; siege: number; tactics: boolean; towers: number }> = {
+  easiest: { scale: 0.5, firstPush: 18, rush: 0, patience: 1800, siege: 0, tactics: false, towers: 0 },
+  easy: { scale: 0.7, firstPush: 14, rush: 0, patience: 1200, siege: 1, tactics: false, towers: 0 },
+  moderate: { scale: 1, firstPush: 0, rush: 0.5, patience: 600, siege: 2, tactics: false, towers: 0 },
+  // The harder levels rush more often: with their tactics a rush won 77% of M13.2's traces, a boom 52%.
+  hard: { scale: 1.15, firstPush: 0, rush: 0.75, patience: 400, siege: 3, tactics: true, towers: 0 },
+  hardest: { scale: 1.3, firstPush: 0, rush: 0.75, patience: 300, siege: 4, tactics: true, towers: 0 },
 };
+// (M13.2: one early tower for Hard cost more than it saved — hard>moderate 41 → 35 of 64 — so `towers` stays 0
+// until the defence task, M13.4, places them where raids actually land.)
 
 export interface MilitaryState {
   plan: Plan;
   lastPush: number;
   sweep: number;
   rallySet: number[];
+  /** Enemy soldiers remembered by the tactics of the harder levels (M13.2; absent in older saves). */
+  seen?: Sighting[];
 }
 
 export class MilitaryBrain {
@@ -61,11 +67,12 @@ export class MilitaryBrain {
   private sweep = 0;
   private rallySet = new Set<number>();
   private readonly war: (typeof WAR)[AiLevel];
+  private readonly tactics = new Tactics();
 
   constructor(rng: Rng, level: AiLevel) {
     this.war = WAR[level];
-    const rush = rng.chance(0.5); // drawn at every level so the AI's random stream doesn't depend on it
-    this.plan = rush && this.war.rush ? 'rush' : 'boom';
+    // One draw at every level, so the AI's random stream doesn't depend on it: a rush with the level's odds.
+    this.plan = rng.int(100) < Math.round(this.war.rush * 100) ? 'rush' : 'boom';
   }
 
   /** Bronze Age, an Archery Range standing, and no Siege Workshop yet (levels that field siege). */
@@ -79,7 +86,7 @@ export class MilitaryBrain {
   }
 
   save(): MilitaryState {
-    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet] };
+    return { plan: this.plan, lastPush: this.lastPush, sweep: this.sweep, rallySet: [...this.rallySet], ...(this.war.tactics ? { seen: this.tactics.save() } : {}) };
   }
 
   restore(st: MilitaryState): void {
@@ -87,6 +94,7 @@ export class MilitaryBrain {
     this.lastPush = st.lastPush;
     this.sweep = st.sweep;
     this.rallySet = new Set(st.rallySet);
+    this.tactics.restore(st.seen);
   }
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {
@@ -96,6 +104,14 @@ export class MilitaryBrain {
     this.research(s, cmds);
     this.train(s, cmds, army, threats.length, ai.overdue(s) ? ai.ageFood(s) : 0, ai.naval.landCap(s), ai.naval.popReserve(s));
     this.rally(s, cmds);
+    if (this.war.tactics) {
+      const enemies = this.enemies(s);
+      this.tactics.observe(s, enemies);
+      const home = s.tc ?? s.buildings[0];
+      if (home && this.tactics.retreat(s, army, enemies, home.x, home.y, cmds)) this.lastPush = s.v.tick; // regroup first
+      if (threats.length) this.tactics.militia(s, army, threats, cmds);
+      this.tactics.focus(s, army, enemies, cmds);
+    }
     if (!this.defend(s, cmds, army, threats)) this.attack(s, cmds, army, ai.naval.invading);
   }
 
@@ -122,6 +138,9 @@ export class MilitaryBrain {
       if (!ai.isPending(s, 'siegeWorkshop')) ai.build(s, cmds, 'siegeWorkshop', tc.x, tc.y, 7, 13, 1);
       return;
     }
+    // Towers (M13.4 early, for the harder levels): the starting stone buys a Watch Tower between the Town Center
+    // and the enemy once the Granary has researched it — a rush then meets arrows at the door.
+    if (this.war.towers && s.me.age >= 2 && this.towers(ai, s, cmds)) return;
     // A rush wants its Barracks early; anyone attacked without one needs it now.
     if ((this.plan === 'rush' || attacked) && s.villagers.length >= (attacked ? 5 : 9) && !ai.has(s, 'barracks').length && !ai.isPending(s, 'barracks')) {
       ai.build(s, cmds, 'barracks', tc.x, tc.y, 6, 12, 1);
@@ -137,6 +156,34 @@ export class MilitaryBrain {
       return;
     }
 
+  }
+
+  /** Towers wanted: research them at the Granary, then place them towards the enemy. True if it acted. */
+  private towers(ai: AiPlayer, s: Snapshot, cmds: Command[]): boolean {
+    const tc = s.tc;
+    if (!tc) return false;
+    const have = s.buildings.filter((b) => b.kind === 'tower').length;
+    if (have >= this.war.towers || ai.isPending(s, 'watchTower')) return false;
+    if (!s.me.techs.includes('watchTower')) {
+      const granary = s.buildings.find((b) => b.type === 'granary' && b.done && b.queue === 0);
+      if (granary && !s.v.researching('watchTower') && !s.v.researchBlocker(granary.h, 'watchTower') && s.me.res[0]! >= 50 + 50) {
+        cmds.push({ t: 'research', bld: granary.h, tech: 'watchTower' });
+      }
+      return false;
+    }
+    if (s.me.res[3]! < 150) return false;
+    const [gx, gy] = this.enemyGuess(s);
+    const len = dist(gx, gy, tc.x, tc.y) || 1;
+    const x = tc.x + ((gx - tc.x) / len) * (4 + 3 * have);
+    const y = tc.y + ((gy - tc.y) / len) * (4 + 3 * have);
+    return ai.build(s, cmds, 'watchTower', x, y, 0, 4, 2);
+  }
+
+  /** Stone still needed for the towers this level wants (the economy mines it). */
+  stoneWanted(s: Snapshot): number {
+    if (!this.war.towers || s.me.age < 2) return 0;
+    const have = s.buildings.filter((b) => b.kind === 'tower').length;
+    return Math.max(0, (this.war.towers - have) * 150 - s.me.res[3]!);
   }
 
   /**
@@ -317,6 +364,8 @@ export class MilitaryBrain {
     // With no enemy building known the war is a hunt for the last of them: whoever is idle keeps sweeping.
     const hunting = !buildings.length && s.v.tick > 20 * 60 * 20;
     if (!idle.length || (!hunting && idle.length < (out >= Math.ceil(waveAt / 2) ? 2 : waveAt))) return;
+    // The harder levels wait until the army is clearly the stronger one (or the population is full).
+    if (this.war.tactics && !hunting && !this.tactics.readyToPush(army, s.me.pop >= s.me.popCap - 1)) return;
     this.lastPush = s.v.tick;
     // Enemy units in sight but no buildings known (the last stragglers): chase them.
     const seen = this.enemies(s);
