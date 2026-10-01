@@ -3,9 +3,9 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.5 done; **M15.6** visual pass in progress: e2e scenarios
-  all ≥ 4 (part a); next the gallery (5 architecture sets × 4 ages) and the KI-1 icon. Earlier: M14 (m14) … — tagged.
-- **Last green:** verify (quick) at M15.6a, 126 s — 500 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.6 done; next **M15.7** Done audit (`docs/DONE.md`: every
+  Done item with its evidence; fix gaps). Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2 … — tagged.
+- **Last green:** verify (quick) at M15.6, 125 s — 500 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
   last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
   the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
 - **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
@@ -18,7 +18,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   value names its decision (D57, enforced by `data.test.ts`).
 - **StartOS:** 0.14.0 built (both arches); last installed on the VM: 0.12.0. Next VM check: M15.8.
 - **Open issues:** KI-3 backups (needs a backup target on the VM — the user), KI-5 voice licence (before any public
-  release — the user), KI-1 icon, KI-2 AI images (optional). No gate failing.
+  release — the user), KI-2 AI images (optional). No gate failing.
 - **Playable now:** `npm run preview` → `/` → Skirmish (setup: map, size, civs, levels, victory, starting age,
   population, Full Tech Tree, reveal); the Mac app `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/
   Empires.app`; review scenes `?scenario=relics|countdowns|map&gators=1|battle|…`.
@@ -980,13 +980,14 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       _Done (D66):_ measured on computer games — 8 facings 9–10° mean / 22–29° p90 off the heading, 16 halve it;
       only the walk clip of ships and riders goes to 16 (memory: full 16 would break 512 MB on water maps). Art
       1,340 MB GPU if all resident, 75.8 MB download; soak art shown ≤ 408 MB. `?scenario=turning` + e2e.
-- [ ] **M15.6 Visual pass** (Done 5). Gallery + every scenario screenshot scored ≥ 4/5, no open must-fix item;
+- [x] **M15.6 Visual pass** (Done 5). Gallery + every scenario screenshot scored ≥ 4/5, no open must-fix item;
       calibration IoU ≥ 0.98; KI-1 icon settled or accepted.
       _Plan:_ (a) e2e scenarios: `tools/contact-screens.ts` sheets of 9, Chromium scored, WebKit by cross-engine
       diff; (b) gallery: `tools/gallery.ts` for one civ per architecture set (greek, egyptian, babylonian, yamato,
       roman) × 4 ages × 8 views, scored in sheets; (c) KI-1 icon at app/favicon sizes; then fix every item < 4.
       _(a) done:_ all 68 ≥ 4 after one fix (results-timeline: Results drawn over the in-game menu → replaces it);
-      calibration IoU > 0.98 (unit test). Next: (b) gallery, (c) icon.
+      calibration IoU > 0.98 (unit test). _(b) done:_ gallery 160 views, all ≥ 4 after Babylonian Iron walls
+      stopped being Blue-player blue (D67). _(c) done:_ emblem kept, simplified favicon for 16–32 px (KI-1 closed).
 - [ ] **M15.7 Done audit.** `docs/DONE.md`: each Done item with its evidence (test names, metric lines, commits)
       — content 100% (units/buildings/techs each with data + tests), ≥ 40 e2e scenarios in both browsers, audio
       gates, Classic toggles. Fix gaps.

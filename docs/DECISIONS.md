@@ -447,3 +447,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   ships and riders would have added 686 MB of art (a four-navy islands game ~556 MB shown, over 512); the walk alone
   adds 217 MB in all (1,123 → 1,340 MB if everything were resident; download 63.7 → 75.8 MB, budget 150): soak art
   shown peaks 393 MB (land, 7 civs) and 408 MB (islands, 4 navies). Review scene `?scenario=turning`.
+- **D67 — Visual pass: owner colours stay the players'; the emblem settled** (2026-09-30, M15.6; Done 5; closes
+  KI-1). Every e2e scenario (68, both engines) and the art gallery (the 5 architecture sets × 4 ages, 160 views)
+  scored ≥ 4 on the checklist after two fixes. (1) Babylonian Iron Age walls, pilasters and silo domes were blue
+  glazed brick (#2c5cb0) — nearly the Blue player's #3f5f9f, so any owner's Iron town read as Blue's (must-fix:
+  misleading owner colour): now dark fired brick, stone pilasters and brick domes, the glaze kept for friezes,
+  bands and merlons. Egyptian and Asian blue is 2–3 cm trim (gold in the Iron Age), left as is. (2) The Results
+  panel drew over the in-game menu (HUD 3) — it replaces it now (M15.6a). KI-1: the hand-made emblem reads well
+  from 64 px up (app, Dock, menu) and is kept; at 16–32 px its laurel was noise, so the favicon is a simplified
+  medallion (`assets/brand/icon-small.svg`: the temple alone, heavier). Calibration IoU > 0.98 (unit test).

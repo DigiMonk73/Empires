@@ -2,6 +2,15 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.6b · visual pass, part 2: the art gallery (5 architecture sets × 4 ages) and the emblem
+- `tools/gallery.ts greek,egyptian,babylonian,roman,yamato 1,2,3,4` (160 views), scored per set on a 4×4 sheet
+  (ages × town-w, town-e, mil-e, wonder). Greek 4 (thatch → tile, domed granaries), Egyptian 4 (pyramid, gold by
+  Iron), Roman 4 (Colosseum, bronze roofs by Iron), Asian 4 (pagoda; Tool → Iron steps are subtle), Babylonian
+  4 after a must-fix: its Iron Age was blue glazed brick wall to wall — the Blue player's colour on any owner;
+  now fired brick with stone pilasters and blue friezes (re-shot, flags read again).
+- Emblem (KI-1): 512/128/64 px polished on dark and light; 16/32 px the laurel was noise → favicon is a simplified
+  medallion (temple alone), readable at 32, a recognisable temple at 16. Every scenario and gallery item ≥ 4.
+
 ## 2026-09-30 · M15.6a · visual pass, part 1: all 68 e2e scenarios (Chromium; WebKit by cross-engine diff)
 - Sheets via `tools/contact-screens.ts` (artifacts/review/e2e-chromium, 8 sheets of 9). Every shot ≥ 4 on the
   checklist: readable units and owners, one sun, grounded sprites, team colours clear, terrain without visible

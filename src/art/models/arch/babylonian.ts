@@ -6,8 +6,8 @@ import { frustum, up, type Age, type HallSpec, type Kit, type Mat } from './kit.
 /**
  * Babylonian (Mesopotamian) architecture — Babylonians, Hittites, Persians. Stone Age: barrel-vaulted reed houses
  * (mudhif). Tool: buttressed mudbrick blocks under stepped crenellations. Bronze: baked brick with a blue glazed
- * frieze of rosettes, arched doors, Persian bull-capital columns. Iron: walls of blue glazed brick with ochre
- * lions striding along them and gilded merlons. Its landmark is a stela, then a lion on a plinth; the temple is a
+ * frieze of rosettes, arched doors, Persian bull-capital columns. Iron: dark fired brick, stone pilasters, blue glazed
+ * friezes with ochre lions striding along them and gilded merlons. Its landmark is a stela, then a lion on a plinth; the temple is a
  * small ziggurat and the Wonder a great one with hanging gardens.
  */
 const REED: MatSpec = { tex: 'thatch', color: 0xc4b078, rough: 1, repeat: 4 };
@@ -16,6 +16,9 @@ const MUDBRICK: MatSpec = { tex: 'mudbrick', color: 0xbe9466, rough: 0.95, repea
 const BRICK: MatSpec = { tex: 'mudbrick', color: 0xb67a4e, rough: 0.9, repeat: 2.4 };
 const GLAZE: MatSpec = { tex: 'mudbrick', color: 0x2c5cb0, rough: 0.45, repeat: 2.4 };
 const GLAZE_DEEP: MatSpec = { tex: 'mudbrick', color: 0x22488c, rough: 0.45, repeat: 2.4 };
+/** Iron walls: dark fired brick. Whole walls of blue glaze read as the Blue player's colour on any owner (M15.6) —
+ * the glaze stays in friezes, bands and merlons, as on the Ishtar Gate's brick. */
+const IRON_BRICK: MatSpec = { tex: 'mudbrick', color: 0xa0603c, rough: 0.85, repeat: 2.4 };
 const STONE: MatSpec = { tex: 'plaster', color: 0xdcd4c4, rough: 0.7, repeat: 2 };
 const STEPS: MatSpec = { tex: 'stoneBlocks', color: 0xd8c8a8, rough: 0.9, repeat: 6 };
 const BRICK_TOP: MatSpec = { tex: 'mudbrick', color: 0xc89468, rough: 0.95, repeat: 3 };
@@ -28,7 +31,7 @@ const LEAVES: MatSpec = { tex: 'foliage', color: 0x4e8a34, rough: 1, repeat: 2 }
 const PALM: MatSpec = { tex: 'bark', color: 0x7a5c3a, rough: 1, repeat: 3 };
 const DARK: MatSpec = { tex: 'plain', color: 0x2e2218, rough: 1 };
 
-const wallMat = (a: Age): Mat => (a <= 1 ? MUDBRICK : a === 2 ? BRICK : GLAZE);
+const wallMat = (a: Age): Mat => (a <= 1 ? MUDBRICK : a === 2 ? BRICK : IRON_BRICK);
 const lift = (a: Age): number => (a >= 2 ? 0.1 : 0);
 
 /** A half-cylinder barrel along X (the reed house's vault), radius r, length len, scaled to height h. */
@@ -109,7 +112,7 @@ function hall(o: HallSpec): NodeSpec {
   }
   const wall = wallMat(a);
   kids.push({ geom: box(w, h, d), mat: wall, t: [0, h / 2, 0] });
-  kids.push(...pilasters(w, d, h, a === 3 ? GLAZE_DEEP : wall));
+  kids.push(...pilasters(w, d, h, a === 3 ? STONE : wall));
   kids.push({ geom: box(w + 0.03, 0.04, d + 0.03), mat: a === 1 ? MUDBRICK : a === 2 ? BRICK : GLAZE_DEEP, t: [0, h + 0.02, 0] });
   if (o.band !== false) kids.push({ geom: box(w + 0.05, 0.045, d + 0.05), mat: 'team', t: [0, h - 0.07, 0] });
   if (a >= 2) kids.push(...frieze(w, d, h * 0.62, a));
@@ -234,7 +237,7 @@ function store(x: number, z: number, r: number, h: number, a: Age): NodeSpec {
   const wall = wallMat(a);
   const kids: NodeSpec[] = [
     { geom: cyl(r, r * 1.04, h * 0.62, 14), mat: wall, t: [0, h * 0.31, 0] },
-    { geom: sphere(r, 14), mat: a === 3 ? GLAZE_DEEP : wall, t: [0, h * 0.62, 0], s: [1, (h * 0.5) / r, 1] },
+    { geom: sphere(r, 14), mat: a === 3 ? BRICK_TOP : wall, t: [0, h * 0.62, 0], s: [1, (h * 0.5) / r, 1] },
     { geom: cyl(r * 1.02, r * 1.02, 0.05, 14), mat: 'team', t: [0, h * 0.5, 0] },
     { geom: box(0.05, 0.12, 0.1), mat: DARK, t: [r * 0.98, 0.1, 0] },
   ];
