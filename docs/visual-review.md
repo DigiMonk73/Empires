@@ -2,6 +2,18 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.6a · visual pass, part 1: all 68 e2e scenarios (Chromium; WebKit by cross-engine diff)
+- Sheets via `tools/contact-screens.ts` (artifacts/review/e2e-chromium, 8 sheets of 9). Every shot ≥ 4 on the
+  checklist: readable units and owners, one sun, grounded sprites, team colours clear, terrain without visible
+  tiling, soft fog edges, legible HUD (alert and age messages checked at full size: outlined, readable on grass).
+- One below 4, fixed: **results-timeline** (HUD 3) — the Results panel opened from the in-game menu was drawn over
+  the menu, whose title, speed buttons, Resign and Quit showed above and below it. The achievements now replace the
+  menu like Options do, and their button reads "Back" (to the menu) there. Re-shot: clean, HUD 4.
+- WebKit: every shot within 0.4% of Chromium but the text-heavy ones (font rasterising, Safari's native selects —
+  menu-skirmish 5.6%, help 3.4%); menu-skirmish and minimap-after compared side by side: same layout, 4.
+- Notes (not must-fix): hills' shaded slope reads heavy; tech-tree icons are small at 26 px (one figure each).
+- Calibration: `bake-calibration.test.ts` (flat tile and 3×3 box vs the runtime projection) IoU > 0.98, green.
+
 ## 2026-09-30 · M15.5 · turning (new, both engines)
 - Four War Galleys and four Cavalry under way at 0°, 22.5°, 45° and 67.5°: each hull and horse points along its
   own heading (the 22.5° and 67.5° rows were drawn at 45° before), wakes trail straight behind the galleys.

@@ -12,6 +12,7 @@ test('achievements mid-game: the timeline graphs every player, metric by metric,
   await page.getByTestId('menu-btn').click();
   await page.getByTestId('menu-achievements').click();
   await expect(page.getByTestId('results')).toBeVisible();
+  await expect(page.getByTestId('game-menu')).toBeHidden(); // the achievements replace the menu (M15.6)
   await page.getByTestId('results-timeline').click();
   const graph = page.getByTestId('graph');
   await expect(graph).toHaveAttribute('data-metric', 'score');

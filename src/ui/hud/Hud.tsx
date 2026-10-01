@@ -392,7 +392,9 @@ function Results() {
           </div>
         )}
         <div class="gameover-buttons">
-          <button data-testid="close-results" onClick={() => (hud.results.value = null)}>Back to the game</button>
+          <button data-testid="close-results" onClick={() => (hud.results.value = null)}>
+            {hud.menuOpen.value ? 'Back' : 'Back to the game'}
+          </button>
         </div>
       </div>
     </div>
@@ -402,6 +404,8 @@ function Results() {
 /** In-game menu (pauses the game): resume, game speed, restart, resign, quit to the main menu. */
 function GameMenu() {
   if (!hud.menuOpen.value) return null;
+  // Achievements replace the menu, like Options; their Back returns here (M15.6: they were drawn over it).
+  if (hud.results.value) return null;
   const dialog = hud.saveDialog.value;
   if (hud.optionsOpen.value)
     return (
