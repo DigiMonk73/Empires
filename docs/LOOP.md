@@ -14,6 +14,7 @@ truth**, not conversation memory, because context gets summarized.
 | `docs/visual-review.md` | Per-iteration screenshot scores against `docs/VISUAL_CHECKLIST.md`. |
 | `docs/research/*` | Sourced game-rule research. Data rows cite these. |
 | `docs/design/architecture-proposal.md` | Detailed design reference (interfaces, systems, budgets). |
+| `docs/POLISH_LOOP.md` | The time-boxed polish run (M15.10): scope, discovery lenses, checkpoints, wrap-up. |
 
 ## Each iteration
 1. **Check the tree.** `git status`. Leftovers from a crashed iteration are finished or reset to the last green
