@@ -38,6 +38,8 @@ const STEPS: Step[] = [
   { id: 'purity', title: 'Sim purity', cmd: ['node', 'tools/check-purity.ts'] },
   { id: 'bake', title: 'Bake sprites (incremental) → public/baked', cmd: ['node', 'tools/bake/cli.ts'] },
   { id: 'unit', title: 'Unit + determinism tests (vitest)', cmd: ['npx', 'vitest', 'run'], needs: ['bake'] },
+  // M15.7: every unit, building and technology the research lists is in the data and reached by a test.
+  { id: 'done', title: 'Done audit: content complete and tested', cmd: ['node', 'tools/done-audit.ts', '--check'] },
   {
     id: 'sim',
     title: 'Headless sim stress (500 units, fuzzed orders)',

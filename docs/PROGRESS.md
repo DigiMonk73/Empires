@@ -3,9 +3,9 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.6 done; next **M15.7** Done audit (`docs/DONE.md`: every
-  Done item with its evidence; fix gaps). Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2 … — tagged.
-- **Last green:** verify (quick) at M15.6, 125 s — 500 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.7 done (`docs/DONE.md`: Done items 1–7 met); next
+  **M15.8** release build 1.0.0 (+ the StartOS VM protocol; backup → restore needs KI-3 from the user), then M15.9.
+- **Last green:** verify (quick) at M15.7, 125 s — 606 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
   last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
   the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
 - **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
@@ -988,9 +988,13 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       _(a) done:_ all 68 ≥ 4 after one fix (results-timeline: Results drawn over the in-game menu → replaces it);
       calibration IoU > 0.98 (unit test). _(b) done:_ gallery 160 views, all ≥ 4 after Babylonian Iron walls
       stopped being Blue-player blue (D67). _(c) done:_ emblem kept, simplified favicon for 16–32 px (KI-1 closed).
-- [ ] **M15.7 Done audit.** `docs/DONE.md`: each Done item with its evidence (test names, metric lines, commits)
+- [x] **M15.7 Done audit.** `docs/DONE.md`: each Done item with its evidence (test names, metric lines, commits)
       — content 100% (units/buildings/techs each with data + tests), ≥ 40 e2e scenarios in both browsers, audio
       gates, Classic toggles. Fix gaps.
+      _Done (D68):_ `docs/DONE.md` — items 1–7 met with their evidence; 8 (M15.8) and 9 (M15.9) remain.
+      `tools/done-audit.ts` (a verify step) matches the research tables to the data and finds every unit,
+      building and tech tested; the gaps it found (2 ships, 2 towers, 30 techs untested) closed by
+      `content-sweep.test.ts` (106 tests: every tech, building, building upgrade, ship upgrade).
 - [ ] **M15.8 Release build** (Done 8). Version 1.0.0; aarch64 `.app` + hidden smoke test; `.s9pk` for both
       arches; README / instructions / i18n complete; StartOS VM protocol (LOOP.md) incl. backup → restore —
       **needs a backup target on the VM (KI-3, the user)**. Voice licence (KI-5) before any public release —

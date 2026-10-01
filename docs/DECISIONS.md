@@ -456,3 +456,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   panel drew over the in-game menu (HUD 3) — it replaces it now (M15.6a). KI-1: the hand-made emblem reads well
   from 64 px up (app, Dock, menu) and is kept; at 16–32 px its laurel was noise, so the favicon is a simplified
   medallion (`assets/brand/icon-small.svg`: the temple alone, heavier). Calibration IoU > 0.98 (unit test).
+- **D68 — The Done audit: evidence per item, content checked on every verify** (2026-09-30, M15.7). `docs/DONE.md`
+  lists each Done item with its proof; items 1–7 are met, 8 (packaging, M15.8) and 9 (the user's playtest, M15.9)
+  remain. "Each unit, building and tech with data and tests" is made checkable: `tools/done-audit.ts` matches the
+  research tables (§4 buildings, §5 and 1d techs, 1a–1b units) to the data by name — all present — and counts a
+  unit, building or tech as tested when a test names it or a sweep reaches it, a sweep counting only while its test
+  exists. Before the audit 2 ships (Merchant Ship, Heavy Transport), 2 towers and 30 techs had no test;
+  `content-sweep.test.ts` now researches every tech at its building once its age and prerequisites are in and
+  requires it to change the player's compiled stats, builds every building with villagers (the Wonder too), and
+  upgrades every standing tower and wall and every ship. `done-audit --check` is a verify step.
