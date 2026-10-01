@@ -435,16 +435,16 @@ function warClips(kind: 'galley' | 'catapult' | 'fire'): Record<string, ClipDef>
 }
 
 export const SHIP_MODELS: ModelDef[] = [
-  { id: 'scoutShip', kind: 'unit', facings: 8, build: galley({ L: 1.2, B: 0.34, banks: 1, oars: 5, sail: true, hull: HULL }), clips: warClips('galley') },
-  { id: 'warGalley', kind: 'unit', facings: 8, build: galley({ L: 1.45, B: 0.38, banks: 2, oars: 6, sail: true, hull: HULL }), clips: warClips('galley') },
-  { id: 'trireme', kind: 'unit', facings: 8, build: galley({ L: 1.7, B: 0.42, banks: 3, oars: 7, sail: true, hull: HULL_DARK }), clips: warClips('galley') },
-  { id: 'catapultTrireme', kind: 'unit', facings: 8, build: catapultShip(false), clips: warClips('catapult') },
-  { id: 'juggernaught', kind: 'unit', facings: 8, build: catapultShip(true), clips: warClips('catapult') },
-  { id: 'fireGalley', kind: 'unit', facings: 8, build: fireGalley(), clips: warClips('fire') },
-  { id: 'fishingBoat', kind: 'unit', facings: 8, build: fisher(false), clips: shipClips(true) },
-  { id: 'fishingShip', kind: 'unit', facings: 8, build: fisher(true), clips: shipClips(true) },
-  { id: 'tradeBoat', kind: 'unit', facings: 8, build: trader(false), clips: shipClips(false) },
-  { id: 'merchantShip', kind: 'unit', facings: 8, build: trader(true), clips: shipClips(false) },
-  { id: 'lightTransport', kind: 'unit', facings: 8, build: transport(false), clips: shipClips(false) },
-  { id: 'heavyTransport', kind: 'unit', facings: 8, build: transport(true), clips: shipClips(false) },
+  { id: 'scoutShip', kind: 'unit', facings: 8, walkFacings: 16, build: galley({ L: 1.2, B: 0.34, banks: 1, oars: 5, sail: true, hull: HULL }), clips: warClips('galley') },
+  { id: 'warGalley', kind: 'unit', facings: 8, walkFacings: 16, build: galley({ L: 1.45, B: 0.38, banks: 2, oars: 6, sail: true, hull: HULL }), clips: warClips('galley') },
+  { id: 'trireme', kind: 'unit', facings: 8, walkFacings: 16, build: galley({ L: 1.7, B: 0.42, banks: 3, oars: 7, sail: true, hull: HULL_DARK }), clips: warClips('galley') },
+  { id: 'catapultTrireme', kind: 'unit', facings: 8, walkFacings: 16, build: catapultShip(false), clips: warClips('catapult') },
+  { id: 'juggernaught', kind: 'unit', facings: 8, walkFacings: 16, build: catapultShip(true), clips: warClips('catapult') },
+  { id: 'fireGalley', kind: 'unit', facings: 8, walkFacings: 16, build: fireGalley(), clips: warClips('fire') },
+  { id: 'fishingBoat', kind: 'unit', facings: 8, walkFacings: 16, build: fisher(false), clips: shipClips(true) },
+  { id: 'fishingShip', kind: 'unit', facings: 8, walkFacings: 16, build: fisher(true), clips: shipClips(true) },
+  { id: 'tradeBoat', kind: 'unit', facings: 8, walkFacings: 16, build: trader(false), clips: shipClips(false) },
+  { id: 'merchantShip', kind: 'unit', facings: 8, walkFacings: 16, build: trader(true), clips: shipClips(false) },
+  { id: 'lightTransport', kind: 'unit', facings: 8, walkFacings: 16, build: transport(false), clips: shipClips(false) },
+  { id: 'heavyTransport', kind: 'unit', facings: 8, walkFacings: 16, build: transport(true), clips: shipClips(false) },
 ];

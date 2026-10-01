@@ -134,6 +134,7 @@ export const CAVALRY_MODELS: ModelDef[] = [
     id: 'scout',
     kind: 'unit',
     facings: 8,
+    walkFacings: 16,
     build: mounted({ rightHand: shortSpear, head: [{ geom: sphere(0.074, 10), mat: 'leather', t: [-0.005, 0.085, 0], s: [1, 0.62, 1] }] }),
     clips: riderClips(),
   },

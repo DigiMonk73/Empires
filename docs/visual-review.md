@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.5 · turning (new, both engines)
+- Four War Galleys and four Cavalry under way at 0°, 22.5°, 45° and 67.5°: each hull and horse points along its
+  own heading (the 22.5° and 67.5° rows were drawn at 45° before), wakes trail straight behind the galleys.
+  Readability 4, anchoring 4, team colour 4 (sails, riders' shields). Other shots: noise only (menus, save lists).
+
 ## 2026-09-30 · M15.4b · every model rebaked (team overlays cut); HUD icons clipped (28 shots ≤ 0.18% px)
 - World views: no visible change (units' team colours sit where they did — selection-box, army checked).
 - HUD icons (tech-tree, selection-box/moved): each shows one figure now — before, a soldier's icon showed its atlas

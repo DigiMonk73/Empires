@@ -339,7 +339,9 @@ export class WorldRenderer {
     if (want === 'attack' && !meta.clips.attack && meta.clips.throw) want = 'throw';
     const clipName = meta.clips[want] ? want : e.act[slot] === Act.move ? 'walk' : 'idle';
     const clip = meta.clips[clipName] ?? meta.clips.idle!;
-    const dir = ((e.facing[slot]! + 1) >> 1) & 7; // 16 sim sectors → 8 baked facings
+    // The sim keeps 16 sectors: a 16-facing clip (ships' and riders' walk, D66) uses them as they are, an 8-facing
+    // clip folds them to 8.
+    const dir = (clip.facings ?? meta.facings) === 16 ? e.facing[slot]! & 15 : ((e.facing[slot]! + 1) >> 1) & 7;
     const secs = (this.world.tick - e.actStart[slot]! + alpha) / 20;
     let f = Math.floor(secs * clip.fps);
     f = clip.loop ? f % clip.frames : Math.min(f, clip.frames - 1);

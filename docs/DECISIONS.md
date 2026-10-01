@@ -437,3 +437,13 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   at its peak (was 551), all textures ≤ 472 MB; the full-population scene 307 → 182 MB. The soak now gates art
   shown ≤ 512 MB at every checkpoint. Found on the way: HUD icons (CSS backgrounds cut from atlas pages) showed the
   frame's neighbours in the box's margins — three soldiers for one; icons are now clipped to their frame.
+- **D66 — 16 facings for ships' and riders' walk; 8 for everything else** (2026-09-30, M15.5; settles D7's "16
+  facings for ships/cavalry decided in M15"). Measured on computer games (`tools/sim/facing.ts`, every moving ship
+  and rider each tick): with 8 facings the drawn hull or horse is off its true heading by 9–10° on average and 22–29°
+  at p90 — the sim's 16 sectors folded to 8 send every odd sector the same way; 8 chosen from the true step barely
+  helps (8°) and flickers riders (separation nudges); 16 facings halve it (4–6° mean, 11° p90) with no more
+  flicker. A heading only shows while moving — standing, attacking and dying face a target or nothing — so only the
+  `walk` clip gets 16 (`walkFacings`; the renderer uses the sim's sector as is for a 16-facing clip). Full 16 for
+  ships and riders would have added 686 MB of art (a four-navy islands game ~556 MB shown, over 512); the walk alone
+  adds 217 MB in all (1,123 → 1,340 MB if everything were resident; download 63.7 → 75.8 MB, budget 150): soak art
+  shown peaks 393 MB (land, 7 civs) and 408 MB (islands, 4 navies). Review scene `?scenario=turning`.

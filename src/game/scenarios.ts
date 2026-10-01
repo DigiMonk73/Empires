@@ -498,6 +498,21 @@ function crowd(n: number): SimConfig {
   return { seed: 3, victory: 'none', map: { w: W, h: W }, players: [{ civ: 'greek', team: 1 }, { civ: 'persian', team: 1 }], scenario: { units } };
 }
 
+/**
+ * Turning review (M15.5, D66): water on the left with four War Galleys, grass on the right with four Cavalry, one of
+ * each per row — tests send them along 0°, 22.5°, 45° and 67.5°, the headings between the old 8 facings.
+ */
+function turning(): SimConfig {
+  const W = 40;
+  const rows: string[] = [];
+  for (let y = 0; y < W; y++) rows.push('~'.repeat(20) + '.'.repeat(W - 20));
+  const units = [0, 1, 2, 3].flatMap((k) => [
+    { type: 'warGalley', owner: 1, x: 9.5, y: 9.5 + k * 4 },
+    { type: 'cavalry', owner: 1, x: 24.5, y: 9.5 + k * 4 },
+  ]);
+  return { victory: 'none', seed: 14, map: { w: W, h: W, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'persian' }], scenario: { units } };
+}
+
 /** A generated random map: ?scenario=map&type=<GEN_MAP_TYPES>&size=tiny…gigantic&seed=N&players=N. */
 function randomMap(p: URLSearchParams): SimConfig {
   const type = ((GEN_MAP_TYPES as readonly string[]).includes(p.get('type') ?? '') ? p.get('type') : 'continental') as GenMapType;
@@ -536,4 +551,5 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
   fullpop: (p) => fullPopConfig(Number(p.get('seed') ?? 1) || 1),
+  turning,
 };

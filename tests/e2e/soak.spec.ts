@@ -10,9 +10,11 @@ import { openGame } from './helpers.ts';
  * with EMPIRES_SOAK=1 (verify:full).
  */
 const SOAK = process.env.EMPIRES_SOAK === '1';
+// EMPIRES_SOAK_QUERY plays another game (M15.5 checked a four-navy islands game with it).
 const QUERY =
+  process.env.EMPIRES_SOAK_QUERY ??
   'scenario=skirmish&type=continental&size=large&seed=5&win=conquest&p=' +
-  ['greek.1.hard', 'egyptian.2.hard', 'persian.3.moderate', 'babylonian.4.hard', 'yamato.5.moderate', 'hittite.6.hardest', 'shang.7.easy'].join(',');
+    ['greek.1.hard', 'egyptian.2.hard', 'persian.3.moderate', 'babylonian.4.hard', 'yamato.5.moderate', 'hittite.6.hardest', 'shang.7.easy'].join(',');
 const CHECKS = [10, 30, 60, 90, 120];
 
 interface Check {

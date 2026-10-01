@@ -16,7 +16,7 @@ export const SS = 4;
 const PITCH = (30 * Math.PI) / 180;
 /** Direction toward the sun: from the viewer's upper-left, so shadows fall toward screen right/down (+x). */
 export const SUN_DIR = new THREE.Vector3(-0.6, 0.86, -0.2).normalize();
-export const BAKER_VERSION = 3; // 2: WebP pages (KI-6); 3: units' team overlays cut to their own pixels (KI-12)
+export const BAKER_VERSION = 4; // 2: WebP pages (KI-6); 3: units' team overlays cut to their own pixels (KI-12); 4: walk facings (D66)
 
 export interface FrameMeta {
   p: number;
@@ -39,7 +39,8 @@ export interface AtlasMeta {
   pageSizes: { w: number; h: number }[];
   facings: number;
   variants: number;
-  clips: Record<string, { frames: number; fps: number; loop: boolean; markers?: Record<string, number> }>;
+  /** `facings`: this clip's own count when it differs from the model's (D66: a 16-facing walk). */
+  clips: Record<string, { frames: number; fps: number; loop: boolean; markers?: Record<string, number>; facings?: number }>;
   frames: Record<string, FrameMeta>;
 }
 
@@ -176,9 +177,10 @@ export class Baker {
       const holder = new THREE.Group();
       holder.add(model);
       if (!def.clips) this.screenBounds(holder, acc, !icon);
-      for (const clip of Object.values(def.clips ?? {})) {
-        for (let d = 0; d < def.facings; d++) {
-          holder.rotation.y = -(d * Math.PI * 2) / def.facings;
+      for (const [name, clip] of Object.entries(def.clips ?? {})) {
+        const n = facingsOf(def, name);
+        for (let d = 0; d < n; d++) {
+          holder.rotation.y = -(d * Math.PI * 2) / n;
           for (let f = 0; f < clip.frames; f++) {
             clip.pose(model, clip.loop ? f / clip.frames : f / (clip.frames - 1));
             this.screenBounds(holder, acc);
@@ -208,9 +210,10 @@ export class Baker {
         continue;
       }
       for (const [name, clip] of Object.entries(clips)) {
-        for (let d = 0; d < def.facings; d++) {
-          // Facing d points along world angle d·45° (0 = +x); model forward is +X.
-          obj.rotation.y = -(d * Math.PI * 2) / def.facings;
+        const n = facingsOf(def, name);
+        for (let d = 0; d < n; d++) {
+          // Facing d points along world angle d·360°/n (0 = +x); model forward is +X.
+          obj.rotation.y = -(d * Math.PI * 2) / n;
           for (let f = 0; f < clip.frames; f++) {
             clip.pose(model, clip.loop ? f / clip.frames : f / (clip.frames - 1));
             obj.updateMatrixWorld(true);
@@ -236,7 +239,7 @@ export class Baker {
       pageSizes: pages.map((c) => ({ w: c.width, h: c.height })),
       facings: def.facings,
       variants,
-      clips: Object.fromEntries(Object.entries(clips).map(([k, c]) => [k, { frames: c.frames, fps: c.fps, loop: c.loop, ...(c.markers ? { markers: c.markers } : {}) }])),
+      clips: Object.fromEntries(Object.entries(clips).map(([k, c]) => [k, { frames: c.frames, fps: c.fps, loop: c.loop, ...(c.markers ? { markers: c.markers } : {}), ...(facingsOf(def, k) !== def.facings ? { facings: facingsOf(def, k) } : {}) }])),
       frames: rects,
     };
     return { meta, pages };
@@ -314,6 +317,11 @@ function compose(beauty: Uint8Array, mask: Uint8Array | null, cw: number, ch: nu
     base: { key, w, h, ax: ox - x0, ay: oy - y0, rgba: cut(base) },
     team: team ? { key: `${key}#t`, w, h, ax: ox - x0, ay: oy - y0, rgba: cut(team) } : null,
   };
+}
+
+/** How many facings a clip is baked in. */
+function facingsOf(def: ModelDef, clip: string): number {
+  return clip === 'walk' && def.walkFacings ? def.walkFacings : def.facings;
 }
 
 /** A frame trimmed to its own visible pixels (anchor kept on the same ground point); null when nothing shows. */

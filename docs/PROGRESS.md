@@ -3,11 +3,11 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.4b done; next **M15.5** the 16-facing decision (D7):
-  turning ships and cavalry with 8 facings. Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2 … — tagged.
-- **Last green:** verify (quick) at M15.4b, 129 s — 500 unit + 130 e2e, 134 screenshots, full-pop sim step. verify:full
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.5 done; next **M15.6** visual pass (every gallery item and
+  scenario ≥ 4/5, calibration IoU ≥ 0.98, KI-1 icon). Earlier: M14 Rules (m14, s9pk 0.14.0) … — tagged.
+- **Last green:** verify (quick) at M15.5, 127 s — 500 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
   last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
-  the two-hour `soak` (≈ 2.5 min, D64). Baked art: 1,123 MB on the GPU if all resident (unit 978), 63.7 MB download.
+  the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
 - **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
   (Hard > Moderate 49/64, bar 48; Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out
   seeds 1001–1024 (D58); water 46/48 held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.07%, 0 crashes.
@@ -975,8 +975,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       _Done (D65):_ 43% of unit art was team overlays at full frame size; cut to their own pixels (baker v3) —
       unit art 1,593 → 978 MB, soak art shown peak 551 → 352 MB (all textures ≤ 472 MB), fullpop 307 → 182 MB,
       world rendering unchanged. HUD icons clipped to their frame (they showed atlas neighbours).
-- [ ] **M15.5 16-facing decision** (D7). Measure how ships and cavalry read turning with 8 facings (contact sheets,
+- [x] **M15.5 16-facing decision** (D7). Measure how ships and cavalry read turning with 8 facings (contact sheets,
       a turning scene); decide 8 vs 16 in DECISIONS; bake if 16 (budget: baked assets ≤ 150 MB).
+      _Done (D66):_ measured on computer games — 8 facings 9–10° mean / 22–29° p90 off the heading, 16 halve it;
+      only the walk clip of ships and riders goes to 16 (memory: full 16 would break 512 MB on water maps). Art
+      1,340 MB GPU if all resident, 75.8 MB download; soak art shown ≤ 408 MB. `?scenario=turning` + e2e.
 - [ ] **M15.6 Visual pass** (Done 5). Gallery + every scenario screenshot scored ≥ 4/5, no open must-fix item;
       calibration IoU ≥ 0.98; KI-1 icon settled or accepted.
 - [ ] **M15.7 Done audit.** `docs/DONE.md`: each Done item with its evidence (test names, metric lines, commits)

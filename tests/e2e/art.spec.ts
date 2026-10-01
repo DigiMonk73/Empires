@@ -53,3 +53,26 @@ test('released baked art loads again when a unit of it reappears', async ({ page
   expect((await page.evaluate(() => window.__empires!.query.units(1))).find((u) => u.h === second)?.sprite).not.toBeNull();
   expect(pageErrors(page)).toEqual([]);
 });
+
+/** The 16-facing walk (M15.5, D66): ships and riders sail and ride along 0°, 22.5°, 45° and 67.5° — each drawn in its own facing. */
+test('turning: War Galleys and Cavalry headed between the old 8 facings', async ({ page }, info) => {
+  await openGame(page, 'scenario=turning&fog=0&paused=1');
+  await page.evaluate(() => {
+    const api = window.__empires!;
+    const units = api.query.units(1).sort((a, b) => a.y - b.y || a.x - b.x);
+    units.forEach((u, i) => {
+      const a = (Math.floor(i / 2) * 22.5 * Math.PI) / 180;
+      api.issue(1, { t: 'move', ids: [u.h], x: Math.round((u.x + 8 * Math.cos(a)) * 4) / 4, y: Math.round((u.y + 8 * Math.sin(a)) * 4) / 4 });
+    });
+    api.step(24);
+    api.camera.setZoom(1);
+    api.camera.centerOn(19, 16);
+  });
+  await frames(page); // the sprites take their frames when drawn (and the walk pages load)
+  const moving = (await page.evaluate(() => window.__empires!.query.units(1))).filter((u) => u.sprite?.startsWith('walk/'));
+  expect(moving.length).toBe(8);
+  // Rows 22.5° and 67.5° use the in-between facings (1 and 3 of 16) — the old renderer drew them at 45°.
+  expect(moving.map((u) => Number(u.sprite!.split('/')[1])).sort((a, b) => a - b)).toEqual([0, 0, 1, 1, 2, 2, 3, 3]);
+  await snap(page, info, 'turning');
+  expect(pageErrors(page)).toEqual([]);
+});

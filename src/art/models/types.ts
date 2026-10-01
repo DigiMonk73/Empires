@@ -20,6 +20,8 @@ export interface ModelDef {
   variants?: number;
   /** Facings to bake (8 for units, 1 for static objects). */
   facings: number;
+  /** Facings for the `walk` clip when it needs more (D66: ships and riders turn in 16; their other clips keep 8). */
+  walkFacings?: number;
   build(variant: number): THREE.Object3D;
   clips?: Record<string, ClipDef>;
 }
