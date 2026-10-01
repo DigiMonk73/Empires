@@ -14,7 +14,7 @@ technology).
 | 5 | Visual | ✅ met |
 | 6 | Audio | ✅ met |
 | 7 | UX | ✅ met |
-| 8 | Packaging | ⏳ M15.8 (1.0.0 build, VM install with backup → restore — needs a backup target on the VM, KI-3) |
+| 8 | Packaging | ✅ met (1.0.0; the VM's backup → restore round trip awaits a backup target, KI-3) |
 | 9 | User playtest | ⏳ M15.9 (the user) |
 
 ## 1. Content — all 16 civs; 100% of RoR 1.0c units, buildings and techs, each with data and tests; all map types, sizes, victory conditions and setup options
@@ -88,9 +88,13 @@ Sweeps: army-lines.test (every unit a land building trains; every land upgrade),
 
 ## 8. Packaging — the aarch64 .app builds and passes its smoke test; the .s9pk builds for x86_64 and aarch64 and installs on the VM with health green; README, instructions and i18n complete
 
-- verify:full `tauri` (build + hidden smoke on `fullpop`), `docker` (amd64 + arm64, /healthz), `startos`
-  (`make arm`); last green at the M14 exit. Remaining for M15.8: version 1.0.0, both-arch `.s9pk`, the VM protocol
-  (health, play, restart persistence, backup → restore — KI-3, uninstall/reinstall, logs), docs and i18n review.
+- 1.0.0 (M15.8): verify:full `tauri` (Empires.app built, hidden smoke on `fullpop` 1.04 ms), `docker` (amd64 +
+  arm64, /healthz, 137 MB), `make` → `empires_x86_64.s9pk` and `empires_aarch64.s9pk` v1.0.0:0 (empires-startos
+  eaedb09). On the StartOS VM: update from 0.12.0 (migration clean), health ok, real play in Chromium and WebKit
+  (server save → load, tick and hash equal), restart persistence, uninstall/reinstall clean, logs without
+  warnings (PROGRESS M15.8). Not yet run: backup → restore (no backup target on the VM — KI-3, the user).
+- Docs: the package README (technical, incl. graphics memory) and instructions (players) are current; i18n: every
+  runtime string, the manifest texts and the release notes in en, es, de, pl, fr.
 
 ## 9. User playtest sign-off — a full skirmish against the Hard AI
 

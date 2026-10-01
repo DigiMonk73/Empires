@@ -3,9 +3,9 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.7 done (`docs/DONE.md`: Done items 1–7 met); next
-  **M15.8** release build 1.0.0 (+ the StartOS VM protocol; backup → restore needs KI-3 from the user), then M15.9.
-- **Last green:** verify (quick) at M15.7, 125 s — 606 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.8 done: **Empires 1.0.0** built and on the StartOS VM.
+  Waiting on **M15.9, the user's playtest** (a full skirmish vs Hard) — the M15 exit; then tag `m15`, M16 multiplayer.
+- **Last green:** verify:full at M15.8 (1.0.0), 1120 s — 606 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
   last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
   the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
 - **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
@@ -16,7 +16,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
   25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
   value names its decision (D57, enforced by `data.test.ts`).
-- **StartOS:** 0.14.0 built (both arches); last installed on the VM: 0.12.0. Next VM check: M15.8.
+- **StartOS:** 1.0.0:0 built (both arches, eaedb09) and verified on the VM (update from 0.12.0, restart, reinstall,
+  real play in both engines); backup → restore unverified (KI-3).
 - **Open issues:** KI-3 backups (needs a backup target on the VM — the user), KI-5 voice licence (before any public
   release — the user), KI-2 AI images (optional). No gate failing.
 - **Playable now:** `npm run preview` → `/` → Skirmish (setup: map, size, civs, levels, victory, starting age,
@@ -995,10 +996,25 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       `tools/done-audit.ts` (a verify step) matches the research tables to the data and finds every unit,
       building and tech tested; the gaps it found (2 ships, 2 towers, 30 techs untested) closed by
       `content-sweep.test.ts` (106 tests: every tech, building, building upgrade, ship upgrade).
-- [ ] **M15.8 Release build** (Done 8). Version 1.0.0; aarch64 `.app` + hidden smoke test; `.s9pk` for both
+- [x] **M15.8 Release build** (Done 8). Version 1.0.0; aarch64 `.app` + hidden smoke test; `.s9pk` for both
       arches; README / instructions / i18n complete; StartOS VM protocol (LOOP.md) incl. backup → restore —
       **needs a backup target on the VM (KI-3, the user)**. Voice licence (KI-5) before any public release —
       **the user's call**.
+      _Done:_ 1.0.0 in package.json / tauri.conf / Cargo (d2f81d7); verify:full green (1120 s: 606 unit + 132 e2e,
+      604-game AI suite unchanged from M15.3, 100-seed determinism ×3 engines, soaks, Docker both arches 137 MB,
+      Tauri smoke 1.04 ms on `fullpop`, s9pk). empires-startos eaedb09: submodule → d2f81d7, 1.0.0:0 with release
+      notes in 5 languages, README (graphics memory) and instructions (saves from 0.8.0 load in 1.0.0); i18n
+      complete (5 runtime strings, manifest texts, all in 5 languages). `make`: empires_x86_64.s9pk 125 MB,
+      empires_aarch64.s9pk 124 MB, v1.0.0:0, Git eaedb09 (clean).
+      **StartOS VM (2026-09-30, muscular-privacy.local, aarch64):** updated 0.12.0 → 1.0.0 in place ("Migrating
+      0.12.0:0 -> 1.0.0:0", clean); /healthz ok and the served build is 1.0.0; `artifacts/vm-e2e-m12.ts` in
+      headless Chromium and WebKit 20/20 (fonts from the box, Help, Diplomacy, save on the server → load with tick
+      and hash equal, Achievements timeline, autosave, no page errors); `package restart` → a fresh browser loads
+      both server saves, tick and hash equal; uninstall (gone from the list, volume gone) → reinstall → starts
+      stopped → start → health ok → real play again 10/10 with saves in the fresh volume (one reinstall straight
+      after an uninstall didn't take — `vm.sh install` hides the error; two more cycles were clean, not
+      reproduced); logs read end to end: no warnings. **Not verified:** backup → restore — the box still has no
+      backup target (KI-3). VM stopped.
 - [ ] **M15.9 User playtest** (Done 9) — **the user**: a full skirmish against Hard. Push-notify with how to play
       (`.app` path, StartOS link); fold in their feedback.
 - _Exit:_ all Done gates (see PLAN.md) and the user's sign-off. After Done: M16 multiplayer (StartOS WebSocket
