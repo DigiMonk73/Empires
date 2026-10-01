@@ -21,6 +21,12 @@ export interface NavalState {
   boardedAt?: number;
   /** When each 4×4 search cell was last in sight (-1: never) — the landed army's hunt (M14.6b). */
   seenAt?: number[];
+  /** The transport throttle, the last think's transport count, the landing-beach rotation and the boarding shore
+   * (M15.1: without them a loaded game trained a transport the original didn't; absent in older saves). */
+  transportAt?: number;
+  hasTransport?: boolean;
+  beachSkip?: number;
+  shore?: [number, number] | null;
 }
 
 /** The landed army's search grid: cells of 4×4 tiles. */
@@ -63,7 +69,19 @@ export class NavalBrain {
   private seenAt: number[] = [];
 
   save(): NavalState {
-    return { island: this.island, sweep: this.sweep, contact: this.contact, lastRaid: this.lastRaid, target: this.target, boardedAt: this.boardedAt, seenAt: [...this.seenAt] };
+    return {
+      island: this.island,
+      sweep: this.sweep,
+      contact: this.contact,
+      lastRaid: this.lastRaid,
+      target: this.target,
+      boardedAt: this.boardedAt,
+      seenAt: [...this.seenAt],
+      transportAt: this.transportAt,
+      hasTransport: this.hasTransport,
+      beachSkip: this.beachSkip,
+      shore: this.shore ? [this.shore[0], this.shore[1]] : null,
+    };
   }
 
   restore(st: NavalState | undefined): void {
@@ -74,7 +92,10 @@ export class NavalBrain {
     this.target = st?.target ?? null;
     this.boardedAt = st?.boardedAt ?? 0;
     this.seenAt = st?.seenAt ? [...st.seenAt] : [];
-    this.shore = null;
+    this.transportAt = st?.transportAt ?? -9999;
+    this.hasTransport = st?.hasTransport ?? false;
+    this.beachSkip = st?.beachSkip ?? 0;
+    this.shore = st?.shore ?? null;
   }
 
   update(ai: AiPlayer, s: Snapshot, cmds: Command[]): void {

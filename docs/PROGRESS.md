@@ -3,12 +3,11 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** M14 Rules completeness **done** (tag `m14`, s9pk 0.14.0). Next: **M15 Hardening & release**
-  (tasks M15.1–M15.9 below; start with M15.1). Earlier: M13 AI v2 (m13), M12 UI & QoL (m12, 0.12.0 on the VM),
-  M11 Audio, M10 World polish, M9 Art, M8 Water, M7 Tech tree, M6 First skirmish … M0 Rails — all tagged.
-- **Last green:** verify:full at the M14 exit, 874 s — 495 unit + 127 e2e (Chromium + WebKit), 134 screenshots,
-  the 604-game AI suite, Docker amd64 + arm64 (126 MB, /healthz, server saves), Tauri smoke render avg 2.1 ms,
-  s9pk.
+- **Milestone:** **M15 Hardening & release** — M15.1 done; next **M15.2** lockstep loopback with jitter (tasks
+  below). Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL (0.12.0 on the VM) … M0 Rails — all tagged.
+- **Last green:** verify (quick) at M15.1, 124 s — 496 unit + 127 e2e, 134 screenshots. verify:full last at the
+  M14 exit (874 s); it now also runs the `determinism` step (≈ 5 min: 100 4-AI games × 24k ticks in Node with
+  save/load/replay, then Chromium + WebKit — all 100 identical, D61).
 - **AI gates (all pass, full suite):** ladder — every level beats the one below (Hard > Moderate 49/64, bar 48;
   Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out seeds 1001–1024 (D58); water 46/48
   held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.03–0.07%, 0 crashes. Margins are thin — see LOOP.md
@@ -24,7 +23,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   population, Full Tech Tree, reveal); the Mac app `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/
   Empires.app`; review scenes `?scenario=relics|countdowns|map&gators=1|battle|…`.
 - **Notes:** metrics `docs/metrics/*.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`;
-  AI suite `node tools/sim/ai-suite.ts [--full --adjacent]`; diagnostics `node tools/sim/diagnose.ts`.
+  AI suite `node tools/sim/ai-suite.ts [--full --adjacent]`; diagnostics `node tools/sim/diagnose.ts`; determinism
+  `node tools/sim/determinism.ts` (then `EMPIRES_SCALE=1 npx playwright test tests/e2e/determinism-scale.spec.ts`).
 
 ---
 
@@ -915,9 +915,22 @@ of island/Narrows games decided in 2 h (11/12).
 ## M15 — Hardening & release (StartOS checkpoint + user playtest)
 Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M14 exit): keep them there — run
 `node tools/sim/ai-suite.ts --full --adjacent` after any AI or map change (LOOP.md "AI work").
-- [ ] **M15.1 Determinism at scale** (Done 2). 100 seeds × 24k ticks with 4 AIs: identical hash traces in Node,
+- [x] **M15.1 Determinism at scale** (Done 2). 100 seeds × 24k ticks with 4 AIs: identical hash traces in Node,
       Chromium and WebKit (today verify:full runs 10 seeds); save → load → continue and replay equal the straight
       run. _Accept:_ a `verify:full` step, all 100 equal.
+      _Plan:_ `src/game/determinism.ts` — seed → a 4-AI skirmish setup that varies map type/size, civs, levels,
+      teams, victory, starting age, pop cap and Full Tech Tree; run through `GameSession` (the game's own path)
+      hashing every 100 ticks, optionally saving at 12k (`encodeSave`) and recording a replay.
+      `tools/sim/determinism.ts` runs the 100 seeds on worker threads: straight trace, save → decode → load →
+      continue (tail equal), replay → play (checkpoints + final equal); writes `artifacts/determinism/node.json`.
+      `tests/e2e/determinism-scale.spec.ts` (only with `EMPIRES_SCALE=1`) runs each seed in Chromium and WebKit
+      through the sim harness and compares with node.json. A `determinism` verify:full step runs both, plus the
+      10 fuzz seeds `EMPIRES_FULL=1` was meant to add (nothing set it — they never ran).
+      _Done (D61):_ Node 100/100 agree — straight, save@12k → load → continue, replay (112 s on 14 threads);
+      Chromium and WebKit 100/100 identical to Node, plus the 10 big fuzz seeds (66 tests, 2.9 min at 12 workers;
+      a game takes 5.5 s avg in Chromium, 10.9 s in WebKit). The first run found 13 water games whose save
+      diverged: the naval AI's transport throttle, beach rotation and boarding shore weren't saved (fixed;
+      `tests/unit/ai-save.test.ts` now compares a restored AI field by field).
 - [ ] **M15.2 Lockstep loopback with jitter** (Done 2). Two sims fed through a network-style router (commands
       scheduled N ticks ahead, random delay/jitter, reordering within the window) stay hash-identical for 20k
       ticks with 2 AIs + scripted input. _Accept:_ unit/soak test; the router is what M16 multiplayer will use.

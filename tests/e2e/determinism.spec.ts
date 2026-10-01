@@ -6,7 +6,8 @@ import type {} from '../../src/debug/simHarness.ts';
 
 /**
  * Cross-engine determinism (DECISIONS D1): the same fuzzed 500-unit scenario must produce identical hash traces
- * in Node (V8), headless Chromium (V8) and headless WebKit (JavaScriptCore). EMPIRES_FULL=1 adds 10 more seeds × 24k ticks.
+ * in Node (V8), headless Chromium (V8) and headless WebKit (JavaScriptCore). EMPIRES_FULL=1 (verify:full's
+ * determinism step) adds 10 more seeds × 24k ticks.
  */
 const FULL = process.env.EMPIRES_FULL === '1';
 const SCENARIOS = [

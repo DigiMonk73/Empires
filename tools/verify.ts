@@ -98,6 +98,19 @@ const STEPS: Step[] = [
     },
   },
   {
+    // M15.1 (Done 2): 100 seeds × 24k ticks of 4 AIs — Node (straight, save → load → continue, replay), then
+    // Chromium and WebKit against Node's traces, with the 10 big fuzz seeds of determinism.spec.ts.
+    id: 'determinism',
+    title: 'Determinism at scale (100 4-AI games × 24k ticks: Node save/load/replay, Chromium, WebKit)',
+    full: true,
+    needs: ['build'],
+    fn: async () => {
+      const node = await run('determinism-node', ['node', 'tools/sim/determinism.ts']);
+      const web = await run('determinism-web', ['npx', 'playwright', 'test', 'tests/e2e/determinism-scale.spec.ts', 'tests/e2e/determinism.spec.ts', '--workers', '12'], { EMPIRES_SCALE: '1', EMPIRES_FULL: '1' });
+      return `${node.replace(/^determinism: /, '').split(' · ')[0]} · browsers: ${web}`;
+    },
+  },
+  {
     id: 'docker',
     title: 'Docker buildx (amd64 + arm64) + /healthz',
     full: true,

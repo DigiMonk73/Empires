@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.1 · no visual change (14 shots ≤ 0.34% px)
+- Determinism work only. Diffs checked: saves-server/saves-save (save-list timestamps and the other tests' saves),
+  village (minimap viewport frame a pixel over), the rest run-to-run noise of the same size. Nothing to score.
+
 ## 2026-09-30 · M14 (D58) · hills on: map-*, ai-base, victory* re-shot
 - Generated maps now rise and fall (D44 shading): soft slopes, level ground round each Town Center, the raised edge
   reading as terrain, not a seam; forests, mines and water unchanged in layout. Skirmish shots changed with the

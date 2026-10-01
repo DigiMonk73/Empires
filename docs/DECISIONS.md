@@ -375,3 +375,14 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   second still needs a Government Center). The camera opens on your villagers. A computer founds its Town Center
   where its villagers stand before anything else, every villager building. 16 AI Nomad games (Hard vs Moderate):
   Town Centers up in the first two minutes, Tool Age ~12 min, 14/16 decided in 60 min.
+- **D61 — Determinism at scale: the Done set** (2026-09-30, M15.1; Done 2). Seeds 1–100, each a 4-AI skirmish whose
+  setup follows from the seed (`scaleSetup`: all 9 map types, small/medium/large, the 16 civs, the 5 levels,
+  free-for-alls and 2v2s, starting resources, every victory type, starting ages Nomad … Iron, population 25/50/75,
+  Full Tech Tree every 13th), played 24,000 ticks through `GameSession` — the game's own path, commands via the
+  router — and hashed every 100 ticks. Node also saves each game at tick 12,000 (`encodeSave`, the server-save
+  bytes), loads it and plays on, and replays the recorded commands: both must match the straight trace. Chromium
+  and WebKit replay the same seeds against Node's traces. It runs in verify:full (`determinism` step, with the 10
+  big fuzz seeds that `EMPIRES_FULL=1` was meant to add and nothing set), not on every commit; every commit keeps
+  the 2 fuzz seeds, the battle and the save/replay unit tests, plus a field-by-field AI save test. First run: 13 of
+  100 loaded water games diverged — the naval AI's transport throttle, beach rotation and boarding shore weren't
+  saved; fixed.
