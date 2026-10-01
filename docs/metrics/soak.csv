@@ -1,0 +1,3 @@
+date,commit,game,minutes,heap30_mb,heap_end_mb,worst_tick_p99_ms,stuck_pct,units_seen,ok
+2026-10-01T02:52,2fba9fc,ffa8,120,15.0,15.5,1.667,0.201,1489,1
+2026-10-01T02:52,2fba9fc,teams4,120,15.5,15.8,0.875,0.270,741,1
