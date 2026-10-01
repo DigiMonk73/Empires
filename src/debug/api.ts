@@ -70,12 +70,14 @@ export interface EmpiresDebugApi {
   resetPerf(): void;
   /** Full-frame CPU ms of the last ~600 frames, oldest first (perf diagnosis, M15.3). */
   frameTimes(): number[];
+  /** Release baked models over `budget` bytes that no sprite shows, at once (M15.4 tests); returns how many. */
+  artTrim(budget: number): number;
   /** The last 200 frames over 8 ms, split by section (sim + AI, world sprites, overlays, minimap, HUD, Pixi render). */
   slowFrames(): { sim: number; world: number; overlays: number; minimap: number; hud: number; render: number; total: number; tick: number }[];
   /** Let rendering settle: animation frames until no baked art is still loading (screenshots, KI-6). */
   settle(): Promise<void>;
   /** Baked models with textures resident / loading / known. */
-  artStats(): { loaded: number; pending: number; known: number };
+  artStats(): { loaded: number; pending: number; known: number; bytes: number; evicted: number; inUseBytes: number };
 }
 
 export interface RenderStats {

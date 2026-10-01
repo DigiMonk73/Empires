@@ -1,4 +1,4 @@
-import { Container, Graphics, Point, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
+import { Container, Graphics, Point, Rectangle, Sprite, Texture, type Renderer, type TextureSource } from 'pixi.js';
 import { PLAYER_COLORS } from '../data/setup.ts';
 import { TERRAINS } from '../data/terrain.ts';
 import { Act, EKind } from '../sim/core/entities.ts';
@@ -789,6 +789,28 @@ export class WorldRenderer {
 
   get viewCount(): number {
     return this.views.filter(Boolean).length;
+  }
+
+  /** Every texture source a sprite of ours shows or holds (baked art in use must not be released, M15.4). */
+  texturesInUse(): Set<TextureSource> {
+    const out = new Set<TextureSource>();
+    const walk = (c: Container): void => {
+      const t = (c as unknown as { texture?: Texture }).texture;
+      if (t?.source) out.add(t.source);
+      for (const ch of c.children) walk(ch);
+    };
+    walk(this.root);
+    // (A view's sprites, attached or not.)
+    for (const v of this.views) {
+      if (!v) continue;
+      for (const sp of [v.base, v.team, v.site]) if (sp?.texture?.source) out.add(sp.texture.source);
+    }
+    return out;
+  }
+
+  /** Released baked pages: drop the construction crops cut from them. */
+  forgetSources(sources: ReadonlySet<TextureSource>): void {
+    for (const [k, t] of this.cropCache) if (sources.has(t.source)) this.cropCache.delete(k);
   }
 }
 

@@ -116,6 +116,18 @@ const STEPS: Step[] = [
     },
   },
   {
+    // M15.4 (D64): two-hour games — headless (8 Hard on Gigantic; 4 mixed 2v2 on water) and one in Chromium.
+    id: 'soak',
+    title: 'Two-hour soak (Node: 2 games; Chromium: 1) — crash, heap, stuck, frame times',
+    full: true,
+    needs: ['build'],
+    fn: async () => {
+      const node = await run('soak-node', ['node', '--expose-gc', 'tools/sim/soak.ts', '--record']);
+      const web = await run('soak-web', ['npx', 'playwright', 'test', 'tests/e2e/soak.spec.ts', '--project', 'chromium'], { EMPIRES_SOAK: '1' });
+      return `${node.replace(/^soak 2 h: /, '').replace(/ \(\d+ s\)/g, '').slice(0, 150)} · browser: ${web}`;
+    },
+  },
+  {
     id: 'docker',
     title: 'Docker buildx (amd64 + arm64) + /healthz',
     full: true,

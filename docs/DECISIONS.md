@@ -415,3 +415,16 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   most two on a tick. The naval AI scanned the whole map for its sea every think, even on land maps — now cached on
   `passVersion` (think p50 0.68 → 0.27 ms; the full AI suite runs in 127 s, was 241 s). Screenshots force a minimap
   redraw (a frozen render clock), ending the stale-frame noise of earlier reviews.
+- **D64 — Two-hour soak gates; baked art bounded** (2026-09-30, M15.4). Headless (`tools/sim/soak.ts`, node
+  --expose-gc): 8 Hard on Gigantic (FFA) and 4 mixed levels 2v2 on Mediterranean (Standard), 2 h each through
+  `GameSession`, sampled every 10 game minutes. Gates: no crash; units stuck > 5 s ≤ 0.5% of all that lived; post-GC
+  heap after minute 30 ends ≤ 1.15 × its minute-30 value + 5 MB and never peaks over 1.3 × + 10 MB; tick p99 never
+  over max(2 × its minute-30 value, 3 ms). First run: heap 15.0 → 15.5 MB and 15.4 → 15.7 MB (a 4-hour run levels off
+  at 15.5–15.7 MB — no leak), worst tick p99 1.75 ms, stuck 0.20% / 0.27%. Browser (`soak.spec.ts`, Chromium): 7
+  computers on Large stepped 15 s at a time with frames between, normal-speed windows at minutes 10/30/60/90/120 —
+  heap 20 → 17 MB after minute 30, frame CPU p95 6.1 → 2.4 ms. It found baked art growing for the whole game (832 MB
+  at minute 60: every age, civ and army type that ever appeared stays loaded), so `BakedArt.trim()` now releases,
+  every 2 s, the least recently used models no sprite holds while the art kept exceeds 320 MB (resource, site and
+  rubble art pinned); a released model loads again on demand (e2e). The soak checks the art kept never exceeds what
+  sprites show + the budget. What sprites show in a late seven-civ game can itself pass 512 MB (551 MB at minute 60:
+  unit atlases are 2× pixels, every animation and facing — a villager is 73 MB) — KI-12, task M15.4b.

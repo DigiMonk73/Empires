@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.4 · no visual change (10 shots ≤ 0.28% px)
+- Soak and art eviction only. The changed shots are the save lists' timestamps and the menus' live backdrop; the
+  minimap fix of M15.3 took the run-to-run noise from ~20 shots to 10.
+
 ## 2026-09-30 · M15.3 · minimap now current in every shot (36 shots ≤ 0.12% px)
 - Screenshots force a minimap redraw, so its camera frame sits over the view shown (ai-base, map-continental
   checked: before, the 4 Hz throttle could leave the frame where the camera had been). Main views unchanged but for

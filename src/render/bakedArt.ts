@@ -1,4 +1,4 @@
-import { Assets, Rectangle, Texture } from 'pixi.js';
+import { Assets, Rectangle, Texture, type TextureSource } from 'pixi.js';
 import type { AtlasMeta } from '../art/bake/baker.ts';
 
 export interface ArtFrame {
@@ -18,6 +18,10 @@ export interface ArtFrame {
  * load the first time `frame()` asks for one of its frames — all of them decoded would be > 1.3 GB of GPU memory,
  * and a match shows a fraction. Until they arrive `frame()` returns null; `version` counts arrivals so the
  * renderer can rebuild what it drew as a placeholder, and `idle()` settles once nothing is loading (tests).
+ *
+ * Bounded (M15.4): a two-hour game asked for 832 MB of models — every age, civ and army that ever appeared — so
+ * `trim()` releases the least recently used models that no live sprite shows, while the resident pages exceed a
+ * budget. A released model loads again (from the HTTP cache) the next time it is asked for.
  */
 export class BakedArt {
   private readonly metas = new Map<string, AtlasMeta>();
@@ -25,6 +29,16 @@ export class BakedArt {
   private readonly pending = new Map<string, Promise<void>>();
   /** Bumped each time a model's textures arrive. */
   version = 0;
+  /** Each resident model's page textures and their GPU bytes. */
+  private readonly pages = new Map<string, { tex: Texture[]; bytes: number }>();
+  /** When each model was last asked for a frame (in `trim()` calls). */
+  private readonly used = new Map<string, number>();
+  private clock = 0;
+  /** Models released so far, and the bytes of models live sprites showed at the last `trim()`. */
+  evicted = 0;
+  inUseBytes = 0;
+  /** Told which texture sources were released (the renderer drops what it cached from them). */
+  onEvict: ((sources: ReadonlySet<TextureSource>) => void) | null = null;
 
   private readonly base: string;
 
@@ -103,6 +117,8 @@ export class BakedArt {
         if (b) frames.set(key, { ...b, team: make(`${key}#t`) });
       }
       this.loaded.set(id, frames);
+      this.pages.set(id, { tex: pages, bytes: pages.reduce((n, t) => n + gpuBytes(t.source), 0) });
+      this.used.set(id, this.clock);
     } catch (e) {
       console.warn(`[art] failed to load ${id}`, e);
       this.metas.delete(id); // don't ask again; placeholders stay
@@ -129,11 +145,55 @@ export class BakedArt {
       void this.request(id);
       return null;
     }
+    this.used.set(id, this.clock);
     return frames.get(key) ?? null;
   }
 
-  /** Models with textures resident, and loading (tests, perf). */
-  stats(): { loaded: number; pending: number; known: number } {
-    return { loaded: this.loaded.size, pending: this.pending.size, known: this.metas.size };
+  /**
+   * Call every couple of seconds with the texture sources live sprites show. While the resident pages exceed
+   * `budget` bytes, releases models — least recently asked for first — that none of them use, that weren't asked
+   * for in the last `idle` calls and that `keep` doesn't pin. Returns how many it released.
+   */
+  trim(budget: number, inUse: ReadonlySet<TextureSource>, idle = 5, keep: (id: string, meta: AtlasMeta) => boolean = () => false): number {
+    this.clock++;
+    let bytes = this.bytes();
+    this.inUseBytes = 0;
+    for (const p of this.pages.values()) if (p.tex.some((t) => inUse.has(t.source))) this.inUseBytes += p.bytes;
+    if (bytes <= budget) return 0;
+    const released = new Set<TextureSource>();
+    let n = 0;
+    const order = [...this.pages.keys()].sort((a, b) => (this.used.get(a) ?? 0) - (this.used.get(b) ?? 0) || (a < b ? -1 : 1));
+    for (const id of order) {
+      if (bytes <= budget) break;
+      const p = this.pages.get(id)!;
+      if (this.clock - (this.used.get(id) ?? 0) < idle || keep(id, this.metas.get(id)!) || p.tex.some((t) => inUse.has(t.source))) continue;
+      for (const t of p.tex) released.add(t.source);
+      this.loaded.delete(id);
+      this.pages.delete(id);
+      this.used.delete(id);
+      for (const page of this.metas.get(id)!.pages) void Assets.unload(`${this.base}${page}`);
+      bytes -= p.bytes;
+      this.evicted++;
+      n++;
+    }
+    if (released.size) this.onEvict?.(released);
+    return n;
   }
+
+  /** GPU bytes of the resident pages. */
+  bytes(): number {
+    let n = 0;
+    for (const p of this.pages.values()) n += p.bytes;
+    return n;
+  }
+
+  /** Models with textures resident, and loading (tests, perf), their pages' GPU bytes, and models released. */
+  stats(): { loaded: number; pending: number; known: number; bytes: number; evicted: number; inUseBytes: number } {
+    return { loaded: this.loaded.size, pending: this.pending.size, known: this.metas.size, bytes: this.bytes(), evicted: this.evicted, inUseBytes: this.inUseBytes };
+  }
+}
+
+/** A texture's GPU memory: RGBA8, a third more with a mip chain. */
+export function gpuBytes(t: { pixelWidth: number; pixelHeight: number; mipLevelCount?: number; autoGenerateMipmaps?: boolean }): number {
+  return Math.round(t.pixelWidth * t.pixelHeight * 4 * (t.autoGenerateMipmaps || (t.mipLevelCount ?? 1) > 1 ? 4 / 3 : 1));
 }

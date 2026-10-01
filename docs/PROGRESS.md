@@ -3,11 +3,11 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.3 done; next **M15.4** two-hour soak (4–8 AIs, heap,
-  stuck, frame times). Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL (0.12.0 on the VM) … — tagged.
-- **Last green:** verify (quick) at M15.3, 131 s — 500 unit + 128 e2e, 134 screenshots, and a full-population sim
-  step (8 × 50 pop, p99 ≈ 2 ms). verify:full last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min,
-  D61) and the Tauri smoke on `fullpop` (D63). Lockstep router + 20k-tick jitter soak in the unit suite (D62).
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.4 done; next **M15.4b** baked unit art memory (KI-12),
+  then M15.5 16-facing decision. Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL … — tagged.
+- **Last green:** verify (quick) at M15.4, 125 s — 500 unit + 130 e2e, 134 screenshots, full-pop sim step. verify:full
+  last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
+  the two-hour `soak` (≈ 2.5 min, D64). Lockstep router + 20k-tick jitter soak in the unit suite (D62).
 - **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
   (Hard > Moderate 49/64, bar 48; Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out
   seeds 1001–1024 (D58); water 46/48 held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.07%, 0 crashes.
@@ -17,8 +17,9 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
   value names its decision (D57, enforced by `data.test.ts`).
 - **StartOS:** 0.14.0 built (both arches); last installed on the VM: 0.12.0. Next VM check: M15.8.
-- **Open issues:** KI-3 backups (needs a backup target on the VM — the user), KI-5 voice licence (before any
-  public release — the user), KI-1 icon, KI-2 AI images (optional). No gate failing.
+- **Open issues:** KI-12 baked art memory in long many-civ games (M15.4b), KI-3 backups (needs a backup target on
+  the VM — the user), KI-5 voice licence (before any public release — the user), KI-1 icon, KI-2 AI images
+  (optional). No gate failing.
 - **Playable now:** `npm run preview` → `/` → Skirmish (setup: map, size, civs, levels, victory, starting age,
   population, Full Tech Tree, reveal); the Mac app `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/
   Empires.app`; review scenes `?scenario=relics|countdowns|map&gators=1|battle|…`.
@@ -958,8 +959,20 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       Fixed on the way: minimap background redraw (20–30 ms spikes), four Hard computers thinking on one tick, the
       naval AI's per-think whole-map sea scan, Tauri smoke frames skipped by a coarse clock, a stale minimap in
       screenshots. AI gates re-run in full: identical to M14's.
-- [ ] **M15.4 Two-hour soak.** 4–8 AIs for 2 h of game time (headless, and one run in the browser): no crash, heap
+- [x] **M15.4 Two-hour soak.** 4–8 AIs for 2 h of game time (headless, and one run in the browser): no crash, heap
       stable (no growth after 30 min), stuck ≤ 0.5%, frame times flat.
+      _Plan:_ `tools/sim/soak.ts` (node --expose-gc): two 2-hour games through `GameSession` — 8 Hard on Gigantic,
+      4 mixed levels 2v2 on Large — sampling every 10 game minutes the post-GC heap, tick p50/p99, stuck units,
+      entity slots; gates set from what a first run shows (a DECISIONS entry). `tests/e2e/soak.spec.ts`
+      (EMPIRES_SOAK=1): one 2-hour game in Chromium at high speed, every 30 min a normal-speed window (frame CPU p95),
+      heap after GC (CDP) and texture bytes. Both in a verify:full `soak` step.
+      _Done (D64):_ Node — no crash, heap 15.0 → 15.5 MB (4 h: levels at 15.5–15.7), tick p99 ≤ 1.75 ms flat, stuck
+      0.20% / 0.27%; Chromium — heap 20 → 17 MB, frame p95 6.1 → 2.4 ms. Found baked art growing all game (832 MB):
+      `BakedArt.trim()` releases unused models over a 320 MB budget (e2e: a released model loads again).
+- [ ] **M15.4b GPU memory of baked unit art** (KI-12). A late seven-civ game shows ~550 MB of art (live sprites);
+      bring it under 512 MB without visible loss: measure options on the soak (compressed textures KTX2/Basis →
+      ASTC/BC7 in both engines; releasing art for far-off sprites; bake scale for the largest units), pick in
+      DECISIONS, keep the visual gates. _Accept:_ the browser soak's art shown ≤ 512 MB at every checkpoint.
 - [ ] **M15.5 16-facing decision** (D7). Measure how ships and cavalry read turning with 8 facings (contact sheets,
       a turning scene); decide 8 vs 16 in DECISIONS; bake if 16 (budget: baked assets ≤ 150 MB).
 - [ ] **M15.6 Visual pass** (Done 5). Gallery + every scenario screenshot scored ≥ 4/5, no open must-fix item;

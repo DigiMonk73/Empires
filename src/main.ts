@@ -13,7 +13,7 @@ import { mountHud } from './ui/mount.tsx';
 import { mountMenu } from './ui/menu/Menu.tsx';
 import { Minimap } from './render/minimap.ts';
 import { quantize } from './sim/commands/types.ts';
-import { BakedArt } from './render/bakedArt.ts';
+import { BakedArt, gpuBytes } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
 import { Notifier, notes } from './ui/notify.ts';
 import { diplomacyView } from './ui/diplomacy.ts';
@@ -86,6 +86,7 @@ async function boot(): Promise<void> {
   setIconArt(art);
   setIconArch(archOf(world.players[session.localPlayer]?.civ));
   const wr = new WorldRenderer(app.renderer, world, art);
+  if (art) art.onEvict = (sources) => wr.forgetSources(sources);
   session.onEvents((ev) => wr.onEvents(ev));
   // Game over, from the local player's point of view.
   session.onEvents((ev) => {
@@ -362,6 +363,7 @@ async function boot(): Promise<void> {
   const cpuHistory: number[] = [];
   let frameStart = 0;
   const draws = countDrawCalls(app);
+  let lastTrim = 0;
   // Where a slow frame's time went (M15.3): section ends within the frame, the render measured after Pixi's own.
   const parts = { sim: 0, world: 0, overlays: 0, minimap: 0, hud: 0 };
   const slowFrames: (typeof parts & { render: number; total: number; tick: number })[] = [];
@@ -406,6 +408,11 @@ async function boot(): Promise<void> {
     frameMs = t.deltaMS;
     fps = t.FPS;
     parts.hud = performance.now() - t4;
+    // Release baked models nothing shows while the art held exceeds its budget (M15.4) — every 2 s.
+    if (art && t0 - lastTrim > 2000) {
+      lastTrim = t0;
+      art.trim(ART_BUDGET, wr.texturesInUse(), 5, KEEP_ART);
+    }
   });
   // Runs after Pixi's own render (priority LOW) → full frame CPU: sim + sync + render submission.
   app.ticker.add(
@@ -544,13 +551,14 @@ async function boot(): Promise<void> {
         await art.idle();
       }
     },
-    artStats: () => art?.stats() ?? { loaded: 0, pending: 0, known: 0 },
+    artStats: () => art?.stats() ?? { loaded: 0, pending: 0, known: 0, bytes: 0, evicted: 0, inUseBytes: 0 },
     resetPerf: () => {
       cpuHistory.length = 0;
       slowFrames.length = 0;
       draws.max = 0;
     },
     frameTimes: () => [...cpuHistory],
+    artTrim: (budget) => art?.trim(budget, wr.texturesInUse(), 0, KEEP_ART) ?? 0,
     slowFrames: () => slowFrames.map((f) => ({ ...f })),
     freezeRenderClock: () => {
       frozen = true;
@@ -637,6 +645,11 @@ function findFirst(world: GameSession['sim']['world'], owner: number, typeId: st
   return -1;
 }
 
+/** GPU memory the baked art may keep (M15.4, D64): with the terrain, fog and UI it keeps all textures ≤ 512 MB. */
+const ART_BUDGET = 320 * 2 ** 20;
+/** Never released: small and preloaded — resource art, and construction sites and rubble (effects don't retry). */
+const KEEP_ART = (id: string, meta: { kind: string }): boolean => meta.kind === 'resource' || /^(site|rubble)\d$/.test(id);
+
 /**
  * Count WebGL draw calls per frame (M15.3's ≤ 150 gate): the context's draw methods, wrapped on the instance. `frame()`
  * at the start of each frame closes the previous frame's count.
@@ -664,11 +677,11 @@ function countDrawCalls(app: Application): { last: number; max: number; frame():
 
 /** Bytes of GPU memory held by Pixi's textures (RGBA8; a full mip chain adds a third). */
 function textureBytes(app: Application): number {
-  const sources = (app.renderer as unknown as { texture?: { managedTextures?: readonly ({ pixelWidth: number; pixelHeight: number; mipLevelCount?: number; autoGenerateMipmaps?: boolean } | null)[] } }).texture?.managedTextures ?? [];
+  const sources = (app.renderer as unknown as { texture?: { managedTextures?: readonly (Parameters<typeof gpuBytes>[0] | null)[] } }).texture?.managedTextures ?? [];
   let bytes = 0;
   // (Released textures leave null slots in the list.)
-  for (const t of sources) if (t) bytes += t.pixelWidth * t.pixelHeight * 4 * (t.autoGenerateMipmaps || (t.mipLevelCount ?? 1) > 1 ? 4 / 3 : 1);
-  return Math.round(bytes);
+  for (const t of sources) if (t) bytes += gpuBytes(t);
+  return bytes;
 }
 
 function readGlInfo(app: Application): { renderer: string; vendor: string } {
