@@ -79,7 +79,9 @@ try {
     if (!keep.has(f)) rmSync(join(OUT, f));
     else bytes += statSync(join(OUT, f)).size;
   }
-  console.log(`bake: ${baked} model(s) baked, ${ids.length - baked} up to date, ${((Date.now() - t0) / 1000).toFixed(1)} s · public/baked ${(bytes / 1e6).toFixed(1)} MB`);
+  // Decoded on the GPU (RGBA8): what the art costs in video memory if all of it were resident (KI-12).
+  const gpu = Object.values(metas as Record<string, { pageSizes?: { w: number; h: number }[] }>).reduce((n, m) => n + (m.pageSizes ?? []).reduce((k, p) => k + p.w * p.h * 4, 0), 0);
+  console.log(`bake: ${baked} model(s) baked, ${ids.length - baked} up to date, ${((Date.now() - t0) / 1000).toFixed(1)} s · public/baked ${(bytes / 1e6).toFixed(1)} MB (GPU ${(gpu / 2 ** 20).toFixed(0)} MB)`);
 } catch (e) {
   failed = true;
   console.error(e);

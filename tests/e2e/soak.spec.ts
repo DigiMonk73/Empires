@@ -71,9 +71,10 @@ if (SOAK) {
       // The same bounds as the headless soak (D64): the heap may wander with the game but not climb.
       expect(c.heapMB, `heap at minute ${c.minute}`).toBeLessThanOrEqual(at30.heapMB * 1.3 + 10);
       expect(c.cpuP95, `frame CPU p95 at minute ${c.minute}`).toBeLessThanOrEqual(Math.max(8, at30.cpuP95 * 1.5));
-      // Baked art is bounded (D64): beyond the budget only what live sprites show is kept. (What they show in a
-      // late seven-civ game can itself exceed the perf scene's 512 MB — KI-12, M15.4b.)
+      // Baked art is bounded (D64): beyond the budget only what live sprites show is kept, and what they show stays
+      // within the perf gate's 512 MB of textures (M15.4b).
       expect(c.artMB, `art kept at minute ${c.minute}`).toBeLessThanOrEqual(c.shownMB + 320);
+      expect(c.shownMB, `art shown at minute ${c.minute}`).toBeLessThanOrEqual(512);
     }
     expect(checks.at(-1)!.evicted).toBeGreaterThan(0);
     expect(checks.at(-1)!.heapMB).toBeLessThanOrEqual(at30.heapMB * 1.15 + 5);

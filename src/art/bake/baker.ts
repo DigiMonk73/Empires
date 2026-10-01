@@ -16,7 +16,7 @@ export const SS = 4;
 const PITCH = (30 * Math.PI) / 180;
 /** Direction toward the sun: from the viewer's upper-left, so shadows fall toward screen right/down (+x). */
 export const SUN_DIR = new THREE.Vector3(-0.6, 0.86, -0.2).normalize();
-export const BAKER_VERSION = 2; // 2: WebP pages (KI-6)
+export const BAKER_VERSION = 3; // 2: WebP pages (KI-6); 3: units' team overlays cut to their own pixels (KI-12)
 
 export interface FrameMeta {
   p: number;
@@ -217,7 +217,11 @@ export class Baker {
             const key = variants > 1 ? `v${v}/${name}/${d}/${f}` : `${name}/${d}/${f}`;
             const { base, team } = this.renderFrame(obj, cw, ch, ox, oy, key, extent);
             frames.push(base);
-            if (team) frames.push(team);
+            // A unit's team overlay is a shield, a sash, a sail — cut to its own pixels it is a fraction of the
+            // frame (they were 43% of all unit art at the base frame's size, KI-12). Buildings keep the shared rect:
+            // the construction reveal crops both layers by the same fraction of one height.
+            const t = team && def.kind === 'unit' ? ownPixels(team) : team;
+            if (t) frames.push(t);
           }
         }
       }
@@ -310,6 +314,30 @@ function compose(beauty: Uint8Array, mask: Uint8Array | null, cw: number, ch: nu
     base: { key, w, h, ax: ox - x0, ay: oy - y0, rgba: cut(base) },
     team: team ? { key: `${key}#t`, w, h, ax: ox - x0, ay: oy - y0, rgba: cut(team) } : null,
   };
+}
+
+/** A frame trimmed to its own visible pixels (anchor kept on the same ground point); null when nothing shows. */
+function ownPixels(f: RawFrame): RawFrame | null {
+  let x0 = f.w;
+  let y0 = f.h;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < f.h; y++) {
+    for (let x = 0; x < f.w; x++) {
+      if (f.rgba[(y * f.w + x) * 4 + 3]! > 2) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) return null;
+  const w = x1 - x0 + 1;
+  const h = y1 - y0 + 1;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) rgba.set(f.rgba.subarray(((y + y0) * f.w + x0) * 4, ((y + y0) * f.w + x0 + w) * 4), y * w * 4);
+  return { key: f.key, w, h, ax: f.ax - x0, ay: f.ay - y0, rgba };
 }
 
 function pack(frames: RawFrame[]): { pages: HTMLCanvasElement[]; rects: Record<string, FrameMeta> } {

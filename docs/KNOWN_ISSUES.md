@@ -19,11 +19,7 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   as a permissively licensed Piper model) with `tools/voices.ts`.
 - **KI-6 · closed (M8.6b, D39)** — baked art was 145 MB and all of it loaded at boot (1.33 GB decoded): now WebP
   (45.5 MB) with textures loaded on first use.
-- **KI-12 · should · baked unit art memory (M15.4b)** — a late seven-civ game holds up to ~550 MB of baked art that
-  live sprites show (D64), over the perf scene's 512 MB texture figure (which passes at 307 MB). Unit atlases are
-  1.6 GB in all (2× pixels, every animation and facing). Options: GPU-compressed textures (KTX2/Basis → ASTC/BC7,
-  ~4× smaller), releasing art for sprites far off screen (pop-in on minimap jumps), a smaller bake scale for the
-  biggest units (ships, elephants). Next: M15.4b.
+- _KI-12 (baked unit art memory) closed by D65: team overlays cut to their own pixels — late-game art shown 551 → 352 MB._
 - _KI-9 (hills vs the war gate) and KI-11 (the predator bug) closed by D58: 1v1s judged within 60 min, hills on,
   the fix applied._
 - _KI-10 (alligators vs the AI gates) closed by D59: alligators on; every land gate passes with them._

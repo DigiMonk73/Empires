@@ -37,10 +37,10 @@ test('released baked art loads again when a unit of it reappears', async ({ page
   const first = await trainClubman();
   expect((await page.evaluate(() => window.__empires!.query.units(1))).find((u) => u.h === first)?.sprite).not.toBeNull();
   const before = await page.evaluate(() => window.__empires!.artStats());
-  // Gone, corpse and all; then nothing shows a clubman and its model can go.
+  // Gone, corpse and all (20 s, then a fade: well past both); then nothing shows a clubman and its model can go.
   await page.evaluate((h) => {
     window.__empires!.issue(1, { t: 'delete', ids: [h] });
-    window.__empires!.step(500);
+    window.__empires!.step(700);
   }, first);
   await frames(page);
   expect(await page.evaluate(() => window.__empires!.artTrim(0))).toBeGreaterThanOrEqual(1);

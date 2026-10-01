@@ -41,10 +41,15 @@ export function iconStyle(model: string | null, box: number, arch = homeArch): R
   const scale = Math.min(box / f.w, box / f.h) * 0.92;
   const page = meta.pages[f.p]!;
   const img = art.pageSize(model, f.p);
+  const left = (box - f.w * scale) / 2;
+  const top = (box - f.h * scale) / 2;
   return {
     backgroundImage: `url(./baked/${page})`,
-    backgroundPosition: `${-f.x * scale + (box - f.w * scale) / 2}px ${-f.y * scale + (box - f.h * scale) / 2}px`,
+    backgroundPosition: `${-f.x * scale + left}px ${-f.y * scale + top}px`,
     backgroundSize: `${img.w * scale}px ${img.h * scale}px`,
     backgroundRepeat: 'no-repeat',
+    // Only the frame: the rest of the box would show its neighbours on the atlas page (M15.4b: a soldier's icon
+    // showed three soldiers).
+    clipPath: `inset(${top.toFixed(2)}px ${left.toFixed(2)}px)`,
   };
 }

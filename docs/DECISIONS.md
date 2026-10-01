@@ -428,3 +428,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   rubble art pinned); a released model loads again on demand (e2e). The soak checks the art kept never exceeds what
   sprites show + the budget. What sprites show in a late seven-civ game can itself pass 512 MB (551 MB at minute 60:
   unit atlases are 2× pixels, every animation and facing — a villager is 73 MB) — KI-12, task M15.4b.
+- **D65 — Units' team overlays cut to their own pixels** (2026-09-30, M15.4b; closes KI-12). Team-colour overlays
+  were stored at their base frame's size: 693 of 1,593 MB of unit art (43%) for what is a shield, a sash, a sail.
+  The baker (version 3) trims a unit's overlay to its own visible pixels, anchor kept on the same ground point, and
+  drops it when nothing shows; buildings keep the shared rect (the construction reveal crops both layers by one
+  height). The runtime already drew each layer by its own anchor — the world renders as before. Unit art 1,593 →
+  978 MB, all baked art 1,737 → 1,123 MB on the GPU (download 64.7 → 63.7 MB); the late seven-civ soak shows 352 MB
+  at its peak (was 551), all textures ≤ 472 MB; the full-population scene 307 → 182 MB. The soak now gates art
+  shown ≤ 512 MB at every checkpoint. Found on the way: HUD icons (CSS backgrounds cut from atlas pages) showed the
+  frame's neighbours in the box's margins — three soldiers for one; icons are now clipped to their frame.

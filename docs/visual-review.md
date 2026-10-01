@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.4b · every model rebaked (team overlays cut); HUD icons clipped (28 shots ≤ 0.18% px)
+- World views: no visible change (units' team colours sit where they did — selection-box, army checked).
+- HUD icons (tech-tree, selection-box/moved): each shows one figure now — before, a soldier's icon showed its atlas
+  neighbours in the box's margins (three soldiers, or a grey team mask beside the unit). Icons 4.
+
 ## 2026-09-30 · M15.4 · no visual change (10 shots ≤ 0.28% px)
 - Soak and art eviction only. The changed shots are the save lists' timestamps and the menus' live backdrop; the
   minimap fix of M15.3 took the run-to-run noise from ~20 shots to 10.
