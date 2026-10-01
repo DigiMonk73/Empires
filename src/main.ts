@@ -361,11 +361,18 @@ async function boot(): Promise<void> {
   let cpuMs = 0;
   const cpuHistory: number[] = [];
   let frameStart = 0;
+  const draws = countDrawCalls(app);
+  // Where a slow frame's time went (M15.3): section ends within the frame, the render measured after Pixi's own.
+  const parts = { sim: 0, world: 0, overlays: 0, minimap: 0, hud: 0 };
+  const slowFrames: (typeof parts & { render: number; total: number; tick: number })[] = [];
   app.ticker.add((t) => {
     const t0 = performance.now();
     frameStart = t0;
+    draws.frame();
     const dt = Math.min(0.25, t.deltaMS / 1000);
     if (!frozen) alpha = session.update(dt);
+    const t1 = performance.now();
+    parts.sim = t1 - t0;
     camera.update(frozen ? 0 : dt);
     // A slow drift across the village behind the menu.
     if (menuMode && !frozen) camera.centerOnWorld(18 + Math.sin(performance.now() / 20000) * 5, 18 + Math.cos(performance.now() / 26000) * 4);
@@ -376,9 +383,15 @@ async function boot(): Promise<void> {
     setWaterTime(frozen ? (session.sim.tick + alpha) / 20 : performance.now() / 1000);
     wr.fog.snap = frozen;
     wr.update(alpha, session.localPlayer);
+    const t2 = performance.now();
+    parts.world = t2 - t1;
     selection.prune((h) => world.ents.valid(h));
     wr.drawOverlays(selection.list, session.localPlayer, alpha);
-    minimap.draw();
+    const t3 = performance.now();
+    parts.overlays = t3 - t2;
+    minimap.draw(frozen); // (a frozen render clock is a screenshot: no stale minimap from the 4 Hz throttle)
+    const t4 = performance.now();
+    parts.minimap = t4 - t3;
     const hudTick = Math.floor(session.sim.tick / 2);
     if (hudTick !== lastHudSync || selection.version !== lastSelVersion) {
       lastHudSync = hudTick;
@@ -392,13 +405,20 @@ async function boot(): Promise<void> {
     }
     frameMs = t.deltaMS;
     fps = t.FPS;
+    parts.hud = performance.now() - t4;
   });
   // Runs after Pixi's own render (priority LOW) → full frame CPU: sim + sync + render submission.
   app.ticker.add(
     () => {
-      cpuMs = performance.now() - frameStart;
+      const end = performance.now();
+      cpuMs = end - frameStart;
       cpuHistory.push(cpuMs);
       if (cpuHistory.length > 600) cpuHistory.shift();
+      if (cpuMs > 8) {
+        const before = parts.sim + parts.world + parts.overlays + parts.minimap + parts.hud;
+        slowFrames.push({ ...parts, render: cpuMs - before, total: cpuMs, tick: session.sim.tick });
+        if (slowFrames.length > 200) slowFrames.shift();
+      }
     },
     undefined,
     -50,
@@ -424,6 +444,9 @@ async function boot(): Promise<void> {
     })(),
     terrainDrawCalls: wr.terrainDrawCalls,
     particles: wr.particles.count,
+    drawCalls: draws.last,
+    drawCallsMax: draws.max,
+    textureBytes: textureBytes(app),
   });
   installDebugApi({
     version: '0.2.0',
@@ -524,7 +547,11 @@ async function boot(): Promise<void> {
     artStats: () => art?.stats() ?? { loaded: 0, pending: 0, known: 0 },
     resetPerf: () => {
       cpuHistory.length = 0;
+      slowFrames.length = 0;
+      draws.max = 0;
     },
+    frameTimes: () => [...cpuHistory],
+    slowFrames: () => slowFrames.map((f) => ({ ...f })),
     freezeRenderClock: () => {
       frozen = true;
       alpha = 1;
@@ -533,7 +560,7 @@ async function boot(): Promise<void> {
   requestAnimationFrame(() => requestAnimationFrame(() => readyResolve()));
   if (params.get('smoke') === '1' && isTauri()) {
     await art?.idle(); // the WebP atlases decode in WKWebView (KI-6): the report says how many models loaded
-    await runTauriSmokeTest(app, () => ({ ...renderStats(), art: art?.stats() ?? null }));
+    await runTauriSmokeTest(app, () => ({ ...renderStats(), art: art?.stats() ?? null, tick: session.sim.tick, slowFrames: slowFrames.length }));
   }
 }
 
@@ -608,6 +635,40 @@ function findFirst(world: GameSession['sim']['world'], owner: number, typeId: st
   const e = world.ents;
   for (let s = 0; s < e.top; s++) if (e.alive[s] && e.owner[s] === owner && TYPES[e.type[s]!]!.id === typeId) return s;
   return -1;
+}
+
+/**
+ * Count WebGL draw calls per frame (M15.3's ≤ 150 gate): the context's draw methods, wrapped on the instance. `frame()`
+ * at the start of each frame closes the previous frame's count.
+ */
+function countDrawCalls(app: Application): { last: number; max: number; frame(): void } {
+  const out = { last: 0, max: 0, n: 0, frame: () => {} };
+  const gl = (app.renderer as unknown as { gl?: WebGL2RenderingContext }).gl;
+  if (!gl) return out;
+  const g = gl as unknown as Record<string, (...a: unknown[]) => unknown>;
+  for (const name of ['drawElements', 'drawArrays', 'drawElementsInstanced', 'drawArraysInstanced']) {
+    const orig = g[name];
+    if (typeof orig !== 'function') continue;
+    g[name] = (...a: unknown[]) => {
+      out.n++;
+      return orig.apply(gl, a);
+    };
+  }
+  out.frame = () => {
+    out.last = out.n;
+    out.max = Math.max(out.max, out.n);
+    out.n = 0;
+  };
+  return out;
+}
+
+/** Bytes of GPU memory held by Pixi's textures (RGBA8; a full mip chain adds a third). */
+function textureBytes(app: Application): number {
+  const sources = (app.renderer as unknown as { texture?: { managedTextures?: readonly ({ pixelWidth: number; pixelHeight: number; mipLevelCount?: number; autoGenerateMipmaps?: boolean } | null)[] } }).texture?.managedTextures ?? [];
+  let bytes = 0;
+  // (Released textures leave null slots in the list.)
+  for (const t of sources) if (t) bytes += t.pixelWidth * t.pixelHeight * 4 * (t.autoGenerateMipmaps || (t.mipLevelCount ?? 1) > 1 ? 4 / 3 : 1);
+  return Math.round(bytes);
 }
 
 function readGlInfo(app: Application): { renderer: string; vendor: string } {

@@ -3,15 +3,15 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.2 done; next **M15.3** performance: 8 players × 50 pop on
-  Gigantic. Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL (0.12.0 on the VM) … M0 Rails — tagged.
-- **Last green:** verify (quick) at M15.2, 123 s — 500 unit + 127 e2e, 134 screenshots. verify:full last at the
-  M14 exit (874 s); it now also runs the `determinism` step (≈ 5 min, D61). Lockstep router + 20k-tick jitter soak
-  in the unit suite (D62).
-- **AI gates (all pass, full suite):** ladder — every level beats the one below (Hard > Moderate 49/64, bar 48;
-  Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out seeds 1001–1024 (D58); water 46/48
-  held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.03–0.07%, 0 crashes. Margins are thin — see LOOP.md
-  "AI work" before touching the AI or map generation; `tools/sim/diagnose.ts` for dev-set analysis.
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.3 done; next **M15.4** two-hour soak (4–8 AIs, heap,
+  stuck, frame times). Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL (0.12.0 on the VM) … — tagged.
+- **Last green:** verify (quick) at M15.3, 131 s — 500 unit + 128 e2e, 134 screenshots, and a full-population sim
+  step (8 × 50 pop, p99 ≈ 2 ms). verify:full last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min,
+  D61) and the Tauri smoke on `fullpop` (D63). Lockstep router + 20k-tick jitter soak in the unit suite (D62).
+- **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
+  (Hard > Moderate 49/64, bar 48; Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out
+  seeds 1001–1024 (D58); water 46/48 held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.07%, 0 crashes.
+  Margins are thin — see LOOP.md "AI work" before touching the AI or map generation; `tools/sim/diagnose.ts`.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
   25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
@@ -941,9 +941,23 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       _Done (D62):_ `tests/unit/lockstep.test.ts` — 20k ticks identical in 3.4 s (17k reordered, 2k duplicated, 4k
       remote commands, both peers waiting). Found and fixed: the codec had no diplomacy / alliedVictory / tribute
       (encoded as nothing); a typed every-command round-trip test now guards it.
-- [ ] **M15.3 Performance: 8 players × 50 population on Gigantic** (Done 4). A scene / scripted match at full pop:
+- [x] **M15.3 Performance: 8 players × 50 population on Gigantic** (Done 4). A scene / scripted match at full pop:
       sim p99 ≤ 6 ms/tick; frame CPU p95 ≤ 8 ms, ≤ 150 draw calls, textures ≤ 512 MB (hardware GL, headless
       Chromium); warm load ≤ 8 s; Tauri smoke render ≤ 8 ms. Profile and fix what misses.
+      _Measured first:_ a real 8-Hard game on Gigantic (pop 50) peaks at 263/400 (wars thin it), step + AI p99
+      ≈ 3.6 ms — so the gate needs a scripted full-population scene.
+      _Plan:_ (a) `?scenario=fullpop`: generated Gigantic continental map, 8 Hard computers (FFA), Iron Age start,
+      high resources, each topped up to 50 pop (villagers + a mixed army) on free land round its Town Center;
+      `tools/sim/perf.ts` plays it (step + AIs timed per tick) — a verify step, gate p99 ≤ 6 ms. (b) `renderStats`
+      gains draw calls per frame (counted on the GL context) and texture bytes (Pixi's managed textures);
+      `tests/e2e/perf.spec.ts` opens the scene in Chromium: frame CPU p95, draw calls, texture MB, warm load.
+      (c) the Tauri smoke test renders the same scene.
+      _Done (D63):_ sim (AI + step) p99 1.99 ms, 3.20 ms at ≥ 360 units, step alone 0.76 ms (gate 6); Chromium frame
+      CPU p95 3.5–6.4 ms (gate 8; alone it reads higher than under the e2e run's load), draw calls ≤ 35 (150), textures
+      307 MB (512), warm load 0.7 s (8 s); Tauri smoke render avg 1.0–1.2 ms, p95 3–4 ms (8), tick 51 after 2.5 s.
+      Fixed on the way: minimap background redraw (20–30 ms spikes), four Hard computers thinking on one tick, the
+      naval AI's per-think whole-map sea scan, Tauri smoke frames skipped by a coarse clock, a stale minimap in
+      screenshots. AI gates re-run in full: identical to M14's.
 - [ ] **M15.4 Two-hour soak.** 4–8 AIs for 2 h of game time (headless, and one run in the browser): no crash, heap
       stable (no growth after 30 min), stuck ≤ 0.5%, frame times flat.
 - [ ] **M15.5 16-facing decision** (D7). Measure how ships and cavalry read turning with 8 facings (contact sheets,

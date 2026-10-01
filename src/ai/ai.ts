@@ -26,6 +26,13 @@ interface LevelParams {
   toolBy: number;
 }
 
+/**
+ * Which tick of its think period each seat thinks on. It was `player × 3`, which put four of eight Hard computers
+ * (every 6 ticks) on one tick — a 7 ms frame every 150 ms at full population (M15.3). Seats 1 and 2 keep 3 and 6, so
+ * every 1v1 (all the AI gates) plays exactly as before; the others fill the gaps: at most two share a tick at any level.
+ */
+const THINK_OFFSET = [0, 3, 6, 1, 4, 2, 5, 0, 7];
+
 export const AI_LEVEL_PARAMS: Record<AiLevel, LevelParams> = {
   easiest: { think: 40, thrifty: false, villagers: [0, 10, 13, 16, 18], toolBy: 12 },
   easy: { think: 20, thrifty: false, villagers: [0, 16, 20, 24, 28], toolBy: 11 },
@@ -156,7 +163,7 @@ export class AiPlayer {
 
   /** Called every tick; decides every `think` ticks (staggered by player). Returns commands for this tick. */
   think(v: PlayerView): Command[] {
-    if ((v.tick + this.player * 3) % this.p.think !== 0) return [];
+    if ((v.tick + (THINK_OFFSET[this.player] ?? this.player)) % this.p.think !== 0) return [];
     const me = v.me();
     if (me.defeated) return [];
     const s = this.snapshot(v, me);

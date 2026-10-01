@@ -1,4 +1,5 @@
 import type { SimConfig } from '../sim/index.ts';
+import { fullPopConfig } from './perfScene.ts';
 import { battleConfig } from '../sim/testing/battle.ts';
 import { GEN_MAP_TYPES, generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import { MAP_SIZES, type MapSizeId } from '../data/setup.ts';
@@ -534,4 +535,5 @@ export const SCENARIOS: Record<string, (p: URLSearchParams) => SimConfig> = {
   hills: hillsScene,
   battle: () => battleConfig(1),
   crowd: () => crowd(1000),
+  fullpop: (p) => fullPopConfig(Number(p.get('seed') ?? 1) || 1),
 };

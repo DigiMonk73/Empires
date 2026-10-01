@@ -58,6 +58,11 @@ const STEPS: Step[] = [
     cmd: ['node', 'tools/sim/battle.ts', '--record'],
   },
   {
+    id: 'perf',
+    title: 'Sim at full population (8 × 50 pop, Gigantic, 5 min; p99 ≤ 6 ms)',
+    cmd: ['node', 'tools/sim/perf.ts', '--record'],
+  },
+  {
     id: 'ai',
     title: 'AI suite (4 timing + 24 war matches)',
     cmd: ['node', 'tools/sim/ai-suite.ts', '--record'],

@@ -32,7 +32,13 @@ export class Minimap {
   private dpr = 1;
   private dragging = false;
   private lastDraw = 0;
-  private resVersion = -1;
+  /** Resource dots on their own layer over the terrain (M15.3): a node used up clears its dot and redraws its
+   * neighbours' — redrawing the whole Gigantic background on every felled tree or new building cost 20–30 ms. */
+  private readonly resLayer: HTMLCanvasElement;
+  private resDrawn = 0;
+  private gone = new Uint8Array(0);
+  /** Tile → resource index + 1 (0: none), for the neighbours of a dot that goes. */
+  private resAt = new Int32Array(0);
   private readonly fogCanvas: HTMLCanvasElement;
   private readonly fogImage: ImageData;
   private fogVersion = -1;
@@ -68,6 +74,11 @@ export class Minimap {
     this.base.width = this.canvas.width;
     this.base.height = this.canvas.height;
     this.renderBase();
+    this.resLayer = document.createElement('canvas');
+    this.resLayer.width = this.canvas.width;
+    this.resLayer.height = this.canvas.height;
+    this.resLayer.getContext('2d')!.scale(this.dpr, this.dpr);
+    this.updateResources();
     this.fogCanvas = document.createElement('canvas');
     this.fogCanvas.width = world.map.w;
     this.fogCanvas.height = world.map.h;
@@ -147,16 +158,53 @@ export class Minimap {
         c.fill();
       }
     }
+  }
+
+  /** Bring the resource dots up to date: all of them when nodes were added, else only round the ones used up. */
+  private updateResources(): void {
     const r = this.world.res;
-    for (let i = 0; i < r.count; i++) {
-      if (r.state[i] === ResState.gone) continue;
-      const col = RES_DOT[RESOURCE_KINDS[r.kind[i]!]!.id];
-      if (!col) continue;
-      const p = this.toMini(r.tx[i]! + 0.5, r.ty[i]! + 0.5);
-      c.fillStyle = col;
-      c.fillRect(p.x - s * 0.6, p.y - s * 0.3, s * 1.2, s * 0.9);
+    const c = this.resLayer.getContext('2d')!;
+    if (r.count !== this.resDrawn) {
+      const W = this.world.map.w;
+      this.resAt = new Int32Array(W * this.world.map.h);
+      this.gone = new Uint8Array(r.count);
+      c.clearRect(0, 0, this.resLayer.width, this.resLayer.height);
+      for (let i = 0; i < r.count; i++) {
+        this.resAt[r.ty[i]! * W + r.tx[i]!] = i + 1;
+        if (r.state[i] === ResState.gone) this.gone[i] = 1;
+        else this.dot(c, i);
+      }
+      this.resDrawn = r.count;
+      return;
     }
-    this.resVersion = this.world.map.passVersion;
+    for (let i = 0; i < r.count; i++) {
+      if (this.gone[i] || r.state[i] !== ResState.gone) continue;
+      this.gone[i] = 1;
+      const s = this.s;
+      const pad = 1 / this.dpr; // a device pixel of antialiasing
+      const p = this.toMini(r.tx[i]! + 0.5, r.ty[i]! + 0.5);
+      c.clearRect(p.x - s * 0.6 - pad, p.y - s * 0.3 - pad, s * 1.2 + 2 * pad, s * 0.9 + 2 * pad);
+      // Neighbours' dots overlap the cleared box (on Gigantic a tile is under half a pixel): redraw those standing.
+      const W = this.world.map.w;
+      const H = this.world.map.h;
+      const R = Math.ceil(2 + (2 * pad) / s);
+      for (let ty = Math.max(0, r.ty[i]! - R); ty <= Math.min(H - 1, r.ty[i]! + R); ty++) {
+        for (let tx = Math.max(0, r.tx[i]! - R); tx <= Math.min(W - 1, r.tx[i]! + R); tx++) {
+          const j = this.resAt[ty * W + tx]! - 1;
+          if (j >= 0 && j !== i && r.state[j] !== ResState.gone) this.dot(c, j);
+        }
+      }
+    }
+  }
+
+  private dot(c: CanvasRenderingContext2D, i: number): void {
+    const r = this.world.res;
+    const col = RES_DOT[RESOURCE_KINDS[r.kind[i]!]!.id];
+    if (!col) return;
+    const s = this.s;
+    const p = this.toMini(r.tx[i]! + 0.5, r.ty[i]! + 0.5);
+    c.fillStyle = col;
+    c.fillRect(p.x - s * 0.6, p.y - s * 0.3, s * 1.2, s * 0.9);
   }
 
   /** Flash world point (x, y) — an attack, a Wonder (research §6: "its location flashes on the minimap"). */
@@ -176,16 +224,12 @@ export class Minimap {
     this.pings = this.pings.filter((p) => this.world.tick - p.tick < PING_TICKS);
     if (!force && now - this.lastDraw < (this.pings.length ? 50 : 250)) return;
     this.lastDraw = now;
-    if (this.resVersion !== this.world.map.passVersion) {
-      const c = this.base.getContext('2d')!;
-      c.setTransform(1, 0, 0, 1, 0, 0);
-      c.clearRect(0, 0, this.base.width, this.base.height);
-      this.renderBase();
-    }
+    this.updateResources();
     const c = this.ctx;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, this.canvas.width, this.canvas.height);
     c.drawImage(this.base, 0, 0);
+    c.drawImage(this.resLayer, 0, 0);
     c.scale(this.dpr, this.dpr);
     const e = this.world.ents;
     const u = Math.max(2, this.s * 1.4);
@@ -200,7 +244,7 @@ export class Minimap {
         if (e.kind[s] === EKind.building ? !exp[i] : !vis[i]) continue;
       }
       const p = this.toMini(e.x[s]!, e.y[s]!);
-      c.fillStyle = `#${playerColor(e.owner[s]!).toString(16).padStart(6, '0')}`;
+      c.fillStyle = (COLORS[e.owner[s]!] ??= `#${playerColor(e.owner[s]!).toString(16).padStart(6, '0')}`);
       if (e.kind[s] === EKind.building) {
         const b = TYPES[e.type[s]!]!.size * this.s;
         c.fillRect(p.x - b, p.y - b / 2, b * 2, b);
@@ -242,6 +286,9 @@ export class Minimap {
     }
   }
 }
+
+/** Player colours as CSS strings (built once each). */
+const COLORS: string[] = [];
 
 /** How long a ping flashes: 3 s of game time. */
 const PING_TICKS = 60;

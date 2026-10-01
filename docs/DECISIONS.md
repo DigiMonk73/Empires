@@ -398,3 +398,20 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   delay 4 ticks: 20,000 ticks hash-identical (17k packets reordered, 4k commands crossed, each peer waiting a third
   of the time). It found the command codec missing diplomacy, allied victory and tribute (M12) — encoded as nothing,
   silently; they are in, and an unknown command now throws.
+- **D63 — Performance at full population: the scene, what is measured, and four fixes** (2026-09-30, M15.3;
+  Done 4). A real 8-computer Gigantic game never holds 400 at once (wars thin it to ~260), so the gate plays
+  `?scenario=fullpop`: 8 Hard computers, Iron Age, high resources, each topped up to 50 population (25 villagers,
+  an army of every arm) round its Town Center — they march at once, so the clash is in the window. Sim: every tick
+  as the game runs it (the computers' thinking + the step), p99 over 5 min and over the ticks with ≥ 360 units, the
+  first tick (JIT, first fog/pathing pass) reported apart as loading — a verify step (`tools/sim/perf.ts`). Render:
+  Chromium on hardware GL at speed 1 after 40 s of play, over the player's base at zoom 1 and 0.5 — frame CPU p95,
+  draw calls (counted on the GL context), texture bytes (Pixi's managed textures), warm load (`perf.spec.ts`). Tauri:
+  the smoke test renders the same scene (`--smoke-scene=fullpop`), 30 warm-up frames then 120 timed on a 60 fps clock
+  of its own (WKWebView's coarse clock let Pixi skip "frames" that then timed 0 ms), each waiting on the GPU.
+  Fixes: the minimap redrew its whole Gigantic background (62,500 tiles) on every new building or felled tree —
+  20–30 ms, 4× a second; now terrain once and resource dots updated where they go. Hard computers think every 6
+  ticks at `player × 3`, which put four of eight on one tick; seats now use an offset table that keeps seats 1–2 as
+  they were (every 1v1, so every AI gate, plays identically — confirmed: full suite numbers unchanged) and puts at
+  most two on a tick. The naval AI scanned the whole map for its sea every think, even on land maps — now cached on
+  `passVersion` (think p50 0.68 → 0.27 ms; the full AI suite runs in 127 s, was 241 s). Screenshots force a minimap
+  redraw (a frozen render clock), ending the stale-frame noise of earlier reviews.

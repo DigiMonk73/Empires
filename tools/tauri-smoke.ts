@@ -10,7 +10,10 @@ if (!existsSync(bin)) {
   console.error(`missing ${bin} — run: npx tauri build --target aarch64-apple-darwin --bundles app`);
   process.exit(1);
 }
-const child = spawn(bin, ['--smoke-test'], { stdio: ['ignore', 'pipe', 'pipe'] });
+// The perf gate's scene (M15.3, Done 4: "Tauri smoke render ≤ 8 ms"): 8 players × 50 population on Gigantic.
+const SCENE = 'fullpop';
+const RENDER_GATE_MS = 8;
+const child = spawn(bin, ['--smoke-test', `--smoke-scene=${SCENE}`], { stdio: ['ignore', 'pipe', 'pipe'] });
 let out = '';
 child.stdout.on('data', (d) => (out += d));
 child.stderr.on('data', (d) => (out += d));
@@ -26,7 +29,8 @@ child.on('close', (code) => {
   }
   const report = JSON.parse(line.slice('SMOKE_REPORT '.length));
   writeFileSync('artifacts/tauri/smoke.json', JSON.stringify(report, null, 2));
-  const summary = `tauri smoke ${report.ok ? 'ok' : 'FAILED'}: ${report.glRenderer} · render avg ${Number(report.renderMsAvg).toFixed(3)} ms · p95 ${Number(report.renderMsP95).toFixed(2)} ms · luma sd ${Number(report.lumaSd).toFixed(1)} · art ${report.art ? `${report.art.loaded}/${report.art.known} models` : 'none'}`;
+  const fast = Number(report.renderMsAvg) <= RENDER_GATE_MS;
+  const summary = `tauri smoke ${report.ok && fast ? 'ok' : 'FAILED'} (${SCENE}): ${report.glRenderer} · render avg ${Number(report.renderMsAvg).toFixed(3)} ms${fast ? '' : ` > ${RENDER_GATE_MS}`} · p95 ${Number(report.renderMsP95).toFixed(2)} ms · ${report.views} sprites · tick ${report.tick} · luma sd ${Number(report.lumaSd).toFixed(1)} · art ${report.art ? `${report.art.loaded}/${report.art.known} models` : 'none'}`;
   console.log(summary);
-  process.exit(code === 0 && report.ok ? 0 : 1);
+  process.exit(code === 0 && report.ok && fast ? 0 : 1);
 });

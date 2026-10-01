@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.3 · minimap now current in every shot (36 shots ≤ 0.12% px)
+- Screenshots force a minimap redraw, so its camera frame sits over the view shown (ai-base, map-continental
+  checked: before, the 4 Hz throttle could leave the frame where the camera had been). Main views unchanged but for
+  a few pixels of animation. The minimap's resource dots now live on their own layer — no visible difference.
+
 ## 2026-09-30 · M15.2 · no visual change (20 shots ≤ 0.32% px)
 - Lockstep router only. Checked menu-options (sub-pixel edges in the live backdrop behind the panel) and volley
   (minimap frame); units in the battle scenes unmoved. Run-to-run noise; nothing to score.

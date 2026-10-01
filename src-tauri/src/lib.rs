@@ -1,6 +1,7 @@
 //! Empires desktop shell. Normal mode opens one window with the game. `--smoke-test` mode (used by the
 //! verify gate) opens a hidden window with no Dock icon, lets the page render a few frames, prints the page's
 //! JSON report to stdout, and exits 0 on success — it never takes focus or shows anything on screen.
+//! `--smoke-scene=<name>` renders that review scene instead of the default (M15.3: `fullpop`, the perf gate's).
 
 use std::time::Duration;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
@@ -17,6 +18,10 @@ fn smoke_report(app: AppHandle, report: String) {
 
 pub fn run() {
     let smoke = std::env::args().any(|a| a == "--smoke-test");
+    // Letters only: it goes into the page's query string.
+    let scene = std::env::args()
+        .find_map(|a| a.strip_prefix("--smoke-scene=").map(str::to_owned))
+        .filter(|s| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphabetic()));
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![smoke_report])
         .setup(move |app| {
@@ -24,7 +29,11 @@ pub fn run() {
             if smoke {
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
-            let url = if smoke { "index.html?smoke=1&debug=1&edgeScroll=0" } else { "index.html" };
+            let url = if smoke {
+                format!("index.html?smoke=1&debug=1&edgeScroll=0{}", scene.as_deref().map(|s| format!("&scenario={s}")).unwrap_or_default())
+            } else {
+                "index.html".to_owned()
+            };
             let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App(url.into()))
                 .title("Empires")
                 .inner_size(1440.0, 900.0)

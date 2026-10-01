@@ -11,18 +11,34 @@ export async function runTauriSmokeTest(app: Application, extra: () => Record<st
   const report: Record<string, unknown> = { ok: false };
   try {
     const gl = (app.renderer as unknown as { gl: WebGL2RenderingContext }).gl;
+    // Drive whole frames (our update callbacks + Pixi's render, then wait for the GPU): rAF never fires in a hidden
+    // window. The ticker gets a 60 fps clock of its own: WKWebView's coarse performance.now() can repeat, and the
+    // ticker skips a frame whose time hasn't moved (M15.3: a run of 120 "frames" took 0 ms). The game runs at normal
+    // speed against it. The first 30 frames aren't timed — the first tick, fog and minimap passes and texture
+    // uploads are loading.
+    let clock = performance.now();
+    const frame = (): void => {
+      clock += 1000 / 60;
+      app.ticker.update(clock);
+      gl.finish();
+    };
+    for (let i = 0; i < 30; i++) frame();
     const times: number[] = [];
     const tStart = performance.now();
     for (let i = 0; i < 120; i++) {
       const t0 = performance.now();
-      // Drive the whole frame (our update callbacks + Pixi's render): rAF never fires in a hidden window.
-      app.ticker.update(t0);
-      gl.finish();
+      frame();
       times.push(performance.now() - t0);
     }
     const renderMsAvg = (performance.now() - tStart) / times.length; // WKWebView timers are coarse; average is precise
     times.sort((a, b) => a - b);
-    const pixels = app.renderer.extract.pixels(app.stage).pixels;
+    // What was drawn: the screen's own pixels (extracting the whole stage of a Gigantic map exceeds any texture).
+    clock += 1000 / 60;
+    app.ticker.update(clock);
+    const w = gl.drawingBufferWidth;
+    const h = gl.drawingBufferHeight;
+    const pixels = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
     let sum = 0;
     let sum2 = 0;
     let n = 0;

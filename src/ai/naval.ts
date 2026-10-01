@@ -324,6 +324,21 @@ export class NavalBrain {
    * and the target's; else the biggest body of water (the open sea, not a cove or a lake).
    */
   private sea(s: Snapshot): number {
+    // Whole-map scans, so remembered until region labels change (M15.3: 9% of a full-population frame's CPU on a
+    // map with no sea at all) — keyed on passVersion, like everything the AI keeps about regions.
+    const key = this.target ? `${this.target[0]},${this.target[1]}` : '';
+    if (this.seaAt === s.v.passVersion() && this.seaKey === key) return this.seaOf;
+    this.seaOf = this.findSea(s);
+    this.seaAt = s.v.passVersion();
+    this.seaKey = key;
+    return this.seaOf;
+  }
+
+  private seaAt = -1;
+  private seaKey = '';
+  private seaOf = 0;
+
+  private findSea(s: Snapshot): number {
     if (!this.target) return this.mainSea(s);
     const home = this.homeLand(s);
     const there = this.landOf(s, this.target[0], this.target[1]);

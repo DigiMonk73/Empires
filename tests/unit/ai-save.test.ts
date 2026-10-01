@@ -13,6 +13,9 @@ const RECOMPUTED: Record<string, string> = {
   nodeLands: 'cache keyed on passVersion (cleared on first use, nodeLandsAt starts at -1)',
   nodeLandsAt: 'see nodeLands',
   fleetShort: 'naval: set at the top of every think',
+  seaAt: 'naval: sea cache keyed on passVersion (starts at -1, rebuilt on first use)',
+  seaKey: 'see seaAt',
+  seaOf: 'see seaAt',
   island: 'military: copied from the naval brain at the top of every think (the naval one is saved)',
 };
 
