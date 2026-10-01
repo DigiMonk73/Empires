@@ -21,6 +21,9 @@ const CMD_DELETE = 13;
 const CMD_REPAIR = 14;
 const CMD_UNLOAD = 15;
 const CMD_TRADE_GOOD = 16;
+const CMD_DIPLOMACY = 17;
+const CMD_ALLIED_VICTORY = 18;
+const CMD_TRIBUTE = 19;
 
 class Writer {
   bytes: number[] = [];
@@ -175,6 +178,25 @@ function writeCommand(w: Writer, c: Command): void {
       w.pos(c.y);
       w.sv(c.res ?? -1);
       return;
+    // (Signed: an out-of-range value travels as given, for the simulation to reject the same way everywhere.)
+    case 'diplomacy':
+      w.uv(CMD_DIPLOMACY);
+      w.sv(c.to);
+      w.sv(c.stance);
+      return;
+    case 'alliedVictory':
+      w.uv(CMD_ALLIED_VICTORY);
+      w.uv(c.on ? 1 : 0);
+      return;
+    case 'tribute':
+      w.uv(CMD_TRIBUTE);
+      w.sv(c.to);
+      w.sv(c.res);
+      w.sv(c.amount);
+      return;
+    default:
+      // M15.2: three M12 commands were missing here and encoded as nothing at all.
+      throw new Error(`cannot encode command ${(c as { t: string }).t}`);
   }
 }
 
@@ -260,6 +282,17 @@ function readCommand(r: Reader): Command {
       const h = r.uv();
       const queue = r.uv() === 1;
       return queue ? { t: 'repair', ids, h, queue } : { t: 'repair', ids, h };
+    }
+    case CMD_DIPLOMACY: {
+      const to = r.sv();
+      return { t: 'diplomacy', to, stance: r.sv() };
+    }
+    case CMD_ALLIED_VICTORY:
+      return { t: 'alliedVictory', on: r.uv() === 1 };
+    case CMD_TRIBUTE: {
+      const to = r.sv();
+      const res = r.sv();
+      return { t: 'tribute', to, res, amount: r.sv() };
     }
     default:
       throw new Error(`unknown command type ${t}`);

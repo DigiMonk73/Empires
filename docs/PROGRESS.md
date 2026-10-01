@@ -3,11 +3,11 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1 done; next **M15.2** lockstep loopback with jitter (tasks
-  below). Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL (0.12.0 on the VM) … M0 Rails — all tagged.
-- **Last green:** verify (quick) at M15.1, 124 s — 496 unit + 127 e2e, 134 screenshots. verify:full last at the
-  M14 exit (874 s); it now also runs the `determinism` step (≈ 5 min: 100 4-AI games × 24k ticks in Node with
-  save/load/replay, then Chromium + WebKit — all 100 identical, D61).
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.2 done; next **M15.3** performance: 8 players × 50 pop on
+  Gigantic. Earlier: M14 Rules (m14, s9pk 0.14.0), M13 AI v2, M12 UI & QoL (0.12.0 on the VM) … M0 Rails — tagged.
+- **Last green:** verify (quick) at M15.2, 123 s — 500 unit + 127 e2e, 134 screenshots. verify:full last at the
+  M14 exit (874 s); it now also runs the `determinism` step (≈ 5 min, D61). Lockstep router + 20k-tick jitter soak
+  in the unit suite (D62).
 - **AI gates (all pass, full suite):** ladder — every level beats the one below (Hard > Moderate 49/64, bar 48;
   Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out seeds 1001–1024 (D58); water 46/48
   held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.03–0.07%, 0 crashes. Margins are thin — see LOOP.md
@@ -931,9 +931,16 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       a game takes 5.5 s avg in Chromium, 10.9 s in WebKit). The first run found 13 water games whose save
       diverged: the naval AI's transport throttle, beach rotation and boarding shore weren't saved (fixed;
       `tests/unit/ai-save.test.ts` now compares a restored AI field by field).
-- [ ] **M15.2 Lockstep loopback with jitter** (Done 2). Two sims fed through a network-style router (commands
+- [x] **M15.2 Lockstep loopback with jitter** (Done 2). Two sims fed through a network-style router (commands
       scheduled N ticks ahead, random delay/jitter, reordering within the window) stay hash-identical for 20k
       ticks with 2 AIs + scripted input. _Accept:_ unit/soak test; the router is what M16 multiplayer will use.
+      _Plan:_ `src/game/lockstep.ts` LockstepRouter (schedule at t + delay, a packet per tick, ready only when every
+      peer's packet is in, peer-order apply, hash checks), `src/game/loopback.ts` (seeded latency/jitter/duplicates,
+      virtual time); `CommandRouter.ready/stepped` and a waiting `GameSession.update`; `ais` option (one peer per
+      computer). Tests: router ordering/duplicates/stale, desync detection, the 20k-tick soak.
+      _Done (D62):_ `tests/unit/lockstep.test.ts` — 20k ticks identical in 3.4 s (17k reordered, 2k duplicated, 4k
+      remote commands, both peers waiting). Found and fixed: the codec had no diplomacy / alliedVictory / tribute
+      (encoded as nothing); a typed every-command round-trip test now guards it.
 - [ ] **M15.3 Performance: 8 players × 50 population on Gigantic** (Done 4). A scene / scripted match at full pop:
       sim p99 ≤ 6 ms/tick; frame CPU p95 ≤ 8 ms, ≤ 150 draw calls, textures ≤ 512 MB (hardware GL, headless
       Chromium); warm load ≤ 8 s; Tauri smoke render ≤ 8 ms. Profile and fix what misses.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Sim, type SimConfig } from '../../src/sim/index.ts';
 import { decodeCommands, encodeCommands } from '../../src/sim/commands/codec.ts';
-import { quantize, type PlayerCommand } from '../../src/sim/commands/types.ts';
+import { quantize, type Command, type PlayerCommand } from '../../src/sim/commands/types.ts';
 import { MOVE_LAND } from '../../src/data/terrain.ts';
 
 const cfg = (extra: Partial<SimConfig> = {}): SimConfig => ({
@@ -34,6 +34,34 @@ describe('command codec', () => {
     ];
     expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);
     expect(() => decodeCommands(Uint8Array.from([1, 1]))).toThrow();
+  });
+
+  it('round-trips every command type (a new one without a sample here does not compile)', () => {
+    // M15.2: diplomacy, allied victory and tribute (M12) were encoded as nothing — lockstep would have desynced.
+    const SAMPLES: { [K in Command['t']]: Extract<Command, { t: K }>[] } = {
+      move: [{ t: 'move', ids: [3], x: 4.25, y: 9, am: true }],
+      stop: [{ t: 'stop', ids: [1, 2] }],
+      gather: [{ t: 'gather', ids: [4], res: 17, queue: true }],
+      build: [{ t: 'build', ids: [4, 5], type: 'house', tx: 10, ty: -1 }],
+      construct: [{ t: 'construct', ids: [4], h: 99 }],
+      repair: [{ t: 'repair', ids: [4], h: 99, queue: true }],
+      unload: [{ t: 'unload', ids: [7], x: 12.5, y: 30.75 }],
+      tradeGood: [{ t: 'tradeGood', ids: [8], good: 2 }],
+      act: [{ t: 'act', ids: [1], h: 2 ** 40 }],
+      resign: [{ t: 'resign' }],
+      delete: [{ t: 'delete', ids: [6] }],
+      stance: [{ t: 'stance', ids: [6], stand: true }],
+      train: [{ t: 'train', bld: 3, unit: 'villager', n: 5 }, { t: 'train', bld: 3, unit: 'scout' }],
+      research: [{ t: 'research', bld: 3, tech: 'toolAge' }],
+      cancelTrain: [{ t: 'cancelTrain', bld: 3, index: 2 }, { t: 'cancelTrain', bld: 3 }],
+      rally: [{ t: 'rally', blds: [3, 4], x: 1, y: 2, res: 5 }],
+      diplomacy: [{ t: 'diplomacy', to: 3, stance: 2 }, { t: 'diplomacy', to: -1, stance: 9 }],
+      alliedVictory: [{ t: 'alliedVictory', on: true }, { t: 'alliedVictory', on: false }],
+      tribute: [{ t: 'tribute', to: 2, res: 3, amount: 500 }, { t: 'tribute', to: 2, res: 0, amount: -100 }],
+    };
+    const cmds: PlayerCommand[] = Object.values(SAMPLES).flatMap((list, i) => list.map((cmd) => ({ player: 1 + (i % 8), cmd })));
+    expect(decodeCommands(encodeCommands(cmds))).toEqual(cmds);
+    expect(() => encodeCommands([{ player: 1, cmd: { t: 'nonsense' } as unknown as Command }])).toThrow(/cannot encode/);
   });
 });
 

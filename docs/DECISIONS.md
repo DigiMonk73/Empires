@@ -386,3 +386,15 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   the 2 fuzz seeds, the battle and the save/replay unit tests, plus a field-by-field AI save test. First run: 13 of
   100 loaded water games diverged — the naval AI's transport throttle, beach rotation and boarding shore weren't
   saved; fixed.
+- **D62 — Lockstep: the router M16 multiplayer will use** (2026-09-30, M15.2; Done 2). Every peer runs the whole
+  simulation; only commands travel. A command given at tick t is scheduled for t + delay (input delay, ticks) and
+  sent in that tick's packet `{from, tick, cmds, check?}` — empty packets too, so a peer knows nothing more is
+  coming. A tick runs only once every peer's packet for it is in (`CommandRouter.ready`; `GameSession.update`
+  waits, holding one tick's worth of time); its commands apply in peer order, then each peer's own order, never in
+  arrival order. Local commands take the same encode → decode trip as remote ones. Duplicates and stale packets are
+  dropped. Every 100 ticks a packet carries the sender's state hash, so a desync is reported at the first checkpoint
+  after it. Each computer seat runs on exactly one peer (`GameSession` option `ais`). Soak: two peers (a scripted
+  human and a computer each, 4 players) over a pretend network of 30–330 ms with reordering and 5% duplicates,
+  delay 4 ticks: 20,000 ticks hash-identical (17k packets reordered, 4k commands crossed, each peer waiting a third
+  of the time). It found the command codec missing diplomacy, allied victory and tribute (M12) — encoded as nothing,
+  silently; they are in, and an unknown command now throws.

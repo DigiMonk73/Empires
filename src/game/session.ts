@@ -27,8 +27,11 @@ export class GameSession {
   /** Computer players (config `ai`), each with its own fog-filtered view. */
   private ais: { ai: AiPlayer; view: PlayerView }[] = [];
 
-  /** A new game from `config`, or a loaded one from a restored `Sim` (then call `restoreAis`). */
-  constructor(config: SimConfig | Sim, localPlayer = 1, router: CommandRouter = new LocalRouter()) {
+  /**
+   * A new game from `config`, or a loaded one from a restored `Sim` (then call `restoreAis`). `ais` names the computer
+   * seats this session runs (default: all but the local player's) — in lockstep each computer runs on one peer.
+   */
+  constructor(config: SimConfig | Sim, localPlayer = 1, router: CommandRouter = new LocalRouter(), opts: { ais?: readonly number[] } = {}) {
     this.sim = config instanceof Sim ? config : Sim.create(config);
     config = this.sim.config;
     // Commands pass through a tap (unit acknowledgements, later replays) on their way to the real router.
@@ -38,10 +41,13 @@ export class GameSession {
         for (const l of this.cmdListeners) l(player, cmd);
       },
       collect: (tick) => router.collect(tick),
+      ready: (tick) => router.ready?.(tick) ?? true,
+      stepped: (sim) => router.stepped?.(sim),
     };
     this.localPlayer = localPlayer;
     config.players.forEach((p, i) => {
-      if (p.ai && i + 1 !== localPlayer) this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i, { civ: p.civ }), view: new PlayerView(this.sim.world, i + 1) });
+      if (!p.ai || i + 1 === localPlayer || (opts.ais && !opts.ais.includes(i + 1))) return;
+      this.ais.push({ ai: new AiPlayer(i + 1, p.ai, config.seed * 31 + i, { civ: p.civ }), view: new PlayerView(this.sim.world, i + 1) });
     });
   }
 
@@ -81,6 +87,12 @@ export class GameSession {
     this.acc += dtSeconds * this.speed;
     let n = 0;
     while (this.acc >= TICK_SECONDS && n < MAX_CATCH_UP) {
+      if (!this.canStep()) {
+        // Waiting on a peer (lockstep): hold at most one tick's worth, then catch up when the packets land.
+        this.waited++;
+        this.acc = Math.min(this.acc, TICK_SECONDS);
+        return 1;
+      }
       this.stepOnce();
       this.acc -= TICK_SECONDS;
       n++;
@@ -89,11 +101,20 @@ export class GameSession {
     return this.acc / TICK_SECONDS;
   }
 
+  /** Frames spent waiting on the router (a lockstep peer's commands not in yet). */
+  waited = 0;
+
+  /** Whether the next tick may be simulated (always, except a lockstep router still waiting on a peer). */
+  canStep(): boolean {
+    return this.router.ready!(this.sim.tick);
+  }
+
   /** Advance exactly one tick (tests, stepping while paused). */
   stepOnce(): void {
     // AI decisions go through the router like any player's input (D10).
     for (const { ai, view } of this.ais) for (const cmd of ai.think(view)) this.router.submit(ai.player, cmd);
     this.sim.step(this.router.collect(this.sim.tick));
+    this.router.stepped!(this.sim);
     const ev = this.sim.drainEvents();
     if (ev.length) for (const l of this.listeners) l(ev);
     for (const l of this.tickListeners) l();

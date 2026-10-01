@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-09-30 · M15.2 · no visual change (20 shots ≤ 0.32% px)
+- Lockstep router only. Checked menu-options (sub-pixel edges in the live backdrop behind the panel) and volley
+  (minimap frame); units in the battle scenes unmoved. Run-to-run noise; nothing to score.
+
 ## 2026-09-30 · M15.1 · no visual change (14 shots ≤ 0.34% px)
 - Determinism work only. Diffs checked: saves-server/saves-save (save-list timestamps and the other tests' saves),
   village (minimap viewport frame a pixel over), the rest run-to-run noise of the same size. Nothing to score.
