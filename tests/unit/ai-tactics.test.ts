@@ -221,3 +221,30 @@ describe('AI villager share (M15.10 P69, D69)', () => {
     }
   }, 60_000);
 });
+
+describe('AI foundations (M15.10 P55)', () => {
+  it('a farm foundation nobody is building gets a builder', () => {
+    // Farms were left out of `finishFoundations`: a field whose builder was pulled away stayed bare dirt for good (17
+    // on one Huge map), and still counted towards the farms the computer wanted.
+    const sim = Sim.create({
+      seed: 2,
+      map: { w: 40, h: 40 },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 6, ty: 6 }, { type: 'farm', owner: 1, tx: 12, ty: 6, progress: 0 }],
+        units: [0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 1, x: 5.5 + i, y: 11.5 })),
+      },
+    });
+    const w = sim.world;
+    for (const t of ['toolAge']) completeResearch(w, 1, t);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    for (let t = 0; t < 20 * 60; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    const farm = view.ownBuildings().find((b) => b.type === 'farm')!;
+    expect(farm.done).toBe(true);
+  });
+});

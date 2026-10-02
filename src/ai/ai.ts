@@ -324,7 +324,8 @@ export class AiPlayer {
 
   private finishFoundations(s: Snapshot, cmds: Command[]): void {
     for (const b of s.buildings) {
-      if (b.done || b.kind === 'farm' || s.villagers.some((u) => u.order === 'build' && u.target === b.h)) continue;
+      // (Fields too: left out, one whose builder was pulled away stayed bare dirt for good, M15.10 P55.)
+      if (b.done || s.villagers.some((u) => u.order === 'build' && u.target === b.h)) continue;
       const pool = s.villagers.filter((u) => !s.busy.has(u.h) && u.order !== 'build' && (this.exploreDone || u.h !== this.explorer));
       pool.sort((a, c) => dist(a.x, a.y, b.x, b.y) - dist(c.x, c.y, b.x, b.y) || a.h - c.h);
       const u = pool[0];

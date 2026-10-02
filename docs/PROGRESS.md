@@ -13,8 +13,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   P24 arrows (KI-13), P2, P17, P20, P27/P31 — the computers rely on uneven starts and forgiving arrows to finish.
 - **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI
   suite, 100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09).
-- **AI gates (all pass, M15.10 P69):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
-  24/24 (1001–1024), water 46/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 45:18 (Done 25–60; D69);
+- **AI gates (all pass, M15.10 P55):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
+  24/24 (1001–1024), water 47/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 46:15 (Done 25–60; D69);
   0 crashes. Margins are thin — LOOP.md "AI work" before touching AI or mapgen; `tools/sim/diagnose.ts`.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
@@ -1161,11 +1161,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             pit near the hunt); food stops at ~12 min · g5 minute 12, `probe-walk.ts 5 8,12`; pop-25 g3 too
       - [ ] P54 · should · AI Deathmatch · Hard plays its normal build order on a 20k bank (Stone Age to 9–10 min,
             4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7)
-      - [ ] P55 · should · AI clutter · farm foundations placed and never built stay as dirt squares 20+ min (17 on
+      - [x] P55 · should · AI clutter · farm foundations placed and never built stay as dirt squares 20+ min (17 on
             a Huge 8p map; `finishFoundations` skips farms) · g4 coastal huge seed 59; g3 pop 25
             _Tried (it. 31, `docs/patches/m15.10-p55-finish-farm-foundations.patch`): farms back in
             `finishFoundations` — its test passes, but held-out water 46 → 45/48 and Hard > Moderate 51 → 48/64 (the
-            bar). Reverted; 1 of 3 cycles.
+            bar). Reverted; 1 of 3 cycles. _Landed after D69 (it. 37):_ held-out water 46 → 47/48, wars 24/24,
+            ladder 51/64, 63/64, Hard duels 16/16 (median 46:15). Test: `ai-tactics` "AI foundations".
       - [x] P56 · nice · end text · a Time Limit win on an ally's score reads "Victory — Player 2 had the highest
             score when time ran out." (no "your ally") · g6 narrows small seed 67 win=time limit=15
       - [x] P57 · must · HUD · command-button tooltips are clipped by the command panel (`.panel { overflow: hidden

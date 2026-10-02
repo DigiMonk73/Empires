@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P55 (landed) · AI only; 6 shots ≤ 0.3% px
+
 ## 2026-10-01 · M15.10 P27/P31 (landed) · victory, victory-results, victory-timeline 2.4–3.1% px: the Hardest-vs-
   Easiest game plays differently; Results reads right (P1 429 vs −74, Iron at 24:25). 4/5.
 
