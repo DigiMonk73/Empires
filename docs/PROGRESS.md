@@ -1244,7 +1244,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - _Lens H2 (package docs vs tonight's game; builds are the wrap-up's): README's ~500 MB of sprites matches E2
         (489 MB); save wording right (`SIM_VERSION` still 0.8.0, 1.0.0 saves load). For the 1.0.1 wrap-up:
         instructions — Esc closes the window on top, towers take a target, Start waits for a second team, 1.0.0
-        saves load in 1.0.1; README — a temporary file per write (P38)._
+        saves load in 1.0.1, and the setup screen's Resources choice (Default / Medium / High / Death Match), never
+        listed; README — a temporary file per write (P38)._
       - _Lens G2 (tonight's diff since 9def2de, 32 source files; e2e ×3): no TODO/FIXME, `console.log`, `any` cast or
         suppression added; every new export used. e2e `--repeat-each 3`: 480 passed, 6 skipped, 0 flaky (3.6 min)._
       - _Lens F2 (round one's 12 unit scenes on tonight's build; `artifacts/polish/lens-f2/run.log`): all as round one
