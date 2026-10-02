@@ -28,7 +28,7 @@ const RESOURCES: StartingResources[] = ['default', 'medium', 'high', 'deathmatch
 const VICTORY_NAMES: Record<SkirmishVictory, string> = { standard: 'Standard', conquest: 'Conquest', score: 'Score', time: 'Time Limit' };
 const VICTORY_HINTS: Record<SkirmishVictory, string> = {
   standard: 'Conquest, or hold a Wonder, all the Artifacts or all the Ruins for 2000 years',
-  conquest: 'Destroy every enemy unit and building',
+  conquest: 'Destroy every enemy unit and building (walls and civilian boats don\u2019t count)',
   score: 'The first to reach the target score wins',
   time: 'The highest score when the time runs out wins',
 };
@@ -243,7 +243,9 @@ function CivInfo({ civ, full }: { civ: string; full: boolean }) {
   const c = CIVS.find((x) => x.id === civ);
   const [tree, setTree] = useState(false);
   if (!c) return null;
-  const missing = c.disabled.units.length + c.disabled.buildings.length + c.disabled.techs.length;
+  // Counted as the Tech Tree beside it greys them — units cut off down a line too (it said 24 where the tree had 34,
+  // M15.10 P49).
+  const missing = techTree(civ, undefined, undefined, full).flatMap((col) => col.ages.flat()).filter((i) => i.state === 'missing').length;
   const bonuses = full ? ['No civilization bonuses (Full Tech Tree)'] : c.bonusText;
   return (
     <div class="civ-info" data-testid="civ-info">

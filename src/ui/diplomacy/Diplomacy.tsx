@@ -1,7 +1,7 @@
 import './diplomacy.css';
 import { useState } from 'preact/hooks';
 import { Emblem } from '../emblems.tsx';
-import type { DiploView } from '../diplomacy.ts';
+import { tributeTotal, type DiploView } from '../diplomacy.ts';
 
 const STANCES = ['Ally', 'Neutral', 'Enemy'] as const;
 const RES = ['Food', 'Wood', 'Gold', 'Stone'] as const;
@@ -27,7 +27,7 @@ export function Diplomacy({
   const [to, setTo] = useState(alive[0]?.id ?? 0);
   const [res, setRes] = useState(0);
   const [amount, setAmount] = useState(100);
-  const cost = Math.ceil(amount * (1 + view.fee));
+  const cost = tributeTotal(amount, view.fee);
   const why = !view.market ? 'Tribute needs a Market.' : !alive.length ? 'Nobody left to send to.' : cost > view.res[res]! ? `Not enough ${RES[res]!.toLowerCase()}.` : '';
   return (
     <div class="gameover" data-testid="diplomacy" onClick={(e) => e.target === e.currentTarget && onClose()}>

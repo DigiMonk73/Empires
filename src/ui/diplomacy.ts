@@ -28,6 +28,12 @@ export interface DiploView {
   res: number[];
 }
 
+/** What a tribute of `amount` costs with the fee, as the sim charges it — exactly, to the cent (the dialog rounded up:
+ *  "Costs 2" for 1, and could grey Send the sim would allow, M15.10 P50). */
+export function tributeTotal(amount: number, fee: number): number {
+  return Math.round(amount * (1 + fee) * 100) / 100;
+}
+
 export function diplomacyView(w: World, me: number): DiploView {
   const p = w.players[me]!;
   const e = w.ents;

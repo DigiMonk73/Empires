@@ -106,3 +106,11 @@ describe('command grid reach (M15.10 P47)', () => {
     expect(alchemy.desc).toMatch(/Missile units, towers and siege \+1 attack/);
   });
 });
+
+describe('missing count (M15.10 P49)', () => {
+  it('the setup screen counts what the Tech Tree greys, not just the matrix rows', () => {
+    const greyed = (civ: string) => techTree(civ).flatMap((c) => c.ages.flat()).filter((i) => i.state === 'missing').length;
+    // The matrix lists 24 for the Assyrians; the tree also greys what they lose down a line (Improved Bowman…).
+    expect(greyed('assyrian')).toBeGreaterThan(24);
+  });
+});

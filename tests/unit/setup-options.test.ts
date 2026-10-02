@@ -6,6 +6,7 @@ import { TYPES } from '../../src/sim/rules/registry.ts';
 import { DEFAULT_SETUP, setupFromQuery, setupToQuery, skirmishConfig } from '../../src/game/skirmish.ts';
 import { SCORE_TARGETS, scoreTargetsFor } from '../../src/data/setup.ts';
 import { clockRows, showsEnd, winLine } from '../../src/ui/clocks.ts';
+import { tributeTotal } from '../../src/ui/diplomacy.ts';
 import { AiPlayer } from '../../src/ai/ai.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
 
@@ -96,6 +97,13 @@ describe('setup options (M14.3, econ:7)', () => {
     const odd = setupFromQuery(new URLSearchParams('scenario=skirmish&size=toString&res=lots&p=zzz.1.human,egyptian.2.hard'));
     expect([odd.size, odd.resources, odd.players[0]!.civ]).toEqual([DEFAULT_SETUP.size, 'default', 'greek']);
     expect(() => Sim.create(skirmishConfig(odd))).not.toThrow();
+  });
+
+  it('the tribute line shows what the sim charges, to the cent (M15.10 P50)', () => {
+    expect(tributeTotal(1, 0.25)).toBe(1.25); // was "Costs 2"
+    expect(tributeTotal(10, 0.25)).toBe(12.5); // was 13
+    expect(tributeTotal(100, 0.25)).toBe(125);
+    expect(tributeTotal(7, 0)).toBe(7);
   });
 
   it('a fallen player who keeps watching sees no second Defeat when the team falls later (M15.10 P39)', () => {

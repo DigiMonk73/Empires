@@ -1145,9 +1145,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             Elephant matches the research table: Y) · `src/ui/commands.ts:160-163`; `lens-d2/grid-vs-tree.ts`
       - [x] P48 · should · Help · "A game is won by conquest" — the default is Standard (Wonder, all Artifacts or all
             Ruins for 2000 years too) · `HelpCredits.tsx:11`
-      - [ ] P49 · nice · setup · "N items missing" counts matrix rows (Assyrian 24) where the Tree greys 34
-      - [ ] P50 · nice · Diplomacy · tribute cost line rounds up ("Costs 2 food" for 1; the sim charges 1.25)
-      - [ ] P51 · nice · Conquest hint/Help omit what doesn't count (walls; trade, fishing, transport boats)
+      - [x] P49 · nice · setup · "N items missing" counts matrix rows (Assyrian 24) where the Tree greys 34
+      - [x] P50 · nice · Diplomacy · tribute cost line rounds up ("Costs 2 food" for 1; the sim charges 1.25)
+      - [x] P51 · nice · Conquest hint/Help omit what doesn't count (walls; trade, fishing, transport boats)
+      - _P49–P51 fixed:_ the setup count is the Tree's greyed items; the tribute line is the sim's sum to the cent
+        (`tributeTotal`); the Conquest hint says walls and civilian boats don't count (Help: P48). Tests:
+        `tech-tree` "missing count", `setup-options` "the tribute line…".
       - _Lens A2 (9 unusual setups to 45 min — Nomad, Post-Iron + Score + FTT, pop 25, Huge 8p, Gigantic 1v1, Time
         Limit, Deathmatch, Reveal; `artifacts/polish/lens-a2/`): 0 page or console errors; HUD, clocks, end texts,
         pop limits, starting ages and frame times all right._
