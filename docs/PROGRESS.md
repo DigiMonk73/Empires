@@ -1162,6 +1162,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7)
       - [ ] P55 · should · AI clutter · farm foundations placed and never built stay as dirt squares 20+ min (17 on
             a Huge 8p map; `finishFoundations` skips farms) · g4 coastal huge seed 59; g3 pop 25
+            _Tried (it. 31, `docs/patches/m15.10-p55-finish-farm-foundations.patch`): farms back in
+            `finishFoundations` — its test passes, but held-out water 46 → 45/48 and Hard > Moderate 51 → 48/64 (the
+            bar). Reverted; 1 of 3 cycles.
       - [x] P56 · nice · end text · a Time Limit win on an ally's score reads "Victory — Player 2 had the highest
             score when time ran out." (no "your ally") · g6 narrows small seed 67 win=time limit=15
       - [x] P57 · must · HUD · command-button tooltips are clipped by the command panel (`.panel { overflow: hidden

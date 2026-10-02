@@ -1,0 +1,49 @@
+diff --git a/src/ai/ai.ts b/src/ai/ai.ts
+index 7ee2b55..32c44aa 100644
+--- a/src/ai/ai.ts
++++ b/src/ai/ai.ts
+@@ -324,7 +324,8 @@ export class AiPlayer {
+ 
+   private finishFoundations(s: Snapshot, cmds: Command[]): void {
+     for (const b of s.buildings) {
+-      if (b.done || b.kind === 'farm' || s.villagers.some((u) => u.order === 'build' && u.target === b.h)) continue;
++      // (Fields too: left out, one whose builder was pulled away stayed bare dirt for good, M15.10 P55.)
++      if (b.done || s.villagers.some((u) => u.order === 'build' && u.target === b.h)) continue;
+       const pool = s.villagers.filter((u) => !s.busy.has(u.h) && u.order !== 'build' && (this.exploreDone || u.h !== this.explorer));
+       pool.sort((a, c) => dist(a.x, a.y, b.x, b.y) - dist(c.x, c.y, b.x, b.y) || a.h - c.h);
+       const u = pool[0];
+diff --git a/tests/unit/ai-tactics.test.ts b/tests/unit/ai-tactics.test.ts
+index c95b36a..79eff9b 100644
+--- a/tests/unit/ai-tactics.test.ts
++++ b/tests/unit/ai-tactics.test.ts
+@@ -209,3 +209,30 @@ describe('AI starting ages (M15.10 P19)', () => {
+     expect(['default', 'nomad', 'tool', 'bronze', 'iron', 'postIron'].map(lateStart)).toEqual([false, false, true, true, true, true]);
+   });
+ });
++
++describe('AI foundations (M15.10 P55)', () => {
++  it('a farm foundation nobody is building gets a builder', () => {
++    // Farms were left out of `finishFoundations`: a field whose builder was pulled away stayed bare dirt for good (17
++    // on one Huge map), and still counted towards the farms the computer wanted.
++    const sim = Sim.create({
++      seed: 2,
++      map: { w: 40, h: 40 },
++      victory: 'none',
++      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
++      scenario: {
++        buildings: [{ type: 'townCenter', owner: 1, tx: 6, ty: 6 }, { type: 'farm', owner: 1, tx: 12, ty: 6, progress: 0 }],
++        units: [0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 1, x: 5.5 + i, y: 11.5 })),
++      },
++    });
++    const w = sim.world;
++    for (const t of ['toolAge']) completeResearch(w, 1, t);
++    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
++    const view = new PlayerView(w, 1);
++    for (let t = 0; t < 20 * 60; t++) {
++      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
++      sim.drainEvents();
++    }
++    const farm = view.ownBuildings().find((b) => b.type === 'farm')!;
++    expect(farm.done).toBe(true);
++  });
++});
