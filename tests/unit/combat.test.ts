@@ -156,6 +156,24 @@ describe('projectiles (mil:2)', () => {
     expect(e.hp[e.slotOf(v!)]).toBe(25);
   });
 
+  it('a target walking along the line of fire, toward the archer or away, is hit — only sideways dodges (M15.10 P24)', () => {
+    // mil:2: "move sideways against arrows, move anywhere against arcing stones". Arrows hit only at the aim point,
+    // so a Sentry Tower's 8 arrows did nothing to axemen walking straight at it.
+    for (const to of [7.5, 20.5]) {
+      const { of, step, w, e } = setup([
+        { type: 'bowman', owner: 1, x: 6.5, y: 10.5 },
+        { type: 'villager', owner: 2, x: 11.5, y: 10.5 },
+      ]);
+      const [b] = of('bowman', 1);
+      const [v] = of('villager', 2);
+      step(1, [{ player: 1, cmd: { t: 'act', ids: [b!], h: v! } }]);
+      for (let i = 0; i < WINDUP_TICKS; i++) step(1);
+      expect(w.projectiles.length).toBe(1);
+      step(w.projectiles[0]!.dur + 1, [{ player: 2, cmd: { t: 'move', ids: [v!], x: to, y: 10.5 } }]);
+      expect(e.hp[e.slotOf(v!)], `walking to x ${to}`).toBe(25 - 3);
+    }
+  });
+
   it('projectiles in flight survive save/load', () => {
     const { of, step, w, sim } = setup([
       { type: 'bowman', owner: 1, x: 6.5, y: 10.5 },

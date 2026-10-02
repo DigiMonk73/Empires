@@ -605,11 +605,25 @@ export function projectileSystem(w: World): void {
     if (e.kind[t] === EKind.building) {
       const h = tt.size / 2 + 0.1;
       on = Math.abs(p.x1 - e.x[t]!) <= h && Math.abs(p.y1 - e.y[t]!) <= h;
-    } else {
+    } else if (p.arc) {
+      // An arcing stone lands where it was aimed: moving anywhere dodges it (mil:2).
       const dx = p.x1 - e.x[t]!;
       const dy = p.y1 - e.y[t]!;
       const r = tt.radius + 0.15;
       on = dx * dx + dy * dy <= r * r;
+    } else {
+      // An arrow flies a straight line through the aim point: only stepping sideways off that line dodges it
+      // (mil:2) — walking toward the archer or away along it does not. It reaches a tile past the aim point.
+      // (Hitting only at the aim point let units walk through tower fire untouched, M15.10 P24.)
+      const lx = p.x1 - p.x0;
+      const ly = p.y1 - p.y0;
+      const len = Math.sqrt(lx * lx + ly * ly) || 1;
+      const rx = e.x[t]! - p.x0;
+      const ry = e.y[t]! - p.y0;
+      const along = (rx * lx + ry * ly) / len;
+      const side = Math.abs(rx * ly - ry * lx) / len;
+      const r = tt.radius + 0.15;
+      on = side <= r && along >= -r && along <= len + r + 1;
     }
     if (!on) continue;
     const atk = p.hunt ? HUNT_ATK : w.stats(p.owner, p.type).atk;

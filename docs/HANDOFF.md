@@ -13,7 +13,9 @@ playtest). Multiplayer is next (M16).
 ## Rules you must keep (from CLAUDE.md)
 - **Headless only.** Never open visible windows, never `tauri dev`, never drive the user's screen. Playwright
   headless (Chromium + WebKit) and the Tauri `--smoke-test` hidden mode only.
-- **Git is local only** — no remotes, no pushes, no `gh`. Commit message `M<n>.<k>: <summary>`.
+- **Git:** commit locally as `M<n>.<k>: <summary>`. Remotes exist (`DigiMonk73/Empires`, `DigiMonk73/empires-startos`);
+  push only when the user asks. Never add a remote. `empires-startos` tags `v*` are not pushed — `release.yml` would
+  try to publish and fail for lack of keys.
 - **`npm run verify` green before every commit** (~2.5 min); `npm run verify:full` at milestone ends (~19 min).
 - **Sim purity** in `src/sim`, `src/data`, `src/ai`: no DOM, `Math.random`, trig/pow/exp/log, `**`, Date/timers,
   `for…in`, or imports from render/ui. `tools/check-purity.ts` enforces it. Data rows cite a research source.
@@ -39,22 +41,14 @@ playtest). Multiplayer is next (M16).
 Work on branch **`m16-multiplayer`** (the main checkout is on it; it contains everything on `main`). Don't merge it
 into `main` until the user has played multiplayer on the VM (M16.8).
 
-1. **Island wood stall (unblocks KI-13 arrows).** _M16.9 so far (all banded and kept, held-out water 183 → 190/192):_
+1. **[done, M16.9] Island wood stall, then KI-13 arrows.** The stall fixes (all banded and kept, water 183 → 190/192):
    room for a transport over the population limit; a full island's last-resort building spot (Market); Docks never
    seal a pocket of water; a transport is at its boarding spot only beside our land; the transport's wood kept while
-   one is afloat. The arrows patch banded on the first four: water 175/192, a FAIL by one game (43.8 of 44).
-   **Next, in order:**
-   - apply `docs/patches/m15.10-p24-arrows-along-the-line.patch` on HEAD and run `node tools/sim/ai-band.ts --keep`
-     (≈ 22 min; it saves the baseline only on a pass). Pass → determinism, verify, commit, close KI-13 (with its
-     test, in the patch). Fail → `git apply -R` it, and:
-   - apply `docs/patches/m16.9-warship-dock-reserve.patch` (enemy ships at our Docks may spend the transport's wood
-     on a warship; the first Dock may too — dev 417; its test fails without it), band it (`--keep`), and if kept
-     try the arrows patch again on top. Dev water with arrows + both: 182–187/192.
-   - still open from the original plan if the arrows need more: ferry villagers to trees on other land with a
-     Storage Pit (M13.7 tried and backed out a version triggered on known wood — tiny maps hold ~880 wood off the
-     home islands).
-   Tools: `diagnose.ts water <base> <shift>`, `water-trace <seed> --shift k --every m`; probe scripts kept in
-   `artifacts/wood/` (gitignored).
+   one is afloat. On that HEAD, `docs/patches/m15.10-p24-arrows-along-the-line.patch` banded **PASS**: water
+   **182**/192 (baseline 190, tolerance 8; average 45.5/48, bar 44), wars 92/96, Hard>Moderate 213/256,
+   Hardest>Hard 256/256, duels 63/64, median 38.7 min, 0 crashes. Baseline re-recorded. The warship/Dock reserve
+   stayed unapplied (`docs/patches/m16.9-warship-dock-reserve.patch`). Ferrying villagers to trees on another land
+   was not needed.
 2. **Multiplayer polish** (`docs/MULTIPLAYER.md`): guests pick their own civilization (and team) in the room; the
    room list and seats show each member's ping; a two-client input monkey (lens C for multiplayer) and a 30-minute
    two-browser soak; saving a multiplayer game (the host saves; a load restarts the room from the save) — in that
@@ -69,6 +63,12 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 14:30 — item 1 done (M16.9): the arrows patch on 3a64a96 banded PASS, water 182/192 (baseline 190 − 8), wars 92/96,
+  Hard>Moderate 213/256, Hardest>Hard 256/256, duels 63/64, median 38.7 min, 0 crashes. Baseline re-recorded.
+  Determinism 10/10. `npm run verify` green in 190 s (668 unit, 168 e2e). KI-13 and P24 closed. Screens reviewed:
+  AI games play differently, no must-fix. The warship/Dock reserve was not needed. Remotes are DigiMonk73/Empires
+  (m16-multiplayer, main, all 17 tags) and DigiMonk73/empires-startos (m16-multiplayer and main; its `v*` tags stay
+  local). This loop commits locally. Next: work queue item 2.
 - 2026-10-02 13:15 — paused at the user's request for a commit before a new loop: the arrows band on 2ffbbfb was
   stopped before its first shift finished (no result) and the patch taken back out; tree clean. Neither repo has a
   git remote (local only so far). Resume at work queue item 1, "Next, in order".
@@ -91,7 +91,7 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 - 2026-10-02 11:00 — tagged `v1.0.1` and `v1.1.0-rc1` in both repos (the exact packaged commits). Branch
   `m16-multiplayer` (837cb61+) is 1.1.0: multiplayer M16.1–M16.6 done and tested, verify:full green, both `.s9pk`
   1.1.0:0 built from empires-startos c8b4d2d — not installed on the VM. Next: work queue item 1.
-- `main` is 1.0.1 + M15.11 (the D70 band, five AI fixes, KI-14); KI-13 arrows still blocked (work queue item 1).
+- `main` is 1.0.1 + M15.11 (the D70 band, five AI fixes, KI-14). KI-13 arrows closed on `m16-multiplayer` (work queue item 1).
 - Package repo `../empires-startos` has a matching branch `m16-multiplayer` (1.1.0:0; its submodule on 4152c5b).
   After any change here that should ship: move that submodule to the new commit, commit there, then
   `PATH=/Users/b1ackswan/code/btctx-vm-lab/bin:$PATH make` (both `.s9pk`).

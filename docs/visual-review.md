@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M16.9 P24 · arrows along the line of flight · 28 shots, both engines
+
+Looked at chromium ai-base (14.4%), army-clash (0.9%), raid (0.4%), victory (4.2%) and victory-results (3.6%).
+WebKit matches. The same scenes played differently: the 8:00 AI base's villagers and houses shifted, the melee
+clump in army-clash moved, victory at 38:47 with Results reading (Greek 599, Egyptian −72, Iron at 27:30). HUD,
+team colors, terrain and the dialogs are intact. 4/5 on readability, scale, team color, terrain, HUD. No must-fix.
+
 ## 2026-10-02 · M15.10 P79 · movement only (queued moves wait); 5 shots of menu-backdrop noise
 
 ## 2026-10-02 · M15.10 P78 · AI above the default population only; 6 shots of menu-backdrop noise

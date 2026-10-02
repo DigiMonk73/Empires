@@ -21,26 +21,7 @@ what · next step. Remove entries when fixed (the commit log keeps history).
 - _KI-9 (hills vs the war gate) and KI-11 (the predator bug) closed by D58: 1v1s judged within 60 min, hills on,
   the fix applied._
 - _KI-10 (alligators vs the AI gates) closed by D59: alligators on; every land gate passes with them._
-- **KI-13 · must (blocked by the AI gates) · arrows miss units walking at the shooter** — M15.10 P24. Before
-  Ballistics a missile hits only if its target is within radius + 0.15 of the aim point (D26), so walking straight
-  at a tower or archer dodges every arrow (a Sentry Tower: 8 arrows, 0 damage); mil:2 says only *sideways*
-  movement dodges arrows (stones: any movement). The fix — straight missiles hit along their line of flight, to a
-  tile past the aim point; arcing stones unchanged — is `docs/patches/m15.10-p24-arrows-along-the-line.patch` (with
-  its test). It moves the held-out gates: 1v1 wars 24 → 22/24, water 46 → 45/48, Hard > Moderate 51 → 48/64 (the
-  bar). Tried again after D69 and P55 (water now 47): water 40/48 — a GATE FAIL — and wars 22/24, though Hard
-  duels end sooner (38:42). Accurate arrows change every fight; the AI needs retuning for them on the dev sets
-  (LOOP.md "AI work") before they can go in — or the user accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
-  _M15.11 on the D70 band:_ wars 93/96, Hard > Moderate 199/256 (both fine), but water 171/192 (−12), averaging
-  42.8/48 — under the 44 bar. On the dev seeds the extra undecided games are the island wood stall (instructions,
-  Limitations): dev 413 at minute 60 — the loser has 0 villagers and 0 buildings but 2 warships at sea (they count
-  for conquest); the winner has 21 villagers, no ships and 2 wood, its island's trees cut. Next: once an enemy has no
-  buildings left, the AI keeps wood for a Dock and two warships (or sends villagers to wood it can ferry to) and
-  hunts the last ships; re-run `ai-band.ts` with the patch.
-  _M16.9:_ the island stalls traced on the dev seeds were mostly not wood: a computer over its population limit with
-  no boat to delete, Docks sealing their transports in a cove, a transport "at its spot" off the shore, no room for a
-  Market on a full island — all fixed (band water 183/192). With them the patch bands water 175/192 (+4 on M15.11),
-  wars 92, Hard>Moderate 213: a FAIL by one game on the water bar (43.8 of 44 average). Then the transport reserve
-  kept while a transport is afloat (band water 190/192); next, the patch again on top.
+- _KI-13 (arrows miss units walking at the shooter) closed in M16.9: a straight missile hits along its line of flight, out to a tile past the aim point; an arcing stone still lands where it was aimed (mil:2). Band PASS — water 182/192 (baseline 190, tolerance 8; average 45.5/48, bar 44), wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, duels 63/64, median 38.7 min, 0 crashes. Baseline re-recorded._
 
 - _KI-14 (two-player island starts buried a villager) closed in M15.11: a final mapgen pass moves a villager on a blocked tile to the nearest open tile, terrain untouched (51 → 0 on 200 maps); band water 183/192._
 - _KI-15 (land starts losing a cluster) closed in M15.10 (P17), after D69._

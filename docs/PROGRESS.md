@@ -3,35 +3,20 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.8 done; the **M15.10 polish run** (2026-10-01 16:53 →
-  10-02 04:10, `docs/POLISH_LOOP.md`) is done: **Empires 1.0.1**, both `.s9pk` built, not yet on the VM. Waiting on
-  **M15.9, the user's playtest** (a full skirmish vs Hard) — the M15 exit; then tag `m15`, M16 multiplayer.
-- **M15.10:** every lens three rounds; 64 of 79 findings fixed — map starts (Narrows, crowded islands and land,
-  Coastal, team bridges, land clusters), computer players (70% villager cap D69, idle boats, Docks under raiders,
-  Death Match ages, armies scaled to a raised limit, Nomad TC, houses and buildings only where villagers walk),
-  rules (Stand Ground catapults, transport riders, tower targets, queued moves wait — D18), UI (dialogs and Esc,
-  Backspace, tooltips and their reach, Keys list, end banners and clocks, one-team Start, Post-Iron Score), server
-  saves. Open: KI-13/-14/-16/-17/-18 and P70/P74/P75/P11/P72 (all gate-blocked), P40 + P29/P32 (need the user / a
-  source), P52 (by rules), P30 (nice).
-- **The AI gates' noise (for the user):** a 1–3-tick think shift with no rule changed moves 1v1 wars 22–24/24,
-  Hard > Moderate 46–52/64, held-out water 42–47/48; tonight's baseline is at the top, so "must not fall" blocks
-  most AI fixes by chance (KNOWN_ISSUES end). How to gate AI changes is the user's call.
-- **Last green:** verify:full at the M15.10 wrap-up (42a685c, 1.0.1), 1114 s — 645 unit + 162 e2e, 604-game AI
-  suite, 100-seed determinism ×3 engines, two-hour soaks, Docker both arches, Tauri smoke; `make` → both `.s9pk`
-  1.0.1:0 (empires-startos c252f98).
-- **AI gates (all pass):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars 24/24
-  (1001–1024), water 48/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 47:08 (Done 25–60; D69); 0 crashes.
-- **Game:** 16 civs, 4 ages, the full RoR tree, water, hills (D58), alligators (D59), Ruins and Artifacts; every
-  victory, starting age and population 25–200; Full Tech Tree; diplomacy, server saves, music, voices (D57 data).
-- **StartOS:** 1.0.1:0 built (both arches, c252f98) — **unverified on the VM**; 1.0.0:0 was verified there (update,
-  restart, reinstall, real play in both engines); backup → restore unverified (KI-3).
-- **Open issues:** KI-13 arrows, KI-14 island villager, KI-16/-17/-18 AI economy and villagers (all blocked by the AI
-  gates — the user), KI-3 backups (a backup target on the VM — the user), KI-5 voice licence (before a public
-  release), KI-2 AI images (optional). No gate failing.
-- **Playable now:** `npm run preview` → `/` → Skirmish; the Mac app `src-tauri/target/aarch64-apple-darwin/release/
-  bundle/macos/Empires.app` (copy to /Applications); review scenes `?scenario=relics|countdowns|map&gators=1|…`.
-- **Notes:** metrics `docs/metrics/*.csv`; reviews `docs/visual-review.md`; AI suite `node tools/sim/ai-suite.ts
-  [--full --adjacent]`; `node tools/sim/diagnose.ts`; `node tools/sim/determinism.ts`; polish scripts `artifacts/polish/`.
+- **Branch:** `m16-multiplayer`. `main` is 1.0.1 + M15.11. Merge only after the user has played multiplayer on the VM (M16.8).
+- **M16:** M16.1–M16.6 done. Tagged `v1.1.0-rc1`; both `.s9pk` 1.1.0:0 from empires-startos c8b4d2d, not on the VM.
+  M16.9 fixed the island wood stall and landed KI-13 arrows.
+- **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
+  stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
+  182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. Baseline re-recorded.
+- **Last green:** `npm run verify` 190 s — 668 unit, 168 e2e, purity ok. Determinism 10/10. verify:full last at the
+  1.1.0 rebuild (837cb61); not re-run for this combat change.
+- **Screens:** 28 shots moved because the scripted AI games play differently (ai-base 14.4%, victory 4.2%). Looked at
+  ai-base, army-clash, raid, victory and results. No must-fix.
+- **Open:** HANDOFF item 2 — a guest picks their own civilization and team, then ping in the room, a two-client
+  monkey, a 30-minute soak, multiplayer save/load. KI-2, KI-3, KI-5. P72 and P75 still open from M15.10.
+- **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
+  alligators, relics. Gates not relaxed. D1–D14 untouched.
 
 ---
 
@@ -1077,10 +1062,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         game (`dialogOpen()` → `InputController.blocked`); Escape closes the dialog on top (save list, Options,
         Menu, Keys, Diplomacy, Tech Tree); F1/F10 close the Tech Tree and Diplomacy first; F3 can't un-pause under
         Keys. e2e `dialogs.spec.ts` (5 tests × 2 engines).
-      - [ ] P24 · must · combat · **[blocked → KI-13]** · before Ballistics a moving unit is almost never hit by arrows, even walking straight
+      - [x] P24 · must · combat · before Ballistics a moving unit is almost never hit by arrows, even walking straight
             at the shooter (Sentry Tower: 8 arrows, 0 damage at 4 axemen passing; 4 arrows, 0 at one walking in) —
             D26's hit test wants the target within radius + 0.15 of the aim point; mil:2 l.196 says only sideways
-            movement dodges · `lens-f/s10-dodge.ts`, `s7b-tower.ts`
+            movement dodges · `lens-f/s10-dodge.ts`, `s7b-tower.ts` — _fixed (M16.9):_ a straight missile hits along
+            its line of flight, out to a tile past the aim point; stones unchanged. Band PASS, water 182/192
+            (baseline 190 − 8; average 45.5/48, bar 44). Test: `combat` "a target walking along the line of fire…".
       - [x] P25 · should · stance · a Stand Ground Stone Thrower still fires (killed a clubman 7 tiles off); mil:2
             l.210: since patch 1.0a Stand Ground stops the catapult line firing at all · `lens-f/s8-settle.ts` §2 —
             _fixed:_ a catapult on Stand Ground neither auto-acquires nor answers; it fires when ordered. The AI sets
