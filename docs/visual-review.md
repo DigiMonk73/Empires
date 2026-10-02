@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P1 · no visual change (7 shots ≤ 0.33% px: menu backdrop edges, save timestamps)
+
 ## 2026-09-30 · M15.6b · visual pass, part 2: the art gallery (5 architecture sets × 4 ages) and the emblem
 - `tools/gallery.ts greek,egyptian,babylonian,roman,yamato 1,2,3,4` (160 views), scored per set on a 4×4 sheet
   (ages × town-w, town-e, mil-e, wonder). Greek 4 (thatch → tile, domed granaries), Egyptian 4 (pyramid, gold by

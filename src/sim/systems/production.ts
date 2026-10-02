@@ -5,7 +5,7 @@ import { EKind } from '../core/entities.ts';
 import { nearestTile } from '../path/service.ts';
 import { TYPES, buildingTypeIndex, unitTypeIndex } from '../rules/registry.ts';
 import type { World } from '../world.ts';
-import { canAfford, pay, shortfall } from './build.ts';
+import { pay, shortfall } from './build.ts';
 import { startGather } from './gather.ts';
 
 /**

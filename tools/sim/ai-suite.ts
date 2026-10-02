@@ -183,7 +183,7 @@ if (duelJobs.length) {
   }
   for (const [pi, [strong, weak]] of ladderPairs.entries()) {
     let j = 0;
-    for (const seed of ladderSeeds) {
+    for (const _seed of ladderSeeds) {
       for (const seat of [0, 1]) {
         const r = results[ladderJobs[pi]![j++]!];
         if (!r || r instanceof Error) continue;

@@ -20,7 +20,6 @@ const NOBLE: Selector = {
   classes: ['scout', 'cavalry', 'camel', 'chariot'],
   units: ['horseArcher', 'heavyHorseArcher', 'chariotArcher'],
 };
-const ALCHEMY: Selector = { classes: ['footArcher', 'mountedArcher', 'slinger', 'siege'], tags: ['warship'], buildingKinds: ['tower'] };
 
 const attr = (sel: Selector, a: string, v: number, mode: 'add' | 'mul' | 'set' = 'add'): Effect => ({ op: 'attr', sel, attr: a, mode, v });
 const upgradeUnit = (from: string, to: string): Effect => ({ op: 'upgrade', kind: 'unit', from, to });

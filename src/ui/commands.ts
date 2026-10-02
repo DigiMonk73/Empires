@@ -2,7 +2,7 @@ import { BUILDINGS, TECHS, TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
 import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES, buildingTypeIndex } from '../sim/rules/registry.ts';
-import { buildingAvailable, canAfford, shortfall } from '../sim/systems/build.ts';
+import { buildingAvailable, shortfall } from '../sim/systems/build.ts';
 import { isVillager } from '../sim/systems/gather.ts';
 import { MAX_QUEUE, currentBuilding, producedType, researchBlocker, trainBlocker } from '../sim/systems/production.ts';
 import type { World } from '../sim/world.ts';

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { openGame, pageErrors, snap } from './helpers.ts';
+import { openGame, pageErrors } from './helpers.ts';
 
 test('boots, renders WebGL2, and projects world coordinates', async ({ page }, info) => {
   await openGame(page);

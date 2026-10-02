@@ -717,7 +717,6 @@ export class WorldRenderer {
   drawGhostTiles(tiles: readonly { tx: number; ty: number; ok: boolean }[]): void {
     const g = this.ghostGfx.clear();
     if (this.ghostSprite) this.ghostSprite.visible = false;
-    const p = { x: 0, y: 0 };
     for (const t of tiles) g.poly(this.tileQuad(t.tx, t.ty)).fill({ color: t.ok ? 0x40ff60 : 0xff3030, alpha: 0.35 });
   }
 

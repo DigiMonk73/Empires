@@ -1,4 +1,3 @@
-import { POPULATION } from '../data/setup.ts';
 import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';

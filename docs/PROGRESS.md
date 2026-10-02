@@ -1017,5 +1017,59 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       backup target (KI-3). VM stopped.
 - [ ] **M15.9 User playtest** (Done 9) — **the user**: a full skirmish against Hard. Push-notify with how to play
       (`.app` path, StartOS link); fold in their feedback.
+- [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
+      per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel). _Next lens:_ C.
+      _Backlog:_
+      - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
+        console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
+      - _Lens B (146-row pairwise matrix + 30 × 15 min + 2268-map sweep; `artifacts/polish/lens-b/`): 0 exceptions,
+        176/176 save → load identical; stockpiles, starting techs, FTT stats, pop caps, time limit all right._
+      - [ ] P6 · must · mapgen Narrows · 3/5/7 players: the middle seat's TC and villagers start in the strait's deep
+            water (never acts, never defeated) · narrows small seed 11 3p (P3 TC at 16,49); 108/108 sweep maps ·
+            `artifacts/polish/lens-b/narrows.ts`; suspect `theta = rot + TRIG_STEPS/(2n)` in `generate.ts`
+      - [ ] P7 · must · mapgen islands · 5–8 players on Tiny/Small (Small Islands also Medium): forest and resource
+            clusters wall the start in — no passable tile around the TC · smallIslands small 7p seed 70134 (5 min,
+            4 villagers each, ≤ 320 gathered); largeIslands small 8p seed 92555 (6/8 enclosed) · `lens-b/sweep.ts`
+      - [ ] P3 · should · AI villagers · 3 villagers of P4 jitter ~90 s under fire at (63,40): orders flip between
+            "move to Town Center" and "attack the bowman" · g2 = `type=largeIslands&size=large&seed=23` 6p Hard,
+            ticks 45600–47400 (`node artifacts/polish/lens-a/stuck.ts`). _Cause:_ `Tactics.militia` returns false
+            once every militia villager already has its attack order, so `flee` sends them home; next think, back.
+      - [ ] P8 · should · mapgen Narrows · team games: the strait doesn't separate the teams (1122, 1212, 111222,
+            121212, 11112222 — 36/36 maps put an ally and an enemy on each side) · `lens-b/narrowsTeams.ts`
+      - [ ] P9 · should · victory · Score 250 + Post-Iron start is won at tick 0 when Full Tech Tree or Reveal Map is
+            on (starting techs score + the most-techs bonus) · 2p continental seed 1 · `lens-b/probes.ts`
+      - [ ] P10 · should · AI Nomad · no Town Center site within 8 tiles of the villagers → `found()`
+            (`src/ai/ai.ts:303`) returns true though `build()` failed, the AI issues nothing all game ·
+            largeIslands tiny 7p nomad seed 81599; smallIslands tiny 8p nomad seed 60503
+      - [ ] P11 · should · mapgen islands fairness · 29/215 Small and 24/225 Large Islands maps (2–4p) leave a start
+            with no land-reachable gold within 40 (stone similar); lions not balanced per island · smallIslands
+            large 2p tool seed 85019 (P2: 0 gold, 8 lions + 3 gators vs 1 + 1) · `lens-b/deaths.ts`, `preds.ts`
+      - [ ] P12 · should · mapgen Coastal fairness · coast distance differs > 30 tiles between starts on 33–40/42
+            maps per size (2p seed 15838: small 48 vs 12, large 75 vs 21)
+      - [ ] P13 · should · data · Babylonian `armoredElephant` needs `ironShield` (disabled for Babylonian), Persian
+            `irrigation` needs `plow` (disabled for Persian) — listed but unreachable (`src/data/civs.ts`); check
+            research · continental medium postIron seed 81794
+      - [ ] P2 · should · AI economy · Hard P1 on `continental small seed 7` (greek vs egyptian, both Hard) never hunts
+            the 5 gazelles by its TC, 15–25 wood minutes 5–20, housed at 36/36 with 400–600 food, 0 soldiers, loses
+            at 28.7 min (civs swapped: same; seed 8: fine) · `node artifacts/polish/lens-a/seat.ts '<g0>' hard 30`
+      - [ ] P4 · nice · HUD · "Not enough food." stacks 3× — the `no:<reason>` throttle (60 ticks, `src/ui/notify.ts`)
+            is shorter than a message's life · g2 tick ≈ 40200
+      - [ ] P5 · nice · defeat · a defeated player's leftover fishing boats show pop "1/0" (conquest rightly ignores
+            them) · g1 from 17:13
+      - [ ] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu
+      - [ ] P15 · nice · setup · 6–8 players allowed on Tiny/Small: TCs 17–19 tiles apart, a neighbour's mine spawns
+            under villagers (they do walk off) · highland tiny 8p seed 50536; coastal tiny 4p seed 15838
+      - [ ] P16 · nice · mapgen Large Islands · 56/96 team maps: allies' islands joined only through forest or mines
+            · `lens-b/bridge.ts`
+      - [ ] P17 · nice · mapgen · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
+            the land nudge searches 8 tiles) — 3/252 continental maps
+      - [ ] P18 · nice · URL · `setupFromQuery` doesn't validate `size`/`res` (`size=foo` → "Invalid array length")
+            or civ ids
+      - [ ] P19 · nice · AI · `src/ai/ai.ts:337` treats Nomad as a late start (villagers capped at 60% of pop) —
+            unconfirmed, code reading
+      - [x] P1 · nice · code health · 19 unused locals/imports (`tsc --noUnusedLocals --noUnusedParameters`: sim 3,
+            app 7, tools 9 — e.g. dead `ALCHEMY` selector in `src/data/techs.ts`) · lens G grep pass; no TODO/FIXME,
+            `console.log` or `any` casts in `src/` — _fixed:_ removed; `noUnusedLocals` + `noUnusedParameters` on in
+            `tsconfig.base.json`, so the typecheck step keeps it so
 - _Exit:_ all Done gates (see PLAN.md) and the user's sign-off. After Done: M16 multiplayer (StartOS WebSocket
   relay on the M15.2 router), then polish loops.

@@ -30,7 +30,7 @@ test('fog hides the enemy until scouted; explored ground stays dimmed', async ({
   expect(pageErrors(page)).toEqual([]);
 });
 
-test('?fog=0 shows everything', async ({ page }, info) => {
+test('?fog=0 shows everything', async ({ page }) => {
   await openGame(page, 'scenario=demo&fog=0&paused=1');
   await page.evaluate(() => window.__empires!.pause(true));
   const enemy = (await page.evaluate(() => window.__empires!.query.units(2)))[0]!;

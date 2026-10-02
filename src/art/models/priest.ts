@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { box, build, cone, cyl, sphere, type MatSpec, type NodeSpec } from '../dsl/model.ts';
-import { diePose, ease, humanoid, idlePose, walkPose, type Pose } from '../dsl/rig.ts';
+import { diePose, humanoid, idlePose, walkPose, type Pose } from '../dsl/rig.ts';
 import { banner, pediment } from './buildings.ts';
 import { clip } from './soldiers.ts';
 import type { ClipDef, ModelDef } from './types.ts';

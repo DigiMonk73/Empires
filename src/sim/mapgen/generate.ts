@@ -180,7 +180,7 @@ function blob(g: Grid, r: Rng, x: number, y: number, n: number, ok: (ch: string)
 }
 
 /** Nearest tile to (x, y) within `maxR` accepted by `ok` (square spiral search). */
-function nearestFree(g: Grid, x: number, y: number, maxR: number, ok: (tx: number, ty: number) => boolean): [number, number] | null {
+function nearestFree(x: number, y: number, maxR: number, ok: (tx: number, ty: number) => boolean): [number, number] | null {
   for (let rad = 0; rad <= maxR; rad++) {
     for (let dy = -rad; dy <= rad; dy++) {
       for (let dx = -rad; dx <= rad; dx++) {
@@ -497,14 +497,14 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
    */
   const spotFor = (p: number, off: { d: number; a: number }, maxR: number, ok: (x: number, y: number) => boolean): [number, number] | null => {
     const [x, y] = place(p, off);
-    if (o.type === 'continental' || o.type === 'inland') return nearestFree(g, x, y, maxR, ok);
+    if (o.type === 'continental' || o.type === 'inland') return nearestFree(x, y, maxR, ok);
     for (let k = 0; k <= TRIG_STEPS / 2; k += Math.max(1, Math.floor(TRIG_STEPS / 128))) {
       for (const sgn of k ? [1, -1] : [1]) {
         const [px, py] = place(p, { d: off.d, a: (off.a + sgn * k + TRIG_STEPS) % TRIG_STEPS });
         if (ok(px, py)) return [px, py];
       }
     }
-    return nearestFree(g, x, y, maxR, ok);
+    return nearestFree(x, y, maxR, ok);
   };
   const clusterSeeds = new Rng(o.seed ^ 0x5eed, STREAM.mapgen); // same cluster shapes for every player
   for (let p = 0; p < n; p++) {
@@ -607,10 +607,10 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     const shoreOk = (x: number, y: number): boolean => at(g, x, y) === '~' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => isOpen(at(g, x + dx!, y + dy!)) || at(g, x + dx!, y + dy!) === 'b');
     for (const [sx, sy] of starts) {
       for (let k = 0; k < 2; k++) {
-        const f = nearestFree(g, sx + 1, sy + 1, 20, shoreOk);
+        const f = nearestFree(sx + 1, sy + 1, 20, shoreOk);
         if (f) set(g, f[0], f[1], 'f');
       }
-      const d = nearestFree(g, sx + 1, sy + 1, 40, (x, y) => Math.max(Math.abs(x - sx - 1), Math.abs(y - sy - 1)) >= 8 && deepOk(x, y));
+      const d = nearestFree(sx + 1, sy + 1, 40, (x, y) => Math.max(Math.abs(x - sx - 1), Math.abs(y - sy - 1)) >= 8 && deepOk(x, y));
       if (d) resources.push({ kind: 'deepFish', tx: d[0], ty: d[1] });
     }
     const t = (W - 72) / (250 - 72);
