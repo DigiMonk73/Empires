@@ -14,6 +14,8 @@ const BLOCKED_PROGRESS = 0.3;
 /** Blocked ticks before re-pathing (3 s) and before giving up (8 s). */
 const STUCK_REPATH = 60;
 const STUCK_GIVE_UP = 160;
+/** Times a move queued behind its own side waits (another 5 s each) instead of giving up. */
+const FRIEND_WAITS = 6;
 /** A crowded destination: stop when this close to the final point and blocked for a while. */
 const CROWD_ARRIVE_DIST = 1.5;
 const CROWD_ARRIVE_TICKS = 12;
@@ -297,6 +299,12 @@ function stuckCheck(w: World, s: number): void {
   } else if (st === STUCK_REPATH) {
     w.paths[s] = undefined; // ask for a fresh path next tick
     w.moveStats.repaths++;
+  } else if (st >= STUCK_GIVE_UP && isMove && friendAhead(w, s) && ((w.orders[s]![0] as { waits?: number }).waits ?? 0) < FRIEND_WAITS) {
+    // Queued behind its own side, not walled in: wait and re-path again — 7 of 30 War Elephants sent through a gap
+    // gave up and stayed home (M15.10 lens F3, P79).
+    const o = w.orders[s]![0] as { waits?: number };
+    o.waits = (o.waits ?? 0) + 1;
+    e.stuck[s] = STUCK_REPATH - 1;
   } else if (st >= STUCK_GIVE_UP) {
     w.moveStats.gaveUp++;
     if (isMove) finishOrder(w, s, false);
@@ -305,6 +313,23 @@ function stuckCheck(w: World, s: number): void {
       e.stuck[s] = 0;
     }
   }
+}
+
+/** Another unit of the same player touching this one on the side it's heading to (a queue, not a wall). */
+function friendAhead(w: World, s: number): boolean {
+  const e = w.ents;
+  const rs = TYPES[e.type[s]!]!.radius;
+  const hx = headingX(w, s);
+  const hy = headingY(w, s);
+  let found = false;
+  w.grid.forEachNear(e.x[s]!, e.y[s]!, rs + 1.2, (j) => {
+    if (found || j === s || !e.alive[j] || e.kind[j] !== EKind.unit || e.owner[j] !== e.owner[s]) return;
+    const dx = e.x[j]! - e.x[s]!;
+    const dy = e.y[j]! - e.y[s]!;
+    const reach = rs + TYPES[e.type[j]!]!.radius + 0.3;
+    if (dx * dx + dy * dy < reach * reach && dx * hx + dy * hy > 0) found = true;
+  });
+  return found;
 }
 
 function scratch(w: World, key: 'px' | 'py', n: number): Float64Array {

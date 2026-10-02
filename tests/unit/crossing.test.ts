@@ -54,3 +54,21 @@ describe('200-unit crossing', () => {
     expect(worst).toBeLessThan(0.5);
   });
 });
+
+describe('a big group of large units through a gap (M15.10 P79)', () => {
+  it('units queued behind their own side wait instead of giving up and staying home', () => {
+    // 7 of 30 War Elephants sent through a 2-tile gap in a forest wall gave up after 8 s blocked behind the others.
+    const W = 60;
+    const rows = Array.from({ length: 50 }, (_, y) => Array.from({ length: W }, (_, x) => (x >= 20 && x < 22 && !(y >= 15 && y < 17) ? 'F' : '.')).join(''));
+    const units = Array.from({ length: 30 }, (_, i) => ({ type: 'warElephant', owner: 1, x: 4.5 + (i % 8), y: 4.5 + Math.floor(i / 8) }));
+    const sim = Sim.create({ seed: 9, map: { w: W, h: 50, ascii: rows }, players: [{ civ: 'greek' }, { civ: 'persian' }], scenario: { units } });
+    const e = sim.world.ents;
+    const ids: number[] = [];
+    for (let s = 0; s < e.top; s++) if (e.owner[s] === 1) ids.push(e.handleOf(s));
+    sim.step([{ player: 1, cmd: { t: 'move', ids, x: 44, y: 16 } }]);
+    for (let t = 0; t < 20 * 120; t++) sim.step();
+    const home = ids.filter((h) => e.x[e.slotOf(h)]! < 22).length;
+    expect(home, 'elephants left on the near side of the wall').toBe(0);
+    expect(sim.world.moveStats.gaveUp).toBe(0);
+  });
+});

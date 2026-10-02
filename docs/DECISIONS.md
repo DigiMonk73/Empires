@@ -56,7 +56,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   followers reuse the leader's path when both joins are walkable. Collision is soft separation on a 2-tile unit
   grid: mover-vs-idle pushes the idle unit sideways (70% perpendicular), head-on movers keep right, pushes are
   capped at 0.06 tiles/tick and never enter unwalkable tiles. Stuck: blocked progress < 30% of speed; repath at
-  3 s, give up at 8 s; crowded destinations accept arrival within 1.5 tiles after 0.6 s blocked.
+  3 s, give up at 8 s; crowded destinations accept arrival within 1.5 tiles after 0.6 s blocked. (M15.10 P79: a
+  move blocked by a unit of its own side touching it ahead — a queue, not a wall — re-paths and waits another 5 s
+  up to 6 times before giving up; 7 of 30 War Elephants sent through a gap had stayed home. Suite unchanged.)
 - **D19 — Bake details** (2026-09-29, M3.2). Headless Chromium on ANGLE Metal bakes at ~30 frames/s-equivalent
   (7 static models in 0.2 s). Camera: ortho, pitch 30°, yaw 45°, PX = 64√2 px per camera-plane unit at 2× →
   calibration IoU 1.0000 for a flat tile and a 3×3×0.6 box. Frames are 4× supersampled, downsampled in

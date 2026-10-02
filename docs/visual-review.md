@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M15.10 P79 · movement only (queued moves wait); 5 shots of menu-backdrop noise
+
 ## 2026-10-02 · M15.10 P78 · AI above the default population only; 6 shots of menu-backdrop noise
 
 ## 2026-10-02 · M15.10 P77 · keys-grid 0.10% (the Esc row's longer text, one line — looked at); the rest menu-backdrop noise
