@@ -30,7 +30,11 @@ function Chip({ id, name, state, kind, arch }: { id: string; name: string; state
 export function TechTree({ civ, columns, full = false, onClose }: { civ: string; columns: TreeColumn[]; full?: boolean; onClose: () => void }) {
   const c = CIV_BY_ID.get(civ);
   return (
-    <div class="tt" data-testid="tech-tree" onKeyDown={(e) => e.key === 'Escape' && onClose()}>
+    <div class="tt" data-testid="tech-tree" onKeyDown={(e) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation(); // (the game's Escape would close the dialog beneath it too)
+        onClose();
+      }}>
       <div class="tt-panel">
         <div class="tt-head">
           <h2>

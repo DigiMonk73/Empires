@@ -85,6 +85,11 @@ export const hud = {
   idleVillagers: signal(0),
 };
 
+/** A dialog is over the game: its keys stay out of the game behind it, and Escape closes it (M15.10 P34, P36). */
+export function dialogOpen(): boolean {
+  return hud.menuOpen.value || hud.keysOpen.value || hud.optionsOpen.value || !!hud.saveDialog.value || !!hud.diplomacy.value || !!hud.techTree.value || !!hud.results.value;
+}
+
 /** Wired by main: what HUD buttons do. */
 export const hudActions: {
   perform(a: Action): void;

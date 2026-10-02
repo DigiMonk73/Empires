@@ -21,7 +21,7 @@ import { TimelineRecorder } from './game/timeline.ts';
 import { computeScores } from './sim/rules/score.ts';
 import { applyHotkeys, gameSettings, SPEEDS } from './ui/settings.ts';
 import { computeCommands } from './ui/commands.ts';
-import { hud, hudActions } from './ui/store.ts';
+import { dialogOpen, hud, hudActions } from './ui/store.ts';
 import { setIconArch, setIconArt } from './ui/icons.ts';
 import { installUiTextures } from './ui/textures.ts';
 import { setWaterTime } from './render/terrainMesh.ts';
@@ -161,9 +161,16 @@ async function boot(): Promise<void> {
     hud.placing.value = input.placing;
   };
   input.onUiChange = refreshCommands;
+  input.blocked = dialogOpen;
   hudActions.perform = (a) => input.perform(a);
   hudActions.setMenu = (open) => {
     hud.menuOpen.value = open;
+    // The menu replaces any other dialog rather than opening beneath it (M15.10 P35).
+    if (open) {
+      hud.keysOpen.value = false;
+      hud.techTree.value = null;
+      hud.diplomacy.value = null;
+    }
     hud.saveDialog.value = null;
     hud.optionsOpen.value = false;
     hud.saveName.value = `${kind} — ${formatClock(world.tick)}`;
@@ -276,11 +283,31 @@ async function boot(): Promise<void> {
     if (keysSeen && !hud.menuOpen.peek()) session.paused = open || hud.userPaused.peek();
     keysSeen = true;
   });
+  // Escape closes the dialog on top (M15.10 P36): the save list, Options, the Menu, Keys, Diplomacy, the Tech Tree.
+  const closeTopDialog = (): void => {
+    if (hud.saveDialog.value) hud.saveDialog.value = null;
+    else if (hud.optionsOpen.value) hud.optionsOpen.value = false;
+    else if (hud.menuOpen.value) hudActions.setMenu(false);
+    else if (hud.keysOpen.value) hud.keysOpen.value = false;
+    else if (hud.diplomacy.value) hudActions.showDiplomacy(false);
+    else if (hud.techTree.value) hud.techTree.value = null;
+  };
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || menuMode) return;
+    if (e.key === 'Escape' && dialogOpen()) {
+      e.preventDefault();
+      closeTopDialog();
+      return;
+    }
     if (e.key === 'F1') {
       e.preventDefault();
-      hud.keysOpen.value = !hud.keysOpen.value;
+      const open = !hud.keysOpen.value;
+      // Keys replace the Tech Tree or Diplomacy rather than opening beneath them (M15.10 P35).
+      if (open) {
+        hud.techTree.value = null;
+        hud.diplomacy.value = null;
+      }
+      hud.keysOpen.value = open;
       return;
     }
     if (e.key === 'F10') {
@@ -293,7 +320,7 @@ async function boot(): Promise<void> {
     if (e.key === 'F3' || e.key === 'Pause') {
       e.preventDefault();
       hud.userPaused.value = !hud.userPaused.value;
-      session.paused = hud.userPaused.value;
+      session.paused = hud.userPaused.value || hud.keysOpen.value; // (the Keys list keeps it paused, M15.10 P37)
       return;
     }
     if (e.key === 'F4') {

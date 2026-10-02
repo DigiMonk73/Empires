@@ -1024,7 +1024,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       (`.app` path, StartOS link); fold in their feedback.
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
-      during the 20:25 verify:full), H; C and F running (21:00). _Next lens:_ E, then G's 3× e2e flake run.
+      during the 20:25 verify:full), H, C, F. _Next lens:_ E, then G's 3× e2e flake run.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1055,6 +1055,25 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - _Lens F (unit behaviour, Node scenes, `artifacts/polish/lens-f/`): pathing through 1–2 tile gaps, walls,
         docks and shores fine for 12–20 units of every size; attack-move, stop, queues, retreat, drop sites, farms,
         builders, priests' range and rules, Stone Thrower minimum range, transports all right._
+      - _Lens C (input monkey, ~7,700 random actions in Chromium over 20 seeds, ~1,400 in WebKit, 15 targeted
+        combos; `artifacts/polish/lens-c/`): 0 page or console errors, no frame or tick stalls; every save/load,
+        server save, quit/restart and resign path fine._
+      - [x] P33 · must · input (WebKit) · Backspace with none of your units selected goes back in browser history —
+            the game is abandoned with no autosave (Chromium stays) · `lens-c/repro-5.ts webkit`; `controller.ts`
+            ~419 calls `preventDefault()` only when it has ids to delete
+      - [x] P34 · must · input · keys act on the game behind the open Menu (F10): Delete on a selected villager is
+            queued while paused and kills it on Resume; B then E opens the build page behind · `lens-c/repro-2.ts`
+      - [x] P35 · should · dialogs · F1 or F10 over the Tech Tree or Diplomacy opens the new dialog underneath
+            (Keys, Diplomacy, Menu all z-index 20): the game pauses with no banner, the covered Close can't be
+            clicked · `lens-c/repro-1.ts`, `probe-stack.ts`
+      - [x] P36 · should · dialogs · Escape closes none of the in-game dialogs (Tech Tree, Diplomacy, Keys, Menu); it
+            reaches the game and clears the selection behind them · `lens-c/repro-4.ts`
+      - [x] P37 · nice · pause · F3 twice with the Keys list (F1) open un-pauses the game behind it ·
+            `lens-c/repro-3.ts`
+      - _P33–P37 fixed together:_ Backspace never leaves the page; while a dialog is open its keys stay out of the
+        game (`dialogOpen()` → `InputController.blocked`); Escape closes the dialog on top (save list, Options,
+        Menu, Keys, Diplomacy, Tech Tree); F1/F10 close the Tech Tree and Diplomacy first; F3 can't un-pause under
+        Keys. e2e `dialogs.spec.ts` (5 tests × 2 engines).
       - [ ] P24 · must · combat · **[blocked → KI-13]** · before Ballistics a moving unit is almost never hit by arrows, even walking straight
             at the shooter (Sentry Tower: 8 arrows, 0 damage at 4 axemen passing; 4 arrows, 0 at one walking in) —
             D26's hit test wants the target within radius + 0.15 of the aim point; mil:2 l.196 says only sideways

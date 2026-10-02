@@ -49,6 +49,9 @@ export class InputController {
   buttons: CommandButton[] = [];
   onUiChange: (() => void) | null = null;
 
+  /** Set by the game: true while a dialog is over it — the game's keys stay out then (M15.10 P34). */
+  blocked: (() => boolean) | null = null;
+
   constructor(canvas: HTMLCanvasElement, camera: Camera, session: GameSession, wr: WorldRenderer, sel: Selection, box: Graphics) {
     this.canvas = canvas;
     this.camera = camera;
@@ -406,6 +409,9 @@ export class InputController {
 
   private onKey(e: KeyboardEvent): void {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    // Backspace never leaves the page — WebKit goes back in history on it, abandoning the game (M15.10 P33).
+    if (e.key === 'Backspace') e.preventDefault();
+    if (this.blocked?.()) return;
     if (e.key === 'Escape') {
       if (this.targeting) this.setTargeting(null);
       else if (this.placing) this.cancelPlacement();
