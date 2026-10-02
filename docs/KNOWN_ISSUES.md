@@ -31,8 +31,8 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
 - **KI-14 · should (blocked by the AI gates) · two-player island starts bury a villager now and then** — M15.10 P20.
   ~15% of two-player Small/Large Islands maps (15 of the water suite's 96) start a villager on a forest or mine
-  tile, stuck for the game. Holding the Town Center's villager tiles clear fixes it but moves held-out water 46 →
-  44/48 (tried twice: before and after D69). Next: trace the water games that stop finishing (dev seeds 401–448,
+  tile, stuck for the game. Holding the Town Center's villager tiles clear fixes it but moves held-out water down
+  every time (46 → 44, 46 → 44 after D69, 47 → 45 after P55: three cycles, blocked). Next: trace the water games that stop finishing (dev seeds 401–448,
   `diagnose.ts water-trace`) — the computers seem to need the lopsided start to end the game.
 - **KI-15 · should (blocked by the AI gates) · land starts lose a gold, stone or berry cluster** — M15.10 P17. On
   Continental/Inland a start's own cluster with nothing free within 8 tiles of its spot is dropped (70 of the AI
