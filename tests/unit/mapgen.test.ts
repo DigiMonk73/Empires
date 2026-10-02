@@ -199,6 +199,31 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('Large Islands: teammates walk to each other over their bridge (M15.10 P16)', () => {
+    // The land bridge joining a team's islands was grown over by forest and mines: teammates had to chop through.
+    for (const layout of ['1122', '1212', '111222', '11112222']) {
+      for (const size of ['tiny', 'small', 'medium'] as const) {
+        for (const seed of [1, 2, 3]) {
+          const players = [...layout].map((t) => ({ civ: 'greek', team: Number(t) }));
+          const m = generateMap({ seed, type: 'largeIslands', size, players });
+          const w = Sim.create(m).world;
+          const labels = w.pathing.regions.labels(1);
+          const land = (p: number) => {
+            for (let s2 = 0; s2 < w.ents.top; s2++) {
+              if (!w.ents.alive[s2] || w.ents.owner[s2] !== p || w.ents.kind[s2] !== EKind.unit) continue;
+              const r = labels[Math.floor(w.ents.y[s2]!) * w.map.w + Math.floor(w.ents.x[s2]!)]!;
+              if (r) return r;
+            }
+            return 0;
+          };
+          const byTeam = new Map<number, Set<number>>();
+          players.forEach((p, i) => byTeam.set(p.team, (byTeam.get(p.team) ?? new Set()).add(land(i + 1))));
+          for (const [t, rs] of byTeam) expect(rs.size, `${layout} ${size} seed ${seed} team ${t}`).toBe(1);
+        }
+      }
+    }
+  });
+
   it('is deterministic and seed-sensitive', () => {
     const a = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
     const b = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });

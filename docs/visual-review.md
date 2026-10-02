@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P16 · no e2e scene uses Large Islands teams; 6 shots ≤ 0.3% px (menu backdrop, timestamps)
+
 ## 2026-10-01 · M15.10 P12 · no e2e scene uses Coastal; 3 shots ≤ 0.1% px (menu backdrop)
 
 ## 2026-10-01 · M15.10 P23 · `keys-grid` (both engines, 0.07% px): "F4 · S button" line fits the key column. 4/5.

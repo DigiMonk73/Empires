@@ -208,6 +208,8 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
 
   /** Island maps: every start's own island radius (resources are pulled inside it). */
   let islandR = Infinity;
+  /** Large Islands: the land bridges joining teammates' islands (start middles), kept clear of clusters below. */
+  const bridges: [number, number, number, number][] = [];
   // ── Terrain, desert and start positions ───────────────────────────────────────────────────────────────
   // The original two types draw terrain first and the starts after it (their seeds' maps stay as they were); the
   // water types need the starts first — islands and the strait are laid out around them.
@@ -432,6 +434,7 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
           const [bx, by] = starts[members[k]!]!;
           const len = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
           for (let d = 0; d <= len; d += 2) islands.push({ x: ax + 1.5 + ((bx - ax) * d) / len, y: ay + 1.5 + ((by - ay) * d) / len, r: own * 0.75 });
+          bridges.push([ax + 1.5, ay + 1.5, bx + 1.5, by + 1.5]);
         }
       }
     }
@@ -487,6 +490,22 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
         if (!keep || !isOpen(at(g, x, y))) continue;
         tcTiles.push([y * W + x, at(g, x, y)]);
         set(g, x, y, 'o');
+      }
+    }
+  }
+  // A three-tile path along each team bridge stays clear too: forest and mines grew across it and teammates had to
+  // chop their way to each other (M15.10 P16).
+  for (const [ax, ay, bx, by] of bridges) {
+    const len = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    for (let d = 0; d <= len; d += 0.5) {
+      const cx = ax + ((bx - ax) * d) / len;
+      const cy = ay + ((by - ay) * d) / len;
+      for (let y = Math.floor(cy - 1.5); y <= Math.floor(cy + 1.5); y++) {
+        for (let x = Math.floor(cx - 1.5); x <= Math.floor(cx + 1.5); x++) {
+          if ((x + 0.5 - cx) * (x + 0.5 - cx) + (y + 0.5 - cy) * (y + 0.5 - cy) > 2.25 || !isOpen(at(g, x, y))) continue;
+          tcTiles.push([y * W + x, at(g, x, y)]);
+          set(g, x, y, 'o');
+        }
       }
     }
   }

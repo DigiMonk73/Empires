@@ -1122,10 +1122,17 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             clearing; land maps with 4+ players get it too (2–3 players keep their layouts). Land types tiny/small
             4–8p × 6 seeds: maps with a villager on a blocked tile 82 → 0 (`artifacts/polish/p15-measure.ts`).
             Test: `mapgen` "Crowded starts…". AI suite maps unchanged except the 4-player free-for-alls.
-      - [ ] P16 · nice · mapgen Large Islands · 56/96 team maps: allies' islands joined only through forest or mines
-            · `lens-b/bridge.ts`
+      - [x] P16 · nice · mapgen Large Islands · 56/96 team maps: allies' islands joined only through forest or mines
+            · `lens-b/bridge.ts` — _fixed:_ a three-tile path along each team bridge is held clear while clusters go
+            down: 56/96 → 0/96. Two-player water maps (the water gate) have no bridges: unchanged. Test: `mapgen`
+            "Large Islands: teammates walk to each other".
       - [ ] P17 · nice · mapgen · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
-            the land nudge searches 8 tiles) — 3/252 continental maps
+            the land nudge searches 8 tiles) — 3/252 continental maps. _Bigger than it looked (it. 15):_ a start's own gold, stone or
+            berry cluster with nothing free within 8 tiles of its spot is dropped on Continental/Inland — 70 of the
+            AI suite's 148 land maps; 55/160 2p maps leave one start < 70% of the other's gold or stone within 32
+            (continental tiny seed 9: stone 0 vs 1250; `artifacts/polish/p17-drops.ts`). Swinging the cluster round
+            the start (as the water maps do) → 40/160, but GATE FAIL: Hard-vs-Hard median 70:39 (Done 25–60),
+            wars 23/24 — reverted. Needs AI work on even land starts first (like P20).
       - [x] P18 · nice · URL · `setupFromQuery` doesn't validate `size`/`res` (`size=foo` → "Invalid array length")
             or civ ids — _fixed:_ unknown size, resources and civ fall back like everything else (`Object.hasOwn`, so
             `size=toString` too). Test: `setup-options` "carries victory…".
