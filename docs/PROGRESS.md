@@ -1123,7 +1123,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             shows no second banner (a team win still does): `showsEnd()`. Test: `setup-options` "a fallen player…".
       - [ ] P40 · should · spectating · after defeat Keep watching shows the dead seat's fog — black but for stale
             ground (g1, g3 minutes 40–90). Unconfirmed whether the original reveals the map on defeat. _Left:_ a
-            reveal would be new behaviour without a rule to follow — for the user.
+            reveal would be new behaviour without a rule to follow — for the user. _Evidence (it. 65), later editions
+            only: an eliminated player pans the map with fog of war on until the game ends, and players have asked
+            for a reveal after the end (forums.ageofempires.com/t/reveal-map-after-game-ends/77867) — today's fogged
+            view may be the faithful one._
       - [x] P41 · nice · HUD · a Standard countdown clock keeps counting after a conquest victory ends the game
             (g2 75:36 → "Player 2 · All Ruins" still 101 at 80:40) · `lens-e/crops/m90-battle_92_112-tr.png` —
             _fixed:_ the clocks read the game-over tick. Test: `standard-victory` "the clocks stop…".
