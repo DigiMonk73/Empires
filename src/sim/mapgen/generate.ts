@@ -481,12 +481,17 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   // water maps, which the water gate measures — P20.)
   const tcTiles: [number, string][] = [];
   const crowded = WATERY.has(o.type) ? n > 2 : n >= 4;
+  // Up to 4 tiles — on a small island less, down to the 5×5 round the Town Center (2.9: its corners too, or clusters
+  // in them cut the ring into pockets apart from each other): a 4-tile disc left a ring too thin for any cluster on
+  // a Tiny 7–8 player island, and every start's own wood, gold, stone and berries were dropped (M15.10 P58).
+  const clearR = Math.min(4, Math.max(2.9, islandR - 4));
+  const clearR2 = clearR * clearR;
   for (const [sx, sy] of WATERY.has(o.type) || crowded ? starts : []) {
     for (let y = sy - 3; y < sy + 6; y++) {
       for (let x = sx - 3; x < sx + 6; x++) {
         const dx = x - sx;
         const dy = y - sy;
-        const keep = crowded ? (dx - 1) * (dx - 1) + (dy - 1) * (dy - 1) <= 16 : dx >= 0 && dx < 3 && dy >= 0 && dy < 3;
+        const keep = crowded ? (dx - 1) * (dx - 1) + (dy - 1) * (dy - 1) <= clearR2 : dx >= 0 && dx < 3 && dy >= 0 && dy < 3;
         if (!keep || !isOpen(at(g, x, y))) continue;
         tcTiles.push([y * W + x, at(g, x, y)]);
         set(g, x, y, 'o');

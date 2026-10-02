@@ -142,7 +142,7 @@ describe('map generation (econ:8)', () => {
     }
   });
 
-  it('Crowded starts on Tiny and Small: villagers on open ground with room round the Town Center (M15.10 P7, P15)', () => {
+  it('Crowded starts on Tiny and Small: villagers on open ground, the ring round the Town Center clear, its resources there (M15.10 P7, P15, P58)', () => {
     // Islands from 3 players, land maps from 4. (Two-player islands still bury a villager now and then — P20, held
     // back by the water gate; land maps with 2–3 players never did.)
     const types: [GenMapType, number][] = [['smallIslands', 3], ['largeIslands', 3], ['continental', 4], ['inland', 4], ['coastal', 4], ['mediterranean', 4], ['highland', 4], ['hillCountry', 4]];
@@ -165,7 +165,7 @@ describe('map generation (econ:8)', () => {
                 expect(w.map.passable(x, y, 1), `${tag} villager at ${x},${y}`).toBe(true);
                 if (!seen[y * W + x]) q.push(y * W + x), (seen[y * W + x] = 1);
               }
-              for (let i = 0; i < q.length && q.length < 40; i++) {
+              for (let i = 0; i < q.length && q.length < 16; i++) {
                 const x = q[i]! % W;
                 const y = Math.floor(q[i]! / W);
                 for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
@@ -173,7 +173,17 @@ describe('map generation (econ:8)', () => {
                   if (w.map.passable(x + dx, y + dy, 1) && !seen[j]) q.push(j), (seen[j] = 1);
                 }
               }
-              expect(q.length, tag).toBeGreaterThanOrEqual(40);
+              // At least the ring round the Town Center (16 tiles): on a small island its own clusters take the rest
+              // — a wider clearing left them no room at all (P58).
+              expect(q.length, tag).toBeGreaterThanOrEqual(16);
+              // …and on a Tiny island they are there: gold, stone, berries and wood within 13 tiles (it seats 6 with
+              // all four; 7–8 players have too little island for everything).
+              if (type.endsWith('Islands') && size === 'tiny' && n <= 6) { // (land maps: P17)
+                const [sx, sy] = m.starts[p - 1]!;
+                const has = new Set<string>();
+                for (let y = sy - 12; y <= sy + 14; y++) for (let x = sx - 12; x <= sx + 14; x++) if (Math.hypot(x - sx - 1, y - sy - 1) <= 13) has.add(m.map.ascii![y]?.[x] === 'T' ? 'F' : m.map.ascii![y]?.[x] ?? '');
+                for (const k of ['G', 'S', 'B', 'F']) expect(has.has(k), `${tag} has ${k}`).toBe(true);
+              }
             }
           }
         }

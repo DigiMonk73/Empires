@@ -1176,6 +1176,27 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         the bar's size); Macedonian text per econ:6.1; Help's goal names Standard; an ally's Score/Time win says
         so. Tests: `tech-tree` (P43, P46, P47, P45), `setup-options` (P56), e2e `research` "a research button's
         tooltip…" with an on-screen hit test; screenshot `research-tooltip`.
+      - _Lens B2 (regression; current tree vs 9def2de, 2268-map sweep + 274 matrix games; `artifacts/polish/lens-b2/`):
+        0 exceptions, 274/274 save → load identical; villagers on blocked tiles 1234 → 4 (all P20), starts with no
+        passable land 274 → 0, TC on water 108 → 0, Narrows starts in the strait 108/108 maps → 0/252, Large Islands
+        bridges blocked 56/96 → 0/96, maps with a bad start 476 → 194, AI idle from the start 16 → 0, Nomad TCs
+        founded 930 → 1080/1080._
+      - [x] P58 · must · mapgen islands · P7's 4-tile clearing covered a Tiny 7–8 player island (land radius ~5.8):
+            the ring left was too thin for any cluster, and every start lost its wood, gold, stone and berries (8p:
+            48/48 bare; matrix L-150: 0 wood in 15 min) · `node artifacts/polish/lens-b2/bare.ts src smallIslands tiny
+            8 7919` — _fixed:_ the clearing shrinks with the island (4 → the 5×5 ring: with its corners, or clusters
+            there cut the ring into pockets — the Large Islands bridge test caught it). Starts lacking a kind within 9
+            tiles, Tiny 7p/8p: Small Islands 17/42, 40/48 (before tonight 11, 39 — but villagers buried then); 3–6p
+            0–1. Test: `mapgen` "Crowded starts…" now also checks Tiny islands' resources (and wants the 16-tile ring,
+            not 40: the clusters take the rest). Water-gate and land suite maps unchanged.
+      - [ ] P59 · should · AI Docks · Docks placed where no villager can walk (P21's land check exempts them): 42 in
+            288 AI games; across water (28) or on shore pockets behind forest (60); dead foundations count to the Dock
+            limit — narrows tiny 6p seed 52912: P1, P3, P5 never get a usable Dock · `lens-b2/classify.ts`
+      - [ ] P60 · should · mapgen Tiny Mediterranean/Narrows · forest or mines cut starts off by land (19 maps, 20
+            before) — mediterranean tiny 6p seed 47514 (each start reaches 1 other) · `lens-b2/islcmp.ts`
+      - _Noted (B2, nice):_ Narrows with uneven teams seats one ally across the strait (sides within one player —
+        by P8's rule); P15 nudged a few land clusters (17 starts worse, 30 better); Large Islands tiny 2v2 seed 3:
+        enemies' islands touch (before tonight too)._
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
