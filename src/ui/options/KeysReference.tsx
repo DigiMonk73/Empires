@@ -19,7 +19,7 @@ const GENERAL: [string, string][] = [
   ['Arrows · edge', 'Scroll'],
   ['+ / −', 'Game speed'],
   ['F3 · Pause', 'Pause / resume'],
-  ['F4 · S', 'Score list'],
+  ['F4 · S button', 'Score list (the S beside the minimap)'],
   ['F11', 'Time, speed and population'],
   ['F10', 'Menu (pauses)'],
   ['F1', 'This list'],

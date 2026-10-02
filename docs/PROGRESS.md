@@ -9,8 +9,9 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   findings fixed (Narrows starts and teams, crowded island and land starts, AI villager jitter, Nomad freeze, AI
   houses across water, Post-Iron Score, one-team Start, Tech Tree reach, URL checks, notifications); P2 (a Hard
   economy) and P20 (2p island starts) wait on AI work — the water/war gates fell when tried.
-- **Last green:** verify:full at M15.8 (1.0.0), 1120 s — 606 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
-  last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
+- **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI suite,
+  100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09). Before:
+  M15.8 (1.0.0), 1120 s; the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
   the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
 - **AI gates (all pass, full suite, M15.10 P15):** ladder — every level beats the one below
   (Hard > Moderate 51/64, bar 48; Hardest > Hard 63/64); Moderate 1v1s decided within 60 min 24/24 on held-out
@@ -1022,7 +1023,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.9 User playtest** (Done 9) — **the user**: a full skirmish against Hard. Push-notify with how to play
       (`.app` path, StartOS link); fold in their feedback.
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
-      per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel). _Next lens:_ C.
+      per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
+      during the 20:25 verify:full). _Next lens:_ C, then E, F, H, and G's 3× e2e flake run.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1041,6 +1043,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             go down (was the TC's 3×3 only). Islands tiny–large, 2–8p × 6 seeds: maps with a villager on a blocked
             tile 170/672 → 4 (all 2p); starts with no walk to the shore (a forest to chop) 123 → 15 of 210 on Tiny Small Islands. 2p maps
             unchanged (P20). Test: `mapgen.test.ts` "Islands, 3–8 players…"; `artifacts/polish/p7-measure.ts`.
+      - _Lens D (reading): Help matches the rules (ages, houses +4, Writing, Coinage, elevation D44, Shift-place);
+        every Keys entry is bound except "S"; every key event has a sound, attacks a message and a ping. The game UI
+        is English only — "5 languages" in POLISH_LOOP means the StartOS texts (lens H)._
+      - [x] P23 · nice · Keys list · "F4 · S — Score list": S is the button by the minimap, no key does it
+            (`src/ui/options/KeysReference.tsx`) — _fixed:_ "F4 · S button — Score list (the S beside the minimap)"; fits
+            the `keys-grid` shot (where S is a grid key, so no key could be).
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
