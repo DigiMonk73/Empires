@@ -1023,7 +1023,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
       during the 20:25 verify:full), H, C, F, E, G (3× e2e); round two A2, B2, C2, D2, A3, then a 1.0.0 → tonight save
-      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2. _Next:_ a third round from A.
+      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3. _Next:_ A4.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1241,6 +1241,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
+      - _Lens C3 (input monkey on the final build, 8 × 400 actions, Chromium + WebKit; C2's dialog script again;
+        `artifacts/polish/lens-c2/runs/c3-*`): 0 findings, 0 page or console errors; the dialog chains differ from
+        C2's only where P61/P65 fixed them._
       - _Lens H2 (package docs vs tonight's game; builds are the wrap-up's): README's ~500 MB of sprites matches E2
         (489 MB); save wording right (`SIM_VERSION` still 0.8.0, 1.0.0 saves load). For the 1.0.1 wrap-up:
         instructions — Esc closes the window on top, towers take a target, Start waits for a second team, 1.0.0
