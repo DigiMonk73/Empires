@@ -55,8 +55,8 @@ playtest). Multiplayer is next (M16).
   server's `/ws`, pause for everyone, chat, a computer takes a departed player's seat; a player who drops mid-game
   can't rejoin yet). verify:full green; both `.s9pk` 1.1.0:0 built (package repo branch `m16-multiplayer`,
   74e7de4) — not installed on the VM. `main` is still 1.0.1 + M15.11 (the AI fixes); KI-13 arrows still blocked.
-- Package repo `../empires-startos` has a matching branch `m16-multiplayer` with the multiplayer docs (version not
-  bumped yet).
-- **Next (see `docs/MULTIPLAYER.md`):** M16.5b late rejoin (replay), M16.6 desync report + latency-based delay,
-  M16.7 version 1.1.0 + both `.s9pk` (move the package's submodule to this branch's HEAD, commit, then `make`),
-  M16.8 the user plays a game against a friend. Then merge `m16-multiplayer` into `main` (fast-forward).
+- Package repo `../empires-startos` has a matching branch `m16-multiplayer` (1.1.0:0, its submodule on this
+  branch's 11cd824). After any further change here: move that submodule, commit there, then `make`.
+- **Next (see `docs/MULTIPLAYER.md`):** M16.5b rejoin mid-game (replay from tick 0), M16.6 desync report +
+  latency-based delay, M16.8 the user plays a game against a friend on the VM. Then merge `m16-multiplayer` into
+  `main` (fast-forward) in both repos. KI-13 arrows (KNOWN_ISSUES) is the open single-player item.
