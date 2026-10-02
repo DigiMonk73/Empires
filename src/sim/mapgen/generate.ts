@@ -469,11 +469,12 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   // of island starts (KI-10; the trees under a Town Center were cut off from everyone). With 3+ players all ground
   // within 4 tiles of its middle stays clear too: on their smaller islands the template, pulled in, walled the start
   // and buried its villagers in forest, and they never moved (M15.10 P7). Held as 'o' until the map is written out.
-  // (Land maps never showed it and keep their layouts exactly; two-player water maps, which the water gate measures,
-  // keep theirs until P20.)
+  // Land maps with 4+ players need the same clearing: a neighbour's far gold, stone or berries grew over the
+  // villagers' spots there (M15.10 P15). (Land maps with 2–3 players keep their layouts exactly; so do two-player
+  // water maps, which the water gate measures — P20.)
   const tcTiles: [number, string][] = [];
-  const crowded = n > 2;
-  for (const [sx, sy] of WATERY.has(o.type) ? starts : []) {
+  const crowded = WATERY.has(o.type) ? n > 2 : n >= 4;
+  for (const [sx, sy] of WATERY.has(o.type) || crowded ? starts : []) {
     for (let y = sy - 3; y < sy + 6; y++) {
       for (let x = sx - 3; x < sx + 6; x++) {
         const dx = x - sx;

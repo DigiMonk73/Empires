@@ -142,11 +142,13 @@ describe('map generation (econ:8)', () => {
     }
   });
 
-  it('Islands, 3–8 players on Tiny and Small: villagers start on open ground with room round the Town Center (M15.10 P7)', () => {
-    // (Two-player islands still bury a villager now and then — P20, held back by the water gate.)
-    for (const type of ['smallIslands', 'largeIslands'] as const) {
+  it('Crowded starts on Tiny and Small: villagers on open ground with room round the Town Center (M15.10 P7, P15)', () => {
+    // Islands from 3 players, land maps from 4. (Two-player islands still bury a villager now and then — P20, held
+    // back by the water gate; land maps with 2–3 players never did.)
+    const types: [GenMapType, number][] = [['smallIslands', 3], ['largeIslands', 3], ['continental', 4], ['inland', 4], ['coastal', 4], ['mediterranean', 4], ['highland', 4], ['hillCountry', 4]];
+    for (const [type, from] of types) {
       for (const size of ['tiny', 'small'] as const) {
-        for (let n = 3; n <= 8; n++) {
+        for (let n = from; n <= 8; n++) {
           for (const seed of [7919, 15838]) {
             const m = generateMap({ seed, type, size, players: Array.from({ length: n }, (_, i) => ({ civ: 'greek', team: i + 1 })) });
             const w = Sim.create(m).world;

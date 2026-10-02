@@ -1099,10 +1099,13 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             them) · g1 from 17:13
       - [x] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu — _fixed:_
             Start waits, with a note saying why (e2e `menu` "everyone on one team", screenshot `menu-one-team`).
-      - [ ] P15 · should · crowding · 6–8 players on Tiny/Small: TCs 17–24 tiles apart, a neighbour's far mine or
+      - [x] P15 · should · crowding · 6–8 players on Tiny/Small: TCs 17–24 tiles apart, a neighbour's far mine or
             berries spawn under/around villagers — usually they walk off, but narrows small 8p seed 11 boxes P2's
             villager into one tile between its TC and P7's far berries · highland tiny 8p seed 50536; coastal tiny 4p
-            seed 15838; `node artifacts/polish/probe-p6.ts 12345678 11 small 1 2`
+            seed 15838; `node artifacts/polish/probe-p6.ts 12345678 11 small 1 2` — _fixed:_ the narrows box went with P7's
+            clearing; land maps with 4+ players get it too (2–3 players keep their layouts). Land types tiny/small
+            4–8p × 6 seeds: maps with a villager on a blocked tile 82 → 0 (`artifacts/polish/p15-measure.ts`).
+            Test: `mapgen` "Crowded starts…". AI suite maps unchanged except the 4-player free-for-alls.
       - [ ] P16 · nice · mapgen Large Islands · 56/96 team maps: allies' islands joined only through forest or mines
             · `lens-b/bridge.ts`
       - [ ] P17 · nice · mapgen · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
