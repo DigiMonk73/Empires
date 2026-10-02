@@ -1257,6 +1257,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             40 s) is skipped. Suite: held out unchanged. Test: `ai-tactics` "AI Docks under attack".
       - [ ] P74 · should · AI attack · idle soldiers sent at an enemy Dock across the Narrows strait (no reach check
             in `military.ts attack()`) · `hh-narrows-small-102` P2 23–34 min
+            _Tried (it. 52, `docs/patches/m15.10-p74-reachable-targets.patch`): a land unit only takes a building it can
+            walk to — its test passes, but held-out water 48 → 46/48. Reverted; 1 of 3 cycles.
       - [ ] P75 · should · AI Stone Age economy · Hard reaches Tool at 18–24 min, 16 of 21 villagers walking 6–15
             tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts`
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at

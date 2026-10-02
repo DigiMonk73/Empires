@@ -1,0 +1,62 @@
+diff --git a/src/ai/military.ts b/src/ai/military.ts
+index 7de0cc1..d8d4014 100644
+--- a/src/ai/military.ts
++++ b/src/ai/military.ts
+@@ -499,6 +499,9 @@ export class MilitaryBrain {
+       for (const o of buildings) {
+         const d = dist(o.x, o.y, u.x, u.y);
+         if ((on.get(o.h) ?? 0) >= perBuilding || d > bd || (d === bd && best && o.h > best.h)) continue;
++        // Only what it can walk to: a land army stood on its own shore "attacking" a Dock across the Narrows strait
++        // for ten minutes (M15.10 P74).
++        if (!AT_SEA.has(u.cls) && !s.v.reachable(u.x, u.y, o.x - 2, o.y - 2, o.x + 2, o.y + 2)) continue;
+         best = o;
+         bd = d;
+       }
+diff --git a/tests/unit/ai-tactics.test.ts b/tests/unit/ai-tactics.test.ts
+index b55244d..e0f156b 100644
+--- a/tests/unit/ai-tactics.test.ts
++++ b/tests/unit/ai-tactics.test.ts
+@@ -7,6 +7,7 @@ import { HARDEST_BONUS } from '../../src/data/setup.ts';
+ import { AiPlayer, lateStart } from '../../src/ai/ai.ts';
+ import { PlayerView } from '../../src/sim/view/playerView.ts';
+ import { completeResearch } from '../../src/sim/systems/production.ts';
++import { TYPES } from '../../src/sim/rules/registry.ts';
+ import { EKind } from '../../src/sim/core/entities.ts';
+ import type { Command } from '../../src/sim/index.ts';
+ 
+@@ -338,3 +339,35 @@ describe('AI Docks under attack (M15.10 P73)', () => {
+     expect(Math.hypot(b!.tx + 1.5 - 11, b!.ty + 1.5 - 17)).toBeGreaterThanOrEqual(7);
+   });
+ });
++
++describe('AI targets across the water (M15.10 P74)', () => {
++  it('idle soldiers are not sent at an enemy building they cannot walk to', () => {
++    // Land to x 14, a strait, land again from x 21: an enemy Dock on the far shore, 7 tiles from our idle army.
++    const W = 40;
++    const ascii = Array.from({ length: W }, () => Array.from({ length: W }, (_, x) => (x <= 14 || x >= 21 ? '.' : 'w')).join(''));
++    const sim = Sim.create({
++      seed: 5,
++      map: { w: W, h: W, ascii },
++      victory: 'none',
++      revealMap: true,
++      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
++      scenario: {
++        buildings: [{ type: 'townCenter', owner: 1, tx: 2, ty: 2 }, { type: 'dock', owner: 2, tx: 19, ty: 18 }, { type: 'townCenter', owner: 2, tx: 35, ty: 35 }],
++        units: Array.from({ length: 6 }, (_, i) => ({ type: 'axeman', owner: 1, x: 12.5 + (i % 2), y: 17.5 + Math.floor(i / 2) })),
++      },
++    });
++    const w = sim.world;
++    sim.step([{ player: 1, cmd: { t: 'diplomacy', to: 2, stance: 2 } }]);
++    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
++    const view = new PlayerView(w, 1);
++    const dock = w.ents.handleOf([...Array(w.ents.top).keys()].find((s) => w.ents.alive[s] && TYPES[w.ents.type[s]!]!.id === 'dock')!);
++    let atDock = 0;
++    for (let t = 0; t < 20 * 20; t++) {
++      const cmds = ai.think(view);
++      atDock += cmds.filter((c) => c.t === 'act' && c.h === dock).length;
++      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
++      sim.drainEvents();
++    }
++    expect(atDock).toBe(0);
++  });
++});
