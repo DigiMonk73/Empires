@@ -1074,9 +1074,14 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             large 2p tool seed 85019 (P2: 0 gold, 8 lions + 3 gators vs 1 + 1) · `lens-b/deaths.ts`, `preds.ts`
       - [ ] P12 · should · mapgen Coastal fairness · coast distance differs > 30 tiles between starts on 33–40/42
             maps per size (2p seed 15838: small 48 vs 12, large 75 vs 21)
-      - [ ] P13 · should · data · Babylonian `armoredElephant` needs `ironShield` (disabled for Babylonian), Persian
+      - [x] P13 · should · data · Babylonian `armoredElephant` needs `ironShield` (disabled for Babylonian), Persian
             `irrigation` needs `plow` (disabled for Persian) — listed but unreachable (`src/data/civs.ts`); check
-            research · continental medium postIron seed 81794
+            research · continental medium postIron seed 81794 — _fixed (display):_ the research table has both quirks (econ:6.2 —
+            Babylonian Armored Elephant Y, Iron Shield –; Persian Plow –, Irrigation Y), so the data stays; the Tech
+            Tree now marks a tech missing when one it needs is (it showed both as obtainable). The only two such
+            chains (`artifacts/polish/p13-unreachable.ts`). Test: `tech-tree` "marks out of reach…".
+      - [ ] P22 · nice · Tech Tree · an upgrade tech for a unit line the civ lacks shows as obtainable (Yamato:
+            Armored Elephant unit missing, its upgrade tech "now") · `node artifacts/polish/p13-check.ts`
       - [ ] P2 · should · AI economy · Hard P1 on `continental small seed 7` (greek vs egyptian, both Hard) never hunts
             the 5 gazelles by its TC, 15–25 wood minutes 5–20, housed at 36/36 with 400–600 food, 0 soldiers, loses
             at 28.7 min (civs swapped: same; seed 8: fine) · `node artifacts/polish/lens-a/seat.ts '<g0>' hard 30`

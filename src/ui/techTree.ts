@@ -1,4 +1,4 @@
-import { BUILDINGS, TECHS, UNIT_BY_ID, UNITS, civRules } from '../data/index.ts';
+import { BUILDINGS, TECH_BY_ID, TECHS, UNIT_BY_ID, UNITS, civRules } from '../data/index.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';
 import type { World } from '../sim/world.ts';
@@ -66,7 +66,8 @@ export function techTree(civId: string, w?: World, player?: number, fullTechTree
       owned.add(TYPES[e.type[s]!]!.id);
     }
   }
-  const techMissing = (t: string) => !!civ.disabled.techs.includes(t);
+  /** Out of reach: the civilization lacks it, or a tech it needs (Babylonian Armored Elephant, Persian Irrigation). */
+  const techMissing = (t: string): boolean => civ.disabled.techs.includes(t) || (TECH_BY_ID.get(t)?.requires ?? []).some(techMissing);
   /** A unit is out of reach if it, anything earlier in its line, the tech that upgrades to it, or a tech it needs is missing. */
   const unitMissing = (id: string): boolean => {
     if (civ.disabled.units.includes(id)) return true;

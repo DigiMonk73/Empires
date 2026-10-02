@@ -21,6 +21,16 @@ describe('tech tree (M7.9)', () => {
     expect(find(techTree('egyptian'), 'chariot').state).not.toBe('missing');
   });
 
+  it('marks out of reach what needs a technology the civilization lacks (M15.10 P13)', () => {
+    // The original's quirks, kept (econ:6.2): Babylonians list the Armored Elephant but lack its Iron Shield,
+    // Persians list Irrigation but lack its Plow — never researchable, so never shown as obtainable.
+    expect(find(techTree('babylonian'), 'ironShield').state).toBe('missing');
+    expect(find(techTree('babylonian'), 'armoredElephant').state).toBe('missing');
+    expect(find(techTree('persian'), 'irrigation').state).toBe('missing');
+    expect(find(techTree('persian'), 'armoredElephant').state).not.toBe('missing');
+    expect(find(techTree('greek'), 'irrigation').state).not.toBe('missing');
+  });
+
   it('follows a live player: researched, built, trainable now, later', () => {
     const sim = Sim.create({ seed: 1, map: { w: 32, h: 32 }, players: [{ civ: 'greek' }], startingResources: 'deathmatch', victory: 'none', scenario: { units: [], buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }, { type: 'barracks', owner: 1, tx: 12, ty: 4 }] } });
     const w = sim.world;
