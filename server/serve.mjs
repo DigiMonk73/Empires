@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Empires static server: zero dependencies. Serves the built game and /healthz.
+// Empires static server: zero dependencies. Serves the built game, /healthz, server saves and the multiplayer
+// relay at /ws (server/relay.mjs).
 // Usage: node server/serve.mjs [--dir dist] [--port 80] [--host 0.0.0.0] [--prefix /some/path] [--data /data]
+//        [--away-ms 30000] (how long a dropped multiplayer member keeps its seat)
 // Env: PORT, HOST, DIST_DIR, DATA_DIR (saved games live in DATA_DIR/saves; unset = no server saves).
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
@@ -8,6 +10,7 @@ import { createGzip } from 'node:zlib';
 import { mkdir, open, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { attachRelay } from './relay.mjs';
 
 const args = new Map();
 for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i].replace(/^--/, ''), process.argv[i + 1]);
@@ -230,6 +233,9 @@ function send(res, code, text) {
   res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8' });
   res.end(text);
 }
+
+// Multiplayer (M16): the WebSocket relay and lobby at <prefix>/ws.
+attachRelay(server, { path: `${prefix}/ws`, log: (m) => console.log(`[relay] ${m}`), ...(args.has('away-ms') ? { awayMs: Number(args.get('away-ms')) } : {}) });
 
 server.listen(port, host, () => {
   console.log(`[serve] empires on http://${host}:${port}${prefix || ''}/ (root ${root}${savesDir ? `, saves in ${savesDir}` : ''})`);

@@ -44,16 +44,23 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
   friends on one StartOS server.
 
 ## Steps
-- [ ] **M16.1 WebSocket relay.** `/ws` upgrade in `server/serve.mjs`: handshake, text + binary frames, ping/pong,
+- [x] **M16.1 WebSocket relay.** _Done:_ `server/relay.mjs` (+ `--away-ms`); `tests/unit/server-ws.test.ts`. `/ws` upgrade in `server/serve.mjs`: handshake, text + binary frames, ping/pong,
       close; rooms (create, join, list, leave, start), relay of binary frames within a room. Unit test with Node's
       built-in `WebSocket` client against a real server (`tests/unit/server-ws.test.ts`).
-- [ ] **M16.2 Client transport.** `src/platform/wsTransport.ts`: implements `LockstepTransport` over a WebSocket
+- [x] **M16.2 Client transport.** _Done:_ `src/game/netPacket.ts`, `src/platform/netClient.ts` (lobby + transport
+      + rejoin); `tests/unit/net-session.test.ts` runs two sessions through the real server, hash-identical. `src/platform/wsTransport.ts`: implements `LockstepTransport` over a WebSocket
       (packet encode/decode as above), plus the lobby messages. Test: two `GameSession`s on two transports through
       the real server for 2 game minutes, hashes equal.
-- [ ] **M16.3 Lobby UI.** Main menu → **Multiplayer**: Host (the skirmish setup with seats Human/Computer/Open and
+- [x] **M16.3 Lobby UI.** _Done:_ `src/ui/menu/Multiplayer.tsx` (name → rooms → host/join), the Skirmish setup's
+      multiplayer mode (Human seats named by members, Start when every seat is filled), guests' read-only room. The
+      host's start saves each member's seat (`sessionStorage` `empires.mp`) and loads `?mp=1`; the game page
+      rejoins with its token (the server holds a reloading member's seat 30 s and buffers its packets).
+      e2e `tests/e2e/multiplayer.spec.ts` (both engines). Main menu → **Multiplayer**: Host (the skirmish setup with seats Human/Computer/Open and
       a room code) or Join (code or list). Players see the seats fill; the host starts when every Human seat is
       taken. e2e: two browser contexts host + join and both reach the game.
-- [ ] **M16.4 In game.** Session wiring (local seat, host runs AIs), speed/pause as commands, "Waiting for
+- [ ] **M16.4 In game.** _Partly:_ `src/platform/netGame.ts` builds the session (host runs the computers); pausing
+      is off in multiplayer (the menu and F3 don't pause — pause/speed as commands are still to do); a "Waiting for the
+      other players…" banner, "Player N left" messages, an out-of-sync banner. _Left:_ pause/speed commands, chat UI. Session wiring (local seat, host runs AIs), speed/pause as commands, "Waiting for
       Player N…" overlay when a peer's packets are late, chat. e2e: two contexts play 1 minute, both select and
       move units, hashes equal.
 - [ ] **M16.5 Disconnects.** `aiTakeover` command; host-left ending; reconnect within 30 s by room code (the

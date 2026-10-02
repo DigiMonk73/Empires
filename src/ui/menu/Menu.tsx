@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { GEN_MAP_TYPES } from '../../sim/mapgen/generate.ts';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { CIVS } from '../../data/civs.ts';
 import { MAP_SIZES, MAP_TYPES, POP_LIMITS, STARTING_AGES, TIME_LIMITS, scoreTargetsFor, type MapSizeId, type StartingAge, type StartingResources } from '../../data/setup.ts';
 import { AI_LEVELS, DEFAULT_SETUP, SKIRMISH_VICTORIES, setupToQuery, validTarget, type SkirmishPlayer, type SkirmishSetup, type SkirmishVictory } from '../../game/skirmish.ts';
@@ -15,6 +15,7 @@ import { VolumeControls } from '../options/VolumeControls.tsx';
 import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
 import { gameSettings } from '../settings.ts';
 import { Credits, Help } from './HelpCredits.tsx';
+import { Multiplayer } from './Multiplayer.tsx';
 import './menu.css';
 
 /**
@@ -33,7 +34,7 @@ const VICTORY_HINTS: Record<SkirmishVictory, string> = {
   time: 'The highest score when the time runs out wins',
 };
 
-function MainMenu({ onSkirmish, onLoad, onOptions, onHelp, onCredits }: { onSkirmish: () => void; onLoad: () => void; onOptions: () => void; onHelp: () => void; onCredits: () => void }) {
+function MainMenu({ onSkirmish, onMultiplayer, onLoad, onOptions, onHelp, onCredits }: { onSkirmish: () => void; onMultiplayer: () => void; onLoad: () => void; onOptions: () => void; onHelp: () => void; onCredits: () => void }) {
   return (
     <div class="menu-main" data-testid="main-menu">
       <h1 class="menu-title">Empires</h1>
@@ -41,6 +42,9 @@ function MainMenu({ onSkirmish, onLoad, onOptions, onHelp, onCredits }: { onSkir
       <div class="menu-buttons">
         <button data-testid="menu-skirmish" onClick={onSkirmish}>
           Skirmish
+        </button>
+        <button data-testid="menu-multiplayer" onClick={onMultiplayer}>
+          Multiplayer
         </button>
         <button data-testid="menu-loadgame" onClick={onLoad}>
           Load Game
@@ -59,9 +63,31 @@ function MainMenu({ onSkirmish, onLoad, onOptions, onHelp, onCredits }: { onSkir
   );
 }
 
-function Skirmish({ onBack }: { onBack: () => void }) {
-  const [s, setS] = useState<SkirmishSetup>({ ...DEFAULT_SETUP, speed: gameSettings.value.defaultSpeed, seed: 1 + Math.floor(Math.random() * 99999) });
-  const upd = (patch: Partial<SkirmishSetup>) => setS({ ...s, ...patch });
+/**
+ * A multiplayer host's setup (M16.3): seats after yours can be Human — filled by the room's members in join order —
+ * or a computer; every change is shared with the room, and Start waits until every Human seat has its player.
+ */
+export interface HostRoom {
+  code: string;
+  /** The room's members' names, the host first. */
+  names: string[];
+  share: (s: SkirmishSetup) => void;
+  start: (s: SkirmishSetup) => void;
+}
+
+export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) {
+  const [s, setS] = useState<SkirmishSetup>(() => ({
+    ...DEFAULT_SETUP,
+    speed: gameSettings.value.defaultSpeed,
+    seed: 1 + Math.floor(Math.random() * 99999),
+    ...(mp ? { players: [{ civ: 'greek', team: 1, controller: 'human' as const }, { civ: 'persian', team: 2, controller: 'human' as const }] } : {}),
+  }));
+  useEffect(() => mp?.share(s), []); // the room sees the setup from the start
+  const upd = (patch: Partial<SkirmishSetup>) => {
+    const next = { ...s, ...patch };
+    setS(next);
+    mp?.share(next);
+  };
   const updP = (i: number, patch: Partial<SkirmishPlayer>) => upd({ players: s.players.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
   const addPlayer = () => {
     if (s.players.length >= 8) return;
@@ -70,13 +96,18 @@ function Skirmish({ onBack }: { onBack: () => void }) {
   };
   // Everyone on one team has no one to beat: conquest was won at the first tick (M15.10 P14).
   const oneTeam = new Set(s.players.map((p) => p.team)).size < 2;
+  // Multiplayer: the Human seats, in order, are the room's members (the host first).
+  const humanSeats = s.players.map((p, i) => (p.controller === 'human' ? i : -1)).filter((i) => i >= 0);
+  const seatName = (i: number): string => mp?.names[humanSeats.indexOf(i)] ?? 'Open';
+  const seatsReady = !mp || humanSeats.length === mp.names.length;
   const start = () => {
-    if (oneTeam) return;
-    location.search = withFlags(setupToQuery(s), new URLSearchParams(location.search));
+    if (oneTeam || !seatsReady) return;
+    if (mp) mp.start(s);
+    else location.search = withFlags(setupToQuery(s), new URLSearchParams(location.search));
   };
   return (
     <div class="menu-panel" data-testid="skirmish-setup">
-      <h2>Skirmish</h2>
+      <h2>{mp ? `Multiplayer · room ${mp.code}` : 'Skirmish'}</h2>
       <div class="menu-row">
         <label>
           Map
@@ -187,11 +218,15 @@ function Skirmish({ onBack }: { onBack: () => void }) {
                 {i === 0 ? (
                   <span>You</span>
                 ) : (
-                  <select value={p.controller} onChange={(e) => updP(i, { controller: (e.target as HTMLSelectElement).value as SkirmishPlayer['controller'] })}>
-                    {AI_LEVELS.map((l) => (
-                      <option value={l}>Computer ({cap(l)})</option>
-                    ))}
-                  </select>
+                  <span class="seat-cell">
+                    <select data-testid={`setup-controller-${i}`} value={p.controller} onChange={(e) => updP(i, { controller: (e.target as HTMLSelectElement).value as SkirmishPlayer['controller'] })}>
+                      {mp && <option value="human">Human</option>}
+                      {AI_LEVELS.map((l) => (
+                        <option value={l}>Computer ({cap(l)})</option>
+                      ))}
+                    </select>
+                    {mp && p.controller === 'human' && <span class="seat-name" data-testid={`setup-seat-name-${i}`}>{seatName(i)}</span>}
+                  </span>
                 )}
               </td>
               <td>
@@ -222,10 +257,17 @@ function Skirmish({ onBack }: { onBack: () => void }) {
           Add player
         </button>
         <button onClick={onBack}>Back</button>
-        <button class="primary" data-testid="setup-start" onClick={start} disabled={oneTeam}>
+        <button class="primary" data-testid="setup-start" onClick={start} disabled={oneTeam || !seatsReady}>
           Start Game
         </button>
       </div>
+      {mp && !seatsReady && (
+        <p class="menu-note" data-testid="setup-seats-note">
+          {humanSeats.length > mp.names.length
+            ? `Waiting for ${humanSeats.length - mp.names.length} more player${humanSeats.length - mp.names.length > 1 ? 's' : ''} — share the room code ${mp.code}.`
+            : `${mp.names.length - humanSeats.length} player${mp.names.length - humanSeats.length > 1 ? 's are' : ' is'} in the room without a seat: set a seat to Human.`}
+        </p>
+      )}
       {oneTeam && (
         <p class="menu-note" data-testid="setup-one-team">
           Every player is on the same team, so the game would be won before it began: put someone on another team.
@@ -290,13 +332,14 @@ function Options({ onBack }: { onBack: () => void }) {
 }
 
 function Menu() {
-  const [screen, setScreen] = useState<'main' | 'skirmish' | 'load' | 'options' | 'help' | 'credits'>('main');
+  const [screen, setScreen] = useState<'main' | 'skirmish' | 'multiplayer' | 'load' | 'options' | 'help' | 'credits'>('main');
   const back = () => setScreen('main');
   return (
     <div class="menu">
       {screen === 'main' && (
         <MainMenu
           onSkirmish={() => setScreen('skirmish')}
+          onMultiplayer={() => setScreen('multiplayer')}
           onLoad={() => setScreen('load')}
           onOptions={() => setScreen('options')}
           onHelp={() => setScreen('help')}
@@ -307,6 +350,7 @@ function Menu() {
       {screen === 'help' && <Help onBack={back} />}
       {screen === 'credits' && <Credits onBack={back} />}
       {screen === 'skirmish' && <Skirmish onBack={back} />}
+      {screen === 'multiplayer' && <Multiplayer onBack={back} />}
       {screen === 'load' && <SaveList mode="load" onLoad={(id, where) => (location.search = loadQuery(id, new URLSearchParams(location.search), where))} onClose={back} />}
     </div>
   );

@@ -40,6 +40,7 @@ import { AUTOSAVE_ID, AUTOSAVE_TICKS, loadQuery, loadSession, saveSession, type 
 import { saves } from './platform/saves.ts';
 import { serverSaves } from './platform/serverSaves.ts';
 import { techTree } from './ui/techTree.ts';
+import { startNetGame, type NetGame } from './platform/netGame.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -63,11 +64,15 @@ async function boot(): Promise<void> {
     loaded = id.startsWith('server:') ? await serverSaves.get(id.slice(7)) : await saves.get(id);
     if (!loaded) throw new Error('That saved game no longer exists.');
   }
-  const menuMode = !loaded && !params.has('scenario') && !params.has('smoke') && !params.has('debug');
+  // A multiplayer game (`?mp=1`, M16): the lobby saved this member's seat; rejoin the room and run in lockstep.
+  const mp: NetGame | null = params.has('mp') ? await startNetGame() : null;
+  const menuMode = !loaded && !mp && !params.has('scenario') && !params.has('smoke') && !params.has('debug');
   const scenario = menuMode ? SCENARIOS.village! : (SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!);
-  const session = loaded ? loadSession(loaded) : new GameSession(scenario(params));
+  const session = mp ? mp.session : loaded ? loadSession(loaded) : new GameSession(scenario(params));
+  // Lockstep can't pause one player's game alone (everyone would wait): in multiplayer nothing here pauses it.
+  if (mp) Object.defineProperty(session, 'paused', { get: () => false, set: () => {} });
   if (!loaded && params.get('scenario') === 'skirmish') session.speed = Number(params.get('speed') ?? 1) || 1;
-  const kind = loaded ? loaded.kind : gameKind(params);
+  const kind = mp ? `Multiplayer · ${mp.launch.game.setup.type} · ${mp.launch.game.setup.size}` : loaded ? loaded.kind : gameKind(params);
   // Tests: start paused so screenshots don't depend on how many ticks ran in real time before the test paused.
   if (params.get('paused') === '1') session.paused = true;
   const world = session.sim.world;
@@ -287,6 +292,36 @@ async function boot(): Promise<void> {
         ping: (x, y, color) => minimap.ping(x, y, color),
       });
   if (notifier) session.onEvents((ev) => notifier.onEvents(ev));
+  // Multiplayer (M16.4): a banner while a peer's packets are late, a message when one leaves, and the desync check.
+  const mpBanner = mp ? document.createElement('div') : null;
+  if (mp && mpBanner) {
+    mpBanner.className = 'mp-banner';
+    mpBanner.dataset.testid = 'mp-waiting';
+    mpBanner.hidden = true;
+    document.body.appendChild(mpBanner);
+    let told = 0;
+    let stalled = 0;
+    let lastWaited = 0;
+    session.onTick(() => {
+      if (mp.left.size > told) {
+        for (const p of [...mp.left].slice(told)) notifier?.post(`Player ${p} left the game.`, { key: `left-${p}` });
+        told = mp.left.size;
+      }
+    });
+    setInterval(() => {
+      const d = mp.router.desync;
+      if (d) {
+        mpBanner.textContent = `Out of sync with player ${mp.launch.game.seats[d.peer] ?? d.peer + 1} at ${formatClock(d.tick)} — this game can't continue.`;
+        mpBanner.hidden = false;
+        return;
+      }
+      stalled = session.waited > lastWaited ? stalled + 1 : 0;
+      lastWaited = session.waited;
+      mpBanner.textContent = 'Waiting for the other players…';
+      mpBanner.hidden = stalled < 3;
+    }, 200);
+    (window as unknown as { __mp?: NetGame }).__mp = mp;
+  }
   effect(() => {
     void gameSettings.value; // hotkey layout, attack-move switch
     refreshCommands();
@@ -355,6 +390,7 @@ async function boot(): Promise<void> {
     // F3 / Pause: pause (research §5); F4: the score list; F11: time, speed and population.
     if (e.key === 'F3' || e.key === 'Pause') {
       e.preventDefault();
+      if (mp) return; // (no pausing in multiplayer yet)
       hud.userPaused.value = !hud.userPaused.value;
       session.paused = hud.userPaused.value;
       return;

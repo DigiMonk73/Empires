@@ -264,3 +264,54 @@
   color: #e8d6a8;
   margin: -6px 0 16px;
 }
+
+/* Multiplayer (M16.3): the lobby, the host's Human seats, and the in-game banner. */
+.seat-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.seat-name {
+  color: #f2d27a;
+  font-size: 14px;
+}
+.mp-form,
+.mp-room {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 420px;
+}
+.mp-form label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mp-rooms,
+.mp-players {
+  width: 100%;
+  border-collapse: collapse;
+}
+.mp-rooms td,
+.mp-players td {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mp-code b {
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: #f2d27a;
+}
+.mp-banner {
+  position: fixed;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 8px 18px;
+  background: rgba(20, 14, 8, 0.88);
+  border: 1px solid #8a6a3a;
+  color: #f2d27a;
+  font-size: 16px;
+  pointer-events: none;
+}
