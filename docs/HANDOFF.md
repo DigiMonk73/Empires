@@ -51,10 +51,7 @@ playtest). Multiplayer is next (M16).
 2. **Multiplayer (M16, branch `m16-multiplayer`)** — plan in `docs/MULTIPLAYER.md` (written when M16 starts).
 
 ## Status
-- 2026-10-02 09:20 — **M15.11 AI bundle committed** on `main` (P2, P53, P70, P74, P76 — KI-16/-17/-18 closed); band
-  baseline re-recorded (wars 94, Hard > Moderate 194, Hardest > Hard 256, water 182, duels 64).
-- **KI-13 arrows: band FAIL** (water 171/192, avg 42.8 < 44) — the island wood stall; diagnosis and the next step
-  are in KNOWN_ISSUES KI-13 (patch `docs/patches/m15.10-p24-arrows-along-the-line.patch`).
-- **KI-14 / P20 committed** (band water 183/192); baseline re-recorded.
-- **M16 multiplayer** on branch `m16-multiplayer` (worktree `artifacts/wt-m16`): M16.1 relay, M16.2 client, M16.3
-  lobby done and tested (unit + e2e both engines), M16.4 partly — see `docs/MULTIPLAYER.md` on that branch.
+- 2026-10-02 10:00 — **Multiplayer lives on branch `m16-multiplayer`** (`git checkout m16-multiplayer`; its
+  `docs/HANDOFF.md` and `docs/MULTIPLAYER.md` have the details): playable host/join, lockstep over the server,
+  pause, chat, rejoin, computer takeover — tested. `main` has M15.11: the D70 noise band, the five AI fixes and
+  KI-14; KI-13 arrows still blocked (the island wood stall, KNOWN_ISSUES KI-13).
