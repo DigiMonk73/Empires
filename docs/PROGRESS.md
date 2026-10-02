@@ -1098,13 +1098,14 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             from `act`, `src/sim/commands/apply.ts:18`); mil:1c l.113: right-click targets — _fixed:_ `act` with own
             finished towers sets their target (kept while fair and in range); right-click an enemy unit with only
             towers selected sends it (else the rally point as before). Test: `combat` "tower targets".
-      - [ ] P29 · nice · priests · a priest never told to heal still heals wounded allies in sight; mil:3 l.269:
-            auto-healing starts once ordered to heal · `lens-f/s4-priests.ts` §2
+      - [ ] P29 · nice · priests · **[left: needs a source]** · a priest never told to heal still heals wounded allies in sight; mil:3 l.269:
+            auto-healing starts once ordered to heal · `lens-f/s4-priests.ts` §2 — _left (it. 56):_ "Once ordered to heal, a priest keeps
+            auto-healing" doesn't say an idle priest never heals; not changed on that reading.
       - [ ] P30 · nice · pathing · units squeezing a 1-tile forest gap cut the corner 0.18 tile into a tree tile for
             ~15 ticks (nobody stops inside) · `node lens-f/s1b-trace.ts 1 20`
       - [x] P31 · nice · orders · a clubman ordered at a fishing boat 3.5 tiles offshore holds the order 180 s+ ·
             `lens-f/s9-unreach-long.ts`
-      - [ ] P32 · nice · hunting · a hunter goes idle when its carcass runs out with a live gazelle 5 tiles off
+      - [ ] P32 · nice · hunting · **[left: needs a source]** · a hunter goes idle when its carcass runs out with a live gazelle 5 tiles off
             (unconfirmed vs research) · `lens-f/s8-settle.ts` §3
       - _Not a bug (D27):_ units never attack buildings on their own — a documented choice.
       - _Lens G (e2e 3×, `--repeat-each=3`): 424/432 — the two server-save tests failed every repeat. Found:_
@@ -1281,7 +1282,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [ ] P74 · should · AI attack · idle soldiers sent at an enemy Dock across the Narrows strait (no reach check
             in `military.ts attack()`) · `hh-narrows-small-102` P2 23–34 min
             _Tried (it. 52, `docs/patches/m15.10-p74-reachable-targets.patch`): a land unit only takes a building it can
-            walk to — its test passes, but held-out water 48 → 46/48. Reverted; 1 of 3 cycles.
+            walk to — its test passes, but held-out water 48 → 46/48. Reverted; 1 of 3 cycles. _Second (it. 56):_
+            Docks only — water 46/48 again (walking at the far Dock seems to bring an army to the shore where the
+            ferry finds it). Reverted; 2 of 3 cycles.
       - [ ] P75 · should · AI Stone Age economy · Hard reaches Tool at 18–24 min, 16 of 21 villagers walking 6–15
             tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts`
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
