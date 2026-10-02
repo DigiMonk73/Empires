@@ -63,7 +63,10 @@ let crashes = 0;
 const t0 = performance.now();
 // Every match up front, run on the worker pool; the sections below read the results in the same order.
 const jobs: MatchJob[] = [];
-const slot = (c: Case, minutes: number, peaceful: boolean): number => jobs.push({ ...c, minutes, peaceful }) - 1;
+// `--shift k`: every computer thinks k ticks later — no rule changes, a fresh draw of the games' chance (D70).
+const shiftArg = process.argv.indexOf('--shift');
+const SHIFT = shiftArg >= 0 ? Number(process.argv[shiftArg + 1]) : 0;
+const slot = (c: Case, minutes: number, peaceful: boolean): number => jobs.push({ ...c, minutes, peaceful, ...(SHIFT ? { thinkShift: SHIFT } : {}) }) - 1;
 const timingJobs = want('timing') ? timing.map((c) => slot(c, 25, true)) : [];
 const warJobs = want('war') ? war.map((c) => slot(c, 60, false)) : [];
 const ladderJobs = want('ladder')

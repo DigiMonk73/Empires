@@ -475,3 +475,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   16/16, median 45:18; Hard idle 1.4 → 0.6%. Idle fishing boats (no fish left) count with the villagers (P71: a
   winner at 50 kept 35 villagers + 8 idle boats + 5 soldiers): held out unchanged again, Hard duels 15 → 16/16.
   (Counting every boat ended peaceful test games short of the limit their tests need.)
+- **D70 — AI changes are gated on a noise band, not one draw** (2026-10-02, the user: "let's fix those rough
+  parts"). One full suite is one draw of the games' chance: shifting the computers' think schedule 1–3 ticks — no
+  rule changed — moved 1v1 wars 22–24/24, Hard > Moderate 46–52/64 and held-out water 42–48/48 (M15.10), and the
+  "held-out must not fall" ratchet against the luckiest draw blocked seven correct fixes (KI-13/-14/-16/-17/-18,
+  P70, P74). Now `node tools/sim/ai-band.ts` runs the full suite at think shifts 0–3 (`ai-suite.ts --shift k`,
+  `AiPlayer` option `thinkShift`, 0 in games) and totals each gate: a total may fall at most its tolerance below
+  `docs/metrics/ai-band.json` (wars 3/96, Hard > Moderate 8/256, Hardest > Hard 8/256, water 8/192, duels 3/64 —
+  ≈ 1.2 σ of a difference of two 4-run totals), and the Done bars (DONE.md §3) must hold on the four-run average.
+  The held-out seeds stay held out; the baseline is re-recorded when a change is kept.

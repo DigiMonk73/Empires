@@ -129,9 +129,12 @@ export class AiPlayer {
 
   /** No army at all (economy benchmarks and the AI suite's timing runs). */
   readonly peaceful: boolean;
+  /** Ticks added to the think schedule — 0 in games; the AI suite's noise band runs 0–3 (D70). */
+  readonly thinkShift: number;
 
-  constructor(player: number, level: AiLevel, seed: number, opts: { peaceful?: boolean; civ?: string } = {}) {
+  constructor(player: number, level: AiLevel, seed: number, opts: { peaceful?: boolean; civ?: string; thinkShift?: number } = {}) {
     this.player = player;
+    this.thinkShift = opts.thinkShift ?? 0;
     this.level = level;
     this.p = AI_LEVEL_PARAMS[level];
     this.rng = new Rng(seed, STREAM.aiBase + player);
@@ -171,7 +174,7 @@ export class AiPlayer {
 
   /** Called every tick; decides every `think` ticks (staggered by player). Returns commands for this tick. */
   think(v: PlayerView): Command[] {
-    if ((v.tick + (THINK_OFFSET[this.player] ?? this.player)) % this.p.think !== 0) return [];
+    if ((v.tick + this.thinkShift + (THINK_OFFSET[this.player] ?? this.player)) % this.p.think !== 0) return [];
     const me = v.me();
     if (me.defeated) return [];
     const s = this.snapshot(v, me);

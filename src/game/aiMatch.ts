@@ -29,6 +29,8 @@ export interface MatchOptions {
   /** Victory condition (default conquest); Standard places the relics (M14.6). */
   victory?: 'standard' | 'conquest';
   clock?: () => number;
+  /** Shift the computers' think schedule by this many ticks (the AI suite's noise band, D70). */
+  thinkShift?: number;
 }
 
 export interface MatchSample {
@@ -71,7 +73,7 @@ export function runMatch(o: MatchOptions): MatchResult {
   const sim = Sim.create({ ...cfg, ...(o.victory ? { victory: o.victory } : {}), ...(o.startingAge ? { startingAge: o.startingAge } : {}), ...(o.popCap ? { popCap: o.popCap } : {}), players: cfg.players.map((p, i) => ({ ...p, ai: o.levels[i] })) });
   const w = sim.world;
   const n = o.levels.length;
-  const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful, civ: civs[i % civs.length]! }));
+  const ais = o.levels.map((lv, i) => new AiPlayer(i + 1, lv, o.seed * 31 + i, { peaceful: o.peaceful, civ: civs[i % civs.length]!, thinkShift: o.thinkShift }));
   const views = o.levels.map((_, i) => new PlayerView(w, i + 1));
   const samples: MatchSample[] = [];
   const idle = new Array<number>(n).fill(0);

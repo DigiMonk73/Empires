@@ -35,8 +35,8 @@ record there which discovery lens ran last.
 4. **Fix:** reproduce first with a failing test (unit, scene or e2e); a purely visual fix gets a screenshot scene
    instead. ≤ ~300 LOC per commit. Never edit a test only to make it pass.
 5. **Verify:** `npm run verify` (≈ 3 min). Sim changes also run `node tools/sim/determinism.ts --seeds 10`. AI,
-   pathing or mapgen changes also run `node tools/sim/ai-suite.ts --full --adjacent` (≈ 5 min) — held-out numbers
-   must not fall (LOOP.md "AI work"). Save-format changes keep old saves loading (`src/sim/version.ts`, a test
+   pathing or mapgen changes also run `node tools/sim/ai-suite.ts --full --adjacent` (≈ 2 min) — and, to keep one,
+   `node tools/sim/ai-band.ts` (≈ 8 min): held-out numbers must not fall beyond the noise band (D70). Save-format changes keep old saves loading (`src/sim/version.ts`, a test
    loading an older save).
 6. **Look** (≤ 8 images), **record**, **commit** `M15.10: <summary>` with the Co-Authored-By line.
 7. Schedule the next wakeup in 60–120 s.

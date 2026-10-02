@@ -59,7 +59,8 @@ truth**, not conversation memory, because context gets summarized.
   the 12 water seeds of M8–M13 read 11/12 while fresh ones were decided 65% of the time. The suite's gates count
   seeds nobody traces — water 501–548 (D56), 1v1 wars 1001–1024 (D58); the ladder's 101–132 are the Done set.
   Trace and tune on the dev sets (water 401–448, wars 601–624, ladder cross-check 1101–1132) with
-  `tools/sim/diagnose.ts`; keep a change only if the held-out numbers don't fall.
+  `tools/sim/diagnose.ts`; keep a change only if the held-out numbers don't fall — judged on the noise band
+  (D70: `node tools/sim/ai-band.ts`, the full suite at think shifts 0–3), not on one draw.
 - **Look at a stalled game before changing numbers.** Most "the AI is weak" results this far were bugs found by
   tracing one game minute by minute (`tools/sim/diagnose.ts trace …`): villagers ping-ponged between two lions,
   an army waited for a wave its full population could never train, a cache kept land labels that the pathing
