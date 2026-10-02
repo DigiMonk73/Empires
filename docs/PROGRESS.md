@@ -1097,7 +1097,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             of standing twice. Test: `notify` "a message still on screen is refreshed".
       - [ ] P5 · nice · defeat · a defeated player's leftover fishing boats show pop "1/0" (conquest rightly ignores
             them) · g1 from 17:13
-      - [ ] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu
+      - [x] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu — _fixed:_
+            Start waits, with a note saying why (e2e `menu` "everyone on one team", screenshot `menu-one-team`).
       - [ ] P15 · should · crowding · 6–8 players on Tiny/Small: TCs 17–24 tiles apart, a neighbour's far mine or
             berries spawn under/around villagers — usually they walk off, but narrows small 8p seed 11 boxes P2's
             villager into one tile between its TC and P7's far berries · highland tiny 8p seed 50536; coastal tiny 4p
@@ -1106,8 +1107,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             · `lens-b/bridge.ts`
       - [ ] P17 · nice · mapgen · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
             the land nudge searches 8 tiles) — 3/252 continental maps
-      - [ ] P18 · nice · URL · `setupFromQuery` doesn't validate `size`/`res` (`size=foo` → "Invalid array length")
-            or civ ids
+      - [x] P18 · nice · URL · `setupFromQuery` doesn't validate `size`/`res` (`size=foo` → "Invalid array length")
+            or civ ids — _fixed:_ unknown size, resources and civ fall back like everything else (`Object.hasOwn`, so
+            `size=toString` too). Test: `setup-options` "carries victory…".
       - [ ] P19 · nice · AI · `src/ai/ai.ts:337` treats Nomad as a late start (villagers capped at 60% of pop) —
             unconfirmed, code reading
       - [x] P1 · nice · code health · 19 unused locals/imports (`tsc --noUnusedLocals --noUnusedParameters`: sim 3,

@@ -63,3 +63,16 @@ test('skirmish setup options: Time Limit, a Bronze Age start, a population of 10
   await expect(page.getByTestId('age')).toHaveText('Bronze Age');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('everyone on one team: Start waits, with a note saying why (M15.10 P14)', async ({ page }, info) => {
+  await page.goto('./?edgeScroll=0');
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('menu-skirmish').click();
+  await expect(page.getByTestId('setup-one-team')).toHaveCount(0);
+  await page.getByTestId('setup-team-1').selectOption('1');
+  await expect(page.getByTestId('setup-start')).toBeDisabled();
+  await expect(page.getByTestId('setup-one-team')).toBeVisible();
+  await snap(page, info, 'menu-one-team');
+  await page.getByTestId('setup-team-1').selectOption('2');
+  await expect(page.getByTestId('setup-start')).toBeEnabled();
+});

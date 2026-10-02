@@ -89,6 +89,10 @@ describe('setup options (M14.3, econ:7)', () => {
     // Unknown values fall back to the defaults.
     const bad = setupFromQuery(new URLSearchParams('scenario=skirmish&win=bogus&age=stone&pop=33&target=7'));
     expect([bad.victory, bad.startingAge, bad.popCap, bad.scoreTarget]).toEqual(['standard', 'default', 50, 1000]);
+    // A hand-edited size, resources or civilization falls back too — it threw "Invalid array length" (M15.10 P18).
+    const odd = setupFromQuery(new URLSearchParams('scenario=skirmish&size=toString&res=lots&p=zzz.1.human,egyptian.2.hard'));
+    expect([odd.size, odd.resources, odd.players[0]!.civ]).toEqual([DEFAULT_SETUP.size, 'default', 'greek']);
+    expect(() => Sim.create(skirmishConfig(odd))).not.toThrow();
   });
 
   it('Nomad: with no Town Center site near its villagers a computer looks further out instead of freezing (M15.10 P10)', () => {

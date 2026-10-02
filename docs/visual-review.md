@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P14, P18 · new `menu-one-team` (both engines): Start Game dimmed, the note under the buttons
+  in the menu's gold, one line at 1280 px. Readability 4, layout 4. Other 7 shots ≤ 0.3% px (backdrop, timestamps).
+
 ## 2026-10-01 · M15.10 P4, P22 · no visual change (8 shots: menu backdrop, save timestamps)
 
 ## 2026-10-01 · M15.10 P13 · no e2e scene shows a Babylonian/Persian tree; 9 shots ≤ 0.22% px (menu backdrop)

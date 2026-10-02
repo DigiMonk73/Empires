@@ -68,7 +68,10 @@ function Skirmish({ onBack }: { onBack: () => void }) {
     const n = s.players.length;
     upd({ players: [...s.players, { civ: CIVS[(n * 5) % CIVS.length]!.id, team: n + 1, controller: 'moderate' }] });
   };
+  // Everyone on one team has no one to beat: conquest was won at the first tick (M15.10 P14).
+  const oneTeam = new Set(s.players.map((p) => p.team)).size < 2;
   const start = () => {
+    if (oneTeam) return;
     location.search = withFlags(setupToQuery(s), new URLSearchParams(location.search));
   };
   return (
@@ -202,7 +205,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
                 </span>
               </td>
               <td>
-                <select value={String(p.team)} onChange={(e) => updP(i, { team: Number((e.target as HTMLSelectElement).value) })}>
+                <select data-testid={`setup-team-${i}`} value={String(p.team)} onChange={(e) => updP(i, { team: Number((e.target as HTMLSelectElement).value) })}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
                     <option value={String(t)}>{t}</option>
                   ))}
@@ -219,10 +222,15 @@ function Skirmish({ onBack }: { onBack: () => void }) {
           Add player
         </button>
         <button onClick={onBack}>Back</button>
-        <button class="primary" data-testid="setup-start" onClick={start}>
+        <button class="primary" data-testid="setup-start" onClick={start} disabled={oneTeam}>
           Start Game
         </button>
       </div>
+      {oneTeam && (
+        <p class="menu-note" data-testid="setup-one-team">
+          Every player is on the same team, so the game would be won before it began: put someone on another team.
+        </p>
+      )}
     </div>
   );
 }

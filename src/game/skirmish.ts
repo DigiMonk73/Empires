@@ -1,4 +1,5 @@
-import { POP_LIMITS, SCORE_TARGETS, STARTING_AGES, TIME_LIMITS, scoreTargetsFor, type MapSizeId, type StartingAge, type StartingResources } from '../data/setup.ts';
+import { MAP_SIZES, POP_LIMITS, SCORE_TARGETS, STARTING_AGES, STARTING_RESOURCES, TIME_LIMITS, scoreTargetsFor, type MapSizeId, type StartingAge, type StartingResources } from '../data/setup.ts';
+import { CIV_BY_ID } from '../data/index.ts';
 import { GEN_MAP_TYPES, generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import type { AiLevel, SimConfig } from '../sim/world.ts';
 
@@ -84,14 +85,15 @@ export function setupFromQuery(q: URLSearchParams): SkirmishSetup {
     .map((x): SkirmishPlayer => {
       const [civ, team, controller] = x.split('.');
       const c = controller === 'human' || AI_LEVELS.includes(controller as AiLevel) ? (controller as SkirmishPlayer['controller']) : 'moderate';
-      return { civ: civ || 'greek', team: Number(team) || 1, controller: c };
+      return { civ: civ && CIV_BY_ID.has(civ) ? civ : 'greek', team: Number(team) || 1, controller: c };
     });
   return {
     type: (GEN_MAP_TYPES as readonly string[]).includes(q.get('type') ?? '') ? (q.get('type') as GenMapType) : 'continental',
-    size: (q.get('size') as MapSizeId) ?? DEFAULT_SETUP.size,
+    // (Unknown sizes and resource levels fall back as everything else does: they threw, M15.10 P18.)
+    size: Object.hasOwn(MAP_SIZES, q.get('size') ?? '') ? (q.get('size') as MapSizeId) : DEFAULT_SETUP.size,
     seed: Number(q.get('seed') ?? 1) || 1,
     players: players.length >= 2 ? players.slice(0, 8) : DEFAULT_SETUP.players,
-    resources: (q.get('res') as StartingResources) ?? 'default',
+    resources: Object.hasOwn(STARTING_RESOURCES, q.get('res') ?? '') ? (q.get('res') as StartingResources) : 'default',
     reveal: q.get('reveal') === '1',
     speed: Number(q.get('speed') ?? 1) || 1,
     victory: SKIRMISH_VICTORIES.includes(q.get('win') as SkirmishVictory) ? (q.get('win') as SkirmishVictory) : DEFAULT_SETUP.victory,
