@@ -687,12 +687,14 @@ export class NavalBrain {
   }
 
   /**
-   * Wood to keep for a transport (KI-10): on an island with an invasion to make and no transport afloat, once the
-   * trees we can reach at home hold under 1500 — or the last of them go to farms, houses and boats, the fleet sinks,
-   * and both sides sit out the game across the water with thousands of gold (tiny-island seeds 305, 311).
+   * Wood to keep for a transport (KI-10): on an island with an invasion to make, once the trees we can reach at home
+   * hold under 1500 — or the last of them go to farms, houses and boats, the fleet sinks, and both sides sit out the
+   * game across the water with thousands of gold (tiny-island seeds 305, 311). Kept with a transport afloat too: it
+   * can sink after the last tree is cut (M16.9, dev water 401: 1,700 food, 6,700 gold, 22 idle villagers, 9 wood and
+   * no transport for the last hour).
    */
   woodReserve(s: Snapshot): number {
-    if (!this.island || !this.target || s.units.some((u) => u.cls === 'transport')) return 0;
+    if (!this.island || !this.target) return 0;
     let wood = 0;
     for (const r of s.known) if (r.job === 'wood') wood += r.amount;
     if (wood >= 1500) return 0;

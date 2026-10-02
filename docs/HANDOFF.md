@@ -63,6 +63,11 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 13:15 — item 1, step 4 (M16.9): the arrows patch on steps 1–3 banded water 175/192 — FAIL by one game
+  (43.8 of 44); reverted (KI-13 notes). Then the wood for a transport is kept while one is afloat too (it can sink
+  after the last tree): band PASS, water **190**/192, re-recorded. Also a server-saves test port flake fixed. Next:
+  the arrows patch again; in reserve if needed (prototyped in `artifacts/wt2`, tested): enemy ships at our Docks may
+  spend that wood on a warship, the first Dock may too.
 - 2026-10-02 12:45 — item 1, steps 2–3 (M16.9): a full island's last-resort building spot (Market, dev 407); Docks
   never seal a pocket of water (dev 417, 425, 437); a transport is at its boarding spot only beside our land (dev
   417: soldiers told to board an unreachable transport for an hour). Bands PASS — now water 183, Hard>Moderate 212,

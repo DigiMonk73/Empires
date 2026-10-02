@@ -36,6 +36,11 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   for conquest); the winner has 21 villagers, no ships and 2 wood, its island's trees cut. Next: once an enemy has no
   buildings left, the AI keeps wood for a Dock and two warships (or sends villagers to wood it can ferry to) and
   hunts the last ships; re-run `ai-band.ts` with the patch.
+  _M16.9:_ the island stalls traced on the dev seeds were mostly not wood: a computer over its population limit with
+  no boat to delete, Docks sealing their transports in a cove, a transport "at its spot" off the shore, no room for a
+  Market on a full island — all fixed (band water 183/192). With them the patch bands water 175/192 (+4 on M15.11),
+  wars 92, Hard>Moderate 213: a FAIL by one game on the water bar (43.8 of 44 average). Then the transport reserve
+  kept while a transport is afloat (band water 190/192); next, the patch again on top.
 
 - _KI-14 (two-player island starts buried a villager) closed in M15.11: a final mapgen pass moves a villager on a blocked tile to the nearest open tile, terrain untouched (51 → 0 on 200 maps); band water 183/192._
 - _KI-15 (land starts losing a cluster) closed in M15.10 (P17), after D69._

@@ -319,3 +319,54 @@ describe('AI transports board where soldiers can reach them (M16.9)', () => {
     expect(landed, 'soldiers on the enemy island').toBeGreaterThan(0);
   }, 30_000);
 });
+
+describe('AI wood at sea (M16.9)', () => {
+  it('an island out of trees keeps the wood for a transport even while one is afloat — it can sink', () => {
+    // Dev water seed 401: the transport sank after the last tree was cut; 1,700 food, 6,700 gold, 22 idle villagers,
+    // 9 wood, and no way across for the last hour. Here: no trees on our island, a transport afloat, 200 wood.
+    const ascii = Array.from({ length: 40 }, () => '.'.repeat(14) + '~'.repeat(20) + '.'.repeat(14));
+    const sim = Sim.create({
+      seed: 8,
+      map: { w: 48, h: 40, ascii },
+      victory: 'none',
+      revealMap: true,
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 3, ty: 3 },
+          { type: 'market', owner: 1, tx: 3, ty: 10 },
+          { type: 'archeryRange', owner: 1, tx: 8, ty: 10 },
+          { type: 'granary', owner: 1, tx: 3, ty: 15 },
+          { type: 'dock', owner: 1, tx: 14, ty: 20 },
+          ...Array.from({ length: 4 }, (_, i) => ({ type: 'house', owner: 1, tx: 2 + i * 3, ty: 34 })),
+          { type: 'townCenter', owner: 2, tx: 40, ty: 18 },
+        ],
+        units: [
+          { type: 'lightTransport', owner: 1, x: 18.5, y: 30.5 },
+          ...Array.from({ length: 6 }, (_, i) => ({ type: 'villager', owner: 1, x: 3.5 + i, y: 26.5 })),
+        ],
+      },
+    });
+    const w = sim.world;
+    completeResearch(w, 1, 'toolAge');
+    w.players[1]!.res.set([100, 0, 0, 0]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const run = (n: number) => {
+      for (let t = 0; t < n; t++) {
+        sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+        sim.drainEvents();
+      }
+    };
+    run(20); // (a first look round: the island and the enemy across the water)
+    w.players[1]!.res[1] = 200;
+    let least = Infinity;
+    for (let t = 0; t < 20 * 90; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      least = Math.min(least, w.players[1]!.res[1]!);
+    }
+    expect(view.ownUnits().some((u) => u.cls === 'transport')).toBe(true);
+    expect(least, 'wood kept for a transport').toBeGreaterThanOrEqual(150);
+  });
+});
