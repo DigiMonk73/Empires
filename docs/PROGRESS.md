@@ -1041,10 +1041,15 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
             finishes those even games: trace 501/505/523 with `diagnose.ts` first (`artifacts/polish/water-*.txt`)
-      - [ ] P3 · should · AI villagers · 3 villagers of P4 jitter ~90 s under fire at (63,40): orders flip between
+      - [x] P3 · should · AI villagers · 3 villagers of P4 jitter ~90 s under fire at (63,40): orders flip between
             "move to Town Center" and "attack the bowman" · g2 = `type=largeIslands&size=large&seed=23` 6p Hard,
             ticks 45600–47400 (`node artifacts/polish/lens-a/stuck.ts`). _Cause:_ `Tactics.militia` returns false
             once every militia villager already has its attack order, so `flee` sends them home; next think, back.
+            _Fixed:_ that, and a second loop — `predators` sent the fleeing villagers at an alligator, `flee` home,
+            and back (lions/alligators now skip villagers in a raider's danger spot). g2 villager attack → move flips
+            ticks 44400–47400: 726 → 10 (≤ 2 per villager). Tests: `ai-tactics.test.ts` "AI villagers under attack".
+            Full suite: Hard > Moderate 49 → 52/64, Hardest > Hard 62 → 63/64, water 46/48 held out, wars 24/24,
+            hard idle 1.2 → 1.6%, hard 1v1 median 32 → 51 min (15/16 decided).
       - [x] P8 · should · mapgen Narrows · team games: the strait doesn't separate the teams (1122, 1212, 111222,
             121212, 11112222 — 36/36 maps put an ally and an enemy on each side) · `lens-b/narrowsTeams.ts` — _fixed with P6:_
             whole teams take a side while the sides stay within one player (same test; probe: all layouts split).

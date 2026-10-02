@@ -283,9 +283,10 @@ export class AiPlayer {
       if (on >= 4) continue;
       // (Not villagers already fighting — this one or another: re-sending them every think restarted their swing,
       // and with two lions about they were pulled from one to the other and back while the lions ate the village
-      // — 2,788 orders and 11 villagers dead by minute 8 on one ladder map, M14.6b.)
+      // — 2,788 orders and 11 villagers dead by minute 8 on one ladder map, M14.6b. Nor villagers fleeing raiders:
+      // sent at an alligator, then home by `flee`, then back, they stood under the raiders' arrows, M15.10 P3.)
       const group = s.villagers
-        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && u.order !== 'attack' && dist(u.x, u.y, lion.x, lion.y) < 16)
+        .filter((u) => !s.busy.has(u.h) && u.order !== 'build' && u.order !== 'attack' && dist(u.x, u.y, lion.x, lion.y) < 16 && !this.military.danger(s, u.x, u.y))
         .sort((a, b) => dist(a.x, a.y, lion.x, lion.y) - dist(b.x, b.y, lion.x, lion.y) || a.h - b.h)
         .slice(0, 4 - on)
         .map((u) => u.h);

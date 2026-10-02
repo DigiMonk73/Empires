@@ -123,8 +123,9 @@ export class Tactics {
   /**
    * Home defence: raiders among our villagers. When soldiers alone would lose but soldiers and the villagers
    * working near the raiders clearly outweigh them, those villagers fight too (villagers hit for 3 — a crowd of
-   * them beats an early wave; against a real army they would only be fed to it, so not then). Returns true if
-   * villagers were sent.
+   * them beats an early wave; against a real army they would only be fed to it, so not then). Returns true while the
+   * militia fights — also when every one of them already has its order: returning false then let `flee` call them
+   * home, and the next think sent them back, every other think (M15.10 P3).
    */
   militia(s: Snapshot, army: OwnUnit[], threats: SeenEntity[], cmds: Command[]): boolean {
     const raiders = threats.filter((o) => !o.building && !CIVILIANS.has(o.cls) && o.cls !== 'siege');
@@ -140,10 +141,9 @@ export class Tactics {
     const vilWorth = vils.reduce((a, u) => a + worth(u.type, u.hp), 0);
     if (soldiers + vilWorth < 1.3 * theirs || vils.length < 3) return false;
     const weakest = raiders.reduce((b, o) => (o.hp < b.hp || (o.hp === b.hp && o.h < b.h) ? o : b));
+    for (const u of vils) s.busy.add(u.h);
     const ids = vils.filter((u) => u.order !== 'attack').map((u) => u.h);
-    if (!ids.length) return false;
-    for (const h of ids) s.busy.add(h);
-    cmds.push({ t: 'act', ids, h: weakest.h });
+    if (ids.length) cmds.push({ t: 'act', ids, h: weakest.h });
     return true;
   }
 

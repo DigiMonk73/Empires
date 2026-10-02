@@ -7,6 +7,8 @@ import { HARDEST_BONUS } from '../../src/data/setup.ts';
 import { AiPlayer } from '../../src/ai/ai.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
 import { completeResearch } from '../../src/sim/systems/production.ts';
+import { EKind } from '../../src/sim/core/entities.ts';
+import type { Command } from '../../src/sim/index.ts';
 
 describe('AI v2 (M13.2)', () => {
   it('values units by price and health left', () => {
@@ -115,5 +117,59 @@ describe('AI priests (M13.5)', () => {
     }
     expect(converting).toBe(true);
     expect(w.players[1]!.techs).toContain('astrology');
+  });
+});
+
+describe('AI villagers under attack (M15.10 P3)', () => {
+  it('a militia already fighting stays in the fight: flee does not call it home', () => {
+    // Every militia villager already had its order, so `militia` reported nothing sent and `flee` called them home;
+    // the next think sent them back — they jittered under the raider's arrows (lens A, g2: 726 flips in 2.5 min).
+    const t = new Tactics();
+    const vil = (h: number) => ({ h, type: 'villager', cls: 'villager', x: 20 + h * 0.5, y: 20, hp: 25, idle: false, order: 'attack', target: 99, job: null, carry: 0, act: 0, aboard: 0 });
+    const raider = { h: 99, type: 'clubman', cls: 'infantry', x: 22, y: 21, hp: 40, owner: 2, building: false };
+    const s = { busy: new Set<number>(), villagers: [1, 2, 3, 4].map(vil), tc: { x: 5, y: 5 }, v: { tick: 100 } };
+    const cmds: Command[] = [];
+    expect(t.militia(s as never, [], [raider as never], cmds)).toBe(true);
+    t.flee(s as never, [raider as never], cmds);
+    expect(cmds).toEqual([]);
+  });
+
+  it('villagers fleeing raiders are not sent at an alligator on the way home', () => {
+    // Two villagers (too few for a militia) with an enemy bowman and an alligator beside them: `flee` sent them home,
+    // the next think `predators` sent them at the alligator, the next home again — 497 flips for one player in g2.
+    const sim = Sim.create({
+      seed: 5,
+      map: { w: 40, h: 40 },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'greek' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }, { type: 'townCenter', owner: 2, tx: 34, ty: 34 }],
+        units: [
+          { type: 'villager', owner: 1, x: 15.5, y: 15.5 },
+          { type: 'villager', owner: 1, x: 16.5, y: 15.5 },
+          { type: 'alligator', owner: 0, x: 17.5, y: 12.5 },
+          { type: 'bowman', owner: 2, x: 18.5, y: 17.5 },
+        ],
+      },
+    });
+    const w = sim.world;
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const bow = w.ents.slotOf(w.ents.handleOf(w.ents.top - 1));
+    const full = w.ents.hp[bow]!;
+    const last = new Map<number, string | null>();
+    let sentHome = 0;
+    for (let t = 0; t < 20 * 40; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      if (w.ents.alive[bow]) w.ents.hp[bow] = full; // the bowman stays: the villagers must keep clear of it
+      for (let s = 0; s < w.ents.top; s++) {
+        if (!w.ents.alive[s] || w.ents.owner[s] !== 1 || w.ents.kind[s] !== EKind.unit) continue;
+        const k = w.orders[s]?.[0]?.k ?? null;
+        if (last.get(s) === 'attack' && k === 'move') sentHome++;
+        last.set(s, k);
+      }
+    }
+    expect(sentHome).toBeLessThanOrEqual(2);
   });
 });
