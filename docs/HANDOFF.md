@@ -39,16 +39,22 @@ playtest). Multiplayer is next (M16).
 Work on branch **`m16-multiplayer`** (the main checkout is on it; it contains everything on `main`). Don't merge it
 into `main` until the user has played multiplayer on the VM (M16.8).
 
-1. **Island wood stall (unblocks KI-13 arrows).** On island maps a winner whose island runs out of trees can't
-   build ships, and the loser's last warships keep the game from ending (dev water seed 413, minute 40+:
-   `node tools/sim/diagnose.ts water-trace 413`). Fix in the AI, tuning on the dev seeds only (water 401–448):
-   - keep a wood reserve for a Dock and two warships once the home island's reachable wood runs low (stop spending
-     the last wood on farms);
-   - guard the Docks with warships while the enemy has a fleet;
-   - when the home island has no reachable wood, ferry a few villagers to the nearest landmass with trees and build a
-     Storage Pit there.
-   Keep a change only if `node tools/sim/ai-band.ts` passes (D70), then re-record the band. Then apply
-   `docs/patches/m15.10-p24-arrows-along-the-line.patch` again and band it; if it passes, close KI-13.
+1. **Island wood stall (unblocks KI-13 arrows).** _M16.9 so far (all banded and kept, held-out water 183 → 190/192):_
+   room for a transport over the population limit; a full island's last-resort building spot (Market); Docks never
+   seal a pocket of water; a transport is at its boarding spot only beside our land; the transport's wood kept while
+   one is afloat. The arrows patch banded on the first four: water 175/192, a FAIL by one game (43.8 of 44).
+   **Next, in order:**
+   - apply `docs/patches/m15.10-p24-arrows-along-the-line.patch` on HEAD and run `node tools/sim/ai-band.ts --keep`
+     (≈ 22 min; it saves the baseline only on a pass). Pass → determinism, verify, commit, close KI-13 (with its
+     test, in the patch). Fail → `git apply -R` it, and:
+   - apply `docs/patches/m16.9-warship-dock-reserve.patch` (enemy ships at our Docks may spend the transport's wood
+     on a warship; the first Dock may too — dev 417; its test fails without it), band it (`--keep`), and if kept
+     try the arrows patch again on top. Dev water with arrows + both: 182–187/192.
+   - still open from the original plan if the arrows need more: ferry villagers to trees on other land with a
+     Storage Pit (M13.7 tried and backed out a version triggered on known wood — tiny maps hold ~880 wood off the
+     home islands).
+   Tools: `diagnose.ts water <base> <shift>`, `water-trace <seed> --shift k --every m`; probe scripts kept in
+   `artifacts/wood/` (gitignored).
 2. **Multiplayer polish** (`docs/MULTIPLAYER.md`): guests pick their own civilization (and team) in the room; the
    room list and seats show each member's ping; a two-client input monkey (lens C for multiplayer) and a 30-minute
    two-browser soak; saving a multiplayer game (the host saves; a load restarts the room from the save) — in that
@@ -63,6 +69,9 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 13:15 — paused at the user's request for a commit before a new loop: the arrows band on 2ffbbfb was
+  stopped before its first shift finished (no result) and the patch taken back out; tree clean. Neither repo has a
+  git remote (local only so far). Resume at work queue item 1, "Next, in order".
 - 2026-10-02 13:15 — item 1, step 4 (M16.9): the arrows patch on steps 1–3 banded water 175/192 — FAIL by one game
   (43.8 of 44); reverted (KI-13 notes). Then the wood for a transport is kept while one is afloat too (it can sink
   after the last tree): band PASS, water **190**/192, re-recorded. Also a server-saves test port flake fixed. Next:

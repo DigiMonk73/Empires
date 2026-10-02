@@ -1,0 +1,89 @@
+diff --git a/src/ai/ai.ts b/src/ai/ai.ts
+index 90c05b9..680b5a5 100644
+--- a/src/ai/ai.ts
++++ b/src/ai/ai.ts
+@@ -734,7 +734,9 @@ export class AiPlayer {
+    * and send `nBuilders` villagers (wood/idle first). Returns true if ordered.
+    */
+   build(s: Snapshot, cmds: Command[], type: string, x: number, y: number, minD: number, maxD: number, nBuilders: number): boolean {
+-    if (!s.v.canBuild(type) || !afford(s, s.v.cost(type))) return false;
++    // (The first Dock may spend the wood kept for the fleet: the reserve counts one while there is none.)
++    const fleetWood = type === 'dock' && !this.has(s, 'dock').length;
++    if (!s.v.canBuild(type) || !(fleetWood ? s.v.canAfford(s.v.cost(type)) : afford(s, s.v.cost(type)))) return false;
+     const size = type === 'house' || type === 'watchTower' ? 2 : type === 'wonder' ? 5 : 3;
+     // On a cramped island start the usual spot may not exist: anywhere within 18 of the Town Center will do
+     // (an island once sat in the Stone Age for two hours, its Tool-age buildings unplaceable).
+diff --git a/src/ai/naval.ts b/src/ai/naval.ts
+index e41f0e4..898b3f5 100644
+--- a/src/ai/naval.ts
++++ b/src/ai/naval.ts
+@@ -642,7 +642,11 @@ export class NavalBrain {
+     const dock = docks.find((d) => d.queue < 2);
+     if (dock && fleet.length < want && s.me.pop + this.popReserve(s) < s.me.popCap) {
+       const unit = ['trireme', 'warGalley', 'scoutShip'].find((u) => !s.v.trainBlocker(dock.h, u));
+-      if (unit && afford(s, s.v.cost(unit)) && (near.length || s.me.res[1]! >= s.v.cost(unit)[1]! + 75)) cmds.push({ t: 'train', bld: dock.h, unit });
++      const cost = unit ? s.v.cost(unit) : null;
++      // (Enemy ships at our Docks may spend the wood kept for a transport: a beaten enemy's last two warships took
++      // down a winner's Docks, transports and Market while it kept 176 wood back, M16.9 — dev water 417.)
++      const paid = cost && (near.length ? s.v.canAfford(cost) : afford(s, cost) && s.me.res[1]! >= cost[1]! + 75);
++      if (unit && paid) cmds.push({ t: 'train', bld: dock.h, unit });
+     }
+     const idle = fleet.filter((u) => u.idle && !s.busy.has(u.h));
+     if (!idle.length) return;
+diff --git a/tests/unit/ai.test.ts b/tests/unit/ai.test.ts
+index 0eddf13..6a9d8d4 100644
+--- a/tests/unit/ai.test.ts
++++ b/tests/unit/ai.test.ts
+@@ -369,4 +369,52 @@ describe('AI wood at sea (M16.9)', () => {
+     expect(view.ownUnits().some((u) => u.cls === 'transport')).toBe(true);
+     expect(least, 'wood kept for a transport').toBeGreaterThanOrEqual(150);
+   });
++
++  it('…but enemy warships at its Docks may spend it on a warship of its own', () => {
++    // Dev water seed 417: a beaten enemy's last two warships took down the winner's Docks, transports and Market
++    // while it kept 176 wood back for a transport.
++    const ascii = Array.from({ length: 40 }, () => '.'.repeat(14) + '~'.repeat(20) + '.'.repeat(14));
++    const sim = Sim.create({
++      seed: 8,
++      map: { w: 48, h: 40, ascii },
++      victory: 'none',
++      revealMap: true,
++      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
++      scenario: {
++        buildings: [
++          { type: 'townCenter', owner: 1, tx: 3, ty: 3 },
++          { type: 'market', owner: 1, tx: 3, ty: 10 },
++          { type: 'archeryRange', owner: 1, tx: 8, ty: 10 },
++          { type: 'granary', owner: 1, tx: 3, ty: 15 },
++          { type: 'dock', owner: 1, tx: 14, ty: 20 },
++          ...Array.from({ length: 4 }, (_, i) => ({ type: 'house', owner: 1, tx: 2 + i * 3, ty: 34 })),
++          { type: 'townCenter', owner: 2, tx: 40, ty: 18 },
++        ],
++        units: [
++          { type: 'lightTransport', owner: 1, x: 18.5, y: 30.5 },
++          ...Array.from({ length: 6 }, (_, i) => ({ type: 'villager', owner: 1, x: 3.5 + i, y: 26.5 })),
++          { type: 'scoutShip', owner: 2, x: 21.5, y: 21.5 },
++        ],
++      },
++    });
++    const w = sim.world;
++    completeResearch(w, 1, 'toolAge');
++    w.players[1]!.res.set([100, 0, 0, 0]);
++    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
++    const view = new PlayerView(w, 1);
++    const run = (n: number) => {
++      for (let t = 0; t < n; t++) {
++        sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
++        sim.drainEvents();
++      }
++    };
++    run(20);
++    w.players[1]!.res[1] = 200;
++    let warship = false;
++    for (let k = 0; k < 180 && !warship; k++) {
++      run(20);
++      warship = view.ownUnits().some((u) => u.cls === 'warship');
++    }
++    expect(warship, 'a warship of its own').toBe(true);
++  });
+ });
