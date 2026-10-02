@@ -1,0 +1,21 @@
+diff --git a/src/ai/military.ts b/src/ai/military.ts
+index 7de0cc1..1ce907a 100644
+--- a/src/ai/military.ts
++++ b/src/ai/military.ts
+@@ -463,11 +463,14 @@ export class MilitaryBrain {
+       for (const t of threats) {
+         // Only on a lone raider on foot: villagers sent at an army (or chasing riders) just feed it.
+         if (!MILITIA_VS.has(t.cls) || threats.some((o) => o !== t && dist(o.x, o.y, t.x, t.y) < 5)) continue;
++        // (Not a builder: taken off a foundation, finishing foundations sent it straight back, and a villager swapped
++        // orders every think for a minute without moving — M15.10 lens A4. The militia leaves builders alone too.)
+         const near = s.villagers
+-          .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6)
++          .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.order !== 'build' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6)
+           .sort((a, b) => dist(a.x, a.y, t.x, t.y) - dist(b.x, b.y, t.x, t.y) || a.h - b.h)
+           .slice(0, 3);
+-        if (!near.length) continue;
++        // Three to one or not at all: one or two sent at it were the ones `flee` ran home the next think.
++        if (near.length < 3) continue;
+         for (const u of near) s.busy.add(u.h);
+         cmds.push({ t: 'act', ids: near.map((u) => u.h), h: t.h });
+       }

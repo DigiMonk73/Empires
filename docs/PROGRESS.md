@@ -1023,7 +1023,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
       during the 20:25 verify:full), H, C, F, E, G (3× e2e); round two A2, B2, C2, D2, A3, then a 1.0.0 → tonight save
-      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3. _Next:_ A4.
+      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4. _Next:_ B3.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1241,6 +1241,19 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
+      - _Lens A4 (4 watched games + Node replicas on setups rounds one and two skipped — pop 200 Hardest 2v2 Hill
+        Country, Bronze 3v3 Small Islands, Iron + High 2v2 Coastal, Hardest 1v1; `artifacts/polish/lens-a4/`): 0 page
+        or console errors, frames p95 ≤ 6.3 ms, ≤ 0.56 ms/tick, every game but the islands one decided by 31 min.
+        (The seat lost both Hardest games: autoplay doesn't get Hardest's 2000 food — a harness artefact.) Found:_
+      - [ ] P76 · should · AI villagers · **[blocked after 3 cycles]** · a builder near a lone raider on foot swaps
+            orders every think — `defend()` sends it at the raider (it skips attackers, not builders), the next think
+            `finishFoundations` sends it back — and never moves: a Hardest villager for a minute (a4 game 0,
+            14:10–15:20); the alligator test's own scene did it for 20 s unnoticed · `lens-a4/dither.ts` — _tried
+            (it. 59), each with a scene test that fails without it (56 swaps in 15 s): (1) `defend()` skips builders
+            and needs three villagers (one or two were what `flee` ran home) — Hard > Moderate 53/64 but wars 23/24,
+            water 47/48; (2) `finishFoundations` skips fighters — still swaps (58); (3) `defend()` skips builders and
+            spots `flee` just marked — water 47/48, Hard duels 15/16. Reverted; patches
+            `docs/patches/m15.10-p76-*.patch`._
       - _Lens C3 (input monkey on the final build, 8 × 400 actions, Chromium + WebKit; C2's dialog script again;
         `artifacts/polish/lens-c2/runs/c3-*`): 0 findings, 0 page or console errors; the dialog chains differ from
         C2's only where P61/P65 fixed them._

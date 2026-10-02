@@ -1,0 +1,67 @@
+diff --git a/src/ai/military.ts b/src/ai/military.ts
+index 7de0cc1..a99f3b4 100644
+--- a/src/ai/military.ts
++++ b/src/ai/military.ts
+@@ -463,8 +463,11 @@ export class MilitaryBrain {
+       for (const t of threats) {
+         // Only on a lone raider on foot: villagers sent at an army (or chasing riders) just feed it.
+         if (!MILITIA_VS.has(t.cls) || threats.some((o) => o !== t && dist(o.x, o.y, t.x, t.y) < 5)) continue;
++        // (Not a builder: taken off a foundation, finishing foundations sent it straight back, and a villager swapped
++        // orders every think for a minute without moving — M15.10 lens A4. The militia leaves builders alone too. Nor
++        // one `flee` just ran from here: it was sent back the next think.)
+         const near = s.villagers
+-          .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6)
++          .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.order !== 'build' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6 && !this.danger(s, u.x, u.y))
+           .sort((a, b) => dist(a.x, a.y, t.x, t.y) - dist(b.x, b.y, t.x, t.y) || a.h - b.h)
+           .slice(0, 3);
+         if (!near.length) continue;
+diff --git a/tests/unit/ai-tactics.test.ts b/tests/unit/ai-tactics.test.ts
+index 993fd92..8837cba 100644
+--- a/tests/unit/ai-tactics.test.ts
++++ b/tests/unit/ai-tactics.test.ts
+@@ -355,3 +355,45 @@ describe('AI on a Deathmatch bank (M15.10 P54)', () => {
+     expect(early, 'players in the Tool Age by 6:00, of 9').toBeGreaterThanOrEqual(7);
+   }, 60_000);
+ });
++
++describe('AI builders under a lone raider (M15.10 lens A4)', () => {
++  it('a villager building is not pulled off to fight and sent back every other think', () => {
++    // The villagers' defence took the farm's builder; finishing foundations sent it straight back: a Hardest villager
++    // swapped orders every 4 ticks for a minute and never moved (a4 game 0, 14:10–15:20).
++    const W = 40;
++    const ascii = Array.from({ length: W }, () => '.'.repeat(W));
++    const sim = Sim.create({
++      seed: 6,
++      map: { w: W, h: W, ascii },
++      victory: 'none',
++      players: [{ civ: 'greek', ai: 'hardest' }, { civ: 'persian' }],
++      scenario: {
++        buildings: [{ type: 'townCenter', owner: 1, tx: 3, ty: 3 }, { type: 'granary', owner: 1, tx: 14, ty: 18 }, { type: 'farm', owner: 1, tx: 18, ty: 18, progress: 0 }],
++        units: [
++          ...Array.from({ length: 5 }, (_, i) => ({ type: 'villager', owner: 1, x: 17.5 + i, y: 22.5 })),
++          { type: 'clubman', owner: 2, x: 21.5, y: 16.5 },
++        ],
++      },
++    });
++    const w = sim.world;
++    sim.step([{ player: 1, cmd: { t: 'diplomacy', to: 2, stance: 2 } }]);
++    w.players[1]!.res.set([500, 500, 0, 0]);
++    const ai = new AiPlayer(1, 'hardest', 1, { civ: 'greek' });
++    const view = new PlayerView(w, 1);
++    const last = new Map<number, string>();
++    let swaps = 0;
++    for (let t = 0; t < 20 * 15; t++) {
++      const cmds = ai.think(view);
++      for (const c of cmds) {
++        if ((c.t !== 'construct' && c.t !== 'act') || !('ids' in c)) continue;
++        for (const id of c.ids) {
++          if (last.has(id) && last.get(id) !== c.t) swaps++;
++          last.set(id, c.t);
++        }
++      }
++      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
++      sim.drainEvents();
++    }
++    expect(swaps, 'villagers swapped between building and fighting').toBeLessThanOrEqual(2);
++  });
++});
