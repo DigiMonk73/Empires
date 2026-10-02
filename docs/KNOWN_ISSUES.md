@@ -27,8 +27,9 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   movement dodges arrows (stones: any movement). The fix — straight missiles hit along their line of flight, to a
   tile past the aim point; arcing stones unchanged — is `docs/patches/m15.10-p24-arrows-along-the-line.patch` (with
   its test). It moves the held-out gates: 1v1 wars 24 → 22/24, water 46 → 45/48, Hard > Moderate 51 → 48/64 (the
-  bar). Next: retune the AI for accurate arrows on the dev sets (LOOP.md "AI work"), then apply; or the user
-  accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
+  bar). Tried again after D69 and P55 (water now 47): water 40/48 — a GATE FAIL — and wars 22/24, though Hard
+  duels end sooner (38:42). Accurate arrows change every fight; the AI needs retuning for them on the dev sets
+  (LOOP.md "AI work") before they can go in — or the user accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
 - **KI-14 · should (blocked by the AI gates) · two-player island starts bury a villager now and then** — M15.10 P20.
   ~15% of two-player Small/Large Islands maps (15 of the water suite's 96) start a villager on a forest or mine
   tile, stuck for the game. Holding the Town Center's villager tiles clear fixes it but moves held-out water down
