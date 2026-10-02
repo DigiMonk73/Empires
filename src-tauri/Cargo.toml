@@ -1,6 +1,6 @@
 [package]
 name = "empires"
-version = "1.0.0"
+version = "1.0.1"
 description = "Empires — ancient-world real-time strategy"
 authors = ["Empires contributors"]
 license = "MIT"
