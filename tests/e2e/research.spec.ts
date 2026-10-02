@@ -43,3 +43,28 @@ test('tech tree: from the top bar in game (live progress) and from skirmish setu
   await expect(page.getByTestId('tt-chariot')).toHaveAttribute('data-state', 'missing');
   expect(pageErrors(page)).toEqual([]);
 });
+
+test('a research button\'s tooltip says what the technology does (M15.10 P45)', async ({ page }, info) => {
+  await openGame(page, 'scenario=village&fog=0&paused=1');
+  await page.evaluate(() => window.__empires!.pause(true));
+  const tc = await page.evaluate(() => window.__empires!.buildingAt(15, 15));
+  await page.evaluate(() => window.__empires!.camera.centerOn(15.5, 15.5));
+  await frames(page);
+  const pos = await page.evaluate((h) => window.__empires!.entityScreenPos(h!), tc);
+  await page.mouse.click(pos!.x, pos!.y - 20);
+  await frames(page);
+  await page.evaluate(() => window.__empires!.step(2));
+  const btn = page.getByTestId('cmd-research:toolAge');
+  await btn.hover();
+  await expect(btn.locator('.tooltip .desc')).toBeVisible();
+  // On screen, not clipped by the command panel (the top row's tooltips showed nothing, M15.10 P57).
+  const onTop = await page.evaluate(() => {
+    const t = document.querySelector('[data-testid="cmd-research:toolAge"] .tooltip')!;
+    const b = t.getBoundingClientRect();
+    const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return !!hit && t.contains(hit);
+  });
+  expect(onTop).toBe(true);
+  await snap(page, info, 'research-tooltip');
+  expect(pageErrors(page)).toEqual([]);
+});

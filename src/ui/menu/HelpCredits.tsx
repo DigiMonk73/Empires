@@ -8,7 +8,7 @@ import { KeysContent } from '../options/KeysReference.tsx';
 const HOW: [string, string][] = [
   [
     'The goal',
-    'Lead your people from the Stone Age to the Iron Age. A game is won by conquest: destroy every enemy villager, soldier, warship and building (walls and trade, fishing and transport boats do not count).',
+    'Lead your people from the Stone Age to the Iron Age. Win by conquest — destroy every enemy villager, soldier, priest, siege weapon, warship and building (walls and trade, fishing and transport boats do not count) — or, in a Standard game (the default), by holding a finished Wonder, every Artifact or every Ruin for 2000 years.',
   ],
   [
     'Gather',

@@ -137,7 +137,7 @@ export const CIVS: readonly CivDef[] = [
     attr({ classes: ['siege'] }, 'hp', 2, 'mul'), attr(ARCHERS, 'atk.pierce', 1),
     attr({ units: ['scoutShip', 'warGalley'] }, 'range', 4), attr({ units: ['scoutShip', 'warGalley'] }, 'los', 4),
   ], { note: 'Mesopotamian (Babylonian) architecture in RoR; Return of Rome swapped it' }),
-  civ('macedonian', 'Macedonian', 'roman', ['Academy units +2 pierce armor', 'Land units and non-war boats +2 LOS', 'Siege weapons cost 50% less', 'Units 4× harder to convert'], [
+  civ('macedonian', 'Macedonian', 'roman', ['Academy units +2 pierce armor', 'Infantry, cavalry, elephants, villagers and non-war boats +2 LOS', 'Siege weapons cost 50% less', 'Units 4× harder to convert'], [
     attr(HOPLITES, 'arm.pierce', 2),
     attr({ classes: ['infantry', 'scout', 'cavalry', 'camel', 'elephant', 'hoplite', 'villager', 'fishingShip', 'tradeShip', 'transport'] }, 'los', 2),
     attr({ classes: ['siege'] }, 'cost.all', 0.5, 'mul'),

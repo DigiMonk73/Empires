@@ -109,6 +109,13 @@
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
+/* The command buttons' tooltips rise above the panel: clipped by it, the top row's showed nothing (M15.10 P57).
+   (min-size 0 keeps the size `overflow: hidden` gave it: the bar grew a pixel without.) */
+.cmd-panel {
+  overflow: visible;
+  min-height: 0;
+  min-width: 0;
+}
 .sel-single {
   display: flex;
   gap: 12px;
@@ -277,6 +284,14 @@
 }
 .why {
   color: #e87060;
+}
+.tooltip .desc {
+  display: block;
+  color: #e8dcc0;
+  font-family: 'Alegreya', Georgia, serif; /* a sentence, not a title */
+  font-variant: normal;
+  text-transform: none;
+  font-size: 13px;
 }
 .queue {
   display: flex;

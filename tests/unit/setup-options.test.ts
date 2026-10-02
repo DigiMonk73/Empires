@@ -76,6 +76,9 @@ describe('setup options (M14.3, econ:7)', () => {
     expect(t.world.gameOver).toMatchObject({ winners: [1], how: 'time', tick: 1200 });
     expect(winLine('time', false, 1, 2)).toBe('Player 1 had the highest score when time ran out.');
     expect(winLine('score', true, 1, 1)).toBe('You reached the target score first.');
+    // An ally's score won it for the team (M15.10 P56).
+    expect(winLine('time', true, 2, 1)).toBe('Your ally, Player 2, had the highest score when time ran out.');
+    expect(winLine('score', true, 2, 1)).toBe('Your ally, Player 2, reached the target score first.');
   });
 
   it('the skirmish setup carries victory, target, limit, age and population through the URL into the sim', () => {

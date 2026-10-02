@@ -41,6 +41,9 @@ function unitsOf(building: string): string[] {
 }
 
 /** The techs that upgrade a line to each unit (Legion ← "legion"). */
+/** Buildings a technology turns another into (Sentry Tower → Guard Tower), by the technology. */
+const BUILT_BY = new Map<string, string[]>();
+for (const t of TECHS) for (const e of t.effects) if (e.op === 'upgrade' && e.kind === 'building') BUILT_BY.set(e.to, [...(BUILT_BY.get(e.to) ?? []), t.id]);
 const UPGRADED_BY = new Map<string, string[]>();
 for (const t of TECHS) for (const e of t.effects) if (e.op === 'upgrade' && e.kind === 'unit') UPGRADED_BY.set(e.to, [...(UPGRADED_BY.get(e.to) ?? []), t.id]);
 
@@ -72,6 +75,8 @@ export function techTree(civId: string, w?: World, player?: number, fullTechTree
   const unitMissing = (id: string): boolean => {
     if (civ.disabled.units.includes(id)) return true;
     const u = UNIT_BY_ID.get(id);
+    // …or the building that trains it (Macedonian Priest — no Temple; Persian Hoplite — no Academy, M15.10 P46).
+    if (u?.trainedAt && civ.disabled.buildings.includes(u.trainedAt)) return true;
     if (u?.requires?.some(techMissing)) return true;
     if (u?.upgradeOf) {
       if (UPGRADED_BY.get(id)?.some(techMissing)) return true;
@@ -79,13 +84,15 @@ export function techTree(civId: string, w?: World, player?: number, fullTechTree
     }
     return false;
   };
+  /** A building the civilization lacks, or one only a technology it lacks makes (Roman Guard Tower, M15.10 P43). */
+  const buildingMissing = (id: string): boolean => civ.disabled.buildings.includes(id) || (BUILT_BY.get(id)?.some(techMissing) ?? false);
   /** A tech that only upgrades units the civilization lacks (Yamato's Armored Elephant: no War Elephants, M15.10 P22). */
   const upgradesNothing = (t: string): boolean => {
     const fx = TECH_BY_ID.get(t)?.effects ?? [];
     return fx.length > 0 && fx.every((e) => e.op === 'upgrade' && e.kind === 'unit' && unitMissing(e.to));
   };
   const state = (kind: TreeItem['kind'], id: string, itemAge: number): ItemState => {
-    if (kind === 'unit' ? unitMissing(id) : kind === 'building' ? civ.disabled.buildings.includes(id) : techMissing(id) || upgradesNothing(id)) return 'missing';
+    if (kind === 'unit' ? unitMissing(id) : kind === 'building' ? buildingMissing(id) : techMissing(id) || upgradesNothing(id)) return 'missing';
     if (!p) return 'now';
     if (kind === 'tech' && p.techs.includes(id)) return 'done';
     if (kind === 'building' && owned.has(id)) return 'done';

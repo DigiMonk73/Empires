@@ -1131,19 +1131,19 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             "160 / 80" (HP bar past 100%), Post-Iron Greek Legion ⚔13 🛡2/0 (17, 8/3), Hittite War Galley range 6
             (10) · `src/ui/sync.ts:51-54`; `lens-d2/hud-vs-stats.txt` — _fixed:_ the box reads `world.stats(owner, type)`. Test:
             `hud-sync` (Choson Long Swordsman with Iron Shield, Hittite War Galley).
-      - [ ] P43 · must · Tech Tree · Granary column shows Fortification, Guard Tower, Ballista Tower available for 7
+      - [x] P43 · must · Tech Tree · Granary column shows Fortification, Guard Tower, Ballista Tower available for 7
             civs that lack the techs (building chips checked against `disabled.buildings`) · `src/ui/techTree.ts`
             88, 105–113; `lens-d2/tree-walls.ts`
-      - [ ] P44 · should · civ text · Macedonian "Land units and non-war boats +2 LOS" — research and code give it to
+      - [x] P44 · should · civ text · Macedonian "Land units and non-war boats +2 LOS" — research and code give it to
             infantry, scouts, cavalry, camels, elephants, villagers, civilian boats only (econ:6.1) · `civs.ts:140`
-      - [ ] P45 · should · research tooltips show name, cost and why it's disabled — never the tech's `desc`: nothing
+      - [x] P45 · should · research tooltips show name, cost and why it's disabled — never the tech's `desc`: nothing
             says what Alchemy or Nobility does · `src/ui/hud/Hud.tsx:249-253`
-      - [ ] P46 · should · Tech Tree · units shown obtainable without their training building (Macedonian Priest —
+      - [x] P46 · should · Tech Tree · units shown obtainable without their training building (Macedonian Priest —
             no Temple; Persian Hoplite — no Academy) · `techTree.ts:72-81` `unitMissing`
-      - [ ] P47 · should · command grid · techs the Tree marks out of reach still appear: Babylonian Armored Elephant
+      - [x] P47 · should · command grid · techs the Tree marks out of reach still appear: Babylonian Armored Elephant
             greyed "requires Iron Shield" forever, Persian Irrigation "requires Plow" (Yamato's buyable Armored
             Elephant matches the research table: Y) · `src/ui/commands.ts:160-163`; `lens-d2/grid-vs-tree.ts`
-      - [ ] P48 · should · Help · "A game is won by conquest" — the default is Standard (Wonder, all Artifacts or all
+      - [x] P48 · should · Help · "A game is won by conquest" — the default is Standard (Wonder, all Artifacts or all
             Ruins for 2000 years too) · `HelpCredits.tsx:11`
       - [ ] P49 · nice · setup · "N items missing" counts matrix rows (Assyrian 24) where the Tree greys 34
       - [ ] P50 · nice · Diplomacy · tribute cost line rounds up ("Costs 2 food" for 1; the sim charges 1.25)
@@ -1159,8 +1159,17 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7)
       - [ ] P55 · should · AI clutter · farm foundations placed and never built stay as dirt squares 20+ min (17 on
             a Huge 8p map; `finishFoundations` skips farms) · g4 coastal huge seed 59; g3 pop 25
-      - [ ] P56 · nice · end text · a Time Limit win on an ally's score reads "Victory — Player 2 had the highest
+      - [x] P56 · nice · end text · a Time Limit win on an ally's score reads "Victory — Player 2 had the highest
             score when time ran out." (no "your ally") · g6 narrows small seed 67 win=time limit=15
+      - [x] P57 · must · HUD · command-button tooltips are clipped by the command panel (`.panel { overflow: hidden
+            }`): the top row's — Train Villager, the ages — showed nothing, names and costs included (found looking at
+            P45's new screenshot; `elementFromPoint` at the tooltip's centre hit the game view)
+      - _P43–P48, P56, P57 fixed together:_ the Tree marks a wall/tower missing when its upgrade tech is, and a unit
+        when its training building is; the grid hides techs whose prerequisite the civ lacks; research tooltips
+        show the tech's line (body font), and rise above the command panel (`overflow: visible`, min-size 0 keeps
+        the bar's size); Macedonian text per econ:6.1; Help's goal names Standard; an ally's Score/Time win says
+        so. Tests: `tech-tree` (P43, P46, P47, P45), `setup-options` (P56), e2e `research` "a research button's
+        tooltip…" with an on-screen hit test; screenshot `research-tooltip`.
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI

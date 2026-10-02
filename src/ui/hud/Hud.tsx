@@ -248,6 +248,7 @@ function CmdButton({ b }: { b: CommandButton }) {
       {b.hotkey && b.hotkey.length === 1 && <span class="hotkey">{b.hotkey}</span>}
       <span class="tooltip">
         <b>{b.label}</b> {b.hotkey && b.hotkey.length === 1 && <em>({b.hotkey})</em>}
+        {b.desc && <span class="desc">{b.desc}</span>}
         {b.cost && <CostLine cost={b.cost} />}
         {b.disabled && <span class="why">{b.disabled}</span>}
       </span>

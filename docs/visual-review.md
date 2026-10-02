@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P43–P48, P56, P57 · new `research-tooltip` (both engines): "Tool Age / Advance to the Tool
+  Age / 500" above the command panel, title in Cinzel, the line in Alegreya. 4/5. `help` 7% px: the Goal line now
+  four lines, the panel still fits with Back clear. A first try at P57 grew the bottom bar a pixel (126 shots ~0.4%);
+  min-size 0 put it back (the next run listed the same shots changing back).
+
 ## 2026-10-01 · M15.10 P39, P41 · no visual change (6 shots ≤ 0.3% px)
 
 ## 2026-10-01 · M15.10 P28, P38 · no visual change (1 shot ≤ 0.3% px)

@@ -47,8 +47,10 @@ export function showsEnd(won: boolean, fellAt: number | null, tick: number): boo
 /** The line under Victory / Defeat. `by` holds the countdown that won (a Standard win). */
 export function winLine(how: WinHow, won: boolean, by: number, me: number): string {
   if (how === 'conquest') return won ? 'Your enemies have been conquered.' : 'Your civilization has fallen.';
-  if (how === 'score') return by === me ? 'You reached the target score first.' : `Player ${by} reached the target score first.`;
-  if (how === 'time') return by === me ? 'Yours was the highest score when time ran out.' : `Player ${by} had the highest score when time ran out.`;
+  // (An ally's score won it for the team: say so — "Victory — Player 2 had the highest score" read oddly, M15.10 P56.)
+  const who = won ? `Your ally, Player ${by},` : `Player ${by}`;
+  if (how === 'score') return by === me ? 'You reached the target score first.' : `${who} reached the target score first.`;
+  if (how === 'time') return by === me ? 'Yours was the highest score when time ran out.' : `${who} had the highest score when time ran out.`;
   if (how === 'wonder') return by === me ? 'Your Wonder has stood for 2000 years.' : `Player ${by}’s Wonder has stood for 2000 years.`;
   const set = how === 'artifacts' ? 'Artifacts' : 'Ruins';
   return by === me ? `You have held all the ${set} for 2000 years.` : `Player ${by} has held all the ${set} for 2000 years.`;

@@ -1,4 +1,4 @@
-import { BUILDINGS, TECHS, TECH_BY_ID, UNIT_BY_ID } from '../data/index.ts';
+import { BUILDINGS, TECHS, TECH_BY_ID, UNIT_BY_ID, civRules } from '../data/index.ts';
 import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES, buildingTypeIndex } from '../sim/rules/registry.ts';
@@ -35,6 +35,8 @@ export interface CommandButton {
   cost: [number, number, number, number] | null;
   disabled: string | null;
   action: Action;
+  /** What it does, in the tooltip (research: the tech's own line — nothing said what Alchemy does, M15.10 P45). */
+  desc?: string;
 }
 
 /** Villager build menu hotkeys (B then letter) — mil:5. */
@@ -157,10 +159,14 @@ export function computeCommands(w: World, player: number, selected: readonly num
     }
     // Research: what this building offers now, plus next-age items greyed out; finished techs disappear.
     const q = w.prod[b]?.items.length ?? 0;
+    // Never offered: what the civilization lacks, or what needs something it lacks (Babylonian Armored Elephant —
+    // no Iron Shield; Persian Irrigation — no Plow: greyed for good, M15.10 P47).
+    const off = civRules(p.civ, w.fullTechTree).disabled.techs;
+    const outOfReach = (id: string): boolean => off.includes(id) || (TECH_BY_ID.get(id)?.requires ?? []).some(outOfReach);
     for (const tech of TECHS) {
       if (tech.at !== def.id || p.techs.includes(tech.id) || tech.age > p.stats.age + 1) continue;
       const why = researchBlocker(w, player, b, tech.id);
-      if (why === 'not available to this civilization' || why === 'already researched') continue;
+      if (why === 'not available to this civilization' || why === 'already researched' || outOfReach(tech.id)) continue;
       const c = tech.cost as Partial<Record<string, number>>;
       const cost: [number, number, number, number] = [c.food ?? 0, c.wood ?? 0, c.gold ?? 0, c.stone ?? 0];
       out.push({
@@ -172,6 +178,7 @@ export function computeCommands(w: World, player: number, selected: readonly num
         cost,
         disabled: why ?? (q >= MAX_QUEUE ? 'queue is full' : shortfall(w, player, cost)),
         action: { kind: 'research', bld: e.handleOf(b), tech: tech.id },
+        desc: tech.desc,
       });
     }
   }
