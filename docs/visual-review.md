@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P28, P38 · no visual change (1 shot ≤ 0.3% px)
+
 ## 2026-10-01 · M15.10 P27/P31 (reverted), P26 · the P27/P31 run became the baseline; this run lists its reversal
   (victory 2.8%, victory-results 2.4%, victory-timeline 3.1%: the Hardest-vs-Easiest game plays as before). P26 draws
   nothing new.

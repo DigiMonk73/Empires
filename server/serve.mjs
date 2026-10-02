@@ -114,6 +114,7 @@ const server = createServer(async (req, res) => {
 // One file per save: "EMPS", version 1, u32 header length, header JSON, world bytes (src/game/saveCodec.ts).
 // Listing reads headers only. Ids are checked, sizes and counts capped, writes are atomic (temp + rename).
 const SAVE_ID = /^[a-z0-9_-]{1,64}$/i;
+let tmpSeq = 0;
 const MAX_SAVE_BYTES = 16 * 1024 * 1024;
 const MAX_SAVES = 100;
 const META_KEYS = ['id', 'name', 'savedAt', 'simVersion', 'tick', 'kind', 'age', 'localPlayer', 'speed', 'camera'];
@@ -207,7 +208,8 @@ async function savesApi(req, res, path) {
     if (!exists && (await readdir(savesDir)).filter((f) => f.endsWith('.save')).length >= MAX_SAVES) {
       return json(res, 507, { error: `the server keeps at most ${MAX_SAVES} saves — delete some first` });
     }
-    const tmp = `${file}.${process.pid}.tmp`;
+    // One temp file per write: two writes to the same save at once shared one and the second rename failed (a 500).
+    const tmp = `${file}.${process.pid}.${++tmpSeq}.tmp`;
     await writeFile(tmp, body);
     await rename(tmp, file);
     return json(res, exists ? 200 : 201, { ok: true, id });

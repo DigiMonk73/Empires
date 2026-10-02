@@ -182,7 +182,9 @@ async function boot(): Promise<void> {
     return saveSession(session, { id, name, kind, savedAt: Date.now(), camera: { x: at.x, y: at.y, zoom: camera.zoom }, timeline: timeline.finish() });
   };
   hudActions.saveGame = async (name, overwrite, where) => {
-    await (where === 'server' ? serverSaves : saves).put(snapshot(overwrite ?? `g${Date.now().toString(36)}`, name));
+    // (A random tail: two players saving to the same server in the same millisecond got the same id, M15.10.)
+    const id = `g${Date.now().toString(36)}${Math.floor(Math.random() * 1679616).toString(36).padStart(4, '0')}`;
+    await (where === 'server' ? serverSaves : saves).put(snapshot(overwrite ?? id, name));
   };
   // Autosave (M12.5): one rolling slot on this device, every 5 minutes of game time and on quitting — real games
   // only (skirmishes and loaded games), never after the game is decided.

@@ -74,6 +74,13 @@ describe('server saves API (M12.5)', () => {
     expect((await fetch(url('/alpha'))).status).toBe(404);
   });
 
+  it('two saves to the same id at once both succeed (M15.10: the temp file was named by process only — a 500)', async () => {
+    const a = encodeSave(save('same'));
+    const codes = await Promise.all(Array.from({ length: 6 }, () => fetch(url('/same'), { method: 'PUT', body: a as BodyInit }).then((r) => r.status)));
+    for (const c of codes) expect([200, 201]).toContain(c);
+    expect((await fetch(url('/same'))).status).toBe(200);
+  });
+
   it('refuses bad ids, mismatched ids, non-saves and oversized bodies', async () => {
     expect((await fetch(url('/..%2Fetc'), { method: 'PUT', body: encodeSave(save('x')) as BodyInit })).status).toBe(400);
     expect((await fetch(url('/one'), { method: 'PUT', body: encodeSave(save('two')) as BodyInit })).status).toBe(400);

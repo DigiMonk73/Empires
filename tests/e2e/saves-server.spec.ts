@@ -1,11 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type TestInfo } from '@playwright/test';
 import { openGame, pageErrors, snap } from './helpers.ts';
+
+/** The server keeps saves for the whole run: a repeat or a retry names its save apart, or it finds the first one too
+ *  (M15.10 lens G: both tests failed on --repeat-each). The first run keeps its plain name (and screenshot). */
+const again = (info: TestInfo): string => (info.repeatEachIndex || info.retry ? ` #${info.repeatEachIndex}.${info.retry}` : '');
 
 test('server saves: save to the server, load it back from there, tick for tick', async ({ page, browserName }, info) => {
   await openGame(page, 'scenario=skirmish&type=inland&size=tiny&seed=7&p=greek.1.human,persian.2.moderate&paused=1');
   await page.evaluate(() => window.__empires!.step(20 * 60));
   const saved = await page.evaluate(() => ({ tick: window.__empires!.query.tick(), hash: window.__empires!.query.hash() }));
-  const name = `On the box ${browserName}`;
+  const name = `On the box ${browserName}${again(info)}`;
   await page.getByTestId('menu-btn').click();
   await page.getByTestId('menu-save').click();
   await page.getByTestId('saves-server').click(); // offered because this server keeps saves (DATA_DIR)
@@ -48,7 +52,7 @@ test('autosave: a skirmish keeps one rolling save every 5 minutes of game time',
   expect(pageErrors(page)).toEqual([]);
 });
 
-test('load dialog: a slow device list never lands on the server tab (race seen on the StartOS VM)', async ({ page, browserName }) => {
+test('load dialog: a slow device list never lands on the server tab (race seen on the StartOS VM)', async ({ page, browserName }, info) => {
   // Make this browser's IndexedDB slow to answer, as on the VM, so the device list arrives after the server's.
   await page.addInitScript(() => {
     Object.defineProperty(IDBTransaction.prototype, 'oncomplete', {
@@ -58,7 +62,7 @@ test('load dialog: a slow device list never lands on the server tab (race seen o
     });
   });
   await openGame(page, 'scenario=skirmish&type=inland&size=tiny&seed=11&p=greek.1.human,persian.2.moderate&paused=1');
-  const name = `Race ${browserName}`;
+  const name = `Race ${browserName}${again(info)}`;
   await page.getByTestId('menu-btn').click();
   await page.getByTestId('menu-save').click();
   await page.getByTestId('saves-server').click(); // remembered: the next dialog opens on the server tab

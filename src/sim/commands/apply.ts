@@ -157,6 +157,15 @@ export function applyCommands(w: World, cmds: readonly PlayerCommand[]): void {
       case 'act': {
         const t = w.ents.slotOf(cmd.h);
         if (t < 0) break;
+        // Towers: shoot the chosen enemy unit while it stays in range (mil:1c "towers can be told to target a specific
+        // unit"; M15.10 P28) — the tower keeps it as its target, see `towerSystem`.
+        if (w.ents.kind[t] === EKind.unit) {
+          for (const h of cmd.ids) {
+            const b = w.ents.slotOf(h);
+            if (b < 0 || w.ents.owner[b] !== player || w.ents.kind[b] !== EKind.building || w.ents.build[b]! < 1) continue;
+            if (w.stats(player, w.ents.type[b]!).range > 0) w.ents.target[b] = cmd.h;
+          }
+        }
         for (const slot of ownedUnitSlots(w, player, cmd.ids)) {
           if (isPriest(w, slot)) {
             // Priests: right-click converts an enemy, heals a friend.

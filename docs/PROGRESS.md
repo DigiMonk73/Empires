@@ -1024,7 +1024,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       (`.app` path, StartOS link); fold in their feedback.
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
-      during the 20:25 verify:full), H, C, F. _Next lens:_ E, then G's 3× e2e flake run.
+      during the 20:25 verify:full), H, C, F, E, G (3× e2e). _Next:_ a second round from A.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1094,8 +1094,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             attack gives up after 4 s without getting closer, and nothing auto-targets across it out of reach —
             both tests pass, held out unchanged (wars 24/24, water 46/48), but GATE FAIL: Hard-vs-Hard median
             64:46 (Done 25–60; it sits at ~51 since P3). Reverted; 1 of 3 cycles.
-      - [ ] P28 · should · towers · no command makes a tower shoot a chosen unit (`ownedUnitSlots` drops buildings
-            from `act`, `src/sim/commands/apply.ts:18`); mil:1c l.113: right-click targets
+      - [x] P28 · should · towers · no command makes a tower shoot a chosen unit (`ownedUnitSlots` drops buildings
+            from `act`, `src/sim/commands/apply.ts:18`); mil:1c l.113: right-click targets — _fixed:_ `act` with own
+            finished towers sets their target (kept while fair and in range); right-click an enemy unit with only
+            towers selected sends it (else the rally point as before). Test: `combat` "tower targets".
       - [ ] P29 · nice · priests · a priest never told to heal still heals wounded allies in sight; mil:3 l.269:
             auto-healing starts once ordered to heal · `lens-f/s4-priests.ts` §2
       - [ ] P30 · nice · pathing · units squeezing a 1-tile forest gap cut the corner 0.18 tile into a tree tile for
@@ -1105,6 +1107,22 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [ ] P32 · nice · hunting · a hunter goes idle when its carcass runs out with a live gazelle 5 tiles off
             (unconfirmed vs research) · `lens-f/s8-settle.ts` §3
       - _Not a bug (D27):_ units never attack buildings on their own — a documented choice.
+      - _Lens G (e2e 3×, `--repeat-each=3`): 424/432 — the two server-save tests failed every repeat. Found:_
+      - [x] P38 · should · server saves · two saves to one id at once → the second got a 500 (both wrote
+            `<id>.save.<pid>.tmp`; the first rename took it); save ids were `Date.now()` alone, so two players saving
+            to one StartOS box in the same millisecond collided — _fixed:_ a temp file per write, a random tail on
+            new ids; the server-save e2e names repeats apart. Tests: `server-saves` "two saves to the same id at
+            once", e2e saves 3× (24/24).
+      - _Lens E (5 long games, ~450 game minutes, Chromium + WebKit; `artifacts/polish/lens-e/`): heap flat 16–23 MB,
+        textures level off and fall as art is released, frame max ≤ 7.7 ms, no frozen tick, music to 90 min, no
+        page or console errors, WebKit hash = Node._
+      - [ ] P39 · should · game over · the Defeat banner shows twice: the local seat falls (49:47), Keep watching,
+            and the same banner returns when its team loses (60:14) · g3 Mediterranean 3v3 seed 33 · `src/main.ts`
+            ~95 (the `victory` event sets `hud.outcome` again)
+      - [ ] P40 · should · spectating · after defeat Keep watching shows the dead seat's fog — black but for stale
+            ground (g1, g3 minutes 40–90). Unconfirmed whether the original reveals the map on defeat.
+      - [ ] P41 · nice · HUD · a Standard countdown clock keeps counting after a conquest victory ends the game
+            (g2 75:36 → "Player 2 · All Ruins" still 101 at 80:40) · `lens-e/crops/m90-battle_92_112-tr.png`
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI

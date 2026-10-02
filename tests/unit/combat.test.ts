@@ -266,6 +266,31 @@ describe('auto-acquire and retaliation (mil:2)', () => {
   });
 });
 
+describe('tower targets (M15.10 P28)', () => {
+  it('a tower told to shoot a chosen enemy unit shoots it rather than the nearest (mil:1c)', () => {
+    const { sim, of, step, e } = setup(
+      [
+        { type: 'clubman', owner: 2, x: 14.5, y: 10.5 },
+        { type: 'axeman', owner: 2, x: 17.5, y: 10.5 },
+      ],
+      [{ type: 'sentryTower', owner: 1, tx: 10, ty: 10 }],
+    );
+    const [near] = of('clubman', 2);
+    const [far] = of('axeman', 2);
+    const [tower] = of('sentryTower', 1);
+    for (const h of [near!, far!]) e.hp[e.slotOf(h)] = 1000; // they outlast the test
+    step(1, [
+      { player: 2, cmd: { t: 'stance', ids: [near!, far!], stand: true } },
+      { player: 1, cmd: { t: 'diplomacy', to: 2, stance: 2 } },
+      { player: 1, cmd: { t: 'act', ids: [tower!], h: far! } },
+    ]);
+    step(20 * 10);
+    expect(e.hp[e.slotOf(far!)], 'the chosen one is shot').toBeLessThan(1000);
+    expect(e.hp[e.slotOf(near!)], 'the nearer one is left').toBe(1000);
+    void sim;
+  });
+});
+
 describe('Stand Ground catapults (M15.10 P25)', () => {
   it('a catapult on Stand Ground holds its fire until ordered (patch 1.0a, mil:2)', () => {
     const { of, step, e } = setup([

@@ -206,6 +206,15 @@ export class InputController {
     const res = this.wr.pickResource(p.x, p.y);
     if (!ids.length) {
       const blds = this.ownBuildings();
+      // Towers: right-click an enemy unit to shoot it first (mil:1c, M15.10 P28).
+      const tgt = this.wr.pick(p.x, p.y);
+      const tslot = this.world.ents.slotOf(tgt);
+      const towers = blds.filter((h) => this.world.stats(me, this.world.ents.type[this.world.ents.slotOf(h)]!).range > 0);
+      if (towers.length && tslot >= 0 && this.world.ents.kind[tslot] === EKind.unit && this.world.ents.owner[tslot] !== me && this.world.ents.owner[tslot] !== 0 && !allied(this.world, me, this.world.ents.owner[tslot]!)) {
+        this.session.router.submit(me, { t: 'act', ids: towers, h: tgt });
+        this.wr.addMarker(this.world.ents.x[tslot]!, this.world.ents.y[tslot]!, 0xff5a4a);
+        return;
+      }
       if (!blds.length || !gameSettings.value.qol.rally || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
       this.session.router.submit(me, { t: 'rally', blds, x: quantize(w.x), y: quantize(w.y), ...(res >= 0 ? { res } : {}) });
       this.wr.addMarker(w.x, w.y, 0xffd84a);
