@@ -344,7 +344,10 @@ export class AiPlayer {
     // A later starting age: at most 60% of the population limit in villagers — an Iron start filled 50 with 36–44
     // villagers by 20 min and had no room left for an army (M14.6). Any other start: 70% (D69) — at the default 50,
     // Hard's 38–44 left an army of 6–12, and two such economies stalled each other for the hour (M15.10 P69).
-    const lateCap = Math.floor(s.v.popLimit() * (lateStart(s.v.startingAge()) ? 0.6 : 0.7));
+    // (Idle fishing boats — no fish left — take villagers' places: a winner at 50 kept 35 villagers + 8 idle boats + 5
+    // soldiers and couldn't finish, M15.10 P71. Working boats feed the town and keep theirs.)
+    const boats = s.units.filter((u) => u.cls === 'fishingShip' && u.idle).length;
+    const lateCap = Math.floor(s.v.popLimit() * (lateStart(s.v.startingAge()) ? 0.6 : 0.7)) - boats;
     const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.villagerCap(), lateCap);
     if (s.villagers.length + tc.queue >= target) return;
     if (s.me.pop + tc.queue + this.naval.popReserve(s) >= s.me.popCap) return; // (room for missing transports)

@@ -217,7 +217,8 @@ describe('AI villager share (M15.10 P69, D69)', () => {
     const r = runMatch({ seed: 101, type: 'inland', size: 'tiny', levels: ['hard', 'hard'], minutes: 35, peaceful: true, popCap: 50 });
     for (const p of [0, 1]) {
       expect(Math.max(...r.samples.map((x) => x.players[p]!.villagers)), `P${p + 1}`).toBeLessThanOrEqual(35);
-      expect(Math.max(...r.samples.map((x) => x.players[p]!.pop)), `P${p + 1} fills the rest`).toBeGreaterThan(40);
+      // (In peace nothing makes it fill the rest with soldiers; the town still grows.)
+      expect(Math.max(...r.samples.map((x) => x.players[p]!.pop)), `P${p + 1} grows`).toBeGreaterThan(30);
     }
   }, 60_000);
 });
@@ -276,4 +277,39 @@ describe('AI Docks (M15.10 P59)', () => {
     expect(b, 'a Dock placed').toBeDefined();
     expect(b!.tx + 1, 'on the mainland shore').toBeLessThan(14);
   });
+});
+
+describe('AI workers at the limit (M15.10 P71)', () => {
+  it('idle fishing boats count with the villagers in the 70% (D69)', () => {
+    // A winner at 50 kept 35 villagers + 8 idle fishing boats (no fish left) + 5 soldiers and couldn't finish the war.
+    // (No fish here: the boats stand idle.)
+    const W = 40;
+    const ascii = Array.from({ length: W }, () => Array.from({ length: W }, (_, x) => (x < 26 ? '.' : 'w')).join(''));
+    const sim = Sim.create({
+      seed: 3,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      popCap: 50,
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }, ...Array.from({ length: 12 }, (_, i) => ({ type: 'house', owner: 1, tx: 2 + (i % 6) * 3, ty: 30 + Math.floor(i / 6) * 3 }))],
+        units: [
+          ...Array.from({ length: 24 }, (_, i) => ({ type: 'villager', owner: 1, x: 10.5 + (i % 6), y: 10.5 + Math.floor(i / 6) })),
+          ...Array.from({ length: 8 }, (_, i) => ({ type: 'fishingBoat', owner: 1, x: 30.5 + (i % 4) * 2, y: 10.5 + Math.floor(i / 4) * 2 })),
+        ],
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([5000, 5000, 5000, 5000]);
+    for (const t of ['toolAge', 'bronzeAge', 'ironAge']) completeResearch(w, 1, t); // Hard wants 44 villagers here
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    for (let t = 0; t < 20 * 240; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    const vils = view.ownUnits().filter((u) => u.cls === 'villager').length;
+    const boats = view.ownUnits().filter((u) => u.cls === 'fishingShip').length;
+    expect(vils + boats).toBeLessThanOrEqual(35);
+  }, 60_000);
 });

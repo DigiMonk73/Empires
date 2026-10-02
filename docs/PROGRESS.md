@@ -1243,10 +1243,13 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             _Tried (it. 46, `docs/patches/m15.10-p70-forget-dead-prey.patch`): the AI forgets a remembered animal when
             hunters sent at it a think ago aren't on it (the order refused) — 202 orders in 30 s → ≤ 8; but held-out
             wars 24 → 23/24, water 48 → 46/48. Reverted; 1 of 3 cycles.
-      - [ ] P71 · should · AI pop 50 · the winner can't finish: 35 villagers + 8 idle fishing boats (no fish left;
+      - [x] P71 · should · AI pop 50 · the winner can't finish: 35 villagers + 8 idle fishing boats (no fish left;
             boats don't count in D69's 70%) + 5–7 soldiers, 2–6k banked · `hh-continental-small-102` (ahead from
-            34 min, conquest 55.5); Mediterranean Hard–Hard 49/50 both, undecided · `lens-a3/probe.ts`
-      - [ ] P72 · should · map · checkerboard coasts at the map edge join only at corners: 95 land regions of ≤ 3
+            34 min, conquest 55.5); Mediterranean Hard–Hard 49/50 both, undecided · `lens-a3/probe.ts` — _fixed
+            (D69 amended):_ idle fishing boats take villagers' places in the 70%. Held out unchanged; Hard duels 15 →
+            16/16. Test: `ai-tactics` "AI workers at the limit". (Counting every boat kept peaceful test games short
+            of the limit M13.4's test needs.)
+      - [ ] P72 · should · map · **[AI-gate class: the fix changes every Continental map]** · checkerboard coasts at the map edge join only at corners: 95 land regions of ≤ 3
             tiles on continental small 101; 17 units stranded at (40,7) · `lens-a3/pockets.ts` (before tonight too)
       - [ ] P73 · should · AI Docks · a Dock foundation goes back down on the same contested tile under the enemy
             army (18× in 7 min, ~1,800 wood); worse since P59 (24/71 Dock foundations lost vs 11/43) ·

@@ -470,4 +470,6 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   of 6–12, and two even Hard economies stalled each other at the limit (Hard-vs-Hard 14/16 decided in 90 min,
   median 51:05). The cap — 60% after a later start (M14.6), 70% otherwise — only binds below a limit of ~63. Full
   suite: held out unchanged (1v1 wars 24/24, water 46/48, Hard > Moderate 51/64, Hardest > Hard 63/64); Hard duels
-  16/16, median 45:18; Hard idle 1.4 → 0.6%.
+  16/16, median 45:18; Hard idle 1.4 → 0.6%. Idle fishing boats (no fish left) count with the villagers (P71: a
+  winner at 50 kept 35 villagers + 8 idle boats + 5 soldiers): held out unchanged again, Hard duels 15 → 16/16.
+  (Counting every boat ended peaceful test games short of the limit their tests need.)
