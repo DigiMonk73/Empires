@@ -198,3 +198,11 @@ test('Keys and Options keep their Close / Back on screen in a small window (P68)
   const box = await back.boundingBox();
   expect(box!.y + box!.height, 'Options Back at 1280×400').toBeLessThanOrEqual(400);
 });
+
+test('the Keys list says Esc closes the window on top (lens D3)', async ({ page }) => {
+  await openGame(page, GAME);
+  await page.keyboard.press('F1');
+  await expect(page.getByTestId('keys')).toBeVisible();
+  const esc = page.getByTestId('keys').locator('tr', { hasText: /^\s*Esc/ });
+  await expect(esc).toContainText('Close the window on top');
+});

@@ -15,7 +15,7 @@ const GENERAL: [string, string][] = [
   ['Home', 'Where the last message happened (again: the one before)'],
   ['Tab', 'Next unit in the status box (selection grid off)'],
   ['Delete', 'Delete the selection'],
-  ['Esc', 'Cancel · back · deselect'],
+  ['Esc', 'Close the window on top · cancel · back · deselect'],
   ['Arrows · edge', 'Scroll'],
   ['+ / −', 'Game speed'],
   ['F3 · Pause', 'Pause / resume'],
