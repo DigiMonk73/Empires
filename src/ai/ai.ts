@@ -2,7 +2,7 @@ import type { AiLevel } from '../data/setup.ts';
 import type { Command } from '../sim/commands/types.ts';
 import { Rng, STREAM, type RngState } from '../sim/math/rng.ts';
 import type { KnownResource, OwnBuilding, OwnUnit, PlayerView } from '../sim/view/playerView.ts';
-import { MilitaryBrain, type MilitaryState } from './military.ts';
+import { MilitaryBrain, landAt, type MilitaryState } from './military.ts';
 import { NavalBrain, type NavalState } from './naval.ts';
 import { RelicBrain, type RelicState } from './relics.ts';
 import { upgrades } from './upgrades.ts';
@@ -703,6 +703,9 @@ export class AiPlayer {
     const cx = Math.floor(x);
     const cy = Math.floor(y);
     const offset = this.rng.int(8);
+    // Only on the land (x, y) stands on: on a crowded island the search reached across the water and put houses on a
+    // neighbour's island, never built and in its way (M15.10 P21). (A Dock stands half in the water.)
+    const home = type === 'dock' ? 0 : landAt(s, x, y);
     for (let r = Math.floor(minD); r <= Math.ceil(maxD); r++) {
       const ring: [number, number][] = [];
       for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r) ring.push([dx, dy]);
@@ -713,6 +716,7 @@ export class AiPlayer {
         const d = dist(tx + size / 2, ty + size / 2, x, y);
         if (d < minD || d > maxD) continue;
         if (!s.v.canPlace(type, tx, ty) || !this.margin(s, tx, ty, size, type === 'farm' || type === 'dock')) continue;
+        if (home && s.v.region(1, tx, ty) !== home) continue;
         return [tx, ty];
       }
     }

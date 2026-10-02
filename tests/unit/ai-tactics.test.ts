@@ -173,3 +173,33 @@ describe('AI villagers under attack (M15.10 P3)', () => {
     expect(sentHome).toBeLessThanOrEqual(2);
   });
 });
+
+describe('AI building sites (M15.10 P21)', () => {
+  it('a computer never puts a building on land its villagers cannot walk to', () => {
+    // A 7×7 island: the Town Center and its margin leave no room for a house. Open land lies 5 tiles across the
+    // water: the search (to 16, then 18 tiles of the Town Center) placed houses there, never built and in a
+    // neighbour's way (crowded island maps).
+    const W = 40;
+    const ascii = Array.from({ length: W }, (_, y) => Array.from({ length: W }, (_, x) => ((x >= 2 && x <= 8 && y >= 2 && y <= 8) || (x >= 14 && x <= 34 && y >= 2 && y <= 30) ? '.' : 'w')).join(''));
+    const sim = Sim.create({
+      seed: 4,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }],
+        units: [{ type: 'villager', owner: 1, x: 3.5, y: 3.5 }, { type: 'villager', owner: 1, x: 7.5, y: 3.5 }, { type: 'villager', owner: 1, x: 3.5, y: 7.5 }, { type: 'villager', owner: 1, x: 7.5, y: 7.5 }],
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([1000, 1000, 500, 200]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    for (let t = 0; t < 20 * 60; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    const away = view.ownBuildings().filter((b) => b.x > 10);
+    expect(away.map((b) => `${b.type}@${b.x},${b.y}`)).toEqual([]);
+  });
+});

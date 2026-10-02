@@ -544,7 +544,7 @@ export class MilitaryBrain {
 }
 
 /** The land region at or next to (x, y) (a building's own tiles are impassable); 0 if none within 3 tiles. */
-function landAt(s: Snapshot, x: number, y: number): number {
+export function landAt(s: Snapshot, x: number, y: number): number {
   for (let r = 0; r <= 3; r++) {
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {

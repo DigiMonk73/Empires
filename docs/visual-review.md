@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P21 · AI only, no visual change (5 shots: menu backdrop, save timestamps)
+
 ## 2026-10-01 · M15.10 P10 · victory, victory-results, victory-timeline 3.0–3.7% px: the Hardest-vs-Easiest game
   plays out differently (the AI no longer freezes without a site); Results reads right (23:00, P1 378 vs −62). 4/5.
 
