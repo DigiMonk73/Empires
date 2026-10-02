@@ -53,6 +53,12 @@ const SHARES: Record<number, [number, number, number, number]> = {
 /** The age advance researched from each age (index = current age). */
 const NEXT_AGE_TECH: (string | null)[] = [null, 'toolAge', 'bronzeAge', 'ironAge', null];
 
+/** A start past the Stone Age (Tool … Post-Iron). Nomad is a Stone Age start too: its town grows as a default one
+ *  does, so no villager cap of 60% (it held Hard to 30 of 50, M15.10 P19). */
+export function lateStart(age: string): boolean {
+  return age !== 'default' && age !== 'nomad';
+}
+
 const FOOD_JOBS = new Set(['forage', 'farm', 'hunt', 'fish']);
 const RES_OF_JOB: Record<string, number> = { forage: 0, farm: 0, hunt: 0, fish: 0, wood: 1, gold: 2, stone: 3 };
 
@@ -336,7 +342,7 @@ export class AiPlayer {
     // guard of 4 + a fleet of 8 fits the 50), 22 while an invasion needs the room for its army.
     // A later starting age: at most 60% of the population limit in villagers — an Iron start filled 50 with 36–44
     // villagers by 20 min and had no room left for an army (M14.6).
-    const lateCap = s.v.startingAge() !== 'default' ? Math.floor(s.v.popLimit() * 0.6) : Infinity;
+    const lateCap = lateStart(s.v.startingAge()) ? Math.floor(s.v.popLimit() * 0.6) : Infinity;
     const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.villagerCap(), lateCap);
     if (s.villagers.length + tc.queue >= target) return;
     if (s.me.pop + tc.queue + this.naval.popReserve(s) >= s.me.popCap) return; // (room for missing transports)
@@ -506,7 +512,7 @@ export class AiPlayer {
     if (s.me.age === 1 && s.v.researching('toolAge')) return [0.3, 0.7, 0, 0];
     // A later starting age (M14.3): three villagers in the Iron Age gather as a young town does — by how far the
     // town has grown, not the age it was handed (an Iron start floated 2,000 gold by 19 min, food and wood dry).
-    const late = s.v.startingAge() !== 'default';
+    const late = lateStart(s.v.startingAge());
     const n = s.villagers.length;
     const stage = late ? Math.min(s.me.age, n < 12 ? 1 : n < 18 ? 2 : n < 22 ? 3 : 4) : s.me.age;
     const sh = [...SHARES[Math.min(4, stage)]!];

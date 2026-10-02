@@ -5,11 +5,15 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 
 - **Milestone:** **M15 Hardening & release** — M15.1–M15.8 done: **Empires 1.0.0** built and on the StartOS VM.
   Waiting on **M15.9, the user's playtest** (a full skirmish vs Hard) — the M15 exit; then tag `m15`, M16 multiplayer.
+  **M15.10 polish run** in progress (`docs/POLISH_LOOP.md`, to 03:45 CDT): lenses A, B, G(grep) run; 16 of 22
+  findings fixed (Narrows starts and teams, crowded island and land starts, AI villager jitter, Nomad freeze, AI
+  houses across water, Post-Iron Score, one-team Start, Tech Tree reach, URL checks, notifications); P2 (a Hard
+  economy) and P20 (2p island starts) wait on AI work — the water/war gates fell when tried.
 - **Last green:** verify:full at M15.8 (1.0.0), 1120 s — 606 unit + 132 e2e, 136 screenshots, full-pop sim step. verify:full
   last at the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
   the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
-- **AI gates (all pass, full suite; re-run at M15.3, unchanged):** ladder — every level beats the one below
-  (Hard > Moderate 49/64, bar 48; Hardest > Hard 62/64); Moderate 1v1s decided within 60 min 24/24 on held-out
+- **AI gates (all pass, full suite, M15.10 P15):** ladder — every level beats the one below
+  (Hard > Moderate 51/64, bar 48; Hardest > Hard 63/64); Moderate 1v1s decided within 60 min 24/24 on held-out
   seeds 1001–1024 (D58); water 46/48 held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.07%, 0 crashes.
   Margins are thin — see LOOP.md "AI work" before touching the AI or map generation; `tools/sim/diagnose.ts`.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
@@ -1113,8 +1117,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [x] P18 · nice · URL · `setupFromQuery` doesn't validate `size`/`res` (`size=foo` → "Invalid array length")
             or civ ids — _fixed:_ unknown size, resources and civ fall back like everything else (`Object.hasOwn`, so
             `size=toString` too). Test: `setup-options` "carries victory…".
-      - [ ] P19 · nice · AI · `src/ai/ai.ts:337` treats Nomad as a late start (villagers capped at 60% of pop) —
-            unconfirmed, code reading
+      - [x] P19 · nice · AI · `src/ai/ai.ts:337` treats Nomad as a late start (villagers capped at 60% of pop) —
+            unconfirmed, code reading — _confirmed and fixed:_ with 50 pop it held Hard to 30 villagers (38–44 in a
+            default game); `lateStart()` leaves Nomad out of both late-start rules. Suite unchanged.
       - [x] P1 · nice · code health · 19 unused locals/imports (`tsc --noUnusedLocals --noUnusedParameters`: sim 3,
             app 7, tools 9 — e.g. dead `ALCHEMY` selector in `src/data/techs.ts`) · lens G grep pass; no TODO/FIXME,
             `console.log` or `any` casts in `src/` — _fixed:_ removed; `noUnusedLocals` + `noUnusedParameters` on in

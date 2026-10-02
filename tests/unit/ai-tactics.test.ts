@@ -4,7 +4,7 @@ import { UPGRADE_TIER } from '../../src/ai/upgrades.ts';
 import { runMatch } from '../../src/game/aiMatch.ts';
 import { Sim } from '../../src/sim/index.ts';
 import { HARDEST_BONUS } from '../../src/data/setup.ts';
-import { AiPlayer } from '../../src/ai/ai.ts';
+import { AiPlayer, lateStart } from '../../src/ai/ai.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
 import { completeResearch } from '../../src/sim/systems/production.ts';
 import { EKind } from '../../src/sim/core/entities.ts';
@@ -201,5 +201,11 @@ describe('AI building sites (M15.10 P21)', () => {
     }
     const away = view.ownBuildings().filter((b) => b.x > 10);
     expect(away.map((b) => `${b.type}@${b.x},${b.y}`)).toEqual([]);
+  });
+});
+
+describe('AI starting ages (M15.10 P19)', () => {
+  it('a Nomad start is a Stone Age start: no late-start villager cap', () => {
+    expect(['default', 'nomad', 'tool', 'bronze', 'iron', 'postIron'].map(lateStart)).toEqual([false, false, true, true, true, true]);
   });
 });
