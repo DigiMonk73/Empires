@@ -72,12 +72,24 @@
   min-width: 720px;
 }
 
-/* Keys (F1). */
-.keys-panel {
+/* Keys (F1) and Options: the list scrolls inside, the Close / Back button stays on screen — at 800×600, 1024×640
+   and 600×900 Keys' Close was below the fold, at 1280×400 Options' Back off-screen (M15.10 P68). */
+.keys-panel,
+.options-panel {
   max-width: 94vw;
   max-height: 86vh;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.keys-panel {
   text-align: left;
+}
+.keys-panel > .keys-cols,
+.options-panel > .options-cols {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 .keys-cols {
   display: flex;

@@ -1225,8 +1225,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         buttons don't act behind a dialog and a focused HUD button loses the focus when one opens; no browser menu
         except in text fields; Escape works from a field (the save list's own Escape stops there); towers take no
         rally point. e2e `dialogs.spec.ts` (+6 tests × 2 engines).
-      - [ ] P68 · nice · layout · Keys' Close below the fold at 800×600, 1024×640, 600×900 (the panel scrolls;
-            Escape and the backdrop close it); Options' Back off-screen at 1280×400 · `lens-c2/resize.ts`
+      - [x] P68 · nice · layout · Keys' Close below the fold at 800×600, 1024×640, 600×900 (the panel scrolls;
+            Escape and the backdrop close it); Options' Back off-screen at 1280×400 · `lens-c2/resize.ts` — _fixed:_
+            both panels are columns whose list scrolls inside, the button stays. e2e `dialogs` "Keys and Options keep
+            their Close / Back on screen". No change at 1280×800.
       - [x] P69 · should · AI · Hard-vs-Hard games stalemate at the default 50 limit: Hard's villager targets (38
             Bronze, 44 Iron) leave 6–12 soldiers a side (found tracing P17's duels) — _fixed (D69):_ computers keep
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard

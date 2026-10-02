@@ -175,3 +175,26 @@ test('a tower takes no rally point (P67)', async ({ page }) => {
   await frames(page);
   expect(await page.evaluate((h) => window.__empires!.query.rally(h!), tower)).toBeNull();
 });
+
+test('Keys and Options keep their Close / Back on screen in a small window (P68)', async ({ page }) => {
+  await openGame(page, GAME);
+  const onScreen = (id: string) =>
+    page.evaluate((x) => {
+      const r = document.querySelector(`[data-testid="${x}"]`)!.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth;
+    }, id);
+  for (const [w, h] of [[800, 600], [1024, 640], [600, 900]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.keyboard.press('F1');
+    await expect(page.getByTestId('keys-close')).toBeVisible();
+    expect(await onScreen('keys-close'), `Keys at ${w}×${h}`).toBe(true);
+    await page.keyboard.press('Escape');
+  }
+  await page.setViewportSize({ width: 1280, height: 400 });
+  await page.keyboard.press('F10');
+  await page.getByTestId('menu-game-options').click();
+  const back = page.getByTestId('game-options').getByRole('button').last();
+  await expect(back).toBeVisible();
+  const box = await back.boundingBox();
+  expect(box!.y + box!.height, 'Options Back at 1280×400').toBeLessThanOrEqual(400);
+});

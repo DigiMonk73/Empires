@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P68 · keys-grid and options shots unchanged at 1280×800 (4 shots ≤ 0.3% px elsewhere)
+
 ## 2026-10-01 · M15.10 P17 · `map-continental` 1.4% px: the start's stone moved to the shore (it had been dropped); the scene reads well — TC, berries, gold, two woodlines. 4/5.
 
 ## 2026-10-01 · M15.10 P59 · AI only; 6 shots ≤ 0.3% px
