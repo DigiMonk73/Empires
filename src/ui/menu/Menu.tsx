@@ -2,8 +2,8 @@ import { render } from 'preact';
 import { GEN_MAP_TYPES } from '../../sim/mapgen/generate.ts';
 import { useState } from 'preact/hooks';
 import { CIVS } from '../../data/civs.ts';
-import { MAP_SIZES, MAP_TYPES, POP_LIMITS, SCORE_TARGETS, STARTING_AGES, TIME_LIMITS, type MapSizeId, type StartingAge, type StartingResources } from '../../data/setup.ts';
-import { AI_LEVELS, DEFAULT_SETUP, SKIRMISH_VICTORIES, setupToQuery, type SkirmishPlayer, type SkirmishSetup, type SkirmishVictory } from '../../game/skirmish.ts';
+import { MAP_SIZES, MAP_TYPES, POP_LIMITS, STARTING_AGES, TIME_LIMITS, scoreTargetsFor, type MapSizeId, type StartingAge, type StartingResources } from '../../data/setup.ts';
+import { AI_LEVELS, DEFAULT_SETUP, SKIRMISH_VICTORIES, setupToQuery, validTarget, type SkirmishPlayer, type SkirmishSetup, type SkirmishVictory } from '../../game/skirmish.ts';
 import { playerColor } from '../../render/worldRenderer.ts';
 import { SaveList } from '../saves/SaveList.tsx';
 import { TechTree } from '../techtree/TechTree.tsx';
@@ -131,7 +131,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
           <label>
             Target
             <select data-testid="setup-target" value={String(s.scoreTarget)} onChange={(e) => upd({ scoreTarget: Number((e.target as HTMLSelectElement).value) })}>
-              {SCORE_TARGETS.map((n) => (
+              {scoreTargetsFor(s.startingAge).map((n) => (
                 <option value={String(n)}>{n}</option>
               ))}
             </select>
@@ -149,7 +149,7 @@ function Skirmish({ onBack }: { onBack: () => void }) {
         )}
         <label>
           Starting age
-          <select data-testid="setup-age" value={s.startingAge} onChange={(e) => upd({ startingAge: (e.target as HTMLSelectElement).value as StartingAge })}>
+          <select data-testid="setup-age" value={s.startingAge} onChange={(e) => { const startingAge = (e.target as HTMLSelectElement).value as StartingAge; upd({ startingAge, scoreTarget: validTarget({ ...s, startingAge }) }); }}>
             {STARTING_AGES.map((a) => (
               <option value={a.id}>{a.name}</option>
             ))}

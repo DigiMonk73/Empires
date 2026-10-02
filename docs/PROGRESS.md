@@ -1053,8 +1053,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [x] P8 · should · mapgen Narrows · team games: the strait doesn't separate the teams (1122, 1212, 111222,
             121212, 11112222 — 36/36 maps put an ally and an enemy on each side) · `lens-b/narrowsTeams.ts` — _fixed with P6:_
             whole teams take a side while the sides stay within one player (same test; probe: all layouts split).
-      - [ ] P9 · should · victory · Score 250 + Post-Iron start is won at tick 0 when Full Tech Tree or Reveal Map is
-            on (starting techs score + the most-techs bonus) · 2p continental seed 1 · `lens-b/probes.ts`
+      - [x] P9 · should · victory · Score 250 + Post-Iron start is won at tick 0 when Full Tech Tree or Reveal Map is
+            on (starting techs score + the most-techs bonus) · 2p continental seed 1 · `lens-b/probes.ts` — _fixed:_ a
+            Post-Iron start scores 231–290 at tick 0 (others ≤ 142), so it offers targets from 500 (`scoreTargetsFor`);
+            the menu moves a 250 up when the age changes, `skirmishConfig` clamps a URL's. Test: `setup-options`.
       - [ ] P10 · should · AI Nomad · no Town Center site within 8 tiles of the villagers → `found()`
             (`src/ai/ai.ts:303`) returns true though `build()` failed, the AI issues nothing all game ·
             largeIslands tiny 7p nomad seed 81599; smallIslands tiny 8p nomad seed 60503

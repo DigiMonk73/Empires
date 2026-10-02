@@ -4,6 +4,7 @@ import type { SimConfig } from '../../src/sim/world.ts';
 import { CIV_BY_ID, TECHS } from '../../src/data/index.ts';
 import { TYPES } from '../../src/sim/rules/registry.ts';
 import { DEFAULT_SETUP, setupFromQuery, setupToQuery, skirmishConfig } from '../../src/game/skirmish.ts';
+import { SCORE_TARGETS, scoreTargetsFor } from '../../src/data/setup.ts';
 import { clockRows, winLine } from '../../src/ui/clocks.ts';
 import { AiPlayer } from '../../src/ai/ai.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
@@ -88,6 +89,19 @@ describe('setup options (M14.3, econ:7)', () => {
     // Unknown values fall back to the defaults.
     const bad = setupFromQuery(new URLSearchParams('scenario=skirmish&win=bogus&age=stone&pop=33&target=7'));
     expect([bad.victory, bad.startingAge, bad.popCap, bad.scoreTarget]).toEqual(['standard', 'default', 50, 1000]);
+  });
+
+  it('a Post-Iron start offers no Score target its starting techs already reach (M15.10 P9)', () => {
+    // Every tech researched scores 231–290 at the first tick: Score 250 was won before anyone moved.
+    expect(scoreTargetsFor('postIron')[0]).toBeGreaterThan(290);
+    expect(scoreTargetsFor('default')).toEqual(SCORE_TARGETS);
+    for (const [fullTech, reveal] of [[false, false], [true, true]] as const) {
+      const setup = { ...DEFAULT_SETUP, victory: 'score' as const, scoreTarget: 250, startingAge: 'postIron' as const, fullTech, reveal };
+      const sim = Sim.create(skirmishConfig(setup));
+      for (let t = 0; t < 20 * 60; t++) sim.step([]);
+      expect(sim.world.gameOver, `FTT ${fullTech}, reveal ${reveal}`).toBeNull();
+      expect(sim.world.scoreTarget).toBe(scoreTargetsFor('postIron')[0]);
+    }
   });
 
   it('Nomad (D60): no Town Centers, three villagers each; a computer founds one within two minutes', () => {

@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P9 · no visual change (2 shots: save timestamps)
+
 ## 2026-10-01 · M15.10 P3 · AI only, no visual change (6 shots: menu backdrop, save timestamps)
 
 ## 2026-10-01 · M15.10 P7 · no e2e scene changed (4 shots: menu backdrop, save timestamps)

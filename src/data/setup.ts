@@ -65,6 +65,11 @@ export const STARTING_AGES_SRC = { src: 'econ:7', note: 'Post-Iron = Iron Age wi
 
 /** Score and Time Limit victories (econ:7): the lobby's choices are ours (D53) — the research gives none. */
 export const SCORE_TARGETS: readonly number[] = [250, 500, 750, 1000, 1500];
+/** The targets offered for a starting age: a Post-Iron start (every tech researched) already scores 231–290, so
+ *  Score 250 was won at the first tick (M15.10 P9). */
+export function scoreTargetsFor(age: StartingAge): readonly number[] {
+  return age === 'postIron' ? SCORE_TARGETS.filter((n) => n > 300) : SCORE_TARGETS;
+}
 export const TIME_LIMITS: readonly number[] = [15, 30, 45, 60, 90, 120]; // minutes of game time
 export const POP_LIMITS: readonly number[] = [25, 50, 75, 100, 125, 150, 175, 200];
 

@@ -1,4 +1,4 @@
-import { POP_LIMITS, SCORE_TARGETS, STARTING_AGES, TIME_LIMITS, type MapSizeId, type StartingAge, type StartingResources } from '../data/setup.ts';
+import { POP_LIMITS, SCORE_TARGETS, STARTING_AGES, TIME_LIMITS, scoreTargetsFor, type MapSizeId, type StartingAge, type StartingResources } from '../data/setup.ts';
 import { GEN_MAP_TYPES, generateMap, type GenMapType } from '../sim/mapgen/generate.ts';
 import type { AiLevel, SimConfig } from '../sim/world.ts';
 
@@ -103,6 +103,12 @@ export function setupFromQuery(q: URLSearchParams): SkirmishSetup {
   };
 }
 
+/** The setup's Score target if its starting age offers it, else the lowest one it does (M15.10 P9). */
+export function validTarget(s: Pick<SkirmishSetup, 'scoreTarget' | 'startingAge'>): number {
+  const offered = scoreTargetsFor(s.startingAge);
+  return offered.includes(s.scoreTarget) ? s.scoreTarget : offered[0]!;
+}
+
 /** A number from the query if it is one of the offered choices. */
 function pick(v: string | null, choices: readonly number[], dflt: number): number {
   const n = Number(v);
@@ -123,7 +129,7 @@ export function skirmishConfig(s: SkirmishSetup): SimConfig {
   return {
     ...map,
     victory: s.victory,
-    ...(s.victory === 'score' ? { scoreTarget: s.scoreTarget } : {}),
+    ...(s.victory === 'score' ? { scoreTarget: validTarget(s) } : {}),
     ...(s.victory === 'time' ? { timeLimit: s.timeLimit } : {}),
     ...(s.startingAge !== 'default' ? { startingAge: s.startingAge } : {}),
     popCap: s.popCap,
