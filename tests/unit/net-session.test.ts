@@ -43,6 +43,10 @@ describe('lockstep packets on the wire (M16.2)', () => {
   it('builds the relay URL from the page address, StartOS prefix included', () => {
     expect(NetClient.urlFor({ protocol: 'http:', host: 'box.local:8080', pathname: '/' })).toBe('ws://box.local:8080/ws');
     expect(NetClient.urlFor({ protocol: 'https:', host: 'x.onion', pathname: '/empires/index.html' })).toBe('wss://x.onion/empires/ws');
+    // The Mac app (its own files) asks for the server: typed bare, with a port, or with a path.
+    expect(NetClient.urlForServer('muscular-privacy.local')).toBe('ws://muscular-privacy.local/ws');
+    expect(NetClient.urlForServer(' http://box.local:8080 ')).toBe('ws://box.local:8080/ws');
+    expect(NetClient.urlForServer('https://x.onion/empires')).toBe('wss://x.onion/empires/ws');
   });
 });
 

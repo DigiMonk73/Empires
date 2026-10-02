@@ -61,6 +61,13 @@ export class NetClient {
     return `${loc.protocol === 'https:' ? 'wss' : 'ws'}://${loc.host}${base}ws`;
   }
 
+  /** The relay for a server typed as `box.local`, `http://box.local:8080/` or `https://x.onion/empires` (the Mac app). */
+  static urlForServer(typed: string): string {
+    const t = typed.trim();
+    const u = new URL(/^[a-z]+:\/\//i.test(t) ? t : `http://${t}`);
+    return NetClient.urlFor({ protocol: u.protocol, host: u.host, pathname: u.pathname.endsWith('/') ? u.pathname : `${u.pathname}/` });
+  }
+
   connect(url: string, name: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(url);

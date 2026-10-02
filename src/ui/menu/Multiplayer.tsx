@@ -15,6 +15,16 @@ import { Skirmish } from './Menu.tsx';
 export type { MpLaunch, NetGameInfo } from '../../platform/netLaunch.ts';
 
 const NAME_KEY = 'empires.name';
+const SERVER_KEY = 'empires.server';
+/** The page came from a web server (the browser, StartOS) — not the Mac app's own files, which need an address. */
+const served = (): boolean => location.protocol === 'http:' || location.protocol === 'https:';
+const readServer = (): string => {
+  try {
+    return localStorage.getItem(SERVER_KEY) ?? '';
+  } catch {
+    return '';
+  }
+};
 const readName = (): string => {
   try {
     return localStorage.getItem(NAME_KEY) ?? '';
@@ -32,7 +42,8 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [setup, setSetup] = useState<SkirmishSetup | null>(null);
   const [note, setNote] = useState('');
-  const url = NetClient.urlFor(location);
+  const [server, setServer] = useState(readServer);
+  const url = served() ? NetClient.urlFor(location) : server ? NetClient.urlForServer(server) : '';
 
   useEffect(() => {
     net.onRoom = (r) => {
@@ -72,8 +83,13 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
   const refresh = async () => setRooms(await net.list().catch(() => []));
   const connect = async () => {
     const n = name.trim().slice(0, 24) || 'Player';
+    if (!url) {
+      setNote('Type the address of the computer that serves Empires (your StartOS address).');
+      return;
+    }
     try {
       localStorage.setItem(NAME_KEY, n);
+      if (!served()) localStorage.setItem(SERVER_KEY, server.trim());
     } catch {
       /* fine */
     }
@@ -136,7 +152,13 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
       <h2>Multiplayer</h2>
       {phase === 'name' || phase === 'connecting' ? (
         <div class="mp-form">
-          <p>Everyone plays on this server: open the same address on each computer.</p>
+          <p>{served() ? 'Everyone plays on this server: open the same address on each computer.' : 'Multiplayer goes through the server that hosts Empires (StartOS).'}</p>
+          {!served() && (
+            <label>
+              Server
+              <input data-testid="mp-server" placeholder="e.g. muscular-privacy.local" value={server} onInput={(e) => setServer((e.target as HTMLInputElement).value)} />
+            </label>
+          )}
           <label>
             Your name
             <input data-testid="mp-name" maxLength={24} value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} />
