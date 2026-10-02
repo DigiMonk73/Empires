@@ -1023,7 +1023,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
       during the 20:25 verify:full), H, C, F, E, G (3× e2e); round two A2, B2, C2, D2, A3, then a 1.0.0 → tonight save
-      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4. _Next:_ B3.
+      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3. _Next:_ wrap-up at 03:45 (D3–H3 left for the next run).
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1241,6 +1241,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
+      - _Lens B3 (a fresh 177-row matrix on the final code, `lens-b2/matrix.ts --prng 20261002`, `results-b3.jsonl`):
+        0 exceptions, every save → load identical. Flags all known or explained: villagers on forest in 2p Large
+        Islands (KI-14); Post-Iron Persians without Irrigation and Babylonians without Armored Elephant — the check
+        is too strict (their Plow / Iron Shield are barred, so neither can be had; the Tech Tree says so since
+        tonight); a 3-team Narrows 6p splits one team across the strait (two shores); beaten Easy players._
       - _Lens A4 (4 watched games + Node replicas on setups rounds one and two skipped — pop 200 Hardest 2v2 Hill
         Country, Bronze 3v3 Small Islands, Iron + High 2v2 Coastal, Hardest 1v1; `artifacts/polish/lens-a4/`): 0 page
         or console errors, frames p95 ≤ 6.3 ms, ≤ 0.56 ms/tick, every game but the islands one decided by 31 min.
