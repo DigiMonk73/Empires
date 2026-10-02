@@ -307,8 +307,9 @@ export class AiPlayer {
     if (!site) {
       const x = s.villagers.reduce((a, u) => a + u.x, 0) / s.villagers.length;
       const y = s.villagers.reduce((a, u) => a + u.y, 0) / s.villagers.length;
-      this.build(s, cmds, 'townCenter', x, y, 0, 8, s.villagers.length);
-      return true;
+      // No site within 8 tiles (a crowded island start): look further out. With none anywhere near, get on with the
+      // rest of the think — returning as if it had built froze the computer for the whole game (M15.10 P10).
+      return this.build(s, cmds, 'townCenter', x, y, 0, 8, s.villagers.length) || this.build(s, cmds, 'townCenter', x, y, 9, 24, s.villagers.length);
     }
     const idle = s.villagers.filter((u) => !s.busy.has(u.h) && !(u.order === 'build' && u.target === site.h));
     if (idle.length) cmds.push({ t: 'construct', ids: idle.map((u) => u.h), h: site.h });

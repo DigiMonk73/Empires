@@ -1057,9 +1057,17 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             on (starting techs score + the most-techs bonus) · 2p continental seed 1 · `lens-b/probes.ts` — _fixed:_ a
             Post-Iron start scores 231–290 at tick 0 (others ≤ 142), so it offers targets from 500 (`scoreTargetsFor`);
             the menu moves a 250 up when the age changes, `skirmishConfig` clamps a URL's. Test: `setup-options`.
-      - [ ] P10 · should · AI Nomad · no Town Center site within 8 tiles of the villagers → `found()`
+      - [x] P10 · should · AI Nomad · no Town Center site within 8 tiles of the villagers → `found()`
             (`src/ai/ai.ts:303`) returns true though `build()` failed, the AI issues nothing all game ·
-            largeIslands tiny 7p nomad seed 81599; smallIslands tiny 8p nomad seed 60503
+            largeIslands tiny 7p nomad seed 81599; smallIslands tiny 8p nomad seed 60503 — _fixed:_ P7's clearing gives
+            those starts room (6/6 and 7/7 computers found a TC by 3:00, `artifacts/polish/p10-nomad.ts`), and `found`
+            now looks 9–24 tiles out, then gets on with the think instead of returning as if it had built (also a
+            computer that lost its TC and can't afford one no longer freezes). Test: `setup-options` "Nomad: …".
+            Full suite: held out unchanged (water 46/48, wars 24/24, ladder 52/64, 63/64); dev hard duels 15 → 14/16.
+      - [ ] P21 · should · AI islands · a computer on a crowded island places houses on a neighbour's island it can't
+            reach (never built, and in the neighbour's way): largeIslands tiny 7p nomad seed 81599 — P2's house at
+            (44,19) on P1's island, P6's at (21,19) by P7 · the `onIsland` fallback "anywhere within 18 of the TC"
+            in `AiPlayer.build` doesn't check the land
       - [ ] P11 · should · mapgen islands fairness · 29/215 Small and 24/225 Large Islands maps (2–4p) leave a start
             with no land-reachable gold within 40 (stone similar); lions not balanced per island · smallIslands
             large 2p tool seed 85019 (P2: 0 gold, 8 lions + 3 gators vs 1 + 1) · `lens-b/deaths.ts`, `preds.ts`

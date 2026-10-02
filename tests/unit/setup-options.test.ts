@@ -91,6 +91,32 @@ describe('setup options (M14.3, econ:7)', () => {
     expect([bad.victory, bad.startingAge, bad.popCap, bad.scoreTarget]).toEqual(['standard', 'default', 50, 1000]);
   });
 
+  it('Nomad: with no Town Center site near its villagers a computer looks further out instead of freezing (M15.10 P10)', () => {
+    // A two-tile strip of land (no room for a Town Center and its margin) runs from the villagers to an open field
+    // 11 tiles away. `found` looked within 8 tiles only, then returned as if it had built: the computer issued no
+    // command for the rest of the game (crowded Nomad island maps, all 7–8 computers).
+    const W = 40;
+    const ascii = Array.from({ length: W }, (_, y) => Array.from({ length: W }, (_, x) => (y >= 30 || (x >= 10 && x <= 11 && y >= 6) ? '.' : 'w')).join(''));
+    const sim = Sim.create({
+      seed: 3,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: { units: [{ type: 'villager', owner: 1, x: 10.5, y: 17.5 }, { type: 'villager', owner: 1, x: 11.5, y: 18.5 }, { type: 'villager', owner: 1, x: 10.5, y: 19.5 }] },
+    });
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(sim.world, 1);
+    let commands = 0;
+    for (let t = 0; t < 20 * 60 * 2 && !view.ownBuildings().some((b) => b.type === 'townCenter'); t++) {
+      const cmds = ai.think(view);
+      commands += cmds.length;
+      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    expect(commands).toBeGreaterThan(0);
+    expect(view.ownBuildings().some((b) => b.type === 'townCenter')).toBe(true);
+  });
+
   it('a Post-Iron start offers no Score target its starting techs already reach (M15.10 P9)', () => {
     // Every tech researched scores 231–290 at the first tick: Score 250 was won before anyone moved.
     expect(scoreTargetsFor('postIron')[0]).toBeGreaterThan(290);
