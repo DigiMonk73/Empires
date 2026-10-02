@@ -1,0 +1,60 @@
+diff --git a/src/ai/ai.ts b/src/ai/ai.ts
+index 58c0cc5..e1673b2 100644
+--- a/src/ai/ai.ts
++++ b/src/ai/ai.ts
+@@ -399,9 +399,12 @@ export class AiPlayer {
+       const at = b && dist(b.x, b.y, tc.x, tc.y) < 22 ? b : tc;
+       if (this.build(s, cmds, 'granary', at.x, at.y, at === tc ? 5 : 2.5, at === tc ? 9 : 5, 1)) return;
+     }
+-    // Storage pit at the nearest woodline.
++    // Storage pit at the nearest woodline — a forest, not the lone trees by the Town Center: one within 5 tiles made
++    // the woodline look close enough, and its cutters walked every load home until those trees were gone (minute 10;
++    // a Hard computer starved of wood never trained an army, M15.10 P2).
+     if (!this.has(s, 'storagePit').length && !this.isPending(s, 'storagePit') && s.working[1] >= 2) {
+-      const t = this.nearest(s.known.filter((r) => r.job === 'wood'), tc.x, tc.y);
++      const wood = s.known.filter((r) => r.job === 'wood');
++      const t = this.nearest(wood.filter((r) => r.kind === 'forestTree'), tc.x, tc.y) ?? this.nearest(wood, tc.x, tc.y);
+       if (t && dist(t.x, t.y, tc.x, tc.y) > 5 && this.build(s, cmds, 'storagePit', t.x, t.y, 2.5, 5, 1)) return;
+     }
+     // A granary beside far food being worked (berries, shore fish, a herd's carcasses): one more in the Stone
+diff --git a/tests/unit/ai-tactics.test.ts b/tests/unit/ai-tactics.test.ts
+index b55244d..1f18008 100644
+--- a/tests/unit/ai-tactics.test.ts
++++ b/tests/unit/ai-tactics.test.ts
+@@ -338,3 +338,36 @@ describe('AI Docks under attack (M15.10 P73)', () => {
+     expect(Math.hypot(b!.tx + 1.5 - 11, b!.ty + 1.5 - 17)).toBeGreaterThanOrEqual(7);
+   });
+ });
++
++describe('AI first Storage Pit (M15.10 P2)', () => {
++  it('goes to the forest, not to a lone tree by the Town Center', () => {
++    // A lone tree within 5 tiles made the woodline look close: no pit until those trees were cut (minute 10), the
++    // forest's cutters walked every load home and a Hard computer starved of wood.
++    const W = 40;
++    const LONE = [[9, 7], [9, 9], [4, 10], [8, 10], [3, 5], [9, 5]]; // round the Town Center, all within 5 tiles
++    const ascii = Array.from({ length: W }, (_, y) =>
++      Array.from({ length: W }, (_, x) => (LONE.some(([a, b]) => a === x && b === y) ? 'T' : x >= 20 && x <= 24 && y >= 4 && y <= 12 ? 'F' : '.')).join(''),
++    );
++    const sim = Sim.create({
++      seed: 2,
++      map: { w: W, h: W, ascii },
++      victory: 'none',
++      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
++      scenario: {
++        buildings: [{ type: 'townCenter', owner: 1, tx: 5, ty: 6 }],
++        units: Array.from({ length: 8 }, (_, i) => ({ type: 'villager', owner: 1, x: 10.5 + (i % 4), y: 11.5 + Math.floor(i / 4) })),
++      },
++    });
++    const w = sim.world;
++    w.players[1]!.res.set([500, 500, 0, 0]);
++    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
++    const view = new PlayerView(w, 1);
++    for (let t = 0; t < 20 * 60 && !view.ownBuildings().some((b) => b.type === 'storagePit'); t++) {
++      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
++      sim.drainEvents();
++    }
++    const pit = view.ownBuildings().find((b) => b.type === 'storagePit');
++    expect(pit, 'a pit within 60 s').toBeDefined();
++    expect(pit!.x, 'beside the forest (x 20–24)').toBeGreaterThan(15);
++  });
++});
