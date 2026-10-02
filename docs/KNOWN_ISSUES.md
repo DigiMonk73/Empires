@@ -30,11 +30,14 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   bar). Tried again after D69 and P55 (water now 47): water 40/48 — a GATE FAIL — and wars 22/24, though Hard
   duels end sooner (38:42). Accurate arrows change every fight; the AI needs retuning for them on the dev sets
   (LOOP.md "AI work") before they can go in — or the user accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
-- **KI-14 · should (blocked by the AI gates) · two-player island starts bury a villager now and then** — M15.10 P20.
-  ~15% of two-player Small/Large Islands maps (15 of the water suite's 96) start a villager on a forest or mine
-  tile, stuck for the game. Holding the Town Center's villager tiles clear fixes it but moves held-out water down
-  every time (46 → 44, 46 → 44 after D69, 47 → 45 after P55: three cycles, blocked). Next: trace the water games that stop finishing (dev seeds 401–448,
-  `diagnose.ts water-trace`) — the computers seem to need the lopsided start to end the game.
+  _M15.11 on the D70 band:_ wars 93/96, Hard > Moderate 199/256 (both fine), but water 171/192 (−12), averaging
+  42.8/48 — under the 44 bar. On the dev seeds the extra undecided games are the island wood stall (instructions,
+  Limitations): dev 413 at minute 60 — the loser has 0 villagers and 0 buildings but 2 warships at sea (they count
+  for conquest); the winner has 21 villagers, no ships and 2 wood, its island's trees cut. Next: once an enemy has no
+  buildings left, the AI keeps wood for a Dock and two warships (or sends villagers to wood it can ferry to) and
+  hunts the last ships; re-run `ai-band.ts` with the patch.
+
+- _KI-14 (two-player island starts buried a villager) closed in M15.11: a final mapgen pass moves a villager on a blocked tile to the nearest open tile, terrain untouched (51 → 0 on 200 maps); band water 183/192._
 - _KI-15 (land starts losing a cluster) closed in M15.10 (P17), after D69._
 - _KI-16 (a computer's first Storage Pit goes to a lone tree) closed in M15.11 (D70 noise band; the five-fix bundle passed)._
 - _KI-17 (hunters carry meat home from far herds) closed in M15.11 (D70 noise band; the five-fix bundle passed)._

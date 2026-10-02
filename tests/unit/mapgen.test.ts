@@ -191,6 +191,28 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('Two-player islands: no villager starts on a forest or mine tile (M15.11, KI-14 / P20)', () => {
+    // ~15% of two-player island maps started a villager inside a forest, stuck all game. The terrain stays as it is
+    // (clearing it changed the maps); a villager whose spot is taken stands on the nearest open tile instead.
+    let buried = 0;
+    const where: string[] = [];
+    for (const type of ['smallIslands', 'largeIslands'] as const) {
+      for (const size of ['tiny', 'small'] as const) {
+        for (let seed = 401; seed <= 548; seed += 3) {
+          const m = generateMap({ seed, type, size, players: [{ civ: 'greek' }, { civ: 'persian' }] });
+          const w = Sim.create(m).world;
+          for (let s = 0; s < w.ents.top; s++) {
+            if (!w.ents.alive[s] || w.ents.owner[s]! < 1 || w.ents.kind[s] !== EKind.unit) continue;
+            const x = Math.floor(w.ents.x[s]!);
+            const y = Math.floor(w.ents.y[s]!);
+            if (!w.map.passable(x, y, 1)) (buried++, where.push(`${type} ${size} seed ${seed} P${w.ents.owner[s]} at ${x},${y}`));
+          }
+        }
+      }
+    }
+    expect(where.slice(0, 5), `${buried} villagers on blocked tiles`).toEqual([]);
+  });
+
   it('Coastal: the seats face the sea alike — two players stand the same distance from the coast (M15.10 P12)', () => {
     // The ring of starts took a random turn: one start 12 tiles from the sea, the other 48 (small seed 15838).
     const coast = (m: ReturnType<typeof generateMap>, [sx, sy]: [number, number]): number => {

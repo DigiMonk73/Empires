@@ -53,9 +53,8 @@ playtest). Multiplayer is next (M16).
 ## Status
 - 2026-10-02 09:20 — **M15.11 AI bundle committed** on `main` (P2, P53, P70, P74, P76 — KI-16/-17/-18 closed); band
   baseline re-recorded (wars 94, Hard > Moderate 194, Hardest > Hard 256, water 182, duels 64).
-- **KI-13 arrows: band FAIL** (water 171/192, avg 42.8 < 44). Next: find why accurate arrows stall water games
-  (likely transports and landings shot down) on the dev seeds 401–448 with `tools/sim/diagnose.ts`; worktree
-  `artifacts/wt-arrows` has the patch applied.
-- **KI-14 / P20** ready in worktree `artifacts/wt-rough` (mapgen final pass; terrain untouched) — needs its band run.
+- **KI-13 arrows: band FAIL** (water 171/192, avg 42.8 < 44) — the island wood stall; diagnosis and the next step
+  are in KNOWN_ISSUES KI-13 (patch `docs/patches/m15.10-p24-arrows-along-the-line.patch`).
+- **KI-14 / P20 committed** (band water 183/192); baseline re-recorded.
 - **M16 multiplayer** on branch `m16-multiplayer` (worktree `artifacts/wt-m16`): M16.1 relay, M16.2 client, M16.3
   lobby done and tested (unit + e2e both engines), M16.4 partly — see `docs/MULTIPLAYER.md` on that branch.

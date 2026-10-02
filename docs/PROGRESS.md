@@ -1261,7 +1261,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         (`tools/sim/ai-band.ts`). P2, P53, P70, P74 and P76 (their saved patches; P53 with a new far-hunt scene test;
         M13.4's fixed-seed pop-25 test replaced by a deadlock scene that fails without the fix) passed together:
         wars 94/96 (93), Hard > Moderate 194/256 (197), Hardest > Hard 256/256 (252), water 182/192 (183), duels 64/64
-        (63). KI-16/-17/-18 closed. Arrows (KI-13) failed the band: water 171/192, averaging 42.8 (bar 44)._
+        (63). KI-16/-17/-18 closed. Arrows (KI-13) failed the band: water 171/192, averaging 42.8 (bar 44) — the island
+        wood stall (KNOWN_ISSUES KI-13). P20 (KI-14) passed on its own: a final mapgen pass moves a buried villager to
+        the nearest open tile, terrain untouched (51 → 0 on 200 two-player island maps); water 183/192._
       - _**AI gate noise floor (it. 64, for the user — gates untouched):** the full suite with the AIs' think timing
         shifted 1, 2 or 3 ticks (no rule changed; `artifacts/polish/noise-{1,2,3}.log`): 1v1 wars 22 / 23 / 24 of
         24, Hard > Moderate 46 / 48 / 52 of 64 (the +1 shift fails the 48 bar), held-out water 42 / 46 / 47 of 48,
@@ -1362,7 +1364,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts`
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
         51/50 (likely faithful)._
-      - [ ] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest
+      - [x] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
             finishes those even games: trace 501/505/523 with `diagnose.ts` first (`artifacts/polish/water-*.txt`)

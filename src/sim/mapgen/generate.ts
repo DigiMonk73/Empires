@@ -791,6 +791,31 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   }
 
   for (const [i, ch] of tcTiles) g.c[i] = ch;
+  // A villager whose spot a forest or mine grew over — the start's own clusters or a later feature — stands on the
+  // nearest open tile instead. The terrain stays as it is (clearing it changed the maps): ~15% of two-player island
+  // starts buried one for the game (M15.11, KI-14 / P20).
+  const tcAt = (x: number, y: number): boolean => buildings.some((b) => b.type === 'townCenter' && x >= b.tx && x < b.tx + 3 && y >= b.ty && y < b.ty + 3);
+  const stood = new Set<number>();
+  for (const [k, u] of units.entries()) {
+    if (u.type !== 'villager') continue;
+    let fx = Math.floor(u.x);
+    let fy = Math.floor(u.y);
+    const free = (x: number, y: number): boolean => isOpen(at(g, x, y)) && !tcAt(x, y) && !stood.has(y * W + x);
+    if (!free(fx, fy)) {
+      search: for (let r = 1; r <= 6; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !free(fx + dx, fy + dy)) continue;
+            fx += dx;
+            fy += dy;
+            units[k] = { ...u, x: fx + 0.5, y: fy + 0.5 };
+            break search;
+          }
+        }
+      }
+    }
+    stood.add(fy * W + fx);
+  }
   const ascii: string[] = [];
   for (let y = 0; y < W; y++) ascii.push(g.c.slice(y * W, (y + 1) * W).join(''));
   const hl = HILLS[o.type];
