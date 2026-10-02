@@ -1124,6 +1124,43 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [x] P41 · nice · HUD · a Standard countdown clock keeps counting after a conquest victory ends the game
             (g2 75:36 → "Player 2 · All Ruins" still 101 at 80:40) · `lens-e/crops/m90-battle_92_112-tr.png` —
             _fixed:_ the clocks read the game-over tick. Test: `standard-victory` "the clocks stop…".
+      - _Lens D2 (tooltips vs rules, Node; `artifacts/polish/lens-d2/`): all 77 tech descs match their effects;
+        15/16 civ bonus texts right; train/build costs right; Help's numbers right._
+      - [x] P42 · must · HUD status box · max HP, attack, armour and range come from the base data, not `w.stats`
+            (civ bonuses, techs): wrong in 558/542/445/287 of 2346 civ × age × type cases — Choson Long Swordsman
+            "160 / 80" (HP bar past 100%), Post-Iron Greek Legion ⚔13 🛡2/0 (17, 8/3), Hittite War Galley range 6
+            (10) · `src/ui/sync.ts:51-54`; `lens-d2/hud-vs-stats.txt` — _fixed:_ the box reads `world.stats(owner, type)`. Test:
+            `hud-sync` (Choson Long Swordsman with Iron Shield, Hittite War Galley).
+      - [ ] P43 · must · Tech Tree · Granary column shows Fortification, Guard Tower, Ballista Tower available for 7
+            civs that lack the techs (building chips checked against `disabled.buildings`) · `src/ui/techTree.ts`
+            88, 105–113; `lens-d2/tree-walls.ts`
+      - [ ] P44 · should · civ text · Macedonian "Land units and non-war boats +2 LOS" — research and code give it to
+            infantry, scouts, cavalry, camels, elephants, villagers, civilian boats only (econ:6.1) · `civs.ts:140`
+      - [ ] P45 · should · research tooltips show name, cost and why it's disabled — never the tech's `desc`: nothing
+            says what Alchemy or Nobility does · `src/ui/hud/Hud.tsx:249-253`
+      - [ ] P46 · should · Tech Tree · units shown obtainable without their training building (Macedonian Priest —
+            no Temple; Persian Hoplite — no Academy) · `techTree.ts:72-81` `unitMissing`
+      - [ ] P47 · should · command grid · techs the Tree marks out of reach still appear: Babylonian Armored Elephant
+            greyed "requires Iron Shield" forever, Persian Irrigation "requires Plow" (Yamato's buyable Armored
+            Elephant matches the research table: Y) · `src/ui/commands.ts:160-163`; `lens-d2/grid-vs-tree.ts`
+      - [ ] P48 · should · Help · "A game is won by conquest" — the default is Standard (Wonder, all Artifacts or all
+            Ruins for 2000 years too) · `HelpCredits.tsx:11`
+      - [ ] P49 · nice · setup · "N items missing" counts matrix rows (Assyrian 24) where the Tree greys 34
+      - [ ] P50 · nice · Diplomacy · tribute cost line rounds up ("Costs 2 food" for 1; the sim charges 1.25)
+      - [ ] P51 · nice · Conquest hint/Help omit what doesn't count (walls; trade, fishing, transport boats)
+      - _Lens A2 (9 unusual setups to 45 min — Nomad, Post-Iron + Score + FTT, pop 25, Huge 8p, Gigantic 1v1, Time
+        Limit, Deathmatch, Reveal; `artifacts/polish/lens-a2/`): 0 page or console errors; HUD, clocks, end texts,
+        pop limits, starting ages and frame times all right._
+      - [ ] P52 · should · AI ending · Gigantic 1v1: P2 razes P1's base (30–36 min) but misses a Granary 17 tiles off
+            and wanders 23 min; P1 sees 0/0 pop, no Defeat until 58:43 · `inland gigantic seed 61` · `probe-g5.ts`
+      - [ ] P53 · should · AI economy · on big maps hunters carry meat 61–78 tiles (11 of 18 villagers at 12:00, no
+            pit near the hunt); food stops at ~12 min · g5 minute 12, `probe-walk.ts 5 8,12`; pop-25 g3 too
+      - [ ] P54 · should · AI Deathmatch · Hard plays its normal build order on a 20k bank (Stone Age to 9–10 min,
+            4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7)
+      - [ ] P55 · should · AI clutter · farm foundations placed and never built stay as dirt squares 20+ min (17 on
+            a Huge 8p map; `finishFoundations` skips farms) · g4 coastal huge seed 59; g3 pop 25
+      - [ ] P56 · nice · end text · a Time Limit win on an ally's score reads "Victory — Player 2 had the highest
+            score when time ran out." (no "your ally") · g6 narrows small seed 67 win=time limit=15
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI

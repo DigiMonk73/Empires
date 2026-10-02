@@ -1,6 +1,7 @@
 import { tradeGood } from '../sim/systems/trade.ts';
 import { EKind } from '../sim/core/entities.ts';
 import { TYPES } from '../sim/rules/registry.ts';
+import { ARMOR_CLASS } from '../data/types.ts';
 import type { World } from '../sim/world.ts';
 import { playerColor } from '../render/worldRenderer.ts';
 import { archOf } from '../render/arch.ts';
@@ -15,10 +16,6 @@ function fmtClock(tick: number): string {
   const ss = s % 60;
   const mm = `${m}`.padStart(2, '0');
   return h ? `${h}:${mm}:${`${ss}`.padStart(2, '0')}` : `${mm}:${`${ss}`.padStart(2, '0')}`;
-}
-
-function classStr(v: Record<string, number | undefined>, keys: string[]): string {
-  return keys.map((k) => v[k] ?? 0).join('/');
 }
 
 /** Copy what the HUD shows out of the world. Called ~10×/s. */
@@ -43,15 +40,18 @@ export function syncHud(world: World, player: number, selected: readonly number[
     if (s < 0) continue;
     const t = TYPES[e.type[s]!]!;
     const u = t.unit;
+    // The unit as the game has it — civ bonuses and technologies in (the base data showed a Choson Long Swordsman
+    // as 160 / 80 and a Hittite War Galley at range 6, M15.10 P42).
+    const st = world.stats(e.owner[s]!, e.type[s]!);
     sel.push({
       h,
       name: t.name,
       owner: e.owner[s]!,
       hp: e.hp[s]!,
-      maxHp: t.hp,
-      atk: u ? String(u.atk.melee ?? u.atk.pierce ?? 0) : '',
-      arm: u ? classStr(u.arm, ['melee', 'pierce']) : '',
-      range: u?.range ?? 0,
+      maxHp: st.hp,
+      atk: u ? String(Math.round(st.atk[ARMOR_CLASS.melee] ?? st.atk[ARMOR_CLASS.pierce] ?? 0)) : '',
+      arm: u ? `${Math.round(st.arm[ARMOR_CLASS.melee] ?? 0)}/${Math.round(st.arm[ARMOR_CLASS.pierce] ?? 0)}` : '',
+      range: u ? st.range : 0,
       isBuilding: e.kind[s] === EKind.building,
       model: e.kind[s] === EKind.building ? `${t.id}_${archOf(world.players[e.owner[s]!]?.civ)}` : t.id,
       ...(e.kind[s] === EKind.building ? { building: e.build[s]! } : {}),
