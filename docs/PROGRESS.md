@@ -5,32 +5,30 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 
 - **Milestone:** **M15 Hardening & release** — M15.1–M15.8 done: **Empires 1.0.0** built and on the StartOS VM.
   Waiting on **M15.9, the user's playtest** (a full skirmish vs Hard) — the M15 exit; then tag `m15`, M16 multiplayer.
-  **M15.10 polish run** in progress (`docs/POLISH_LOOP.md`, to 03:45 CDT): lenses A, B, G(grep) run; 16 of 22
-  findings fixed (Narrows starts and teams, crowded island and land starts, AI villager jitter, Nomad freeze, AI
-  houses across water, Post-Iron Score, one-team Start, Tech Tree reach, URL checks, notifications); P2 (a Hard
-  economy) and P20 (2p island starts) wait on AI work — the water/war gates fell when tried.
-- **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI suite,
-  100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09). Before:
-  M15.8 (1.0.0), 1120 s; the M14 exit (874 s); it now also runs `determinism` (≈ 5 min, D61), the Tauri smoke on `fullpop` (D63) and
-  the two-hour `soak` (≈ 2.5 min, D64). Baked art 1,340 MB GPU if all resident, 75.8 MB download (D65, D66).
-- **AI gates (all pass, full suite, M15.10 P15):** ladder — every level beats the one below
-  (Hard > Moderate 51/64, bar 48; Hardest > Hard 63/64); Moderate 1v1s decided within 60 min 24/24 on held-out
-  seeds 1001–1024 (D58); water 46/48 held out 501–548 (D56, bar 44); Hard idle 1.2%, stuck 0.07%, 0 crashes.
-  Margins are thin — see LOOP.md "AI work" before touching the AI or map generation; `tools/sim/diagnose.ts`.
+  **M15.10 polish run** in progress (`docs/POLISH_LOOP.md`, to 03:45 CDT): all 8 lenses run once (A2, D2 now);
+  30 of 41 findings fixed — map starts (Narrows, crowded islands and land, Coastal, team bridges), AI (villager
+  jitter, Nomad freeze, houses across water, Nomad villager cap), rules (Stand Ground catapults, converted
+  transports' riders, tower targets), UI (dialogs and keys, Backspace, notifications, Tech Tree reach, Keys list,
+  banners and clocks at the end, one-team Start, Post-Iron Score), server saves. Blocked by the AI gates:
+  P24 arrows (KI-13), P2, P17, P20, P27/P31 — the computers rely on uneven starts and forgiving arrows to finish.
+- **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI
+  suite, 100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09).
+- **AI gates (all pass, M15.10 P26):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
+  24/24 (1001–1024), water 46/48 (501–548, bar 44); Hard-vs-Hard median 51:05 (Done 25–60 — since P3, was 32);
+  0 crashes. Margins are thin — LOOP.md "AI work" before touching AI or mapgen; `tools/sim/diagnose.ts`.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
   25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
   value names its decision (D57, enforced by `data.test.ts`).
 - **StartOS:** 1.0.0:0 built (both arches, eaedb09) and verified on the VM (update from 0.12.0, restart, reinstall,
   real play in both engines); backup → restore unverified (KI-3).
-- **Open issues:** KI-3 backups (needs a backup target on the VM — the user), KI-5 voice licence (before any public
-  release — the user), KI-2 AI images (optional). No gate failing.
+- **Open issues:** KI-13 arrows (blocked by the AI gates — the user), KI-3 backups (a backup target on the VM — the
+  user), KI-5 voice licence (before a public release), KI-2 AI images (optional). No gate failing.
 - **Playable now:** `npm run preview` → `/` → Skirmish (setup: map, size, civs, levels, victory, starting age,
   population, Full Tech Tree, reveal); the Mac app `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/
   Empires.app`; review scenes `?scenario=relics|countdowns|map&gators=1|battle|…`.
-- **Notes:** metrics `docs/metrics/*.csv`; visual reviews `docs/visual-review.md`; bake `node tools/bake/cli.ts`;
-  AI suite `node tools/sim/ai-suite.ts [--full --adjacent]`; diagnostics `node tools/sim/diagnose.ts`; determinism
-  `node tools/sim/determinism.ts` (then `EMPIRES_SCALE=1 npx playwright test tests/e2e/determinism-scale.spec.ts`).
+- **Notes:** metrics `docs/metrics/*.csv`; reviews `docs/visual-review.md`; AI suite `node tools/sim/ai-suite.ts
+  [--full --adjacent]`; `node tools/sim/diagnose.ts`; `node tools/sim/determinism.ts`; polish scripts `artifacts/polish/`.
 
 ---
 
