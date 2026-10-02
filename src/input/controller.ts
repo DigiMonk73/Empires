@@ -215,8 +215,10 @@ export class InputController {
         this.wr.addMarker(this.world.ents.x[tslot]!, this.world.ents.y[tslot]!, 0xff5a4a);
         return;
       }
-      if (!blds.length || !gameSettings.value.qol.rally || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
-      this.session.router.submit(me, { t: 'rally', blds, x: quantize(w.x), y: quantize(w.y), ...(res >= 0 ? { res } : {}) });
+      // (Towers train nothing: no rally point for them, M15.10 P67.)
+      const rallying = blds.filter((h) => this.world.stats(me, this.world.ents.type[this.world.ents.slotOf(h)]!).range <= 0);
+      if (!rallying.length || !gameSettings.value.qol.rally || w.x < 0 || w.y < 0 || w.x >= map.w || w.y >= map.h) return;
+      this.session.router.submit(me, { t: 'rally', blds: rallying, x: quantize(w.x), y: quantize(w.y), ...(res >= 0 ? { res } : {}) });
       this.wr.addMarker(w.x, w.y, 0xffd84a);
       return;
     }

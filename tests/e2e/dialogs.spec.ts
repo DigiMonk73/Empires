@@ -101,3 +101,77 @@ test('F3 twice with the Keys list open keeps the game paused (P37)', async ({ pa
   await page.waitForTimeout(600);
   expect(await tick(page)).toBe(t0);
 });
+
+test('Escape and F10 close what is on top: Keys and Achievements over the Menu (P61)', async ({ page }) => {
+  await openGame(page, GAME);
+  await page.keyboard.press('F10');
+  await page.keyboard.press('F1');
+  await expect(page.getByTestId('keys')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('keys')).toHaveCount(0);
+  await expect(page.getByTestId('game-menu')).toBeVisible(); // the Menu beneath is still there
+  await page.getByTestId('menu-achievements').click();
+  await expect(page.getByTestId('close-results')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('close-results')).toHaveCount(0);
+  await expect(page.getByTestId('game-menu')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('game-menu')).toHaveCount(0);
+});
+
+test('behind the Tech Tree the game keys stay out (P62)', async ({ page }) => {
+  await openGame(page, GAME);
+  await page.getByTestId('tech-tree-btn').click();
+  await expect(page.getByTestId('tech-tree')).toBeVisible();
+  const cam = await page.evaluate(() => window.__empires!.camera.get());
+  await page.keyboard.press('h');
+  await page.keyboard.press('.');
+  await frames(page);
+  expect(await selected(page)).toBe(0);
+  expect(await page.evaluate(() => window.__empires!.camera.get())).toEqual(cam);
+});
+
+test('a focused HUD button does nothing behind the Menu (P63)', async ({ page }) => {
+  await openGame(page, GAME);
+  await page.keyboard.press('h'); // the Town Center
+  await expect(page.getByTestId('cmd-train:villager')).toBeVisible();
+  await page.getByTestId('cmd-train:villager').click();
+  const food = await page.evaluate(() => window.__empires!.query.player(1).res[0]);
+  await page.keyboard.press('F10');
+  for (const k of ['Space', 'Space', 'Enter']) await page.keyboard.press(k);
+  await page.getByTestId('menu-resume').click();
+  expect(await page.evaluate(() => window.__empires!.query.player(1).res[0])).toBe(food);
+});
+
+test('no browser menu on a right-click off the map (P64)', async ({ page }) => {
+  await openGame(page, GAME);
+  const prevented = await page.evaluate(() => {
+    const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    document.querySelector('[data-testid="menu-btn"]')!.dispatchEvent(ev);
+    return ev.defaultPrevented;
+  });
+  expect(prevented).toBe(true);
+});
+
+test('Escape in a field closes its dialog (P66)', async ({ page }) => {
+  await openGame(page, GAME);
+  await page.getByTestId('menu-btn').click();
+  await page.getByTestId('menu-save').click();
+  await page.getByTestId('save-name').click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('save-name')).toHaveCount(0);
+  await expect(page.getByTestId('game-menu')).toBeVisible(); // only the save list closed
+});
+
+test('a tower takes no rally point (P67)', async ({ page }) => {
+  await openGame(page, 'scenario=raid&fog=0&paused=1');
+  const tower = await page.evaluate(() => window.__empires!.buildingAt(6, 13));
+  await page.evaluate(() => window.__empires!.camera.centerOn(7, 14));
+  await frames(page);
+  const at = await page.evaluate((h) => window.__empires!.entityScreenPos(h!)!, tower);
+  await page.mouse.click(at.x, at.y - 20);
+  await frames(page);
+  await page.mouse.click(at.x + 120, at.y + 60, { button: 'right' });
+  await frames(page);
+  expect(await page.evaluate((h) => window.__empires!.query.rally(h!), tower)).toBeNull();
+});

@@ -166,7 +166,16 @@ async function boot(): Promise<void> {
   };
   input.onUiChange = refreshCommands;
   input.blocked = dialogOpen;
-  hudActions.perform = (a) => input.perform(a);
+  // Command buttons don't act behind a dialog (Chromium: a clicked button kept the focus, and Space or Enter queued
+  // villagers behind the Menu, M15.10 P63).
+  hudActions.perform = (a) => {
+    if (!dialogOpen()) input.perform(a);
+  };
+  effect(() => {
+    if (dialogOpen() && document.activeElement instanceof HTMLButtonElement && !document.activeElement.closest('.gameover, .menu-panel, .tt, [data-testid="keys"], [data-testid="game-menu"]')) {
+      document.activeElement.blur();
+    }
+  });
   hudActions.setMenu = (open) => {
     hud.menuOpen.value = open;
     // The menu replaces any other dialog rather than opening beneath it (M15.10 P35).
@@ -290,16 +299,31 @@ async function boot(): Promise<void> {
     keysSeen = true;
   });
   // Escape closes the dialog on top (M15.10 P36): the save list, Options, the Menu, Keys, Diplomacy, the Tech Tree.
+  // In the order they stack on screen — Keys and Achievements open over the Menu, so they close before it (M15.10 P61).
   const closeTopDialog = (): void => {
-    if (hud.saveDialog.value) hud.saveDialog.value = null;
+    if (hud.techTree.value) hud.techTree.value = null;
+    else if (hud.saveDialog.value) hud.saveDialog.value = null;
     else if (hud.optionsOpen.value) hud.optionsOpen.value = false;
-    else if (hud.menuOpen.value) hudActions.setMenu(false);
     else if (hud.keysOpen.value) hud.keysOpen.value = false;
+    else if (hud.results.value) hud.results.value = null;
     else if (hud.diplomacy.value) hudActions.showDiplomacy(false);
-    else if (hud.techTree.value) hud.techTree.value = null;
+    else if (hud.menuOpen.value) hudActions.setMenu(false);
   };
+  // No browser menu on a right-click anywhere but a text field: off the map (the top bar, a panel, a dialog's backdrop)
+  // it opened, and in WebKit it then swallowed the clicks after it (M15.10 P64).
+  window.addEventListener('contextmenu', (e) => {
+    if (!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) e.preventDefault();
+  });
+  /** A dialog over the Menu (Keys, Achievements, Options, the save list). */
+  const overMenu = (): boolean => hud.keysOpen.value || !!hud.results.value || hud.optionsOpen.value || !!hud.saveDialog.value;
   window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement || menuMode) return;
+    if (menuMode) return;
+    if (e.target instanceof HTMLInputElement) {
+      // In a field (a save's name, the tribute amount, a slider) only Escape is ours: it leaves the field and closes
+      // the dialog (M15.10 P66).
+      if (e.key !== 'Escape' || !dialogOpen()) return;
+      e.target.blur();
+    }
     if (e.key === 'Escape' && dialogOpen()) {
       e.preventDefault();
       closeTopDialog();
@@ -308,7 +332,9 @@ async function boot(): Promise<void> {
     if (e.key === 'F1') {
       e.preventDefault();
       const open = !hud.keysOpen.value;
-      // Keys replace the Tech Tree or Diplomacy rather than opening beneath them (M15.10 P35).
+      // Keys replace the Tech Tree or Diplomacy rather than opening beneath them (M15.10 P35), and don't open beneath
+      // Achievements, Options or the save list.
+      if (open && (hud.results.value || hud.optionsOpen.value || hud.saveDialog.value)) return;
       if (open) {
         hud.techTree.value = null;
         hud.diplomacy.value = null;
@@ -318,15 +344,19 @@ async function boot(): Promise<void> {
     }
     if (e.key === 'F10') {
       e.preventDefault();
-      hudActions.setMenu(!hud.menuOpen.value);
+      // With a dialog over the Menu, F10 closes that one (it closed the Menu beneath it, M15.10 P61).
+      if (hud.menuOpen.value && overMenu()) closeTopDialog();
+      else hudActions.setMenu(!hud.menuOpen.value);
       return;
     }
-    if (hud.menuOpen.value) return;
+    // Behind any dialog the game's keys stay out: H, '.', +/−, F3, F4, F11, Home, Tab acted on the game behind the
+    // Tech Tree, Diplomacy, Keys or Achievements (M15.10 P62).
+    if (dialogOpen()) return;
     // F3 / Pause: pause (research §5); F4: the score list; F11: time, speed and population.
     if (e.key === 'F3' || e.key === 'Pause') {
       e.preventDefault();
       hud.userPaused.value = !hud.userPaused.value;
-      session.paused = hud.userPaused.value || hud.keysOpen.value; // (the Keys list keeps it paused, M15.10 P37)
+      session.paused = hud.userPaused.value;
       return;
     }
     if (e.key === 'F4') {

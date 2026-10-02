@@ -1201,6 +1201,26 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - _Noted (B2, nice):_ Narrows with uneven teams seats one ally across the strait (sides within one player —
         by P8's rule); P15 nudged a few land clusters (17 starts worse, 30 better); Large Islands tiny 2v2 seed 3:
         enemies' islands touch (before tonight too)._
+      - _Lens C2 (input monkey on tonight's build; `artifacts/polish/lens-c2/`): round one's 5 repros fixed in both
+        engines; 0 page or console errors; tooltips at 3 viewports never clipped. Found:_
+      - [x] P61 · should · dialogs · Escape (and F10) closed the Menu hidden beneath Keys opened from it; the game ran
+            under Keys · `lens-c2/dialogs.ts <engine> menuKeys,f10f1`
+      - [x] P65 · should · dialogs · Achievements (Results) ignored Escape; Escape or F10 closed the Menu beneath it
+      - [x] P62 · should · keys · behind the Tech Tree, Diplomacy, Keys or Results the game's keys still acted (H,
+            '.', +/−, F3, F4, F11, Home, Tab — `main.ts` bailed on the Menu only)
+      - [x] P63 · should · focus (Chromium) · a clicked HUD button kept the focus: F10, Space ×3, Enter, Resume → 4
+            villagers queued, 200 food spent behind the Menu · `lens-c2/repro-focus.ts chromium`
+      - [x] P64 · should · input · a right-click off the map opened the browser menu; in WebKit it then swallowed
+            the next clicks (Options' Back did nothing) · `lens-c2/repro-optback.ts webkit 4`
+      - [x] P66 · nice · Escape and F10 did nothing with the focus in a field (save name, tribute, a slider)
+      - [x] P67 · nice · towers · right-clicking the ground with a tower selected set a rally point on it
+      - _P61–P67 fixed together:_ Escape and F10 close what's on top, in the order dialogs stack (Tech Tree, save
+        list, Options, Keys, Achievements, Diplomacy, Menu); behind any dialog the game's keys stay out; command
+        buttons don't act behind a dialog and a focused HUD button loses the focus when one opens; no browser menu
+        except in text fields; Escape works from a field (the save list's own Escape stops there); towers take no
+        rally point. e2e `dialogs.spec.ts` (+6 tests × 2 engines).
+      - [ ] P68 · nice · layout · Keys' Close below the fold at 800×600, 1024×640, 600×900 (the panel scrolls;
+            Escape and the backdrop close it); Options' Back off-screen at 1280×400 · `lens-c2/resize.ts`
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI

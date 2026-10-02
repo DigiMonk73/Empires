@@ -166,6 +166,11 @@ export function SaveList(props: {
                 setPicked(null);
               }}
               onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation(); // (the game's Escape would close the Menu beneath too)
+                  props.onClose(); // Escape leaves the dialog, typing or not (M15.10 P66)
+                  return;
+                }
                 e.stopPropagation(); // typing must not trigger game hotkeys
                 if (e.key === 'Enter') void save();
               }}
