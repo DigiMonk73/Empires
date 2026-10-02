@@ -51,10 +51,10 @@ playtest). Multiplayer is next (M16).
 2. **Multiplayer (M16, branch `m16-multiplayer`)** — plan in `docs/MULTIPLAYER.md` (written when M16 starts).
 
 ## Status
-- 2026-10-02 10:00 — `main` (cb9a3c6): M15.11 done but KI-13 arrows (see KNOWN_ISSUES). **`m16-multiplayer`**
-  (this branch): M16.1–M16.5 + the Mac app's server address + a soak tool — playable multiplayer: host/join from
-  the menu, lockstep over the server's `/ws`, synced pause, chat, a computer takes a
-  departed player's seat. Unit + e2e (both engines) green; `npm run verify` green at every commit.
+- 2026-10-02 10:15 — **`m16-multiplayer` is 1.1.0**: playable multiplayer (host/join from the menu, lockstep over the
+  server's `/ws`, pause for everyone, chat, a computer takes a departed player's seat; a player who drops mid-game
+  can't rejoin yet). verify:full green; both `.s9pk` 1.1.0:0 built (package repo branch `m16-multiplayer`,
+  74e7de4) — not installed on the VM. `main` is still 1.0.1 + M15.11 (the AI fixes); KI-13 arrows still blocked.
 - Package repo `../empires-startos` has a matching branch `m16-multiplayer` with the multiplayer docs (version not
   bumped yet).
 - **Next (see `docs/MULTIPLAYER.md`):** M16.5b late rejoin (replay), M16.6 desync report + latency-based delay,
