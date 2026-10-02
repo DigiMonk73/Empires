@@ -238,9 +238,11 @@ async function boot(): Promise<void> {
     hudActions.setMenu(false);
   };
   hudActions.restart = () => location.reload();
+  let quitting = false;
   hudActions.quit = () => {
     if (mp) {
       // Quitting a multiplayer game says so (the others don't wait out the hold) and forgets the seat.
+      quitting = true;
       mp.net.leave();
       try {
         sessionStorage.removeItem(MP_KEY);
@@ -316,7 +318,12 @@ async function boot(): Promise<void> {
   if (mp && mpBanner) {
     hud.multiplayer.value = true;
     let lost = false;
-    mp.net.onDisconnect = () => (lost = true);
+    // A dropped connection: load the page again — it rejoins within the server's hold and replays the game to
+    // where it is (M16.5b). (Not when quitting.)
+    mp.net.onDisconnect = () => {
+      lost = true;
+      if (!quitting) setTimeout(() => location.reload(), 1500);
+    };
     mpBanner.className = 'mp-banner';
     mpBanner.dataset.testid = 'mp-waiting';
     mpBanner.hidden = true;
@@ -357,7 +364,7 @@ async function boot(): Promise<void> {
     mp.onChat = (c) => notifier?.post(`${c.name}: ${c.text}`, { key: `chat-${chatSeq++}`, color: c.player ? lightColor(c.player) : undefined });
     setInterval(() => {
       if (lost) {
-        mpBanner.textContent = 'Lost the connection to the game server — this game can’t go on here (the others carry on with a computer in your place).';
+        mpBanner.textContent = 'Lost the connection to the game server — reconnecting…';
         mpBanner.hidden = false;
         return;
       }

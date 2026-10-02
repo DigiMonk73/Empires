@@ -133,6 +133,10 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
   await expect(host!.getByTestId('menu-resume')).toBeVisible();
   for (const id of ['menu-restart', 'menu-save', 'menu-load']) await expect(host!.getByTestId(id)).toHaveCount(0);
   await host!.getByTestId('menu-resume').click();
+  // A connection blip (the socket closes, the page stays): the page reloads itself and rejoins.
+  const blip = await tick(host!);
+  await guest!.evaluate(() => (window as unknown as { __mp: { net: { close(): void } } }).__mp.net.close());
+  await guest!.waitForFunction((t) => (window.__empires?.query.tick() ?? -1) > t, blip, { timeout: 60_000 });
   const before = await tick(host!);
   await guest!.reload();
   // The guest's page replays the game from the start and joins in again where it is.
