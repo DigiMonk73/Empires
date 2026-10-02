@@ -77,9 +77,9 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       progress", `server-ws.test.ts`, e2e "reloads mid-game" (both engines).
 - [ ] **M16.6 Desync report**, latency-based delay, room list polish.
 - [x] **M16.7 StartOS.** _Done:_ version 1.1.0; the package's instructions and README cover multiplayer (branch
-      `m16-multiplayer` in `../empires-startos`, 74e7de4); verify:full green (1173 s: 659 unit + 168 e2e, AI suite,
-      determinism ×3, soaks, Docker both arches, Tauri, make arm); both `.s9pk` 1.1.0:0 built — **not installed on
-      the VM** (the user's call).
+      `m16-multiplayer` in `../empires-startos`, cc8b265 — with M16.5b); verify:full green (660 unit + 168 e2e, AI
+      suite, determinism ×3, soaks, Docker both arches, Tauri, make arm); both `.s9pk` 1.1.0:0 built — **not
+      installed on the VM** (the user's call).
 - [ ] **M16.8 Exit:** verify:full green; a 4-player game (2 humans in two headless browsers + 2 AIs) runs 30 game
       minutes with no desync; the user plays one game against a friend.
 
