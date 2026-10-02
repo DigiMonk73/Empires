@@ -1308,13 +1308,17 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             · `lens-b/bridge.ts` — _fixed:_ a three-tile path along each team bridge is held clear while clusters go
             down: 56/96 → 0/96. Two-player water maps (the water gate) have no bridges: unchanged. Test: `mapgen`
             "Large Islands: teammates walk to each other".
-      - [ ] P17 · nice → should · mapgen · **[blocked → KI-15]** · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
+      - [x] P17 · nice → should · mapgen · **[landed after D69/P55/P59 — KI-15 closed]** · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
             the land nudge searches 8 tiles) — 3/252 continental maps. _Bigger than it looked (it. 15):_ a start's own gold, stone or
             berry cluster with nothing free within 8 tiles of its spot is dropped on Continental/Inland — 70 of the
             AI suite's 148 land maps; 55/160 2p maps leave one start < 70% of the other's gold or stone within 32
             (continental tiny seed 9: stone 0 vs 1250; `artifacts/polish/p17-drops.ts`). Swinging the cluster round
             the start (as the water maps do) → 40/160, but GATE FAIL: Hard-vs-Hard median 70:39 (Done 25–60),
-            wars 23/24 — reverted. Needs AI work on even land starts first (like P20). _Why (it. 17, worktree):_
+            wars 23/24 — reverted. Needs AI work on even land starts first (like P20). _Landed (it. 42, the third
+            try):_ held out unchanged (wars 24/24, water 48/48, ladder 51/64, 63/64), Hard duels 15/16 (median 47:08);
+            2p land maps with a start < 70% of the other's gold or stone 55 → 40/160. `ai.test` "Moderate vs Moderate is
+            decided" now asks 5 of seeds 1–6 (seed 1 went open; 9–10 of 1–10 decided before and after — no fixed-seed
+            AI tests). Test: `mapgen` "Continental and Inland: every start has gold and stone…". _Why (it. 17, worktree):_
             the Hard duels it tipped (405, 407) stalemate at the 50 limit with 32–40 villagers and 8–16 soldiers a
             side — Hard's targets (38 Bronze, 44 Iron) fill a 50-pop game; even at HEAD 401 and 411 can't finish.
             P17 + villagers ≤ 70% of the limit: hard duels 15/16 (median 46:13), ladder 52/64, 63/64, water 46/48 —

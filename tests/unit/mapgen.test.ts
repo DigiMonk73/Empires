@@ -273,6 +273,23 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('Continental and Inland: every start has gold and stone of its own nearby (M15.10 P17)', () => {
+    // A start's own cluster with nothing free within 8 tiles of its spot was dropped (a lake, a forest): continental
+    // tiny seed 9 left one player no stone within 30, its opponent 1,250.
+    for (const type of ['continental', 'inland'] as const) {
+      for (const size of ['tiny', 'small'] as const) {
+        for (let seed = 1; seed <= 20; seed++) {
+          const m = generateMap({ seed, type, size, players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
+          const sim = Sim.create(m);
+          near(sim, m.starts, 30).forEach((z, p) => {
+            expect(z.goldMine ?? 0, `${type} ${size} seed ${seed} P${p + 1} gold`).toBeGreaterThan(0);
+            expect(z.stoneMine ?? 0, `${type} ${size} seed ${seed} P${p + 1} stone`).toBeGreaterThan(0);
+          });
+        }
+      }
+    }
+  });
+
   it('is deterministic and seed-sensitive', () => {
     const a = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
     const b = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });

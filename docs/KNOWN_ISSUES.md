@@ -35,9 +35,4 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   tile, stuck for the game. Holding the Town Center's villager tiles clear fixes it but moves held-out water down
   every time (46 → 44, 46 → 44 after D69, 47 → 45 after P55: three cycles, blocked). Next: trace the water games that stop finishing (dev seeds 401–448,
   `diagnose.ts water-trace`) — the computers seem to need the lopsided start to end the game.
-- **KI-15 · should (blocked by the AI gates) · land starts lose a gold, stone or berry cluster** — M15.10 P17. On
-  Continental/Inland a start's own cluster with nothing free within 8 tiles of its spot is dropped (70 of the AI
-  suite's 148 land maps; 55/160 2p maps leave one start < 70% of the other's gold or stone within 32). Swinging it
-  round the start fixes most (→ 40/160) but flips one held-out 1v1 war (24 → 23/24), with or without D69. Patch:
-  the P17 note in PROGRESS (M15.10).
-
+- _KI-15 (land starts losing a cluster) closed in M15.10 (P17), after D69._

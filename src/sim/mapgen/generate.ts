@@ -589,16 +589,24 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
    * Where a start's cluster goes. The water maps keep its distance from the start (fairness) and swing it around
    * the start until it fits on land; the land maps keep their original nudge to the nearest free tile.
    */
-  const spotFor = (p: number, off: { d: number; a: number }, maxR: number, ok: (x: number, y: number) => boolean): [number, number] | null => {
+  const spotFor = (p: number, off: { d: number; a: number; kind?: string }, maxR: number, ok: (x: number, y: number) => boolean): [number, number] | null => {
     const [x, y] = place(p, off);
-    if (o.type === 'continental' || o.type === 'inland') return nearestFree(x, y, maxR, ok);
+    // (Nothing free within reach — the spot fell in a lake or a forest: swing round the start as the water maps do,
+    // rather than drop a start's own gold, stone or berries — 55 of 160 two-player land maps left one start short,
+    // M15.10 P17.)
+    if (o.type === 'continental' || o.type === 'inland') return nearestFree(x, y, maxR, ok) ?? (mine(off) ? swing(p, off, ok) : null);
+    return swing(p, off, ok) ?? nearestFree(x, y, maxR, ok);
+  };
+  const mine = (off: { d: number; a: number; kind?: string }): boolean => off.kind === 'G' || off.kind === 'S' || off.kind === 'B';
+  /** The first spot at the cluster's distance from the start that `ok` accepts, swinging either way round it. */
+  const swing = (p: number, off: { d: number; a: number }, ok: (x: number, y: number) => boolean): [number, number] | null => {
     for (let k = 0; k <= TRIG_STEPS / 2; k += Math.max(1, Math.floor(TRIG_STEPS / 128))) {
       for (const sgn of k ? [1, -1] : [1]) {
         const [px, py] = place(p, { d: off.d, a: (off.a + sgn * k + TRIG_STEPS) % TRIG_STEPS });
         if (ok(px, py)) return [px, py];
       }
     }
-    return nearestFree(x, y, maxR, ok);
+    return null;
   };
   const clusterSeeds = new Rng(o.seed ^ 0x5eed, STREAM.mapgen); // same cluster shapes for every player
   for (let p = 0; p < n; p++) {

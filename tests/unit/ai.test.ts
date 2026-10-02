@@ -29,13 +29,20 @@ describe('AI v1 economy (M6.4)', () => {
 
 describe('AI v1 military (M6.5)', () => {
   it('Moderate vs Moderate is decided by conquest', () => {
-    // Within the hour the Done definition allows for an even 1v1 (25–60 min); the suite gates 75% of 1v1s decided
-    // within 45 min. M13.2 (rush odds per level, upgrades) redrew the plans: seeds 1–10 are decided in 9 of 10
-    // (median ~35 min); seed 5, used until then, is now the one open game — seed 1 (≈36 min) is typical.
-    const r = runMatch({ seed: 1, type: 'continental', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 60 });
-    expect(r.winner).not.toBeNull();
-    expect(r.winner!.length).toBe(1);
-  });
+    // Within the hour the Done definition allows for an even 1v1 (25–60 min); the suite gates the held-out 1v1s.
+    // Seeds 1–10 have run 9 or 10 of 10 decided through M13–M15 — which one stays open moves whenever the maps or the
+    // AI do (seed 5 until M13.2, seed 1 after M15.10 P17), so this asks it of most of six, not of one (LOOP.md "AI
+    // work": no fixed-seed AI tests).
+    let decided = 0;
+    for (let seed = 1; seed <= 6; seed++) {
+      const r = runMatch({ seed, type: 'continental', size: 'tiny', levels: ['moderate', 'moderate'], minutes: 60 });
+      if (r.winner) {
+        expect(r.winner.length, `seed ${seed}`).toBe(1);
+        decided++;
+      }
+    }
+    expect(decided).toBeGreaterThanOrEqual(5);
+  }, 120_000);
 });
 
 describe('AI in the Iron Age (M7.4)', () => {
