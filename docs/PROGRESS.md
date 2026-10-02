@@ -1246,6 +1246,14 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
+      - _**AI gate noise floor (it. 64, for the user — gates untouched):** the full suite with the AIs' think timing
+        shifted 1, 2 or 3 ticks (no rule changed; `artifacts/polish/noise-{1,2,3}.log`): 1v1 wars 22 / 23 / 24 of
+        24, Hard > Moderate 46 / 48 / 52 of 64 (the +1 shift fails the 48 bar), held-out water 42 / 46 / 47 of 48,
+        Hard duels 15–16 of 16. Tonight's baseline (24 / 51 / 48 / 16) sits at the top of that spread, so "held-out
+        must not fall" turns ±1–2 games of chance into a block: P2, P20, P24, P53, P70, P74 and P76 each failed by
+        1–2 games (most with a passing scene test). Fixes that never trigger in the gated setups (P54, P78, P79)
+        passed unchanged. Deciding how to gate AI changes (more seeds, a tolerance, a fixed noise band) is the
+        user's call._
       - _Lens F3 (big groups now that a raised limit brings big armies, P78; `artifacts/polish/lens-f3/`): 60–100
         infantry and 60 cavalry through 1–3-tile gaps — all through in 13–27 s, nobody left. Found:_
       - [x] P79 · should · pathing · 7 of 30 (5 of 40) War Elephants sent through a 2-tile gap gave up after 8 s
