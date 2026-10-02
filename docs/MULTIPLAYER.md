@@ -73,6 +73,8 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
 - [ ] **M16.6 Desync report**, latency-based delay, room list polish.
 - [ ] **M16.7 StartOS.** README/instructions: multiplayer section (everyone opens the same address; the interface
       can be shared on the LAN or Tor). Version 1.1.0. Both `.s9pk`.
+- _Soak (`node tools/sim/net-soak.ts [minutes] [humans] [computers] [seed]`, real server, Node clients, fuzzed
+  orders): 2 + 2 for 30 min, 4 + 4 for 60 min, 3 + 1 for 30 min — every checkpoint equal, no desync (2026-10-02)._
 - [ ] **M16.8 Exit:** verify:full green; a 4-player game (2 humans in two headless browsers + 2 AIs) runs 30 game
       minutes with no desync; the user plays one game against a friend.
 
