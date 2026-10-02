@@ -52,11 +52,11 @@ playtest). Multiplayer is next (M16).
 
 ## Status
 - 2026-10-02 10:15 — **`m16-multiplayer` is 1.1.0**: playable multiplayer (host/join from the menu, lockstep over the
-  server's `/ws`, pause for everyone, chat, a computer takes a departed player's seat; a player who drops mid-game
-  can't rejoin yet). verify:full green; both `.s9pk` 1.1.0:0 built (package repo branch `m16-multiplayer`,
+  server's `/ws`, pause for everyone, chat, a dropped player rejoins within 30 s by replaying the game, else a
+  computer takes the seat). verify:full green; both `.s9pk` 1.1.0:0 built (package repo branch `m16-multiplayer`,
   74e7de4) — not installed on the VM. `main` is still 1.0.1 + M15.11 (the AI fixes); KI-13 arrows still blocked.
 - Package repo `../empires-startos` has a matching branch `m16-multiplayer` (1.1.0:0, its submodule on this
   branch's 11cd824). After any further change here: move that submodule, commit there, then `make`.
-- **Next (see `docs/MULTIPLAYER.md`):** M16.5b rejoin mid-game (replay from tick 0), M16.6 desync report +
+- **Next (see `docs/MULTIPLAYER.md`):** M16.6 desync report +
   latency-based delay, M16.8 the user plays a game against a friend on the VM. Then merge `m16-multiplayer` into
   `main` (fast-forward) in both repos. KI-13 arrows (KNOWN_ISSUES) is the open single-player item.

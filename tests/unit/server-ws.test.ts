@@ -165,11 +165,21 @@ describe('multiplayer relay (M16.1)', () => {
     expect([...(await b2.nextBinary())]).toEqual([7, 7, 7]);
     b2.ws.send(new Uint8Array([1]));
     expect([...(await a.nextBinary())]).toEqual([1]);
-    // Once it has played, a drop can't rejoin (its page would start over from tick 0): the others hear at once.
-    const t0 = Date.now();
+    // Once it has played, a drop is held too — and the rejoin brings the whole log, its own packets included, so
+    // its page can replay the game from the start (M16.5b).
     b2.ws.close();
+    await new Promise((r) => setTimeout(r, 50));
+    a.ws.send(new Uint8Array([8]));
+    const b3 = await connect();
+    b3.send({ t: 'rejoin', code, peer: 1, token });
+    expect(await b3.next('rejoined')).toMatchObject({ you: 1, replay: true });
+    const log = [[...(await b3.nextBinary())], [...(await b3.nextBinary())], [...(await b3.nextBinary())]];
+    expect(log).toEqual([[7, 7, 7], [1], [8]]);
+    // Quitting says so: the others hear at once, no hold.
+    const t0 = Date.now();
+    b3.send({ t: 'leave' });
     expect(await a.next('left')).toMatchObject({ peer: 1 });
-    expect(Date.now() - t0, 'no hold for a member that played').toBeLessThan(1500);
+    expect(Date.now() - t0, 'no hold for a member that quit').toBeLessThan(1500);
     a.ws.close();
   });
 

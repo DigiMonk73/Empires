@@ -88,7 +88,7 @@ test('two players host and join from the menu, then play one game in step (M16.3
   expect(errors).toEqual([]);
 });
 
-test('a player who closes the game: a computer takes the seat at once and play goes on (M16.5)', async ({ browser }) => {
+test('a player who closes the game: the other waits briefly, then a computer takes the seat and play goes on (M16.5)', async ({ browser }) => {
   test.setTimeout(120_000);
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   await enterLobby(host!, 'Ann');
@@ -102,7 +102,8 @@ test('a player who closes the game: a computer takes the seat at once and play g
   await host!.getByTestId('setup-start').click();
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
   await guest!.close();
-  // A player already in the game can't come back, so the host hears at once and plays on.
+  // The test server holds a dropped player's seat 3 s (StartOS: 30 s) in case they come back; meanwhile the host waits.
+  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 15_000 });
   const t0 = await tick(host!);
   await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(t0 + 100);
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
@@ -112,9 +113,11 @@ test('a player who closes the game: a computer takes the seat at once and play g
     .toBeGreaterThan(0);
 });
 
-test('a player who reloads mid-game is told the game went on, and the other plays on (M16.5)', async ({ browser }) => {
+test('a player who reloads mid-game catches up and both play on in step (M16.5b)', async ({ browser }) => {
   test.setTimeout(120_000);
+  const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
   await enterLobby(host!, 'Ann');
   await enterLobby(guest!, 'Bo');
   await host!.getByTestId('mp-host').click();
@@ -124,17 +127,22 @@ test('a player who reloads mid-game is told the game went on, and the other play
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
-  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 300, null, { timeout: 60_000 });
   // The in-game menu has no Restart, Save, Load or speed in multiplayer.
   await host!.keyboard.press('F10');
   await expect(host!.getByTestId('menu-resume')).toBeVisible();
   for (const id of ['menu-restart', 'menu-save', 'menu-load']) await expect(host!.getByTestId(id)).toHaveCount(0);
   await host!.getByTestId('menu-resume').click();
+  const before = await tick(host!);
   await guest!.reload();
-  await expect(guest!.getByTestId('mp-gone')).toContainText('went on without you');
-  const t0 = await tick(host!);
-  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(t0 + 100);
-  await expect
-    .poll(() => host!.evaluate(() => window.__empires!.query.units(2).filter((u) => u.type === 'villager' && u.hasOrder).length), { timeout: 30_000 })
-    .toBeGreaterThan(0);
+  // The guest's page replays the game from the start and joins in again where it is.
+  await guest!.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 0, null, { timeout: 60_000 });
+  await expect.poll(() => tick(guest!), { timeout: 60_000 }).toBeGreaterThan(before);
+  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(before + 200);
+  await expect.poll(() => tick(guest!), { timeout: 30_000 }).toBeGreaterThan(before + 200);
+  expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
+  expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
+  // Still the guest's own seat (no computer took it).
+  expect(await guest!.evaluate(() => window.__mp!.session.localPlayer)).toBe(2);
+  expect(errors).toEqual([]);
 });

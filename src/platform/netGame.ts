@@ -20,6 +20,8 @@ export interface NetGame {
   pause: { on: boolean; by: string };
   /** Chat lines as they arrive (the game shows them as messages). */
   onChat: (line: { player: number; name: string; text: string }) => void;
+  /** Replaying the game after a rejoin (step as fast as the packets allow, M16.5b). */
+  catchingUp: boolean;
 }
 
 export function readLaunch(): MpLaunch | null {
@@ -41,8 +43,10 @@ export async function startNetGame(): Promise<NetGame> {
   // The transport first: the packets that waited on the server arrive right after the rejoin.
   const transport = net.transport((p) => box.r?.receive(p));
   const router = (box.r = new LockstepRouter({ peer: launch.you, peers: launch.peers, delay, transport }));
+  // Back after a drop (M16.5b): the room's packets since the start follow — replay them, ours included.
+  net.onRejoined = (info) => (router.replaying = !!info.replay);
   await net.rejoin(launch.code, launch.you, launch.token).catch(() => {
-    // Only the page the lobby opened may rejoin (before playing): a reload mid-game can't catch up yet (M16.5b).
+    // The seat is gone (the hold ran out, the player quit, or the game outgrew the server's log).
     try {
       sessionStorage.removeItem(MP_KEY);
     } catch {
@@ -56,7 +60,15 @@ export async function startNetGame(): Promise<NetGame> {
   session.speed = setup.speed || 1;
   const left = new Set<number>();
   net.onLeft = (peer) => takeOver({ router, session, seats, aiSeats, left, you: launch.you }, peer);
-  const g: NetGame = { session, router, net, launch, left, pause: { on: false, by: '' }, onChat: () => {} };
+  const g: NetGame = { session, router, net, launch, left, pause: { on: false, by: '' }, onChat: () => {}, catchingUp: router.replaying };
+  if (router.replaying) {
+    // Replaying the game to where it is: no sounds or messages until we're live (the others wait for us meanwhile).
+    session.muted = true;
+    router.onLive = () => {
+      session.muted = false;
+      g.catchingUp = false;
+    };
+  }
   net.onPause = (p) => (g.pause = { on: p.on, by: p.name });
   net.onChat = (c) => g.onChat({ player: seats[c.from] ?? 0, name: c.name, text: c.text });
   return g;

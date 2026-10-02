@@ -13,9 +13,10 @@
 //   {t:'chat', text}                     → {t:'chat', from, name, text} to everyone
 //   {t:'pause', on}                      → {t:'pause', on, from, name} to everyone (a started game; anyone may)
 //   {t:'ping', at}                       → {t:'pong', at}
-//   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game} — into a started game from the game page
-//                                          (within AWAY_MS of the lobby page closing, before playing; the packets
-//                                          sent meanwhile are delivered first). `token` comes in your {t:'room'}.
+//   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game, replay} — back into a started game within
+//                                          AWAY_MS of dropping (the game page after the lobby, a reload, a blip). Then
+//                                          come the packets it missed — or, if it had played, the room's whole log to
+//                                          replay from tick 0. `token` comes in your {t:'room'}.
 // Server → clients also: {t:'left', peer} (a member left a started game), {t:'closed', why} (the host left before
 // the start), {t:'error', error}.
 // Binary frames: game packets. In a started room each one goes unchanged to every other member.
@@ -29,6 +30,8 @@ const MAX_MEMBERS = 8;
 /** A member of a started game who drops is held this long before the others hear {t:'left'} (a page load). */
 const AWAY_MS = 30_000;
 const MAX_BUFFERED = 50_000;
+/** Game packets kept per room so a member back from a drop can replay the game from the start (M16.5b). */
+const MAX_LOG = 2_000_000;
 
 /** Attach the relay to an `http.Server`: upgrades on `path` become WebSocket clients. */
 export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWAY_MS } = {}) {
@@ -116,6 +119,7 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         if (!room || room.members[0] !== c || room.started) return sendJson(c, { t: 'error', error: 'only the host starts the game' });
         room.started = true;
         room.game = m.game ?? null;
+        room.log = [];
         log(`room ${room.code} started with ${room.members.length}`);
         room.members.forEach((o, i) => sendJson(o, { t: 'start', game: m.game ?? null, you: i, peers: room.members.length }));
         return;
@@ -130,9 +134,12 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         c.token = old.token;
         c.room = r;
         r.members[peer] = c;
-        sendJson(c, { t: 'rejoined', code: r.code, you: peer, peers: r.members.length, game: r.game });
-        for (const data of old.buffer) c.sendBinary(data);
-        log(`room ${r.code}: peer ${peer} back (${old.buffer.length} packets waited)`);
+        c.sent = old.sent;
+        // Before it played: the packets that waited. After: everything since the start, to replay the game.
+        const replay = old.sent;
+        sendJson(c, { t: 'rejoined', code: r.code, you: peer, peers: r.members.length, game: r.game, replay });
+        for (const data of replay ? r.log : old.buffer) c.sendBinary(data);
+        log(`room ${r.code}: peer ${peer} back (${replay ? `replaying ${r.log.length}` : `${old.buffer.length} waited`} packets)`);
         return;
       }
       case 'pause': {
@@ -156,7 +163,9 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
   function relay(c, data) {
     const room = c.room;
     if (!room || !room.started) return;
-    c.sent = true; // in the game now: from here a drop can't rejoin (see leave)
+    c.sent = true; // in the game now: a drop from here rejoins by replaying the room's log (see rejoin)
+    if (room.log.length < MAX_LOG) room.log.push(Buffer.from(data));
+    else room.logFull = true;
     for (const o of room.members) {
       if (o === c) continue;
       if (o.away) {
@@ -171,19 +180,19 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
     c.room = null;
     const peer = room.members.indexOf(c);
     if (room.started) {
-      // Peer indices stay fixed in a running game. A member that drops before sending anything — every member's
-      // page loads the game right after the start — is held `awayMs`: its packets wait, and it rejoins with its
-      // token. One already playing can't rejoin (its page would start the game over from tick 0 while the others
-      // wait for it — M16.5b, replay, is to do), so the others hear at once that it left and a computer takes its
-      // seat.
+      // Peer indices stay fixed in a running game. A member whose connection drops (a page load — every member's
+      // page loads the game right after the start — a reload, a blip) is held `awayMs` while the others wait, and
+      // rejoins with its token: before it played, the packets sent meanwhile are delivered; after, the room's whole
+      // log, which its page replays from tick 0 (M16.5b). A member that says {t:'leave'} (Quit) goes at once; so
+      // does one whose game outgrew the log. Then the others hear it left and a computer takes its seat.
       const gone = () => {
         room.members[peer] = { closed: true, sendText() {}, sendBinary() {}, name: c.name, id: c.id };
         const live = room.members.filter((o) => !o.closed && !o.away);
         for (const o of live) sendJson(o, { t: 'left', peer });
         if (!room.members.some((o) => !o.closed)) rooms.delete(room.code);
       };
-      if (c.closed && c.token && awayMs > 0 && !c.sent) {
-        const held = { away: true, closed: false, buffer: [], token: c.token, name: c.name, id: c.id, sendText() {}, sendBinary() {} };
+      if (c.closed && c.token && awayMs > 0 && !room.logFull) {
+        const held = { away: true, closed: false, buffer: [], sent: !!c.sent, token: c.token, name: c.name, id: c.id, sendText() {}, sendBinary() {} };
         held.awayTimer = setTimeout(() => room.members[peer] === held && gone(), awayMs);
         room.members[peer] = held; // (everyone is away a moment at the start: each page loads the game)
         return;

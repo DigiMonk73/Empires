@@ -119,3 +119,73 @@ describe('two sessions through the relay (M16.2)', () => {
     guest.close();
   }, 90_000);
 });
+
+describe('rejoining a game in progress (M16.5b)', () => {
+  it('a guest whose connection drops comes back by replaying the game, and both play on in step', async () => {
+    const url = `ws://127.0.0.1:${PORT}/ws`;
+    const host = new NetClient();
+    const guest = new NetClient();
+    await host.connect(url, 'Host');
+    await guest.connect(url, 'Guest');
+    const room = await host.create();
+    const joined = await guest.join(room.code);
+    const setup: SkirmishSetup = {
+      ...DEFAULT_SETUP,
+      seed: 33,
+      type: 'inland',
+      size: 'tiny',
+      players: [
+        { civ: 'greek', team: 1, controller: 'human' },
+        { civ: 'persian', team: 2, controller: 'human' },
+        { civ: 'egyptian', team: 3, controller: 'hard' },
+      ],
+    };
+    const starts = Promise.all([host, guest].map((c) => new Promise<void>((r) => (c.onStart = () => r()))));
+    host.start({ setup, delay: 4 });
+    await starts;
+    const make = (client: NetClient, you: number, replaying = false) => {
+      const box: { r?: LockstepRouter } = {};
+      const router = (box.r = new LockstepRouter({ peer: you, peers: 2, delay: 4, transport: client.transport((p) => box.r!.receive(p)), checkEvery: 50 }));
+      router.replaying = replaying;
+      const session = new GameSession(skirmishConfig(setup), you + 1, router, { ais: you === 0 ? [3] : [] });
+      const hands = new OrderFuzzer(700 + you, 30);
+      const trace = new Map<number, number>();
+      session.onTick(() => {
+        for (const pc of hands.commands(session.sim)) if (pc.player === you + 1) session.router.submit(pc.player, pc.cmd);
+        if (session.sim.tick % 100 === 0) trace.set(session.sim.tick, session.sim.hash());
+      });
+      return { router, session, trace };
+    };
+    const a = make(host, 0);
+    let b = make(guest, 1);
+    const drive = async (peers: { session: GameSession }[], until: number) => {
+      const t0 = Date.now();
+      while (peers.some((p) => p.session.sim.tick < until)) {
+        let stepped = false;
+        for (const p of peers) for (let k = 0; k < 25 && p.session.sim.tick < until && p.session.canStep(); k++) (p.session.stepOnce(), (stepped = true));
+        await new Promise((r) => (stepped ? setImmediate(r) : setTimeout(r, 1)));
+        if (Date.now() - t0 > 60_000) throw new Error(`stalled at ${peers.map((p) => p.session.sim.tick)}`);
+      }
+    };
+    await drive([a, b], 600);
+    const traceBefore = b.trace;
+    guest.close(); // the connection drops
+    await new Promise((r) => setTimeout(r, 100));
+    // A new page: a new client and a new session from tick 0, replaying the room's log.
+    const back = new NetClient();
+    await back.connect(url, '');
+    b = make(back, 1);
+    back.onRejoined = (info) => (b.router.replaying = !!info.replay);
+    const info = await back.rejoin(room.code, 1, joined.token!);
+    expect(info.replay).toBe(true);
+    let live = false;
+    b.router.onLive = () => (live = true);
+    await drive([a, b], 1600);
+    expect(live, 'the replay reached the present').toBe(true);
+    for (const [t, h] of a.trace) if (b.trace.has(t)) expect(b.trace.get(t), `tick ${t}`).toBe(h);
+    for (const [t, h] of traceBefore) expect(b.trace.get(t), `tick ${t} again`).toBe(h);
+    expect(a.router.desync ?? b.router.desync).toBeNull();
+    host.close();
+    back.close();
+  }, 90_000);
+});

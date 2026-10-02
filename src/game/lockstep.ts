@@ -52,6 +52,14 @@ export class LockstepRouter implements CommandRouter {
   private lastFrom: number[];
   /** Peers that left: ticks after this one don't wait for them (M16.5). */
   private dropAfter = new Map<number, number>();
+  /**
+   * Replaying after a rejoin (M16.5b): the room's log brings this peer's own old packets too. While on, they're
+   * taken like anyone's, and a tick whose own packet is already in is neither sealed again nor sent — the
+   * commands given meanwhile (a computer re-deciding the past) are dropped. It ends at the first tick of our own
+   * that the log doesn't have: from there we're live (`onLive`).
+   */
+  replaying = false;
+  onLive: () => void = () => {};
 
   constructor(o: { peer: number; peers: number; delay: number; transport: LockstepTransport; checkEvery?: number }) {
     if (o.delay < 1) throw new Error('lockstep needs a delay of at least one tick');
@@ -99,11 +107,19 @@ export class LockstepRouter implements CommandRouter {
   collect(tick: number): PlayerCommand[] {
     if (!this.ready(tick)) throw new Error(`lockstep: tick ${tick} is still waiting for a peer`);
     const at = tick + this.delay;
-    const bytes = encodeCommands(this.pending);
-    this.pending = [];
-    this.store(at, this.peer, decodeCommands(bytes));
-    this.transport.send({ from: this.peer, tick: at, cmds: bytes, ...(this.check ? { check: this.check } : {}) });
-    this.check = null;
+    if (this.replaying && this.inbox.get(at)?.[this.peer]) {
+      this.pending = []; // our packet for `at` went out before the drop: the log has it
+    } else {
+      if (this.replaying) {
+        this.replaying = false;
+        this.onLive();
+      }
+      const bytes = encodeCommands(this.pending);
+      this.pending = [];
+      this.store(at, this.peer, decodeCommands(bytes));
+      this.transport.send({ from: this.peer, tick: at, cmds: bytes, ...(this.check ? { check: this.check } : {}) });
+      this.check = null;
+    }
     const slot = this.inbox.get(tick);
     this.inbox.delete(tick);
     this.done = tick;
@@ -114,7 +130,7 @@ export class LockstepRouter implements CommandRouter {
 
   /** A packet from another peer (duplicates and stale ones are dropped). */
   receive(p: LockstepPacket): void {
-    if (p.from === this.peer || p.from < 0 || p.from >= this.peers || p.tick <= this.done) return;
+    if ((p.from === this.peer && !this.replaying) || p.from < 0 || p.from >= this.peers || p.tick <= this.done) return;
     const after = this.dropAfter.get(p.from);
     if (after !== undefined && p.tick > after) return; // (a peer that left sends nothing more; never apply it)
     if (this.inbox.get(p.tick)?.[p.from]) return;

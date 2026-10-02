@@ -32,9 +32,9 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
   `delay = clamp(ceil(maxRTT / 50 ms) + 2, 4, 12)`.
 - **Speed and pause:** both become commands (`{t:'speed'}` / `{t:'pause'}`) so every peer applies them at the
   same tick. The host's choice wins; any player may pause (as the original).
-- **Disconnects (as built, M16.5):** a member that hasn't played yet (each page loads the game after the start)
-  keeps its seat for the hold (`--away-ms`, 30 s) and rejoins with its token; one that drops mid-game is announced
-  at once with `{left, peer}`. The relay has delivered everything
+- **Disconnects (as built, M16.5/5b):** a member whose connection drops keeps its seat for the hold (`--away-ms`,
+  30 s; every page drops once, loading the game after the start) and rejoins with its token — replaying the room's
+  log if it had played; Quit, or the hold running out, sends `{left, peer}` to the room. The relay has delivered everything
   that peer sent first, so every survivor calls `router.drop(peer)` and stops waiting after the same tick. The
   lowest-numbered remaining peer runs a computer for the seat (and every computer seat, if the host left); its
   commands travel in that peer's packets.
@@ -66,15 +66,15 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
 - [x] **M16.5 Disconnects** (the part that keeps a game alive). _Done:_ `LockstepRouter.drop(peer)` — the relay
       delivers everything a peer sent before announcing it left, so every survivor stops waiting after the same
       tick; `takeOver()` in `netGame.ts` gives the seat to a computer run by the lowest remaining peer (all the
-      computers, if the host left). The server holds a seat (`--away-ms`, 30 s) only for a member that hasn't
-      played yet — every page loads the game right after the start and rejoins with its token. A member that drops
-      mid-game is announced at once: its page can't catch up (it would start over from tick 0 while the others
-      waited), so on a reload it shows "That multiplayer game went on without you" and a link to the menu. The
-      in-game menu has no speed, Save, Load or Restart in multiplayer. Tests: `lockstep.test.ts` "a peer leaving",
-      `server-ws.test.ts`, e2e "closes the game" and "reloads mid-game". _Left:_ M16.5b.
-- [ ] **M16.5b Rejoin mid-game.** The server keeps the room's packets from the start; a rejoining client replays
-      them from tick 0 at full speed (taking its own old packets from the log, sending nothing for past ticks), then
-      the computer hands the seat back. Until then a mid-game drop is final (a computer plays on).
+      computers, if the host left). A dropped member's seat is held (`--away-ms`, 30 s) while the others wait; Quit
+      sends `{t:'leave'}` and goes at once. The in-game menu has no speed, Save, Load or Restart in multiplayer.
+      Tests: `lockstep.test.ts` "a peer leaving", `server-ws.test.ts`, e2e "closes the game".
+- [x] **M16.5b Rejoin mid-game.** _Done:_ the server keeps each room's packets from the start (`room.log`, up to 2M);
+      a member back within the hold that had played gets `{t:'rejoined', replay:true}` and the whole log. Its page
+      replays from tick 0 at full speed, muted (`LockstepRouter.replaying` takes its own old packets from the log
+      and neither re-seals nor re-sends those ticks — what its computers re-decide meanwhile is dropped), and goes
+      live at the first tick the log lacks; the others resume. Tests: `net-session.test.ts` "rejoining a game in
+      progress", `server-ws.test.ts`, e2e "reloads mid-game" (both engines).
 - [ ] **M16.6 Desync report**, latency-based delay, room list polish.
 - [x] **M16.7 StartOS.** _Done:_ version 1.1.0; the package's instructions and README cover multiplayer (branch
       `m16-multiplayer` in `../empires-startos`, 74e7de4); verify:full green (1173 s: 659 unit + 168 e2e, AI suite,

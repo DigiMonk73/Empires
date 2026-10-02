@@ -31,6 +31,8 @@ export interface StartInfo<G = unknown> {
   game: G;
   you: number;
   peers: number;
+  /** After a rejoin: the room's packets since the start follow, to replay (M16.5b). */
+  replay?: boolean;
 }
 
 type Listener<T> = (v: T) => void;
@@ -53,6 +55,8 @@ export class NetClient {
   onError: Listener<string> = () => {};
   /** The connection dropped. */
   onDisconnect: Listener<void> = () => {};
+  /** The server took us back into a started game — called before any packet that follows (they may be a replay). */
+  onRejoined: Listener<StartInfo> = () => {};
   room: RoomState | null = null;
 
   /** `url`: ws(s)://host/prefix/ws — `NetClient.urlFor(location)` builds it from the page's address. */
@@ -134,7 +138,7 @@ export class NetClient {
   /** Back into a started game: the server delivers the packets sent meanwhile. */
   rejoin(code: string, peer: number, token: string): Promise<StartInfo> {
     this.sendJson({ t: 'rejoin', code, peer, token });
-    return this.expect('rejoined').then((m) => ({ game: m.game, you: m.you as number, peers: m.peers as number }));
+    return this.expect('rejoined').then((m) => ({ game: m.game, you: m.you as number, peers: m.peers as number, replay: !!m.replay }));
   }
 
   leave(): void {
@@ -185,6 +189,7 @@ export class NetClient {
   }
 
   private dispatch(m: Record<string, unknown>): void {
+    if (m.t === 'rejoined') this.onRejoined({ game: m.game, you: m.you as number, peers: m.peers as number, replay: !!m.replay });
     const i = this.waiters.findIndex((w) => w.t === m.t || m.t === 'error');
     if (i >= 0) {
       const [w] = this.waiters.splice(i, 1);

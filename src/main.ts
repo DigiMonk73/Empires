@@ -41,6 +41,7 @@ import { saves } from './platform/saves.ts';
 import { serverSaves } from './platform/serverSaves.ts';
 import { techTree } from './ui/techTree.ts';
 import { startNetGame, type NetGame } from './platform/netGame.ts';
+import { MP_KEY } from './platform/netLaunch.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -238,6 +239,17 @@ async function boot(): Promise<void> {
   };
   hudActions.restart = () => location.reload();
   hudActions.quit = () => {
+    if (mp) {
+      // Quitting a multiplayer game says so (the others don't wait out the hold) and forgets the seat.
+      mp.net.leave();
+      try {
+        sessionStorage.removeItem(MP_KEY);
+      } catch {
+        /* fine */
+      }
+      location.search = '';
+      return;
+    }
     void autosave().finally(() => (location.search = ''));
   };
   hud.speed.value = session.speed;
@@ -352,6 +364,11 @@ async function boot(): Promise<void> {
       const d = mp.router.desync;
       if (d) {
         mpBanner.textContent = `Out of sync with player ${mp.launch.game.seats[d.peer] ?? d.peer + 1} at ${formatClock(d.tick)} — this game can't continue.`;
+        mpBanner.hidden = false;
+        return;
+      }
+      if (mp.catchingUp) {
+        mpBanner.textContent = `Catching up with the game… ${formatClock(session.sim.tick)}`;
         mpBanner.hidden = false;
         return;
       }
@@ -525,7 +542,12 @@ async function boot(): Promise<void> {
     frameStart = t0;
     draws.frame();
     const dt = Math.min(0.25, t.deltaMS / 1000);
-    if (!frozen) alpha = session.update(dt);
+    if (mp?.catchingUp) {
+      // Back after a drop (M16.5b): replay the game as fast as the packets allow, ~40 ms of it per frame.
+      const until = performance.now() + 40;
+      while (mp.catchingUp && session.canStep() && performance.now() < until) session.stepOnce();
+      alpha = 1;
+    } else if (!frozen) alpha = session.update(dt);
     const t1 = performance.now();
     parts.sim = t1 - t0;
     camera.update(frozen ? 0 : dt);

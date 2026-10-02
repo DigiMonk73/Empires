@@ -104,6 +104,9 @@ export class GameSession {
   /** Frames spent waiting on the router (a lockstep peer's commands not in yet). */
   waited = 0;
 
+  /** Events go to no one (a multiplayer page replaying the game after a rejoin, M16.5b: no sounds or messages). */
+  muted = false;
+
   /** Whether the next tick may be simulated (always, except a lockstep router still waiting on a peer). */
   canStep(): boolean {
     return this.router.ready!(this.sim.tick);
@@ -116,7 +119,7 @@ export class GameSession {
     this.sim.step(this.router.collect(this.sim.tick));
     this.router.stepped!(this.sim);
     const ev = this.sim.drainEvents();
-    if (ev.length) for (const l of this.listeners) l(ev);
+    if (ev.length && !this.muted) for (const l of this.listeners) l(ev);
     for (const l of this.tickListeners) l();
   }
 }
