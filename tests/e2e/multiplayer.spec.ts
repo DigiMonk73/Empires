@@ -70,3 +70,28 @@ test('two players host and join from the menu, then play one game in step (M16.3
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+test('a player who closes the game: the other waits briefly, then a computer takes the seat and play goes on (M16.5)', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
+  await guest!.close();
+  // The test server holds a seat 3 s (StartOS: 30 s) for a page that reloads; meanwhile the host waits.
+  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 15_000 });
+  const t0 = await tick(host!);
+  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(t0 + 100);
+  await expect(host!.getByTestId('mp-waiting')).toBeHidden();
+  // Player 2's villagers are working for the computer now.
+  await expect
+    .poll(() => host!.evaluate(() => window.__empires!.query.units(2).filter((u) => u.type === 'villager' && u.hasOrder).length), { timeout: 30_000 })
+    .toBeGreaterThan(0);
+});

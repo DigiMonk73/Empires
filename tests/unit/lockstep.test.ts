@@ -112,3 +112,65 @@ describe('lockstep loopback with jitter (M15.2, Done 2)', () => {
     expect(remote).toBeGreaterThan(500);
   }, 120_000);
 });
+
+describe('a peer leaving a lockstep game (M16.5)', () => {
+  it('the others stop waiting for it after the same tick, a computer takes its seat, and they stay in step', async () => {
+    const { takeOver } = await import('../../src/platform/netGame.ts');
+    const net = new LoopbackNetwork(31, { latency: 20, jitter: 80 });
+    const cfg = skirmishConfig({
+      ...DEFAULT_SETUP,
+      seed: 31,
+      type: 'continental',
+      size: 'tiny',
+      players: [
+        { civ: 'greek', team: 1, controller: 'human' },
+        { civ: 'persian', team: 2, controller: 'human' },
+        { civ: 'egyptian', team: 3, controller: 'human' },
+        { civ: 'yamato', team: 4, controller: 'moderate' },
+      ],
+    });
+    const peers = [0, 1, 2].map((peer) => {
+      const box: { r?: LockstepRouter } = {};
+      const transport = net.join((p) => box.r!.receive(p));
+      const router = (box.r = new LockstepRouter({ peer, peers: 3, delay: 4, transport, checkEvery: 50 }));
+      const session = new GameSession(cfg, peer + 1, router, { ais: peer === 0 ? [4] : [] });
+      const hands = new OrderFuzzer(500 + peer, 30);
+      const trace = new Map<number, number>();
+      session.onTick(() => {
+        for (const pc of hands.commands(session.sim)) if (pc.player === peer + 1) session.router.submit(pc.player, pc.cmd);
+        if (session.sim.tick % 100 === 0) trace.set(session.sim.tick, session.sim.hash());
+      });
+      return { router, session, trace, left: new Set<number>() };
+    });
+    const run = (until: number, who: number[]) => {
+      for (let ms = 0; who.some((i) => peers[i]!.session.sim.tick < until); ms += 5) {
+        net.advance(5);
+        for (const i of who) if (peers[i]!.session.sim.tick < until) peers[i]!.session.update(0.005);
+        if (ms > 600_000) throw new Error(`stalled at ${who.map((i) => peers[i]!.session.sim.tick)}`);
+      }
+    };
+    run(300, [0, 1, 2]);
+    // Peer 2 (player 3) is gone: everything it sent arrives, then the others hear it left — at different ticks.
+    net.advance(2000);
+    // (Until they hear, each can run only as far as peer 2's last packet: tick 300 + the delay.)
+    run(302, [0]);
+    takeOver({ ...peers[0]!, seats: [1, 2, 3], aiSeats: [4], you: 0 }, 2);
+    run(304, [1]);
+    takeOver({ ...peers[1]!, seats: [1, 2, 3], aiSeats: [4], you: 1 }, 2);
+    // Player 3's seat now plays itself (peer 0 runs a computer for it) and the two stay in step.
+    const before = peers[0]!.session.sim.world.players[3]!.tally;
+    run(2000, [0, 1]);
+    const [a, b] = peers;
+    for (const [t, h] of a!.trace) if (b!.trace.has(t)) expect(b!.trace.get(t), `tick ${t}`).toBe(h);
+    expect(a!.router.desync ?? b!.router.desync).toBeNull();
+    expect(a!.left).toEqual(new Set([3]));
+    const units3 = (s: GameSession) => {
+      const w = s.sim.world;
+      let n = 0;
+      for (let e = 0; e < w.ents.top; e++) if (w.ents.alive[e] && w.ents.owner[e] === 3 && w.orders[e]?.length) n++;
+      return n;
+    };
+    expect(units3(a!.session), 'player 3 units with orders').toBeGreaterThan(0);
+    expect(before).toBeDefined();
+  }, 120_000);
+});

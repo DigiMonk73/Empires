@@ -4,6 +4,7 @@ import { MAP_TYPES } from '../../data/setup.ts';
 import type { SkirmishSetup } from '../../game/skirmish.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import { NetClient, type RoomInfo, type RoomState } from '../../platform/netClient.ts';
+import { MP_KEY, type MpLaunch, type NetGameInfo } from '../../platform/netLaunch.ts';
 import { Skirmish } from './Menu.tsx';
 
 /**
@@ -11,22 +12,7 @@ import { Skirmish } from './Menu.tsx';
  * host sets the game up (the skirmish setup with Human seats); guests see it fill in. When the host starts, every
  * member saves its seat and loads the game page, which rejoins the room (`src/game/netGame.ts`).
  */
-export interface MpLaunch {
-  url: string;
-  code: string;
-  token: string;
-  you: number;
-  peers: number;
-  game: NetGameInfo;
-}
-export interface NetGameInfo {
-  setup: SkirmishSetup;
-  /** Ticks of input delay. */
-  delay: number;
-  /** The player number each peer controls (peer index → player). */
-  seats: number[];
-}
-export const MP_KEY = 'empires.mp';
+export type { MpLaunch, NetGameInfo } from '../../platform/netLaunch.ts';
 
 const NAME_KEY = 'empires.name';
 const readName = (): string => {

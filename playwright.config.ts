@@ -34,7 +34,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `node server/serve.mjs --dir dist --port ${PORT} --host 127.0.0.1 --data ${DATA_DIR}`,
+    command: `node server/serve.mjs --dir dist --port ${PORT} --host 127.0.0.1 --data ${DATA_DIR} --away-ms 3000`,
     url: `http://127.0.0.1:${PORT}/healthz`,
     reuseExistingServer: false,
     timeout: 30_000,

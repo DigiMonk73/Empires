@@ -1,7 +1,7 @@
 import { LockstepRouter } from '../game/lockstep.ts';
 import { GameSession } from '../game/session.ts';
 import { skirmishConfig } from '../game/skirmish.ts';
-import { MP_KEY, type MpLaunch } from '../ui/menu/Multiplayer.tsx';
+import { MP_KEY, type MpLaunch } from './netLaunch.ts';
 import { NetClient } from './netClient.ts';
 
 /**
@@ -42,9 +42,23 @@ export async function startNetGame(): Promise<NetGame> {
   const session = new GameSession(skirmishConfig(setup), seats[launch.you]!, router, { ais: launch.you === 0 ? aiSeats : [] });
   session.speed = setup.speed || 1;
   const left = new Set<number>();
-  net.onLeft = (peer) => {
-    const player = seats[peer];
-    if (player) left.add(player);
-  };
+  net.onLeft = (peer) => takeOver({ router, session, seats, aiSeats, left, you: launch.you }, peer);
   return { session, router, net, launch, left };
+}
+
+/**
+ * A peer left (M16.5): every remaining peer stops waiting for it after the same tick (`router.drop`), and the
+ * lowest-numbered peer still here runs a computer for its seat — and, if the one who left was running the
+ * computers (the host), all of them from now on. The computers' commands go through that peer's packets, so the
+ * others simply apply them.
+ */
+export function takeOver(g: { router: LockstepRouter; session: GameSession; seats: number[]; aiSeats: number[]; left: Set<number>; you: number }, peer: number): void {
+  const wasAuthority = g.router.livePeers()[0];
+  g.router.drop(peer);
+  const player = g.seats[peer];
+  if (player) g.left.add(player);
+  const authority = g.router.livePeers()[0];
+  if (authority !== g.you) return;
+  const seats = wasAuthority === peer ? [...g.aiSeats, ...g.left] : player ? [player] : [];
+  for (const p of seats) g.session.addAi(p, 'hard');
 }

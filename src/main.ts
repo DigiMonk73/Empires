@@ -71,6 +71,11 @@ async function boot(): Promise<void> {
   const session = mp ? mp.session : loaded ? loadSession(loaded) : new GameSession(scenario(params));
   // Lockstep can't pause one player's game alone (everyone would wait): in multiplayer nothing here pauses it.
   if (mp) Object.defineProperty(session, 'paused', { get: () => false, set: () => {} });
+  // …nor change its speed alone (it would only wait on the others): the host's setup speed holds for everyone.
+  if (mp) {
+    const speed = session.speed;
+    Object.defineProperty(session, 'speed', { get: () => speed, set: () => {} });
+  }
   if (!loaded && params.get('scenario') === 'skirmish') session.speed = Number(params.get('speed') ?? 1) || 1;
   const kind = mp ? `Multiplayer · ${mp.launch.game.setup.type} · ${mp.launch.game.setup.size}` : loaded ? loaded.kind : gameKind(params);
   // Tests: start paused so screenshots don't depend on how many ticks ran in real time before the test paused.

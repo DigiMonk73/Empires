@@ -59,11 +59,18 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       a room code) or Join (code or list). Players see the seats fill; the host starts when every Human seat is
       taken. e2e: two browser contexts host + join and both reach the game.
 - [ ] **M16.4 In game.** _Partly:_ `src/platform/netGame.ts` builds the session (host runs the computers); pausing
-      is off in multiplayer (the menu and F3 don't pause — pause/speed as commands are still to do); a "Waiting for the
-      other players…" banner, "Player N left" messages, an out-of-sync banner. _Left:_ pause/speed commands, chat UI. Session wiring (local seat, host runs AIs), speed/pause as commands, "Waiting for
+      and speed changes are off in multiplayer (the menu and F3 don't pause; the host's setup speed holds — a synced
+      pause/speed command is still to do); a "Waiting for the other players…" banner, "Player N left" messages, an
+      out-of-sync banner. _Left:_ pause/speed as commands, a chat box (the relay and `NetClient.chat` exist). Session wiring (local seat, host runs AIs), speed/pause as commands, "Waiting for
       Player N…" overlay when a peer's packets are late, chat. e2e: two contexts play 1 minute, both select and
       move units, hashes equal.
-- [ ] **M16.5 Disconnects.** `aiTakeover` command; host-left ending; reconnect within 30 s by room code (the
+- [x] **M16.5 Disconnects** (the part that keeps a game alive). _Done:_ `LockstepRouter.drop(peer)` — the relay
+      delivers everything a peer sent before announcing it left, so every survivor stops waiting after the same
+      tick; `takeOver()` in `netGame.ts` gives the seat to a computer run by the lowest remaining peer (all the
+      computers, if the host left). A page reload rejoins within the hold (`--away-ms`, 30 s). Tests:
+      `lockstep.test.ts` "a peer leaving", e2e "a player who closes the game". _Left:_ a guest who reloads after the
+      hold can't come back; desync reports (M16.6).
+- [ ] **M16.5 (original plan)** `aiTakeover` command; host-left ending; reconnect within 30 s by room code (the
       server buffers the room's packets so a rejoining client can replay from tick 0 — or from a save the host
       sends; start with replay).
 - [ ] **M16.6 Desync report**, latency-based delay, room list polish.

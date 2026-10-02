@@ -48,6 +48,10 @@ export class LockstepRouter implements CommandRouter {
   private check: [number, number] | null = null;
   /** The first state-hash mismatch with any peer, or null. */
   desync: Desync | null = null;
+  /** The last tick each peer has sent commands for (−1: none yet). */
+  private lastFrom: number[];
+  /** Peers that left: ticks after this one don't wait for them (M16.5). */
+  private dropAfter = new Map<number, number>();
 
   constructor(o: { peer: number; peers: number; delay: number; transport: LockstepTransport; checkEvery?: number }) {
     if (o.delay < 1) throw new Error('lockstep needs a delay of at least one tick');
@@ -56,6 +60,22 @@ export class LockstepRouter implements CommandRouter {
     this.delay = o.delay;
     this.checkEvery = o.checkEvery ?? 100;
     this.transport = o.transport;
+    this.lastFrom = new Array<number>(o.peers).fill(-1);
+  }
+
+  /**
+   * A peer left (M16.5): wait for its packets up to the last tick it sent, and not after. The relay delivers
+   * everything a peer sent before it tells the room the peer left, so every remaining peer drops it after the same
+   * tick and they stay in step.
+   */
+  drop(peer: number): void {
+    if (peer === this.peer || this.dropAfter.has(peer)) return;
+    this.dropAfter.set(peer, this.lastFrom[peer]!);
+  }
+
+  /** The peers still in the game. */
+  livePeers(): number[] {
+    return Array.from({ length: this.peers }, (_, p) => p).filter((p) => !this.dropAfter.has(p));
   }
 
   submit(player: number, cmd: Command): void {
@@ -67,7 +87,11 @@ export class LockstepRouter implements CommandRouter {
     if (tick < this.delay) return true;
     const slot = this.inbox.get(tick);
     if (!slot) return false;
-    for (let p = 0; p < this.peers; p++) if (!slot[p]) return false;
+    for (let p = 0; p < this.peers; p++) {
+      if (slot[p]) continue;
+      const after = this.dropAfter.get(p);
+      if (after === undefined || tick <= after) return false;
+    }
     return true;
   }
 
@@ -91,6 +115,8 @@ export class LockstepRouter implements CommandRouter {
   /** A packet from another peer (duplicates and stale ones are dropped). */
   receive(p: LockstepPacket): void {
     if (p.from === this.peer || p.from < 0 || p.from >= this.peers || p.tick <= this.done) return;
+    const after = this.dropAfter.get(p.from);
+    if (after !== undefined && p.tick > after) return; // (a peer that left sends nothing more; never apply it)
     if (this.inbox.get(p.tick)?.[p.from]) return;
     this.store(p.tick, p.from, decodeCommands(p.cmds));
     if (p.check) this.compare(p.from, p.check[0], p.check[1]);
@@ -119,6 +145,7 @@ export class LockstepRouter implements CommandRouter {
   }
 
   private store(tick: number, peer: number, cmds: PlayerCommand[]): void {
+    if (tick > this.lastFrom[peer]!) this.lastFrom[peer] = tick;
     let slot = this.inbox.get(tick);
     if (!slot) this.inbox.set(tick, (slot = new Array<PlayerCommand[] | undefined>(this.peers)));
     slot[peer] = cmds;
