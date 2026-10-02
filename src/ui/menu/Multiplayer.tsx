@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CIVS } from '../../data/civs.ts';
 import { MAP_TYPES } from '../../data/setup.ts';
-import type { SkirmishSetup } from '../../game/skirmish.ts';
+import type { SkirmishPlayer, SkirmishSetup } from '../../game/skirmish.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import { NetClient, type RoomInfo, type RoomState } from '../../platform/netClient.ts';
 import { delayFor, MP_KEY, type MpLaunch, type NetGameInfo } from '../../platform/netLaunch.ts';
-import { Skirmish } from './Menu.tsx';
+import { Emblem } from '../emblems.tsx';
+import { CivInfo, Skirmish } from './Menu.tsx';
 
 /**
  * Multiplayer (M16.3, docs/MULTIPLAYER.md): a name, then the room list — Host a game or Join one by its code. The
- * host sets the game up (the skirmish setup with Human seats); guests see it fill in. When the host starts, every
- * member saves its seat and loads the game page, which rejoins the room (`src/game/netGame.ts`).
+ * host sets the game up (the skirmish setup with Human seats). A guest picks their own civilization and team
+ * (M16.10). When the host starts, every member saves its seat and loads the game page, which rejoins the room
+ * (`src/game/netGame.ts`).
  */
 export type { MpLaunch, NetGameInfo } from '../../platform/netLaunch.ts';
 
@@ -138,6 +140,7 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
         mp={{
           code: room.code,
           names: room.members.map((m) => m.name),
+          remote: setup,
           share: (s) => net.setup(s),
           start: (s) => {
             const seats = s.players.map((p, i) => (p.controller === 'human' ? i + 1 : 0)).filter((n) => n > 0);
@@ -216,7 +219,15 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       ) : room ? (
-        <GuestRoom room={room} setup={setup} onLeave={leave} />
+        <GuestRoom
+          room={room}
+          setup={setup}
+          onLeave={leave}
+          onSeat={(civ, team) => {
+            net.seat(civ, team);
+            setSetup((prev) => (prev ? { ...prev, players: prev.players.map((p, i) => (i === humanIndex(prev, room.you) ? { ...p, civ, team } : p)) } : prev));
+          }}
+        />
       ) : null}
       {note && (
         <p class="menu-note" data-testid="mp-note">
@@ -227,9 +238,18 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
   );
 }
 
-/** A guest's view of the room: the host's setup as it changes, and who's here. */
-function GuestRoom({ room, setup, onLeave }: { room: RoomState; setup: SkirmishSetup | null; onLeave: () => void }) {
+/** The player row a room member sits in: human seats in order, the host first. -1 when the host has not made one. */
+function humanIndex(setup: SkirmishSetup, member: number): number {
+  const humans = setup.players.map((p, i) => (p.controller === 'human' ? i : -1)).filter((i) => i >= 0);
+  return humans[member] ?? -1;
+}
+
+/** A guest's view of the room: the host's setup as it changes, and this guest's own civilization and team. */
+function GuestRoom({ room, setup, onLeave, onSeat }: { room: RoomState; setup: SkirmishSetup | null; onLeave: () => void; onSeat: (civ: string, team: number) => void }) {
   const humans = setup ? setup.players.map((p, i) => (p.controller === 'human' ? i : -1)).filter((i) => i >= 0) : [];
+  const mine = humans[room.you] ?? -1;
+  const oneTeam = !!setup && new Set(setup.players.map((p) => p.team)).size < 2;
+  const seatLabel = (p: SkirmishPlayer, i: number): string => (p.controller === 'human' ? (room.members[humans.indexOf(i)]?.name ?? 'Open') : `Computer (${p.controller})`);
   return (
     <div class="mp-room" data-testid="mp-guest-room">
       <div class="mp-code">
@@ -245,13 +265,42 @@ function GuestRoom({ room, setup, onLeave }: { room: RoomState; setup: SkirmishS
               {setup.players.map((p, i) => (
                 <tr data-testid={`mp-seat-${i + 1}`}>
                   <td>Player {i + 1}</td>
-                  <td>{p.controller === 'human' ? (room.members[humans.indexOf(i)]?.name ?? 'Open') : `Computer (${p.controller})`}</td>
-                  <td>{CIVS.find((c) => c.id === p.civ)?.name ?? p.civ}</td>
-                  <td>Team {p.team}</td>
+                  <td>{seatLabel(p, i)}</td>
+                  <td>
+                    {i === mine ? (
+                      <span class="civ-cell">
+                        <Emblem civ={p.civ} size={28} />
+                        <select data-testid={`mp-civ-${i}`} value={p.civ} onChange={(e) => onSeat((e.target as HTMLSelectElement).value, p.team)}>
+                          {CIVS.map((c) => (
+                            <option value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </span>
+                    ) : (
+                      (CIVS.find((c) => c.id === p.civ)?.name ?? p.civ)
+                    )}
+                  </td>
+                  <td>
+                    {i === mine ? (
+                      <select data-testid={`mp-team-${i}`} value={String(p.team)} onChange={(e) => onSeat(p.civ, Number((e.target as HTMLSelectElement).value))}>
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
+                          <option value={String(t)}>{t}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      `Team ${p.team}`
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {mine >= 0 ? <CivInfo civ={setup.players[mine]!.civ} full={setup.fullTech} /> : <p class="menu-note" data-testid="mp-no-seat">The host has not given you a seat yet.</p>}
+          {oneTeam && (
+            <p class="menu-note" data-testid="setup-one-team">
+              Every player is on the same team, so the game would be won before it began: put someone on another team.
+            </p>
+          )}
         </>
       ) : (
         <div class="mp-summary">The host is setting up the game…</div>

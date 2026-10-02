@@ -71,8 +71,27 @@ export interface HostRoom {
   code: string;
   /** The room's members' names, the host first. */
   names: string[];
+  /** The server's setup after a guest picks a civilization or team. Null until one does. */
+  remote: SkirmishSetup | null;
   share: (s: SkirmishSetup) => void;
   start: (s: SkirmishSetup) => void;
+}
+
+/** A seated guest keeps the civilization and team they picked. The host's own seat and the computers stay as they are. */
+function mergeGuestSeats(prev: SkirmishSetup, remote: SkirmishSetup): SkirmishSetup {
+  const human = (players: SkirmishPlayer[]) => players.map((p, i) => (p.controller === 'human' ? i : -1)).filter((i) => i >= 0);
+  const mine = human(prev.players);
+  const theirs = human(remote.players);
+  let changed = false;
+  const players = prev.players.map((p, i) => {
+    const member = mine.indexOf(i);
+    if (member <= 0) return p;
+    const rp = remote.players[theirs[member]!];
+    if (!rp || (rp.civ === p.civ && rp.team === p.team)) return p;
+    changed = true;
+    return { ...p, civ: rp.civ, team: rp.team };
+  });
+  return changed ? { ...prev, players } : prev;
 }
 
 export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) {
@@ -83,6 +102,10 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
     ...(mp ? { players: [{ civ: 'greek', team: 1, controller: 'human' as const }, { civ: 'persian', team: 2, controller: 'human' as const }] } : {}),
   }));
   useEffect(() => mp?.share(s), []); // the room sees the setup from the start
+  useEffect(() => {
+    if (!mp?.remote) return;
+    setS((prev) => mergeGuestSeats(prev, mp.remote!));
+  }, [mp?.remote]);
   const upd = (patch: Partial<SkirmishSetup>) => {
     const next = { ...s, ...patch };
     setS(next);
@@ -99,6 +122,11 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
   // Multiplayer: the Human seats, in order, are the room's members (the host first).
   const humanSeats = s.players.map((p, i) => (p.controller === 'human' ? i : -1)).filter((i) => i >= 0);
   const seatName = (i: number): string => mp?.names[humanSeats.indexOf(i)] ?? 'Open';
+  /** A filled human seat belongs to that player: they pick the civilization and the team. */
+  const ownedByGuest = (i: number): boolean => {
+    const member = humanSeats.indexOf(i);
+    return !!mp && member > 0 && member < mp.names.length;
+  };
   const seatsReady = !mp || humanSeats.length === mp.names.length;
   const start = () => {
     if (oneTeam || !seatsReady) return;
@@ -232,7 +260,13 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
               <td>
                 <span class="civ-cell">
                   <Emblem civ={p.civ} size={28} />
-                  <select value={p.civ} onChange={(e) => updP(i, { civ: (e.target as HTMLSelectElement).value })}>
+                  <select
+                    data-testid={`setup-civ-${i}`}
+                    value={p.civ}
+                    disabled={ownedByGuest(i)}
+                    title={ownedByGuest(i) ? `Chosen by ${seatName(i)}` : undefined}
+                    onChange={(e) => updP(i, { civ: (e.target as HTMLSelectElement).value })}
+                  >
                     {CIVS.map((c) => (
                       <option value={c.id}>{c.name}</option>
                     ))}
@@ -240,7 +274,13 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
                 </span>
               </td>
               <td>
-                <select data-testid={`setup-team-${i}`} value={String(p.team)} onChange={(e) => updP(i, { team: Number((e.target as HTMLSelectElement).value) })}>
+                <select
+                  data-testid={`setup-team-${i}`}
+                  value={String(p.team)}
+                  disabled={ownedByGuest(i)}
+                  title={ownedByGuest(i) ? `Chosen by ${seatName(i)}` : undefined}
+                  onChange={(e) => updP(i, { team: Number((e.target as HTMLSelectElement).value) })}
+                >
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
                     <option value={String(t)}>{t}</option>
                   ))}
@@ -281,7 +321,7 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
  * Your civilization's bonuses (and what its tree lacks), as the original's civ screen summarised them — or, with
  * Full Tech Tree, that every civilization has everything and no bonuses.
  */
-function CivInfo({ civ, full }: { civ: string; full: boolean }) {
+export function CivInfo({ civ, full }: { civ: string; full: boolean }) {
   const c = CIVS.find((x) => x.id === civ);
   const [tree, setTree] = useState(false);
   if (!c) return null;

@@ -128,6 +128,59 @@ describe('multiplayer relay (M16.1)', () => {
     for (const p of [a, c, d]) p.ws.close();
   });
 
+  it('a guest picks their own civilization and team, and a later host setup keeps it (M16.10)', async () => {
+    const h = await connect();
+    const g = await connect();
+    const extra = await connect();
+    h.send({ t: 'create', name: 'Ann' });
+    const code = (await h.next('room')).code as string;
+    g.send({ t: 'join', code, name: 'Bo' });
+    await g.next('room');
+    const players = [
+      { civ: 'greek', team: 1, controller: 'human' },
+      { civ: 'persian', team: 2, controller: 'human' },
+      { civ: 'egyptian', team: 3, controller: 'moderate' },
+    ];
+    h.send({ t: 'setup', setup: { type: 'continental', players } });
+    expect((await g.next('setup')).setup).toMatchObject({ type: 'continental' });
+
+    g.send({ t: 'setup', setup: { type: 'coastal' } });
+    expect((await g.next('error')).error).toMatch(/host/);
+    g.send({ t: 'seat', civ: 'roman', team: 4 });
+    const picked = (await h.next('setup')).setup as { players: { civ: string; team: number }[] };
+    expect(picked.players.map((p) => [p.civ, p.team])).toEqual([
+      ['greek', 1],
+      ['roman', 4],
+      ['egyptian', 3],
+    ]);
+    expect((await g.next('setup')).setup).toMatchObject({ players: [{ civ: 'greek' }, { civ: 'roman', team: 4 }, { civ: 'egyptian' }] });
+
+    // The host changing the map, and even rewriting Bo's row, does not take Bo's choice away.
+    h.send({
+      t: 'setup',
+      setup: {
+        type: 'coastal',
+        players: [
+          { civ: 'greek', team: 1, controller: 'human' },
+          { civ: 'greek', team: 1, controller: 'human' },
+          { civ: 'egyptian', team: 3, controller: 'moderate' },
+        ],
+      },
+    });
+    const kept = (await g.next('setup')).setup as { type: string; players: { civ: string; team: number; controller: string }[] };
+    expect(kept.type).toBe('coastal');
+    expect(kept.players[1]).toMatchObject({ civ: 'roman', team: 4, controller: 'human' });
+
+    g.send({ t: 'seat', civ: 'atlantean', team: 9 });
+    expect((await g.next('error')).error).toMatch(/civilization/);
+
+    extra.send({ t: 'join', code, name: 'Cy' });
+    await extra.next('room');
+    extra.send({ t: 'seat', civ: 'minoan', team: 2 });
+    expect((await extra.next('error')).error).toMatch(/no seat/);
+    for (const p of [h, g, extra]) p.ws.close();
+  });
+
   it('before the start: a guest leaving renumbers the room; the host leaving closes it', async () => {
     const h = await connect();
     const g1 = await connect();

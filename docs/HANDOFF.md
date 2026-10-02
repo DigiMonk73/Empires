@@ -49,10 +49,12 @@ into `main` until the user has played multiplayer on the VM (M16.8).
    Hardest>Hard 256/256, duels 63/64, median 38.7 min, 0 crashes. Baseline re-recorded. The warship/Dock reserve
    stayed unapplied (`docs/patches/m16.9-warship-dock-reserve.patch`). Ferrying villagers to trees on another land
    was not needed.
-2. **Multiplayer polish** (`docs/MULTIPLAYER.md`): guests pick their own civilization (and team) in the room; the
-   room list and seats show each member's ping; a two-client input monkey (lens C for multiplayer) and a 30-minute
-   two-browser soak; saving a multiplayer game (the host saves; a load restarts the room from the save) — in that
-   order, each as its own verified step.
+2. **Multiplayer polish** (`docs/MULTIPLAYER.md`), in this order, each as its own verified step:
+   - **[done, M16.10]** A guest with a human seat picks that seat's civilization and team. The host sees it and
+     cannot overwrite it by changing the map or rewriting the row. A member with no human seat cannot pick.
+   - The room list and seats show each member's ping.
+   - A two-client input monkey (lens C for multiplayer) and a 30-minute two-browser soak.
+   - Saving a multiplayer game (the host saves; a load restarts the room from the save).
 3. **Polish lenses, round four** (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
 4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
    final (tag `v1.1.0`), build both `.s9pk`.
@@ -63,6 +65,8 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 — item 2, step 1 (M16.10): a guest picks their own civilization and team. The relay keeps that choice
+  when the host sends a new setup. Next: the room list and seats show each member's ping.
 - 2026-10-02 14:30 — item 1 done (M16.9): the arrows patch on 3a64a96 banded PASS, water 182/192 (baseline 190 − 8), wars 92/96,
   Hard>Moderate 213/256, Hardest>Hard 256/256, duels 63/64, median 38.7 min, 0 crashes. Baseline re-recorded.
   Determinism 10/10. `npm run verify` green in 190 s (668 unit, 168 e2e). KI-13 and P24 closed. Screens reviewed:

@@ -153,6 +153,11 @@ export class NetClient {
     this.sendJson({ t: 'setup', setup });
   }
 
+  /** Your own human seat: civilization and team (the room's setup comes back with the change). */
+  seat(civ: string, team: number): void {
+    this.sendJson({ t: 'seat', civ, team });
+  }
+
   /** Host: start — every member gets `game` and its peer index. */
   start(game: unknown): void {
     this.sendJson({ t: 'start', game });

@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M16.10 · guest civilization and team · 6 shots ≤ 0.30% px
+
+Options, credits and the save dialog, both engines. The diffs are the menu backdrop and the save rows' clock
+text. The credits panel, options controls and save list still read. No must-fix.
+
 ## 2026-10-02 · M16.9 P24 · arrows along the line of flight · 28 shots, both engines
 
 Looked at chromium ai-base (14.4%), army-clash (0.9%), raid (0.4%), victory (4.2%) and victory-results (3.6%).

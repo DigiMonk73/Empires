@@ -9,11 +9,11 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. Baseline re-recorded.
-- **Last green:** `npm run verify` 190 s — 668 unit, 168 e2e, purity ok. Determinism 10/10. verify:full last at the
-  1.1.0 rebuild (837cb61); not re-run for this combat change.
-- **Screens:** 28 shots moved because the scripted AI games play differently (ai-base 14.4%, victory 4.2%). Looked at
-  ai-base, army-clash, raid, victory and results. No must-fix.
-- **Open:** HANDOFF item 2 — a guest picks their own civilization and team, then ping in the room, a two-client
+- **Last green:** `npm run verify` 192 s — 669 unit, 168 e2e, purity ok. No AI or map change, so the band was not re-run.
+  verify:full last at the 1.1.0 rebuild (837cb61).
+- **Screens:** 6 shots ≤ 0.30% px (menu backdrop and save-row clocks). Credits, options and the save list still read.
+  No must-fix.
+- **Open:** HANDOFF item 2 — guest civilization and team done (M16.10). Next: ping in the room, then a two-client
   monkey, a 30-minute soak, multiplayer save/load. KI-2, KI-3, KI-5. P72 and P75 still open from M15.10.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.

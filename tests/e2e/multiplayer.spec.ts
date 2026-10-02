@@ -6,7 +6,10 @@ import { expect, test, type Page } from '@playwright/test';
 
 declare global {
   interface Window {
-    __mp?: { router: { desync: unknown }; session: { localPlayer: number; router: { submit(p: number, c: unknown): void } } };
+    __mp?: {
+      router: { desync: unknown };
+      session: { localPlayer: number; sim: { world: { players: { civ: string; team: number }[] } }; router: { submit(p: number, c: unknown): void } };
+    };
   }
 }
 
@@ -44,6 +47,15 @@ test('two players host and join from the menu, then play one game in step (M16.3
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await expect(guest!.getByTestId('mp-seat-2')).toContainText('Bo');
+  // Bo picks a civilization and a team (M16.10). The host sees it, and changing the map does not put it back.
+  await guest!.getByTestId('mp-civ-1').selectOption('roman');
+  await guest!.getByTestId('mp-team-1').selectOption('3');
+  await expect(guest!.getByTestId('civ-info')).toContainText('Roman');
+  await expect(host!.getByTestId('setup-civ-1')).toHaveValue('roman');
+  await expect(host!.getByTestId('setup-team-1')).toHaveValue('3');
+  await host!.getByTestId('setup-pop').selectOption('75');
+  await expect(guest!.getByTestId('mp-civ-1')).toHaveValue('roman');
+  await expect(host!.getByTestId('setup-civ-1')).toHaveValue('roman');
   await expect(host!.getByTestId('setup-start')).toBeEnabled();
   await host!.getByTestId('setup-start').click();
 
@@ -54,6 +66,10 @@ test('two players host and join from the menu, then play one game in step (M16.3
   }
   expect(await host!.evaluate(() => window.__mp!.session.localPlayer)).toBe(1);
   expect(await guest!.evaluate(() => window.__mp!.session.localPlayer)).toBe(2);
+  expect(await guest!.evaluate(() => {
+    const p = window.__mp!.session.sim.world.players[2]!;
+    return { civ: p.civ, team: p.team };
+  })).toEqual({ civ: 'roman', team: 3 });
 
   // Each player orders a villager; the other sees it walk.
   const a0 = await unitAt(guest!, 1);

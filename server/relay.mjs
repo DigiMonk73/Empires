@@ -9,6 +9,8 @@
 //   {t:'join', code, name}               → {t:'room', …} to you, {t:'members', members} to the others
 //   {t:'leave'}
 //   {t:'setup', setup}       host only   → {t:'setup', setup} to the others
+//                                          (a seated guest's civilization and team are kept)
+//   {t:'seat', civ, team}                → {t:'setup', setup} to the room: your own human seat (M16.10)
 //   {t:'start', game}        host only   → {t:'start', game, you, peers} to everyone (peer indices fixed from here)
 //   {t:'chat', text}                     → {t:'chat', from, name, text} to everyone
 //   {t:'pause', on}                      → {t:'pause', on, from, name} to everyone (a started game; anyone may)
@@ -28,6 +30,11 @@ const MAX_MESSAGE = 1 << 20; // 1 MiB
 const PING_MS = 15_000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I or O
 const MAX_MEMBERS = 8;
+/** The sixteen civilizations (src/data/civs.ts CIV_ORDER). A seat message may name only one of these. */
+const CIVS = new Set([
+  'assyrian', 'babylonian', 'carthaginian', 'choson', 'egyptian', 'greek', 'hittite', 'macedonian',
+  'minoan', 'palmyran', 'persian', 'phoenician', 'roman', 'shang', 'sumerian', 'yamato',
+]);
 /** A member of a started game who drops is held this long before the others hear {t:'left'} (a page load). */
 const AWAY_MS = 30_000;
 const MAX_BUFFERED = 50_000;
@@ -61,6 +68,47 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
 
   function membersOf(room) {
     return room.members.map((m, i) => ({ peer: i, name: m.name, id: m.id, rtt: m.rtt ?? 0 }));
+  }
+
+  /** Human seats, in order: member 0 sits in the first, member 1 in the second, and so on. */
+  function humanSeats(setup) {
+    if (!setup || !Array.isArray(setup.players)) return [];
+    const seats = [];
+    setup.players.forEach((p, i) => {
+      if (p && p.controller === 'human') seats.push(i);
+    });
+    return seats;
+  }
+
+  function validTeam(team) {
+    const n = Number(team);
+    return Number.isInteger(n) && n >= 1 && n <= 8 ? n : 0;
+  }
+
+  /**
+   * The host replaces the whole setup. Each guest who already has a human seat keeps the civilization and team
+   * they picked; the host still owns the map, the computers, and any seat nobody has sat in.
+   */
+  function keepGuestChoices(prev, next) {
+    if (!prev || !next || !Array.isArray(next.players)) return next;
+    const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
+    const prevSeats = humanSeats(prev);
+    const seats = humanSeats(next);
+    for (let member = 1; member < seats.length && member < prevSeats.length; member++) {
+      const old = prevPlayers[prevSeats[member]];
+      const row = next.players[seats[member]];
+      if (!old || !row || !CIVS.has(old.civ)) continue;
+      const team = validTeam(old.team);
+      if (!team) continue;
+      row.civ = old.civ;
+      row.team = team;
+    }
+    return next;
+  }
+
+  /** Tell the room the setup it should show. */
+  function broadcastSetup(room) {
+    for (const o of room.members) sendJson(o, { t: 'setup', setup: room.setup });
   }
 
   function lobby(c, text) {
@@ -119,9 +167,24 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         return leave(c);
       case 'setup':
         if (!room || room.members[0] !== c || room.started) return sendJson(c, { t: 'error', error: 'only the host sets up the game' });
-        room.setup = m.setup ?? null;
+        room.setup = keepGuestChoices(room.setup, m.setup ?? null);
         for (const o of room.members) if (o !== c) sendJson(o, { t: 'setup', setup: room.setup });
         return;
+      case 'seat': {
+        if (!room || room.started || !room.setup) return sendJson(c, { t: 'error', error: 'no game to join yet' });
+        const member = room.members.indexOf(c);
+        const seats = humanSeats(room.setup);
+        const i = member >= 0 && member < seats.length ? seats[member] : -1;
+        if (i < 0) return sendJson(c, { t: 'error', error: 'you have no seat yet' });
+        const civ = String(m.civ ?? '');
+        const team = validTeam(m.team);
+        if (!CIVS.has(civ) || !team) return sendJson(c, { t: 'error', error: 'pick a civilization and a team' });
+        const row = room.setup.players[i];
+        row.civ = civ;
+        row.team = team;
+        broadcastSetup(room);
+        return;
+      }
       case 'start':
         if (!room || room.members[0] !== c || room.started) return sendJson(c, { t: 'error', error: 'only the host starts the game' });
         room.started = true;

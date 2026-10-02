@@ -19,7 +19,8 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
   RFC 6455 framing — the server has no npm dependencies and should keep none). The server is a dumb relay plus a
   lobby: it never runs the simulation.
 - **Rooms:** a host creates a room (4-letter code), sets up the skirmish (the normal setup screen, with each seat
-  Human / Computer / Open), others join by code or from a room list. The host starts; the server sends every
+  Human / Computer / Open), others join by code or from a room list. A guest who has a human seat picks that
+  seat's civilization and team; the host's later setup changes keep that choice. The host starts; the server sends every
   member `{start, setup, seed, seats, peerIndex, delay}`; every client builds the same `SimConfig` from `setup`
   (`skirmishConfig`) and its own `GameSession(config, mySeat, new LockstepRouter({peer, peers, delay,
   transport}), { ais: host ? aiSeats : [] })`.
