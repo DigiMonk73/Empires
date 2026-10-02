@@ -35,28 +35,38 @@ playtest). Multiplayer is next (M16).
 | Determinism | `node tools/sim/determinism.ts --seeds 10` |
 | Trace one AI game | `node tools/sim/diagnose.ts …` (see its header) |
 
-## Task queue
-1. **Rough parts (M15.11, on `main`)** — fixes that were blocked by the old one-draw AI gate; each has a saved
-   patch with a scene test. Apply, run determinism + `ai-band.ts`, keep or revert:
-   - KI-16 / P2 first Storage Pit at the forest — `docs/patches/m15.10-p2-first-pit-at-the-forest.patch`
-   - KI-17 / P53 pit beside far hunts — `docs/patches/m15.10-p53-pit-beside-far-hunts.patch`
-   - KI-18 / P76 builder vs defender order swap — `docs/patches/m15.10-p76-builder-dither.patch`
-   - P70 forget dead prey — `docs/patches/m15.10-p70-forget-dead-prey.patch`
-   - P74 soldiers sent at an unreachable Dock — `docs/patches/m15.10-p74-reachable-targets.patch`
-   - KI-14 / P20 two-player island villager on a forest tile — no patch; see KNOWN_ISSUES KI-14
-   - KI-13 / P24 arrows miss units walking at the shooter — `docs/patches/m15.10-p24-arrows-along-the-line.patch`
-     (changes every fight; may need AI retuning on the dev seeds)
-   Patches were cut against older trees; apply with `git apply --3way` and fix conflicts by hand (test files
-   conflict only because several patches append to the end of `tests/unit/ai-tactics.test.ts`).
-2. **Multiplayer (M16, branch `m16-multiplayer`)** — plan in `docs/MULTIPLAYER.md` (written when M16 starts).
+## Work queue (in order — take the top unfinished item; tick it with its commit)
+Work on branch **`m16-multiplayer`** (the main checkout is on it; it contains everything on `main`). Don't merge it
+into `main` until the user has played multiplayer on the VM (M16.8).
+
+1. **Island wood stall (unblocks KI-13 arrows).** On island maps a winner whose island runs out of trees can't
+   build ships, and the loser's last warships keep the game from ending (dev water seed 413, minute 40+:
+   `node tools/sim/diagnose.ts water-trace 413`). Fix in the AI, tuning on the dev seeds only (water 401–448):
+   - keep a wood reserve for a Dock and two warships once the home island's reachable wood runs low (stop spending
+     the last wood on farms);
+   - guard the Docks with warships while the enemy has a fleet;
+   - when the home island has no reachable wood, ferry a few villagers to the nearest landmass with trees and build a
+     Storage Pit there.
+   Keep a change only if `node tools/sim/ai-band.ts` passes (D70), then re-record the band. Then apply
+   `docs/patches/m15.10-p24-arrows-along-the-line.patch` again and band it; if it passes, close KI-13.
+2. **Multiplayer polish** (`docs/MULTIPLAYER.md`): guests pick their own civilization (and team) in the room; the
+   room list and seats show each member's ping; a two-client input monkey (lens C for multiplayer) and a 30-minute
+   two-browser soak; saving a multiplayer game (the host saves; a load restarts the room from the save) — in that
+   order, each as its own verified step.
+3. **Polish lenses, round four** (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
+4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
+   final (tag `v1.1.0`), build both `.s9pk`.
+
+## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
+```
+/loop Empires work loop, repo /Users/b1ackswan/code/Empires (branch m16-multiplayer). Each wakeup: run `date`, then read docs/HANDOFF.md (rules, work queue, status), docs/LOOP.md and docs/POLISH_LOOP.md — the repo docs are the source of truth, not memory. Take the top unfinished item of HANDOFF's work queue and do one verified step: reproduce it with a failing test, fix it, `npm run verify` green (plus `node tools/sim/determinism.ts --seeds 10` and `node tools/sim/ai-band.ts` for AI, pathing or mapgen changes), look at the changed screenshots, commit locally as `M<n>.<k>: …`, and update HANDOFF's status line. Headless only, local git only (never push or add remotes), never relax a gate or touch D1–D14, don't start the StartOS VM or tag m15. Three failed cycles on an item: record it in docs/KNOWN_ISSUES.md and move to the next. Long jobs (verify:full, ai-band, soaks) in the background. Keep going until the queue is empty or the user says stop.
+```
 
 ## Status
-- 2026-10-02 10:15 — **`m16-multiplayer` is 1.1.0**: playable multiplayer (host/join from the menu, lockstep over the
-  server's `/ws`, pause for everyone, chat, a dropped player rejoins within 30 s by replaying the game, else a
-  computer takes the seat). verify:full green; both `.s9pk` 1.1.0:0 built (package repo branch `m16-multiplayer`,
-  c8b4d2d) — not installed on the VM. `main` is still 1.0.1 + M15.11 (the AI fixes); KI-13 arrows still blocked.
-- Package repo `../empires-startos` has a matching branch `m16-multiplayer` (1.1.0:0, its submodule on this
-  branch's 4152c5b). After any further change here: move that submodule, commit there, then `make`.
-- **Next (see `docs/MULTIPLAYER.md`):**
-  M16.8 the user plays a game against a friend on the VM. Then merge `m16-multiplayer` into
-  `main` (fast-forward) in both repos. KI-13 arrows (KNOWN_ISSUES) is the open single-player item.
+- 2026-10-02 11:00 — tagged `v1.0.1` and `v1.1.0-rc1` in both repos (the exact packaged commits). Branch
+  `m16-multiplayer` (837cb61+) is 1.1.0: multiplayer M16.1–M16.6 done and tested, verify:full green, both `.s9pk`
+  1.1.0:0 built from empires-startos c8b4d2d — not installed on the VM. Next: work queue item 1.
+- `main` is 1.0.1 + M15.11 (the D70 band, five AI fixes, KI-14); KI-13 arrows still blocked (work queue item 1).
+- Package repo `../empires-startos` has a matching branch `m16-multiplayer` (1.1.0:0; its submodule on 4152c5b).
+  After any change here that should ship: move that submodule to the new commit, commit there, then
+  `PATH=/Users/b1ackswan/code/btctx-vm-lab/bin:$PATH make` (both `.s9pk`).
