@@ -1251,9 +1251,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             of the limit M13.4's test needs.)
       - [ ] P72 · should · map · **[AI-gate class: the fix changes every Continental map]** · checkerboard coasts at the map edge join only at corners: 95 land regions of ≤ 3
             tiles on continental small 101; 17 units stranded at (40,7) · `lens-a3/pockets.ts` (before tonight too)
-      - [ ] P73 · should · AI Docks · a Dock foundation goes back down on the same contested tile under the enemy
+      - [x] P73 · should · AI Docks · a Dock foundation goes back down on the same contested tile under the enemy
             army (18× in 7 min, ~1,800 wood); worse since P59 (24/71 Dock foundations lost vs 11/43) ·
-            `hh-smallIslands-small-102` P1 · `lens-a3/docks.ts`
+            `hh-smallIslands-small-102` P1 · `lens-a3/docks.ts` — _fixed:_ a Dock spot in a raiders' danger spot (`flee` marks them,
+            40 s) is skipped. Suite: held out unchanged. Test: `ai-tactics` "AI Docks under attack".
       - [ ] P74 · should · AI attack · idle soldiers sent at an enemy Dock across the Narrows strait (no reach check
             in `military.ts attack()`) · `hh-narrows-small-102` P2 23–34 min
       - [ ] P75 · should · AI Stone Age economy · Hard reaches Tool at 18–24 min, 16 of 21 villagers walking 6–15

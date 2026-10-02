@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M15.10 P73 · AI only; 8 shots (victory scene and noise)
+
 ## 2026-10-02 · M15.10 P71 · AI only; victory scenes 1.8–2.6% px (the Hardest-vs-Easiest game plays differently; its e2e still wins)
 
 ## 2026-10-01 · M15.10 P68 · keys-grid and options shots unchanged at 1280×800 (4 shots ≤ 0.3% px elsewhere)

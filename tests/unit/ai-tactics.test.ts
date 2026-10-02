@@ -313,3 +313,28 @@ describe('AI workers at the limit (M15.10 P71)', () => {
     expect(vils + boats).toBeLessThanOrEqual(35);
   }, 60_000);
 });
+
+describe('AI Docks under attack (M15.10 P73)', () => {
+  it('a Dock does not go back down where raiders were just seen', () => {
+    const W = 40;
+    const ascii = Array.from({ length: W }, () => Array.from({ length: W }, (_, x) => (x <= 11 ? '.' : 'w')).join(''));
+    const sim = Sim.create({
+      seed: 4,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: { buildings: [{ type: 'townCenter', owner: 1, tx: 3, ty: 16 }], units: [0, 1, 2].map((i) => ({ type: 'villager', owner: 1, x: 7.5, y: 15.5 + i })) },
+    });
+    sim.world.players[1]!.res.set([1000, 1000, 500, 200]);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(sim.world, 1);
+    // Raiders seen on the shore just east of the Town Center (as `flee` marks them).
+    (ai.military as unknown as { tactics: { dangers: { x: number; y: number; until: number }[] } }).tactics.dangers.push({ x: 11, y: 17, until: 100000 });
+    const s = (ai as unknown as { snapshot(v: PlayerView, me: ReturnType<PlayerView['me']>): never }).snapshot(view, view.me());
+    const cmds: Command[] = [];
+    ai.build(s, cmds, 'dock', 11, 17, 0, 12, 1);
+    const b = cmds.find((c) => c.t === 'build') as { tx: number; ty: number } | undefined;
+    expect(b, 'a Dock placed elsewhere on the shore').toBeDefined();
+    expect(Math.hypot(b!.tx + 1.5 - 11, b!.ty + 1.5 - 17)).toBeGreaterThanOrEqual(7);
+  });
+});

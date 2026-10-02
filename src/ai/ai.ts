@@ -731,6 +731,9 @@ export class AiPlayer {
         // A Dock on a shore the builders can walk to from the Town Center: one across the water or behind a forest
         // line stood unbuilt all game and counted towards the Dock limit (M15.10 P59).
         if (type === 'dock' && s.tc && !s.v.reachable(s.tc.x + s.tc.size / 2 + 0.5, s.tc.y, tx, ty, tx + size, ty + size)) continue;
+        // …and not where raiders were just seen: a Dock went back down on the same contested tile 18 times in 7
+        // minutes under the enemy army (M15.10 P73).
+        if (type === 'dock' && this.military.danger(s, tx + size / 2, ty + size / 2)) continue;
         return [tx, ty];
       }
     }
