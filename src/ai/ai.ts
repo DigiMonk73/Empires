@@ -99,7 +99,7 @@ export interface AiState {
   exploreDone: boolean;
   loops: number;
   lastRebalance: number;
-  game: { h: number; type: string; x: number; y: number }[];
+  game: { h: number; type: string; x: number; y: number; sent?: number }[];
   military: MilitaryState;
   /** Absent in saves made before the naval AI (M8.8). */
   naval?: NavalState;
@@ -121,7 +121,7 @@ export class AiPlayer {
   /** Exploration loops walked so far (radius 11, 18, 26). */
   private loops = 0;
   private lastRebalance = 0;
-  private game = new Map<number, { h: number; type: string; x: number; y: number }>();
+  private game = new Map<number, { h: number; type: string; x: number; y: number; sent?: number }>();
   readonly military: MilitaryBrain;
   readonly naval = new NavalBrain();
   readonly relics = new RelicBrain();
@@ -225,6 +225,14 @@ export class AiPlayer {
       this.game.set(o.h, { h: o.h, type: o.type, x: o.x, y: o.y });
     }
     for (const [h, g] of this.game) if (!visible.has(h) && v.visible(Math.floor(g.x), Math.floor(g.y))) this.game.delete(h);
+    // …and out of sight: hunters sent a moment ago (an order takes the next tick) and nobody on it — the order was
+    // refused, the animal is gone (killed out of sight; the hunters never moved, so its spot never came into view
+    // and it was hunted every think, M15.10 P70).
+    for (const [h, g] of this.game) {
+      if (visible.has(h) || g.sent === undefined || v.tick - g.sent < 12) continue;
+      if (!villagers.some((u) => u.order === 'attack' && u.target === h)) this.game.delete(h);
+      else g.sent = undefined;
+    }
     return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set(), load, game: [...this.game.values()], woodReserve: 0 };
   }
 
@@ -408,9 +416,12 @@ export class AiPlayer {
       const at = b && dist(b.x, b.y, tc.x, tc.y) < 22 ? b : tc;
       if (this.build(s, cmds, 'granary', at.x, at.y, at === tc ? 5 : 2.5, at === tc ? 9 : 5, 1)) return;
     }
-    // Storage pit at the nearest woodline.
+    // Storage pit at the nearest woodline — a forest, not the lone trees by the Town Center: one within 5 tiles made
+    // the woodline look close enough, and its cutters walked every load home until those trees were gone (minute 10;
+    // a Hard computer starved of wood never trained an army, M15.10 P2).
     if (!this.has(s, 'storagePit').length && !this.isPending(s, 'storagePit') && s.working[1] >= 2) {
-      const t = this.nearest(s.known.filter((r) => r.job === 'wood'), tc.x, tc.y);
+      const wood = s.known.filter((r) => r.job === 'wood');
+      const t = this.nearest(wood.filter((r) => r.kind === 'forestTree'), tc.x, tc.y) ?? this.nearest(wood, tc.x, tc.y);
       if (t && dist(t.x, t.y, tc.x, tc.y) > 5 && this.build(s, cmds, 'storagePit', t.x, t.y, 2.5, 5, 1)) return;
     }
     // A granary beside far food being worked (berries, shore fish, a herd's carcasses): one more in the Stone
@@ -435,6 +446,21 @@ export class AiPlayer {
       if (!mine) continue;
       const drops = s.buildings.filter((b) => b.type === 'storagePit' || b.type === 'townCenter');
       if (drops.every((d) => dist(d.x, d.y, mine.x, mine.y) > 8) && this.build(s, cmds, 'storagePit', mine.x, mine.y, 2.5, 5, 1)) return;
+    }
+    // A pit beside a far hunt: meat goes to a Storage Pit or the Town Center, never a Granary — on big maps hunters
+    // carried it 61–78 tiles home while the Granary built beside the herd stood unused (M15.10 P53). Only the far
+    // ones (> 30 tiles, three hunters): nearer herds are eaten before a pit pays for itself.
+    if (!this.isPending(s, 'storagePit')) {
+      const meatDrops = s.buildings.filter((b) => b.type === 'storagePit' || b.type === 'townCenter'); // (one going up counts)
+      const far = new Map<number, number>();
+      for (const u of s.villagers) {
+        if (u.order !== 'gather' || s.jobOf.get(u.target) !== 'hunt') continue;
+        const r = s.known.find((k) => k.i === u.target);
+        if (r && meatDrops.every((d) => dist(d.x, d.y, r.x, r.y) > 30)) far.set(r.i, (far.get(r.i) ?? 0) + 1);
+      }
+      const [top] = [...far].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+      const at = top && s.known.find((k) => k.i === top[0]);
+      if (at && this.build(s, cmds, 'storagePit', at.x, at.y, 2.5, 6, 1)) return;
     }
     // Tool Age: a Market (farms) and the Barracks → Archery Range pair that also unlocks Bronze.
     if (s.me.age >= 1 && !this.has(s, 'barracks').length && this.has(s, 'granary', true).length && this.has(s, 'storagePit', true).length && s.villagers.length >= 14) {
@@ -631,6 +657,7 @@ export class AiPlayer {
         if (p) {
           cmds.push({ t: 'act', ids: [u.h], h: p.h });
           s.busy.add(u.h);
+          this.sentAt(p.h, s.v.tick);
           return true;
         }
         // No easy food left and no farms yet: take an elephant (300 food) with a group of five — it fights back.
@@ -647,6 +674,7 @@ export class AiPlayer {
             const ids = [u.h, ...group];
             cmds.push({ t: 'act', ids, h: el.h });
             for (const h of ids) s.busy.add(h);
+            this.sentAt(el.h, s.v.tick);
             return true;
           }
         }
@@ -682,6 +710,12 @@ export class AiPlayer {
   }
 
   /** Where food can be dropped off: Town Centers and finished granaries. */
+  /** Note when hunters were first sent at remembered animal `h` (see the game memory in `snapshot`). */
+  private sentAt(h: number, tick: number): void {
+    const g = this.game.get(h);
+    if (g && g.sent === undefined) g.sent = tick;
+  }
+
   private foodDrops(s: Snapshot): { x: number; y: number }[] {
     const d = s.buildings.filter((b) => (b.type === 'granary' && b.done) || b.type === 'townCenter');
     return d.length ? d : s.tc ? [s.tc] : [];

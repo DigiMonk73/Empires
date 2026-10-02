@@ -7,6 +7,8 @@ import { HARDEST_BONUS } from '../../src/data/setup.ts';
 import { AiPlayer, lateStart } from '../../src/ai/ai.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
 import { completeResearch } from '../../src/sim/systems/production.ts';
+import { kill } from '../../src/sim/systems/combat.ts';
+import { TYPES } from '../../src/sim/rules/registry.ts';
 import { EKind } from '../../src/sim/core/entities.ts';
 import type { Command } from '../../src/sim/index.ts';
 import { GameSession } from '../../src/game/session.ts';
@@ -48,15 +50,36 @@ describe('AI v2 (M13.2)', () => {
 describe('AI v2 fixes (M13.4)', () => {
   it('a full population never freezes the Town Center: the computers still age up at the game\'s limit', () => {
     // M13.4: a villager queued at a full population waited for a house forever, the age could not be queued behind
-    // it, and Hardest floated 14,000 resources in the Tool Age. A peaceful game with a 25 limit puts both computers
-    // at the limit early (M14: the fix had 50 hard-coded — a 25 limit brought the deadlock back on seed 103).
-    for (const seed of [101, 103]) {
-      const r = runMatch({ seed, type: 'inland', size: 'tiny', levels: ['hardest', 'hard'], minutes: 30, peaceful: true, popCap: 25 });
-      for (const p of [0, 1]) {
-        expect(Math.max(...r.samples.map((x) => x.players[p]!.pop)), `seed ${seed} P${p + 1} at the limit`).toBe(25);
-        expect(r.ageTick[p]![4], `seed ${seed} P${p + 1} Iron Age`).toBeGreaterThan(0);
-      }
+    // it, and Hardest floated 14,000 resources in the Tool Age (M14: the fix had 50 hard-coded — a 25 limit brought
+    // it back). A scene, not seeded games: since D69 peaceful games at 25 rarely reach the limit (M15.11).
+    const sim = Sim.create({
+      seed: 8,
+      map: { w: 40, h: 40 },
+      victory: 'none',
+      popCap: 25,
+      players: [{ civ: 'greek', ai: 'hardest' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 4, ty: 4 },
+          { type: 'granary', owner: 1, tx: 12, ty: 4 },
+          { type: 'storagePit', owner: 1, tx: 16, ty: 4 },
+          ...Array.from({ length: 6 }, (_, i) => ({ type: 'house', owner: 1, tx: 4 + i * 3, ty: 30 })),
+        ],
+        units: Array.from({ length: 25 }, (_, i) => ({ type: 'villager', owner: 1, x: 8.5 + (i % 5), y: 12.5 + Math.floor(i / 5) })),
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([5000, 5000, 5000, 5000]);
+    const view = new PlayerView(w, 1);
+    const tc = view.ownBuildings().find((b) => b.type === 'townCenter')!;
+    sim.step([{ player: 1, cmd: { t: 'train', bld: tc.h, unit: 'villager' } }]); // waits for a house that can't come
+    expect(view.ownBuildings().find((b) => b.type === 'townCenter')!.queue).toBe(1);
+    const ai = new AiPlayer(1, 'hardest', 1, { civ: 'greek' });
+    for (let t = 0; t < 20 * 180; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
     }
+    expect(view.me().age, 'in the Tool Age by 3:00').toBeGreaterThanOrEqual(2);
   });
 
   it('a won war is finished: the army hunts down the last building in explored ground', () => {
@@ -389,4 +412,190 @@ describe('AI army at a raised population limit (M15.10 P78)', () => {
     const army = view.ownUnits().filter((u) => u.cls !== 'villager' && u.cls !== 'fishingShip').length;
     expect(army, 'soldiers after 8 minutes (40 at the default-50 target)').toBeGreaterThan(55);
   }, 60_000);
+});
+
+describe('AI first Storage Pit (M15.10 P2)', () => {
+  it('goes to the forest, not to a lone tree by the Town Center', () => {
+    // A lone tree within 5 tiles made the woodline look close: no pit until those trees were cut (minute 10), the
+    // forest's cutters walked every load home and a Hard computer starved of wood.
+    const W = 40;
+    const LONE = [[9, 7], [9, 9], [4, 10], [8, 10], [3, 5], [9, 5]]; // round the Town Center, all within 5 tiles
+    const ascii = Array.from({ length: W }, (_, y) =>
+      Array.from({ length: W }, (_, x) => (LONE.some(([a, b]) => a === x && b === y) ? 'T' : x >= 20 && x <= 24 && y >= 4 && y <= 12 ? 'F' : '.')).join(''),
+    );
+    const sim = Sim.create({
+      seed: 2,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 5, ty: 6 }],
+        units: Array.from({ length: 8 }, (_, i) => ({ type: 'villager', owner: 1, x: 10.5 + (i % 4), y: 11.5 + Math.floor(i / 4) })),
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([500, 500, 0, 0]);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    for (let t = 0; t < 20 * 60 && !view.ownBuildings().some((b) => b.type === 'storagePit'); t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    const pit = view.ownBuildings().find((b) => b.type === 'storagePit');
+    expect(pit, 'a pit within 60 s').toBeDefined();
+    expect(pit!.x, 'beside the forest (x 20–24)').toBeGreaterThan(15);
+  });
+});
+
+describe('AI builders under a lone raider (M15.10 lens A4)', () => {
+  it('a villager building is not pulled off to fight and sent back every other think', () => {
+    // The villagers' defence took the farm's builder; finishing foundations sent it straight back: a Hardest villager
+    // swapped orders every 4 ticks for a minute and never moved (a4 game 0, 14:10–15:20).
+    const W = 40;
+    const ascii = Array.from({ length: W }, () => '.'.repeat(W));
+    const sim = Sim.create({
+      seed: 6,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hardest' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 3, ty: 3 }, { type: 'granary', owner: 1, tx: 14, ty: 18 }, { type: 'farm', owner: 1, tx: 18, ty: 18, progress: 0 }],
+        units: [
+          ...Array.from({ length: 5 }, (_, i) => ({ type: 'villager', owner: 1, x: 17.5 + i, y: 22.5 })),
+          { type: 'clubman', owner: 2, x: 21.5, y: 16.5 },
+        ],
+      },
+    });
+    const w = sim.world;
+    sim.step([{ player: 1, cmd: { t: 'diplomacy', to: 2, stance: 2 } }]);
+    w.players[1]!.res.set([500, 500, 0, 0]);
+    const ai = new AiPlayer(1, 'hardest', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const last = new Map<number, string>();
+    let swaps = 0;
+    for (let t = 0; t < 20 * 15; t++) {
+      const cmds = ai.think(view);
+      for (const c of cmds) {
+        if ((c.t !== 'construct' && c.t !== 'act') || !('ids' in c)) continue;
+        for (const id of c.ids) {
+          if (last.has(id) && last.get(id) !== c.t) swaps++;
+          last.set(id, c.t);
+        }
+      }
+      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    expect(swaps, 'villagers swapped between building and fighting').toBeLessThanOrEqual(2);
+  });
+});
+
+describe('AI hunting memory (M15.10 P70)', () => {
+  it('a gazelle that died out of sight is not hunted for ever', () => {
+    // The computer remembered a herd it had seen and kept sending villagers at an animal killed out of its sight:
+    // the order was refused, nobody moved, the spot never came into view — 1,000+ orders a minute, villagers idle.
+    const sim = Sim.create({
+      seed: 6,
+      map: { w: 48, h: 48 },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }],
+        units: [
+          ...[0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 1, x: 8.5 + i, y: 9.5 })),
+          { type: 'scout', owner: 1, x: 36.5, y: 36.5 },
+          { type: 'gazelle', owner: 0, x: 38.5, y: 38.5 },
+        ],
+      },
+    });
+    const w = sim.world;
+    const e = w.ents;
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const slotOf = (type: string) => {
+      for (let s = 0; s < e.top; s++) if (e.alive[s] && TYPES[e.type[s]!]!.id === type) return s;
+      return -1;
+    };
+    const gaz = e.handleOf(slotOf('gazelle'));
+    for (let t = 0; t < 20; t++) sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd }))); // it sees the gazelle
+    kill(w, slotOf('scout'), -1);
+    kill(w, e.slotOf(gaz), -1); // dies where nobody of ours can see
+    let atIt = 0;
+    for (let t = 0; t < 20 * 30; t++) {
+      const cmds = ai.think(view);
+      atIt += cmds.filter((c) => c.t === 'act' && c.h === gaz).length;
+      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    expect(atIt).toBeLessThanOrEqual(8); // a couple of thinks to see the order refused, then it forgets (was 202)
+  });
+});
+
+describe('AI targets across the water (M15.10 P74)', () => {
+  it('idle soldiers are not sent at an enemy building they cannot walk to', () => {
+    // Land to x 14, a strait, land again from x 21: an enemy Dock on the far shore, 7 tiles from our idle army.
+    const W = 40;
+    const ascii = Array.from({ length: W }, () => Array.from({ length: W }, (_, x) => (x <= 14 || x >= 21 ? '.' : 'w')).join(''));
+    const sim = Sim.create({
+      seed: 5,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      revealMap: true,
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 2, ty: 2 }, { type: 'dock', owner: 2, tx: 19, ty: 18 }, { type: 'townCenter', owner: 2, tx: 35, ty: 35 }],
+        units: Array.from({ length: 6 }, (_, i) => ({ type: 'axeman', owner: 1, x: 12.5 + (i % 2), y: 17.5 + Math.floor(i / 2) })),
+      },
+    });
+    const w = sim.world;
+    sim.step([{ player: 1, cmd: { t: 'diplomacy', to: 2, stance: 2 } }]);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const dock = w.ents.handleOf([...Array(w.ents.top).keys()].find((s) => w.ents.alive[s] && TYPES[w.ents.type[s]!]!.id === 'dock')!);
+    let atDock = 0;
+    for (let t = 0; t < 20 * 20; t++) {
+      const cmds = ai.think(view);
+      atDock += cmds.filter((c) => c.t === 'act' && c.h === dock).length;
+      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    expect(atDock).toBe(0);
+  });
+});
+
+describe('AI drop sites for far hunts (M15.11, KI-17 / P53)', () => {
+  it('builds a Storage Pit beside a herd being hunted far from home — meat never goes to a Granary', () => {
+    // Meat goes only to a Storage Pit or the Town Center; the far-food rule built a Granary beside far herds, and on
+    // big maps hunters carried meat 61–78 tiles home.
+    const W = 70;
+    const sim = Sim.create({
+      seed: 9,
+      map: { w: W, h: W },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }, { type: 'storagePit', owner: 1, tx: 10, ty: 4 }, { type: 'house', owner: 1, tx: 4, ty: 10 }, { type: 'house', owner: 1, tx: 8, ty: 10 }],
+        units: [
+          ...Array.from({ length: 8 }, (_, i) => ({ type: 'villager', owner: 1, x: 54.5 + i, y: 55.5 })),
+          ...[0, 1].map((i) => ({ type: 'elephant', owner: 0, x: 57.5 + i * 2, y: 58.5 })),
+        ],
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([500, 500, 100, 100]);
+    // Kill the elephants where they stand: two carcasses, 75 tiles from the Town Center.
+    for (let s = 0; s < w.ents.top; s++) if (w.ents.alive[s] && w.ents.owner[s] === 0 && TYPES[w.ents.type[s]!]!.id === 'elephant') kill(w, s);
+    sim.step([]);
+    const view = new PlayerView(w, 1);
+    const meat = view.resources('hunt');
+    expect(meat.length).toBeGreaterThan(0);
+    const vils = view.ownUnits().filter((u) => u.cls === 'villager').map((u) => u.h);
+    sim.step([{ player: 1, cmd: { t: 'gather', ids: vils, res: meat[0]!.i } }]);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    for (let t = 0; t < 20 * 60 && !view.ownBuildings().some((b) => b.type === 'storagePit' && b.x > 40); t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    const far = view.ownBuildings().find((b) => b.type === 'storagePit' && b.x > 40);
+    expect(far, 'a Storage Pit beside the far herd within a minute').toBeDefined();
+  });
 });

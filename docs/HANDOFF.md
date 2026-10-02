@@ -51,4 +51,11 @@ playtest). Multiplayer is next (M16).
 2. **Multiplayer (M16, branch `m16-multiplayer`)** — plan in `docs/MULTIPLAYER.md` (written when M16 starts).
 
 ## Status
-- 2026-10-02 04:30 — D70 noise band added (`tools/sim/ai-band.ts`); baseline being recorded. Next: the rough parts.
+- 2026-10-02 09:20 — **M15.11 AI bundle committed** on `main` (P2, P53, P70, P74, P76 — KI-16/-17/-18 closed); band
+  baseline re-recorded (wars 94, Hard > Moderate 194, Hardest > Hard 256, water 182, duels 64).
+- **KI-13 arrows: band FAIL** (water 171/192, avg 42.8 < 44). Next: find why accurate arrows stall water games
+  (likely transports and landings shot down) on the dev seeds 401–448 with `tools/sim/diagnose.ts`; worktree
+  `artifacts/wt-arrows` has the patch applied.
+- **KI-14 / P20** ready in worktree `artifacts/wt-rough` (mapgen final pass; terrain untouched) — needs its band run.
+- **M16 multiplayer** on branch `m16-multiplayer` (worktree `artifacts/wt-m16`): M16.1 relay, M16.2 client, M16.3
+  lobby done and tested (unit + e2e both engines), M16.4 partly — see `docs/MULTIPLAYER.md` on that branch.

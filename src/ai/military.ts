@@ -465,8 +465,11 @@ export class MilitaryBrain {
       for (const t of threats) {
         // Only on a lone raider on foot: villagers sent at an army (or chasing riders) just feed it.
         if (!MILITIA_VS.has(t.cls) || threats.some((o) => o !== t && dist(o.x, o.y, t.x, t.y) < 5)) continue;
+        // (Not a builder: taken off a foundation, finishing foundations sent it straight back, and a villager swapped
+        // orders every think for a minute without moving — M15.10 lens A4. The militia leaves builders alone too. Nor
+        // one `flee` just ran from here: it was sent back the next think.)
         const near = s.villagers
-          .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6)
+          .filter((u) => !s.busy.has(u.h) && u.order !== 'attack' && u.order !== 'build' && u.hp > 8 && dist(u.x, u.y, t.x, t.y) < 6 && !this.danger(s, u.x, u.y))
           .sort((a, b) => dist(a.x, a.y, t.x, t.y) - dist(b.x, b.y, t.x, t.y) || a.h - b.h)
           .slice(0, 3);
         if (!near.length) continue;
@@ -501,6 +504,9 @@ export class MilitaryBrain {
       for (const o of buildings) {
         const d = dist(o.x, o.y, u.x, u.y);
         if ((on.get(o.h) ?? 0) >= perBuilding || d > bd || (d === bd && best && o.h > best.h)) continue;
+        // Only what it can walk to: a land army stood on its own shore "attacking" a Dock across the Narrows strait
+        // for ten minutes (M15.10 P74).
+        if (!AT_SEA.has(u.cls) && !s.v.reachable(u.x, u.y, o.x - 2, o.y - 2, o.x + 2, o.y + 2)) continue;
         best = o;
         bd = d;
       }

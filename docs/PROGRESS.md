@@ -1166,7 +1166,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         pop limits, starting ages and frame times all right._
       - [ ] P52 · should · AI ending · Gigantic 1v1: P2 razes P1's base (30–36 min) but misses a Granary 17 tiles off
             and wanders 23 min; P1 sees 0/0 pop, no Defeat until 58:43 · `inland gigantic seed 61` · `probe-g5.ts`
-      - [ ] P53 · should · AI economy · **[blocked after 3 cycles]** · on big maps hunters carry meat 61–78 tiles (11 of 18 villagers at 12:00, no
+      - [x] P53 · should · AI economy · **[blocked after 3 cycles]** · on big maps hunters carry meat 61–78 tiles (11 of 18 villagers at 12:00, no
             pit near the hunt); food stops at ~12 min · g5 minute 12, `probe-walk.ts 5 8,12`; pop-25 g3 too
       - _P53 tried twice (it. 43): a Storage Pit beside far hunts and fishing (and Granaries for berries only) —
         GATE FAIL Hard > Moderate 47/64; the pit alone — wars 23/24, water 45/48. Reverted; 2 of 3 cycles._
@@ -1257,6 +1257,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         `artifacts/polish/lens-d4/`): no clipped HUD text, no errors. The HUD keeps its pixel size, so at 2560×1440 it
         is small (16 px type) and the selected unit's health bar runs 1000 px — a UI-scale option would be a feature,
         not polish; noted for the user._
+      - _**M15.11 (2026-10-02, the user: "fix those rough parts"):** D70 gates AI changes on a noise band
+        (`tools/sim/ai-band.ts`). P2, P53, P70, P74 and P76 (their saved patches; P53 with a new far-hunt scene test;
+        M13.4's fixed-seed pop-25 test replaced by a deadlock scene that fails without the fix) passed together:
+        wars 94/96 (93), Hard > Moderate 194/256 (197), Hardest > Hard 256/256 (252), water 182/192 (183), duels 64/64
+        (63). KI-16/-17/-18 closed. Arrows (KI-13) failed the band: water 171/192, averaging 42.8 (bar 44)._
       - _**AI gate noise floor (it. 64, for the user — gates untouched):** the full suite with the AIs' think timing
         shifted 1, 2 or 3 ticks (no rule changed; `artifacts/polish/noise-{1,2,3}.log`): 1v1 wars 22 / 23 / 24 of
         24, Hard > Moderate 46 / 48 / 52 of 64 (the +1 shift fails the 48 bar), held-out water 42 / 46 / 47 of 48,
@@ -1296,7 +1301,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         Country, Bronze 3v3 Small Islands, Iron + High 2v2 Coastal, Hardest 1v1; `artifacts/polish/lens-a4/`): 0 page
         or console errors, frames p95 ≤ 6.3 ms, ≤ 0.56 ms/tick, every game but the islands one decided by 31 min.
         (The seat lost both Hardest games: autoplay doesn't get Hardest's 2000 food — a harness artefact.) Found:_
-      - [ ] P76 · should · AI villagers · **[blocked after 3 cycles]** · a builder near a lone raider on foot swaps
+      - [x] P76 · should · AI villagers · **[blocked after 3 cycles]** · a builder near a lone raider on foot swaps
             orders every think — `defend()` sends it at the raider (it skips attackers, not builders), the next think
             `finishFoundations` sends it back — and never moves: a Hardest villager for a minute (a4 game 0,
             14:10–15:20); the alligator test's own scene did it for 20 s unnoticed · `lens-a4/dither.ts` — _tried
@@ -1329,7 +1334,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - _Lens A3 (51 all-AI games to 60 min after tonight's AI changes, 15 rerun on 9def2de; `artifacts/polish/lens-a3/`):
         no crash, slowest tick 10.5 ms; villager cap never exceeded (17/25, 35/50, 43/100, Post-Iron 27, Nomad 33);
         farms 2166/2240 finished; no Dock on an unreachable shore; no militia flip-flop; pop 25 games now end._
-      - [ ] P70 · must · AI hunt · villagers sent at an animal that died out of sight, every think: 7–25 idle,
+      - [x] P70 · must · AI hunt · villagers sent at an animal that died out of sight, every think: 7–25 idle,
             1,000–1,800 attack orders a minute for 2–8 min (15/51 games; 11/51 on the old tree) ·
             `hh-largeIslands-small-101` P2 19–25 min · `lens-a3/invalid.ts`; `ai.ts` hunting (`s.game` memory)
             _Tried (it. 46, `docs/patches/m15.10-p70-forget-dead-prey.patch`): the AI forgets a remembered animal when
@@ -1347,7 +1352,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             army (18× in 7 min, ~1,800 wood); worse since P59 (24/71 Dock foundations lost vs 11/43) ·
             `hh-smallIslands-small-102` P1 · `lens-a3/docks.ts` — _fixed:_ a Dock spot in a raiders' danger spot (`flee` marks them,
             40 s) is skipped. Suite: held out unchanged. Test: `ai-tactics` "AI Docks under attack".
-      - [ ] P74 · should · AI attack · idle soldiers sent at an enemy Dock across the Narrows strait (no reach check
+      - [x] P74 · should · AI attack · idle soldiers sent at an enemy Dock across the Narrows strait (no reach check
             in `military.ts attack()`) · `hh-narrows-small-102` P2 23–34 min
             _Tried (it. 52, `docs/patches/m15.10-p74-reachable-targets.patch`): a land unit only takes a building it can
             walk to — its test passes, but held-out water 48 → 46/48. Reverted; 1 of 3 cycles. _Second (it. 56):_
@@ -1407,7 +1412,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [x] P22 · nice · Tech Tree · an upgrade tech for a unit line the civ lacks shows as obtainable (Yamato:
             Armored Elephant unit missing, its upgrade tech "now") · `node artifacts/polish/p13-check.ts` — _fixed:_ a
             tech that only upgrades units the civ lacks is missing too. Test: `tech-tree` "marks an upgrade…".
-      - [ ] P2 · should · AI economy · **[blocked after 3 cycles]** · Hard P1 on `continental small seed 7` (greek vs egyptian, both Hard) never hunts
+      - [x] P2 · should · AI economy · **[blocked after 3 cycles]** · Hard P1 on `continental small seed 7` (greek vs egyptian, both Hard) never hunts
             the 5 gazelles by its TC, 15–25 wood minutes 5–20, housed at 36/36 with 400–600 food, 0 soldiers, loses
             at 28.7 min (civs swapped: same; seed 8: fine) · `node artifacts/polish/lens-a/seat.ts '<g0>' hard 30`
             _Traced (it. 9, `artifacts/polish/p2-econ.ts`, `p2-early.ts`):_ P1's wood stays < 50 to minute 10 — its
