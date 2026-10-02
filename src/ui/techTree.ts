@@ -79,8 +79,13 @@ export function techTree(civId: string, w?: World, player?: number, fullTechTree
     }
     return false;
   };
+  /** A tech that only upgrades units the civilization lacks (Yamato's Armored Elephant: no War Elephants, M15.10 P22). */
+  const upgradesNothing = (t: string): boolean => {
+    const fx = TECH_BY_ID.get(t)?.effects ?? [];
+    return fx.length > 0 && fx.every((e) => e.op === 'upgrade' && e.kind === 'unit' && unitMissing(e.to));
+  };
   const state = (kind: TreeItem['kind'], id: string, itemAge: number): ItemState => {
-    if (kind === 'unit' ? unitMissing(id) : kind === 'building' ? civ.disabled.buildings.includes(id) : techMissing(id)) return 'missing';
+    if (kind === 'unit' ? unitMissing(id) : kind === 'building' ? civ.disabled.buildings.includes(id) : techMissing(id) || upgradesNothing(id)) return 'missing';
     if (!p) return 'now';
     if (kind === 'tech' && p.techs.includes(id)) return 'done';
     if (kind === 'building' && owned.has(id)) return 'done';

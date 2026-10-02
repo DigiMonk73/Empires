@@ -1080,13 +1080,21 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             Babylonian Armored Elephant Y, Iron Shield –; Persian Plow –, Irrigation Y), so the data stays; the Tech
             Tree now marks a tech missing when one it needs is (it showed both as obtainable). The only two such
             chains (`artifacts/polish/p13-unreachable.ts`). Test: `tech-tree` "marks out of reach…".
-      - [ ] P22 · nice · Tech Tree · an upgrade tech for a unit line the civ lacks shows as obtainable (Yamato:
-            Armored Elephant unit missing, its upgrade tech "now") · `node artifacts/polish/p13-check.ts`
+      - [x] P22 · nice · Tech Tree · an upgrade tech for a unit line the civ lacks shows as obtainable (Yamato:
+            Armored Elephant unit missing, its upgrade tech "now") · `node artifacts/polish/p13-check.ts` — _fixed:_ a
+            tech that only upgrades units the civ lacks is missing too. Test: `tech-tree` "marks an upgrade…".
       - [ ] P2 · should · AI economy · Hard P1 on `continental small seed 7` (greek vs egyptian, both Hard) never hunts
             the 5 gazelles by its TC, 15–25 wood minutes 5–20, housed at 36/36 with 400–600 food, 0 soldiers, loses
             at 28.7 min (civs swapped: same; seed 8: fine) · `node artifacts/polish/lens-a/seat.ts '<g0>' hard 30`
-      - [ ] P4 · nice · HUD · "Not enough food." stacks 3× — the `no:<reason>` throttle (60 ticks, `src/ui/notify.ts`)
-            is shorter than a message's life · g2 tick ≈ 40200
+            _Traced (it. 9, `artifacts/polish/p2-econ.ts`, `p2-early.ts`):_ P1's wood stays < 50 to minute 10 — its
+            first Storage Pit waits for lone trees by the TC to run out (the pit rule's "nearest wood" is one of them)
+            and then for 120 wood; meanwhile it builds a Dock and 6 fishing boats on a lake. Placing the pit at the
+            nearest *forest* sped every economy (Tool 11:14 → 10:48, Bronze 20:15 → 17:57) but held-out wars fell
+            24 → 23/24 and Hard > Moderate to 48/64 (the bar) — reverted. Needs the AI-work protocol (dev seeds
+            601–624, `diagnose.ts wars`) before another try.
+      - [x] P4 · nice · HUD · "Not enough food." stacks 3× — the `no:<reason>` throttle (60 ticks, `src/ui/notify.ts`)
+            is shorter than a message's life · g2 tick ≈ 40200 — _fixed:_ the same words still on screen move down as the newest instead
+            of standing twice. Test: `notify` "a message still on screen is refreshed".
       - [ ] P5 · nice · defeat · a defeated player's leftover fishing boats show pop "1/0" (conquest rightly ignores
             them) · g1 from 17:13
       - [ ] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu

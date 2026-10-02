@@ -31,6 +31,12 @@ describe('tech tree (M7.9)', () => {
     expect(find(techTree('greek'), 'irrigation').state).not.toBe('missing');
   });
 
+  it('marks an upgrade out of reach when the civilization lacks the unit it upgrades (M15.10 P22)', () => {
+    const tech = (civ: string, id: string) => techTree(civ).flatMap((c) => c.ages.flat()).find((i) => i.id === id && i.kind === 'tech')!.state;
+    expect(tech('yamato', 'armoredElephant')).toBe('missing'); // Yamato have no War Elephants
+    expect(tech('persian', 'armoredElephant')).not.toBe('missing');
+  });
+
   it('follows a live player: researched, built, trainable now, later', () => {
     const sim = Sim.create({ seed: 1, map: { w: 32, h: 32 }, players: [{ civ: 'greek' }], startingResources: 'deathmatch', victory: 'none', scenario: { units: [], buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }, { type: 'barracks', owner: 1, tx: 12, ty: 4 }] } });
     const w = sim.world;

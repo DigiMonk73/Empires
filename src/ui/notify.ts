@@ -90,7 +90,9 @@ export class Notifier {
       this.cueAt = 0;
       if (o.ping) this.c.ping(o.x, o.y, o.ping);
     }
-    notes.value = [...notes.value, n].slice(-MAX_NOTES);
+    // The same words still on screen move down as the newest instead of standing twice (refused orders repeat
+    // every 60 ticks, a message lasts 200: "Not enough food." stood three times, M15.10 P4).
+    notes.value = [...notes.value.filter((m) => m.text !== text), n].slice(-MAX_NOTES);
     return true;
   }
 

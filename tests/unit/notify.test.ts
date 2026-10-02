@@ -91,3 +91,17 @@ describe('notifications (M12.1)', () => {
     expect(texts()).toEqual(['Not enough food.']);
   });
 });
+
+describe('notifications, polish (M15.10 P4)', () => {
+  it('a message still on screen is refreshed, not stacked', () => {
+    // "Not enough food." stood three times at once: refused orders repeat every 60 ticks, a message lasts 200.
+    const { sim, run, texts } = setup();
+    for (let k = 0; k < 3; k++) {
+      sim.world.events.push({ t: 'rejected', player: 1, reason: 'not enough food' } as never);
+      run(61);
+    }
+    expect(texts().filter((t) => t === 'Not enough food.').length).toBe(1);
+    run(NOTE_TICKS + 1);
+    expect(texts()).not.toContain('Not enough food.');
+  });
+});

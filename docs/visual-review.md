@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P4, P22 · no visual change (8 shots: menu backdrop, save timestamps)
+
 ## 2026-10-01 · M15.10 P13 · no e2e scene shows a Babylonian/Persian tree; 9 shots ≤ 0.22% px (menu backdrop)
 
 ## 2026-10-01 · M15.10 P21 · AI only, no visual change (5 shots: menu backdrop, save timestamps)
