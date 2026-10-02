@@ -1,0 +1,26 @@
+diff --git a/src/ai/ai.ts b/src/ai/ai.ts
+index 3feaca8..ff23344 100644
+--- a/src/ai/ai.ts
++++ b/src/ai/ai.ts
+@@ -433,6 +433,21 @@ export class AiPlayer {
+       const drops = s.buildings.filter((b) => b.type === 'storagePit' || b.type === 'townCenter');
+       if (drops.every((d) => dist(d.x, d.y, mine.x, mine.y) > 8) && this.build(s, cmds, 'storagePit', mine.x, mine.y, 2.5, 5, 1)) return;
+     }
++    // A pit beside a far hunt: meat goes to a Storage Pit or the Town Center, never a Granary — on big maps hunters
++    // carried it 61–78 tiles home while the Granary built beside the herd stood unused (M15.10 P53). Only the far
++    // ones (> 30 tiles, three hunters): nearer herds are eaten before a pit pays for itself.
++    if (!this.isPending(s, 'storagePit')) {
++      const meatDrops = s.buildings.filter((b) => b.type === 'storagePit' || b.type === 'townCenter'); // (one going up counts)
++      const far = new Map<number, number>();
++      for (const u of s.villagers) {
++        if (u.order !== 'gather' || s.jobOf.get(u.target) !== 'hunt') continue;
++        const r = s.known.find((k) => k.i === u.target);
++        if (r && meatDrops.every((d) => dist(d.x, d.y, r.x, r.y) > 30)) far.set(r.i, (far.get(r.i) ?? 0) + 1);
++      }
++      const [top] = [...far].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1] || a[0] - b[0]);
++      const at = top && s.known.find((k) => k.i === top[0]);
++      if (at && this.build(s, cmds, 'storagePit', at.x, at.y, 2.5, 6, 1)) return;
++    }
+     // Tool Age: a Market (farms) and the Barracks → Archery Range pair that also unlocks Bronze.
+     if (s.me.age >= 1 && !this.has(s, 'barracks').length && this.has(s, 'granary', true).length && this.has(s, 'storagePit', true).length && s.villagers.length >= 14) {
+       if (!this.isPending(s, 'barracks') && this.build(s, cmds, 'barracks', tc.x, tc.y, 6, 12, 1)) return;

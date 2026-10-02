@@ -1159,10 +1159,15 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         pop limits, starting ages and frame times all right._
       - [ ] P52 · should · AI ending · Gigantic 1v1: P2 razes P1's base (30–36 min) but misses a Granary 17 tiles off
             and wanders 23 min; P1 sees 0/0 pop, no Defeat until 58:43 · `inland gigantic seed 61` · `probe-g5.ts`
-      - [ ] P53 · should · AI economy · on big maps hunters carry meat 61–78 tiles (11 of 18 villagers at 12:00, no
+      - [ ] P53 · should · AI economy · **[blocked after 3 cycles]** · on big maps hunters carry meat 61–78 tiles (11 of 18 villagers at 12:00, no
             pit near the hunt); food stops at ~12 min · g5 minute 12, `probe-walk.ts 5 8,12`; pop-25 g3 too
       - _P53 tried twice (it. 43): a Storage Pit beside far hunts and fishing (and Granaries for berries only) —
         GATE FAIL Hard > Moderate 47/64; the pit alone — wars 23/24, water 45/48. Reverted; 2 of 3 cycles._
+      - _P53 root cause (it. 63): meat goes only to a Storage Pit or the Town Center, but the far-food rule builds a
+        *Granary* beside a far herd (FOOD_JOBS counts hunters) — the hunters can't use it, and the herd then counts as
+        near a drop. Third try, `docs/patches/m15.10-p53-pit-beside-far-hunts.patch`: a pit beside a hunt > 30 tiles
+        from any pit or TC (three hunters; a pit going up counts) — one pit by minute 14 on g5, but wars 24 → 23/24.
+        Reverted; blocked. (The Granary-for-hunts rule itself is left: changing it moves the gate games too.)_
       - [x] P54 · should · AI Deathmatch · Hard plays its normal build order on a 20k bank (Stone Age to 9–10 min,
             4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7) — _fixed:_
             the age waited for an empty Town Center queue, which kept refilling with villagers. On a bank of ≥ 8000
