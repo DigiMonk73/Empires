@@ -22,6 +22,14 @@ export interface CargoUnit {
   stance: number;
   carryJob: number;
   carryAmt: number;
+  /** Whose unit it is: a converted transport's riders stay their own side's (mil:3, M15.10 P26). Saves from
+   *  before 1.0.1 lack it — their riders count as the transport's owner's, as they did. */
+  owner?: number;
+}
+
+/** The side a rider belongs to. */
+export function riderOwner(w: World, t: number, c: CargoUnit): number {
+  return c.owner ?? w.ents.owner[t]!;
 }
 
 /** How far (tiles) from the transport's centre cargo can be set down. */
@@ -74,7 +82,7 @@ function finish(w: World, s: number): void {
 /** Unit `s` steps aboard transport `t`: its record goes into the cargo and it leaves the map. */
 function board(w: World, s: number, t: number): void {
   const e = w.ents;
-  (w.cargo[t] ??= []).push({ type: e.type[s]!, hp: e.hp[s]!, faith: e.faith[s]!, stance: e.stance[s]!, carryJob: e.carryJob[s]!, carryAmt: e.carryAmt[s]! });
+  (w.cargo[t] ??= []).push({ type: e.type[s]!, hp: e.hp[s]!, faith: e.faith[s]!, stance: e.stance[s]!, carryJob: e.carryJob[s]!, carryAmt: e.carryAmt[s]!, owner: e.owner[s]! });
   w.removeEntity(e.handleOf(s));
 }
 
@@ -104,9 +112,10 @@ function landCargo(w: World, t: number): number {
     if (i < 0) break;
     used.add(i);
     const c = cargo.shift()!;
-    const h = w.spawnUnit(c.type, e.owner[t]!, (i % w.map.w) + 0.5, Math.floor(i / w.map.w) + 0.5);
+    const owner = riderOwner(w, t, c);
+    const h = w.spawnUnit(c.type, owner, (i % w.map.w) + 0.5, Math.floor(i / w.map.w) + 0.5);
     const u = e.slotOf(h);
-    e.hp[u] = Math.min(c.hp, w.stats(e.owner[t]!, c.type).hp);
+    e.hp[u] = Math.min(c.hp, w.stats(owner, c.type).hp);
     e.faith[u] = c.faith;
     e.stance[u] = c.stance;
     e.carryJob[u] = c.carryJob;

@@ -1,5 +1,6 @@
 import { EKind } from '../core/entities.ts';
 import type { World } from '../world.ts';
+import { riderOwner } from './transport.ts';
 
 /** Recompute each player's population and housing (completed buildings only), capped by the game limit. */
 export function populationSystem(w: World): void {
@@ -14,7 +15,11 @@ export function populationSystem(w: World): void {
     const st = p.stats.types[e.type[s]!]!;
     if (e.kind[s] === EKind.unit) {
       p.pop += st.pop;
-      for (const c of w.cargo[s] ?? []) p.pop += p.stats.types[c.type]!.pop; // aboard a transport (M8.4)
+      // Aboard a transport (M8.4), counted for the rider's own side (a converted transport's riders, P26).
+      for (const c of w.cargo[s] ?? []) {
+        const rp = w.players[riderOwner(w, s, c)]!;
+        rp.pop += rp.stats.types[c.type]!.pop;
+      }
     }
     else if (e.build[s]! >= 1) p.popCap += st.popProvided;
   }

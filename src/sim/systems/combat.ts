@@ -14,6 +14,7 @@ import { approachRect, depleteNode, isVillager, REACH, startGather } from './gat
 import { refundQueue } from './production.ts';
 import { FAITH_MAX, isPriest, startConvert } from './priest.ts';
 import { ENEMY, allied, stanceOf } from '../rules/diplomacy.ts';
+import { riderOwner } from './transport.ts';
 
 /**
  * Combat core (mil:2). Damage = max(1, Σ over armor classes the target has: max(0, attack − armor)); against
@@ -113,10 +114,11 @@ export function kill(w: World, s: number, by = -1): number {
     else bt.kills++;
   }
   // A sunk transport takes everyone aboard down with it (M8.4).
-  const aboard = w.cargo[s]?.length ?? 0;
-  if (aboard && owner > 0) {
-    w.players[owner]!.tally.losses += aboard;
-    if (by > 0 && by !== owner) w.players[by]!.tally.kills += aboard;
+  for (const c of w.cargo[s] ?? []) {
+    const ro = riderOwner(w, s, c); // (a converted transport's riders are their own side's losses, P26)
+    if (ro <= 0) continue;
+    w.players[ro]!.tally.losses++;
+    if (by > 0 && by !== ro) w.players[by]!.tally.kills++;
   }
   let carcass = -1;
   if (t.animal) {

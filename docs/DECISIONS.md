@@ -169,8 +169,8 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   the map — its record (type, HP, faith, stance, load) rides in `world.cargo` and population and conquest still
   count it. Right-click land with a loaded transport (or L: land here): it sails to the water nearest that point
   and sets everyone down on free land within 2.6 tiles; whoever finds no room stays aboard. A sunk transport's
-  cargo is lost (tallied as losses/kills). Cargo lands as the transport's owner, so a converted transport's
-  riders change sides (the original's behaviour here is unverified). Save format: SIM_VERSION 0.8.0.
+  cargo is lost (tallied as losses/kills). Cargo lands as its own side's — a converted transport's riders do not change
+  sides (mil:3; M15.10 P26 — this said the opposite, "unverified"). Save format: SIM_VERSION 0.8.0.
 - **D38 — Sea trade** (2026-09-30, M8.5; `verify:true`). A Trade Boat / Merchant Ship loads 20 of its good (food,
   wood or stone — Trade Food / Wood / Stone buttons, wood by default) from the stockpile at the nearest own
   Dock, sails to the other player's Dock it was sent to (ally or enemy — never its own), sells, brings the gold

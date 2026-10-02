@@ -4,6 +4,7 @@ import { mutualAllies } from '../rules/diplomacy.ts';
 import { TYPES } from '../rules/registry.ts';
 import { computeScores } from '../rules/score.ts';
 import type { Countdown, WinHow, World } from '../world.ts';
+import { riderOwner } from './transport.ts';
 
 /**
  * Conquest (econ:7): a player is defeated once they have no villagers, military units, warships or buildings
@@ -30,7 +31,7 @@ export function victorySystem(w: World): void {
   for (let s = 0; s < e.top; s++) {
     if (!e.alive[s]) continue;
     const t = TYPES[e.type[s]!]!;
-    counts[e.owner[s]!]! += w.cargo[s]?.length ?? 0; // an army aboard a transport is still an army
+    for (const c of w.cargo[s] ?? []) counts[riderOwner(w, s, c)]!++; // an army aboard a transport is still an army
     if (e.kind[s] === EKind.building ? t.building!.kind === 'wall' || t.building!.kind === 'relic' : EXEMPT.has(t.unit?.cls ?? '')) continue;
     counts[e.owner[s]!]!++;
   }

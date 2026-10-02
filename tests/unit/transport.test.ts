@@ -3,6 +3,7 @@ import { decodeCommands, encodeCommands } from '../../src/sim/commands/codec.ts'
 import { Sim } from '../../src/sim/index.ts';
 import { TYPES } from '../../src/sim/rules/registry.ts';
 import { kill } from '../../src/sim/systems/combat.ts';
+import { convert } from '../../src/sim/systems/priest.ts';
 
 /**
  * M8.4 (D37): transports (mil:1b — Light carries 5, Heavy 10). Land units board from the shore, ride as cargo
@@ -85,6 +86,49 @@ describe('transports (M8.4, D37)', () => {
     kill(w, tr, 2);
     run(20 * 2);
     expect(w.players[1]!.defeated).not.toBeNull();
+  });
+
+  it('a converted transport changes sides but its riders do not (M15.10 P26, mil:3)', () => {
+    // mil:3: "Converting a loaded transport converts the ship but not its cargo." They landed as the priest's side.
+    const { sim, w, e, all, run } = setup([...army(3), { type: 'lightTransport', owner: 1, x: 10.6, y: 9.5 }, { type: 'priest', owner: 2, x: 24.5, y: 9.5 }]);
+    const tr = all('lightTransport')[0]!;
+    sim.step([{ player: 1, cmd: { t: 'act', ids: all('clubman').map((s) => e.handleOf(s)), h: e.handleOf(tr) } }]);
+    run(20 * 20);
+    expect(w.cargo[tr]?.length).toBe(3);
+    convert(w, tr, 2, all('priest', 2)[0]!);
+    run(2);
+    expect(w.players[1]!.pop).toBe(3); // the riders are still Player 1's
+    expect(w.players[2]!.pop).toBe(1 + 1); // the priest and the ship
+    sim.step([{ player: 2, cmd: { t: 'unload', ids: [e.handleOf(tr)], x: 25, y: 10 } }]);
+    run(20 * 30);
+    expect(all('clubman', 1).length).toBe(3);
+    expect(all('clubman', 2).length).toBe(0);
+  });
+
+  it('a save from before P26 (riders without an owner) still loads: they ride and land as the transport\'s', () => {
+    const { sim, w, e, all, run } = setup([...army(2), { type: 'lightTransport', owner: 1, x: 10.6, y: 9.5 }]);
+    const tr = all('lightTransport')[0]!;
+    sim.step([{ player: 1, cmd: { t: 'act', ids: all('clubman').map((s) => e.handleOf(s)), h: e.handleOf(tr) } }]);
+    run(20 * 20);
+    // The save's JSON header with the riders' owners taken out (the binary blobs move with its new length).
+    const bytes = sim.serialize();
+    const jlen = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(8, true);
+    const header = JSON.parse(new TextDecoder().decode(bytes.subarray(12, 12 + jlen))) as { cargo: [number, { owner?: number }[]][] };
+    for (const [, riders] of header.cargo) for (const r of riders) delete r.owner;
+    const json = new TextEncoder().encode(JSON.stringify(header));
+    const pad = (n: number) => n + ((8 - (n % 8)) % 8);
+    const out = new Uint8Array(pad(12 + json.length) + bytes.length - pad(12 + jlen));
+    out.set(bytes.subarray(0, 12), 0);
+    new DataView(out.buffer).setUint32(8, json.length, true);
+    out.set(json, 12);
+    out.set(bytes.subarray(pad(12 + jlen)), pad(12 + json.length));
+    const b = Sim.deserialize(out);
+    expect(b.world.players[1]!.pop).toBe(w.players[1]!.pop);
+    b.step([{ player: 1, cmd: { t: 'unload', ids: [b.world.ents.handleOf(tr)], x: 25, y: 10 } }]);
+    for (let k = 0; k < 20 * 30; k++) b.step();
+    let mine = 0;
+    for (let s = 0; s < b.world.ents.top; s++) if (b.world.ents.alive[s] && b.world.ents.owner[s] === 1 && TYPES[b.world.ents.type[s]!]!.id === 'clubman') mine++;
+    expect(mine).toBe(2);
   });
 
   it('the unload command survives the replay codec', () => {

@@ -1,0 +1,104 @@
+diff --git a/src/sim/systems/combat.ts b/src/sim/systems/combat.ts
+index d5be45f..de41641 100644
+--- a/src/sim/systems/combat.ts
++++ b/src/sim/systems/combat.ts
+@@ -197,6 +197,11 @@ function mayReact(w: World, s: number): boolean {
+   return canAttack(w, s);
+ }
+ 
++/** One of the two moves on water and the other on land: they can strike each other only across the shore. */
++function crossesShore(w: World, a: number, b: number): boolean {
++  return (TYPES[w.ents.type[a]!]!.moveClass === MOVE_WATER) !== (TYPES[w.ents.type[b]!]!.moveClass === MOVE_WATER);
++}
++
+ /** Patch 1.0a (mil:2): a catapult on Stand Ground holds its fire — it shoots only when ordered (M15.10 P25). */
+ function holdsFire(w: World, s: number): boolean {
+   return w.ents.stance[s] === 1 && !!TYPES[w.ents.type[s]!]!.unit?.tags.includes('catapultLine');
+@@ -259,6 +264,7 @@ export function targetSystem(w: World): void {
+       if (!lion && !w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)]) return;
+       const d = edgeDist(w, s, j);
+       if (d > look || d > bestD || (d === bestD && j > best)) return;
++      if (d > reach && crossesShore(w, s, j)) return; // a ship doesn't set out after a villager inland (M15.10 P27)
+       best = j;
+       bestD = d;
+     });
+@@ -436,6 +442,18 @@ export function attackSystem(w: World): void {
+       }
+       continue;
+     }
++    // Across the shore (a land unit after a ship, a ship after a land unit) the target can stay out of reach for
++    // good — a clubman walked the beach after a fishing boat for minutes, a galley sat after a villager inland: 4 s
++    // without getting closer and it gives up (M15.10 P27, P31).
++    if (crossesShore(w, s, t)) {
++      if (o.best === undefined || d < o.best - 0.25) {
++        o.best = d;
++        o.away = 0;
++      } else if ((o.away = (o.away ?? 0) + 1) > 80) {
++        finish(w, s);
++        continue;
++      }
++    }
+     // Chase: (re)path toward the target when idle or when it has moved away from our path's end.
+     const path = w.paths[s];
+     const end = path && path.length ? [path[path.length - 2]!, path[path.length - 1]!] : null;
+diff --git a/src/sim/world.ts b/src/sim/world.ts
+index 69e1328..7da183b 100644
+--- a/src/sim/world.ts
++++ b/src/sim/world.ts
+@@ -187,7 +187,7 @@ export type Order =
+   /** Attack unit `h` (`hunt`: a villager hunting an animal — butchers the carcass afterwards). */
+   /** Attack unit/building `h`. `auto`: picked by the unit itself (auto-acquire, retaliation) — leashed, and dropped
+    *  by Stand Ground units once the target leaves reach. */
+-  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean; stall?: number }
++  | { k: 'attack'; h: number; hunt: boolean; retarget: number; windup: number; auto: boolean; stall?: number; best?: number; away?: number }
+   /** A priest converting `h` (chanting from range once its faith is full) or healing `h` (adjacent). */
+   | { k: 'convert'; h: number; chant: number; auto: boolean; stall?: number }
+   | { k: 'heal'; h: number; auto: boolean; stall?: number };
+diff --git a/tests/unit/combat.test.ts b/tests/unit/combat.test.ts
+index 7c98776..e4bd713 100644
+--- a/tests/unit/combat.test.ts
++++ b/tests/unit/combat.test.ts
+@@ -266,6 +266,43 @@ describe('auto-acquire and retaliation (mil:2)', () => {
+   });
+ });
+ 
++describe('targets across the shore (M15.10 P27, P31)', () => {
++  // Land on the left 14 columns, water on the right.
++  const shore = (units: U[]) => {
++    const ascii = Array.from({ length: 24 }, () => '.'.repeat(14) + '~'.repeat(26));
++    const sim = Sim.create({ seed: 3, map: { w: 40, h: 24, ascii }, players: [{ civ: 'greek' }, { civ: 'persian' }], victory: 'none', scenario: { units } });
++    const e = sim.world.ents;
++    const slot = (type: string) => {
++      for (let s2 = 0; s2 < e.top; s2++) if (e.alive[s2] && e.type[s2] === unitTypeIndex(type)) return s2;
++      throw new Error(type);
++    };
++    return { sim, w: sim.world, e, slot };
++  };
++
++  it('a clubman ordered at a boat out of reach off the shore gives up', () => {
++    const { sim, w, e, slot } = shore([{ type: 'clubman', owner: 1, x: 10.5, y: 12.5 }, { type: 'fishingBoat', owner: 2, x: 17.5, y: 12.5 }]);
++    const c = slot('clubman');
++    sim.step([{ player: 1, cmd: { t: 'act', ids: [e.handleOf(c)], h: e.handleOf(slot('fishingBoat')) } }]);
++    for (let i = 0; i < 20 * 15; i++) sim.step();
++    expect(w.orders[c]?.[0]?.k).not.toBe('attack');
++  });
++
++  it('a warship does not set out after a villager inland it can never reach', () => {
++    // In sight (LOS 9) but 7.5 tiles inland: range 6 from the water's edge never reaches it.
++    const { sim, w, e, slot } = shore([{ type: 'warGalley', owner: 1, x: 15.5, y: 12.5 }, { type: 'villager', owner: 2, x: 6.5, y: 12.5 }]);
++    const g = slot('warGalley');
++    const v = slot('villager');
++    sim.step([{ player: 2, cmd: { t: 'stance', ids: [e.handleOf(v)], stand: true } }]);
++    let attacking = 0;
++    for (let i = 0; i < 20 * 60; i++) {
++      sim.step();
++      if (w.orders[g]?.[0]?.k === 'attack') attacking++;
++    }
++    expect(attacking, 'ticks spent on the attack').toBeLessThan(20 * 5);
++    expect(e.hp[v]).toBe(25);
++  });
++});
++
+ describe('Stand Ground catapults (M15.10 P25)', () => {
+   it('a catapult on Stand Ground holds its fire until ordered (patch 1.0a, mil:2)', () => {
+     const { of, step, e } = setup([

@@ -1082,11 +1082,18 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             l.210: since patch 1.0a Stand Ground stops the catapult line firing at all · `lens-f/s8-settle.ts` §2 —
             _fixed:_ a catapult on Stand Ground neither auto-acquires nor answers; it fires when ordered. The AI sets
             no unit stances. Test: `combat` "Stand Ground catapults".
-      - [ ] P26 · should · priests · converting a loaded Light Transport converts its cargo too (3 clubmen landed as
+      - [x] P26 · should · priests · converting a loaded Light Transport converts its cargo too (3 clubmen landed as
             the priest's); mil:3 l.253: the ship, not its cargo (D37 called it unverified) · `lens-f/s4-priests.ts` §4
+            — _fixed:_ each rider's record keeps its owner (population, conquest, losses and landing use it); saves
+            without the field ride as before. Tests: `transport` "a converted transport changes sides…", "a save
+            from before P26…". Suite unchanged.
       - [ ] P27 · should · ships · a War Galley chases a villager 8 tiles inland (out of reach from any water) and
             holds that self-given order 80 s+; under a direct order it flips attack/idle every ~5 s ·
             `lens-f/s6-unreachable.ts`, `s6b-galley.ts`
+            _Tried with P31 (it. 22, `docs/patches/m15.10-p27-p31-across-the-shore.patch`): across the shore an
+            attack gives up after 4 s without getting closer, and nothing auto-targets across it out of reach —
+            both tests pass, held out unchanged (wars 24/24, water 46/48), but GATE FAIL: Hard-vs-Hard median
+            64:46 (Done 25–60; it sits at ~51 since P3). Reverted; 1 of 3 cycles.
       - [ ] P28 · should · towers · no command makes a tower shoot a chosen unit (`ownedUnitSlots` drops buildings
             from `act`, `src/sim/commands/apply.ts:18`); mil:1c l.113: right-click targets
       - [ ] P29 · nice · priests · a priest never told to heal still heals wounded allies in sight; mil:3 l.269:
