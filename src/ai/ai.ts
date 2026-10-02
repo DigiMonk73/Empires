@@ -52,6 +52,8 @@ const SHARES: Record<number, [number, number, number, number]> = {
 
 /** The age advance researched from each age (index = current age). */
 const NEXT_AGE_TECH: (string | null)[] = [null, 'toolAge', 'bronzeAge', 'ironAge', null];
+/** A Deathmatch-sized bank (M15.10 P54) — far beyond what a normal game holds while it still has ages to go. */
+const rich = (s: Snapshot): boolean => s.me.res[0]! >= 8000 && s.me.res[1]! >= 8000;
 
 /** A start past the Stone Age (Tool … Post-Iron). Nomad is a Stone Age start too: its town grows as a default one
  *  does, so no villager cap of 60% (it held Hard to 30 of 50, M15.10 P19). */
@@ -339,6 +341,10 @@ export class AiPlayer {
   private trainVillagers(s: Snapshot, cmds: Command[]): void {
     const tc = s.tc;
     if (!tc || tc.queue >= 2) return;
+    // A Deathmatch bank ages first: no villager queued ahead of an age it can research now — the queue never
+    // emptied, and Hard sat in the Stone Age to minute 8 on 20,000 food and wood (M15.10 P54).
+    const tech = NEXT_AGE_TECH[s.me.age];
+    if (rich(s) && tech && !s.v.researching(tech) && !s.v.researchBlocker(tc.h, tech)) return;
     // An island's population goes to boats and warships too: villagers stop at 26 there (26 + 10 fishers + a
     // guard of 4 + a fleet of 8 fits the 50), 22 while an invasion needs the room for its army.
     // A later starting age: at most 60% of the population limit in villagers — an Iron start filled 50 with 36–44
@@ -460,8 +466,8 @@ export class AiPlayer {
     }
     if (tc.queue > 0) return;
     // Boom to the villager target first — but under pressure (losses), go anyway once the clock says so.
-    // (A full population can't reach the villager target: go.)
-    if (s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !this.overdue(s) && s.me.pop < s.me.popCap - 1) return;
+    // (A full population can't reach the villager target: go. Nor need a Deathmatch bank wait for one.)
+    if (!rich(s) && s.villagers.length < (this.p.villagers[s.me.age] ?? 0) - 1 && !this.overdue(s) && s.me.pop < s.me.popCap - 1) return;
     if (s.v.researchBlocker(tc.h, tech)) return;
     cmds.push({ t: 'research', bld: tc.h, tech });
   }

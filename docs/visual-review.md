@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M15.10 P54 · AI on Deathmatch only; 7 shots of menu-backdrop noise (0.06–0.38% px)
+
 ## 2026-10-02 · M15.10 P73 · AI only; 8 shots (victory scene and noise)
 
 ## 2026-10-02 · M15.10 P71 · AI only; victory scenes 1.8–2.6% px (the Hardest-vs-Easiest game plays differently; its e2e still wins)

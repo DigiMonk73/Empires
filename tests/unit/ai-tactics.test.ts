@@ -9,6 +9,8 @@ import { PlayerView } from '../../src/sim/view/playerView.ts';
 import { completeResearch } from '../../src/sim/systems/production.ts';
 import { EKind } from '../../src/sim/core/entities.ts';
 import type { Command } from '../../src/sim/index.ts';
+import { GameSession } from '../../src/game/session.ts';
+import { setupFromQuery, skirmishConfig } from '../../src/game/skirmish.ts';
 
 describe('AI v2 (M13.2)', () => {
   it('values units by price and health left', () => {
@@ -337,4 +339,19 @@ describe('AI Docks under attack (M15.10 P73)', () => {
     expect(b, 'a Dock placed elsewhere on the shore').toBeDefined();
     expect(Math.hypot(b!.tx + 1.5 - 11, b!.ty + 1.5 - 17)).toBeGreaterThanOrEqual(7);
   });
+});
+
+describe('AI on a Deathmatch bank (M15.10 P54)', () => {
+  it('ages up as soon as it can instead of booming villagers first', () => {
+    // The Town Center's queue never emptied of villagers, and the age waits behind it: Hard reached the Tool Age at
+    // 8:00 on 20,000 food and wood (the buildings it needs stood by 3:00).
+    let early = 0;
+    for (const seed of [71, 72, 73]) {
+      const q = `type=continental&size=small&seed=${seed}&res=deathmatch&p=shang.1.hard,roman.2.hard,hittite.3.hard`;
+      const s = new GameSession(skirmishConfig(setupFromQuery(new URLSearchParams(q))), 0);
+      while (s.sim.tick < 6 * 1200) s.stepOnce();
+      for (const p of [1, 2, 3]) if (new PlayerView(s.sim.world, p).me().age >= 2) early++;
+    }
+    expect(early, 'players in the Tool Age by 6:00, of 9').toBeGreaterThanOrEqual(7);
+  }, 60_000);
 });

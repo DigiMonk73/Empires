@@ -1162,8 +1162,13 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             pit near the hunt); food stops at ~12 min · g5 minute 12, `probe-walk.ts 5 8,12`; pop-25 g3 too
       - _P53 tried twice (it. 43): a Storage Pit beside far hunts and fishing (and Granaries for berries only) —
         GATE FAIL Hard > Moderate 47/64; the pit alone — wars 23/24, water 45/48. Reverted; 2 of 3 cycles._
-      - [ ] P54 · should · AI Deathmatch · Hard plays its normal build order on a 20k bank (Stone Age to 9–10 min,
-            4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7)
+      - [x] P54 · should · AI Deathmatch · Hard plays its normal build order on a 20k bank (Stone Age to 9–10 min,
+            4–13 soldiers at 10:00; fell with 43k unspent) · `continental small seed 71 res=deathmatch` (g7) — _fixed:_
+            the age waited for an empty Town Center queue, which kept refilling with villagers. On a bank of ≥ 8000
+            food and wood, no villager is queued ahead of an age it can research: Tool / Bronze / Iron at ~4 / 8 / 12
+            min (were 8 / 13–14 / 17–23). Suite unchanged to the game (normal games never hold such a bank). The
+            "fell with 43k" was the human seat against allied computers (M13.8). Test: `ai-tactics` "AI on a
+            Deathmatch bank". Probe: `artifacts/polish/p54/dm.ts`.
       - [x] P55 · should · AI clutter · farm foundations placed and never built stay as dirt squares 20+ min (17 on
             a Huge 8p map; `finishFoundations` skips farms) · g4 coastal huge seed 59; g3 pop 25
             _Tried (it. 31, `docs/patches/m15.10-p55-finish-farm-foundations.patch`): farms back in
