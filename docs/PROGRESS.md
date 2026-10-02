@@ -1234,6 +1234,29 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
+      - _Lens A3 (51 all-AI games to 60 min after tonight's AI changes, 15 rerun on 9def2de; `artifacts/polish/lens-a3/`):
+        no crash, slowest tick 10.5 ms; villager cap never exceeded (17/25, 35/50, 43/100, Post-Iron 27, Nomad 33);
+        farms 2166/2240 finished; no Dock on an unreachable shore; no militia flip-flop; pop 25 games now end._
+      - [ ] P70 · must · AI hunt · villagers sent at an animal that died out of sight, every think: 7–25 idle,
+            1,000–1,800 attack orders a minute for 2–8 min (15/51 games; 11/51 on the old tree) ·
+            `hh-largeIslands-small-101` P2 19–25 min · `lens-a3/invalid.ts`; `ai.ts` hunting (`s.game` memory)
+            _Tried (it. 46, `docs/patches/m15.10-p70-forget-dead-prey.patch`): the AI forgets a remembered animal when
+            hunters sent at it a think ago aren't on it (the order refused) — 202 orders in 30 s → ≤ 8; but held-out
+            wars 24 → 23/24, water 48 → 46/48. Reverted; 1 of 3 cycles.
+      - [ ] P71 · should · AI pop 50 · the winner can't finish: 35 villagers + 8 idle fishing boats (no fish left;
+            boats don't count in D69's 70%) + 5–7 soldiers, 2–6k banked · `hh-continental-small-102` (ahead from
+            34 min, conquest 55.5); Mediterranean Hard–Hard 49/50 both, undecided · `lens-a3/probe.ts`
+      - [ ] P72 · should · map · checkerboard coasts at the map edge join only at corners: 95 land regions of ≤ 3
+            tiles on continental small 101; 17 units stranded at (40,7) · `lens-a3/pockets.ts` (before tonight too)
+      - [ ] P73 · should · AI Docks · a Dock foundation goes back down on the same contested tile under the enemy
+            army (18× in 7 min, ~1,800 wood); worse since P59 (24/71 Dock foundations lost vs 11/43) ·
+            `hh-smallIslands-small-102` P1 · `lens-a3/docks.ts`
+      - [ ] P74 · should · AI attack · idle soldiers sent at an enemy Dock across the Narrows strait (no reach check
+            in `military.ts attack()`) · `hh-narrows-small-102` P2 23–34 min
+      - [ ] P75 · should · AI Stone Age economy · Hard reaches Tool at 18–24 min, 16 of 21 villagers walking 6–15
+            tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts`
+      - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
+        51/50 (likely faithful)._
       - [ ] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI

@@ -1,0 +1,124 @@
+diff --git a/src/ai/ai.ts b/src/ai/ai.ts
+index 6b8fc5f..32a286a 100644
+--- a/src/ai/ai.ts
++++ b/src/ai/ai.ts
+@@ -97,7 +97,7 @@ export interface AiState {
+   exploreDone: boolean;
+   loops: number;
+   lastRebalance: number;
+-  game: { h: number; type: string; x: number; y: number }[];
++  game: { h: number; type: string; x: number; y: number; sent?: number }[];
+   military: MilitaryState;
+   /** Absent in saves made before the naval AI (M8.8). */
+   naval?: NavalState;
+@@ -119,7 +119,7 @@ export class AiPlayer {
+   /** Exploration loops walked so far (radius 11, 18, 26). */
+   private loops = 0;
+   private lastRebalance = 0;
+-  private game = new Map<number, { h: number; type: string; x: number; y: number }>();
++  private game = new Map<number, { h: number; type: string; x: number; y: number; sent?: number }>();
+   readonly military: MilitaryBrain;
+   readonly naval = new NavalBrain();
+   readonly relics = new RelicBrain();
+@@ -220,6 +220,14 @@ export class AiPlayer {
+       this.game.set(o.h, { h: o.h, type: o.type, x: o.x, y: o.y });
+     }
+     for (const [h, g] of this.game) if (!visible.has(h) && v.visible(Math.floor(g.x), Math.floor(g.y))) this.game.delete(h);
++    // …and out of sight: hunters sent a moment ago (an order takes the next tick) and nobody on it — the order was
++    // refused, the animal is gone (killed out of sight; the hunters never moved, so its spot never came into view
++    // and it was hunted every think, M15.10 P70).
++    for (const [h, g] of this.game) {
++      if (visible.has(h) || g.sent === undefined || v.tick - g.sent < 12) continue;
++      if (!villagers.some((u) => u.order === 'attack' && u.target === h)) this.game.delete(h);
++      else g.sent = undefined;
++    }
+     return { v, me, units, villagers, buildings, tc, known, jobOf, working, busy: new Set(), load, game: [...this.game.values()], woodReserve: 0 };
+   }
+ 
+@@ -619,6 +627,7 @@ export class AiPlayer {
+         if (p) {
+           cmds.push({ t: 'act', ids: [u.h], h: p.h });
+           s.busy.add(u.h);
++          this.sentAt(p.h, s.v.tick);
+           return true;
+         }
+         // No easy food left and no farms yet: take an elephant (300 food) with a group of five — it fights back.
+@@ -635,6 +644,7 @@ export class AiPlayer {
+             const ids = [u.h, ...group];
+             cmds.push({ t: 'act', ids, h: el.h });
+             for (const h of ids) s.busy.add(h);
++            this.sentAt(el.h, s.v.tick);
+             return true;
+           }
+         }
+@@ -670,6 +680,12 @@ export class AiPlayer {
+   }
+ 
+   /** Where food can be dropped off: Town Centers and finished granaries. */
++  /** Note when hunters were first sent at remembered animal `h` (see the game memory in `snapshot`). */
++  private sentAt(h: number, tick: number): void {
++    const g = this.game.get(h);
++    if (g && g.sent === undefined) g.sent = tick;
++  }
++
+   private foodDrops(s: Snapshot): { x: number; y: number }[] {
+     const d = s.buildings.filter((b) => (b.type === 'granary' && b.done) || b.type === 'townCenter');
+     return d.length ? d : s.tc ? [s.tc] : [];
+diff --git a/tests/unit/ai-tactics.test.ts b/tests/unit/ai-tactics.test.ts
+index cd6a435..b7b452d 100644
+--- a/tests/unit/ai-tactics.test.ts
++++ b/tests/unit/ai-tactics.test.ts
+@@ -7,6 +7,8 @@ import { HARDEST_BONUS } from '../../src/data/setup.ts';
+ import { AiPlayer, lateStart } from '../../src/ai/ai.ts';
+ import { PlayerView } from '../../src/sim/view/playerView.ts';
+ import { completeResearch } from '../../src/sim/systems/production.ts';
++import { kill } from '../../src/sim/systems/combat.ts';
++import { TYPES } from '../../src/sim/rules/registry.ts';
+ import { EKind } from '../../src/sim/core/entities.ts';
+ import type { Command } from '../../src/sim/index.ts';
+ 
+@@ -277,3 +279,44 @@ describe('AI Docks (M15.10 P59)', () => {
+     expect(b!.tx + 1, 'on the mainland shore').toBeLessThan(14);
+   });
+ });
++
++describe('AI hunting memory (M15.10 P70)', () => {
++  it('a gazelle that died out of sight is not hunted for ever', () => {
++    // The computer remembered a herd it had seen and kept sending villagers at an animal killed out of its sight:
++    // the order was refused, nobody moved, the spot never came into view — 1,000+ orders a minute, villagers idle.
++    const sim = Sim.create({
++      seed: 6,
++      map: { w: 48, h: 48 },
++      victory: 'none',
++      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
++      scenario: {
++        buildings: [{ type: 'townCenter', owner: 1, tx: 4, ty: 4 }],
++        units: [
++          ...[0, 1, 2, 3].map((i) => ({ type: 'villager', owner: 1, x: 8.5 + i, y: 9.5 })),
++          { type: 'scout', owner: 1, x: 36.5, y: 36.5 },
++          { type: 'gazelle', owner: 0, x: 38.5, y: 38.5 },
++        ],
++      },
++    });
++    const w = sim.world;
++    const e = w.ents;
++    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
++    const view = new PlayerView(w, 1);
++    const slotOf = (type: string) => {
++      for (let s = 0; s < e.top; s++) if (e.alive[s] && TYPES[e.type[s]!]!.id === type) return s;
++      return -1;
++    };
++    const gaz = e.handleOf(slotOf('gazelle'));
++    for (let t = 0; t < 20; t++) sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd }))); // it sees the gazelle
++    kill(w, slotOf('scout'), -1);
++    kill(w, e.slotOf(gaz), -1); // dies where nobody of ours can see
++    let atIt = 0;
++    for (let t = 0; t < 20 * 30; t++) {
++      const cmds = ai.think(view);
++      atIt += cmds.filter((c) => c.t === 'act' && c.h === gaz).length;
++      sim.step(cmds.map((cmd) => ({ player: 1, cmd })));
++      sim.drainEvents();
++    }
++    expect(atIt).toBeLessThanOrEqual(8); // a couple of thinks to see the order refused, then it forgets (was 202)
++  });
++});
