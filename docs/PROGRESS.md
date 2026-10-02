@@ -1085,13 +1085,14 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             — _fixed:_ each rider's record keeps its owner (population, conquest, losses and landing use it); saves
             without the field ride as before. Tests: `transport` "a converted transport changes sides…", "a save
             from before P26…". Suite unchanged.
-      - [ ] P27 · should · ships · a War Galley chases a villager 8 tiles inland (out of reach from any water) and
+      - [x] P27 · should · ships · a War Galley chases a villager 8 tiles inland (out of reach from any water) and
             holds that self-given order 80 s+; under a direct order it flips attack/idle every ~5 s ·
             `lens-f/s6-unreachable.ts`, `s6b-galley.ts`
             _Tried with P31 (it. 22, `docs/patches/m15.10-p27-p31-across-the-shore.patch`): across the shore an
             attack gives up after 4 s without getting closer, and nothing auto-targets across it out of reach —
             both tests pass, held out unchanged (wars 24/24, water 46/48), but GATE FAIL: Hard-vs-Hard median
-            64:46 (Done 25–60; it sits at ~51 since P3). Reverted; 1 of 3 cycles.
+            64:46 (Done 25–60; it sits at ~51 since P3). Reverted; 1 of 3 cycles. _Landed after D69 (it. 36):_ the same patch —
+            held out unchanged (wars 24/24, water 46/48, ladder 51/64, 63/64), Hard duels 16/16, median 47:08.
       - [x] P28 · should · towers · no command makes a tower shoot a chosen unit (`ownedUnitSlots` drops buildings
             from `act`, `src/sim/commands/apply.ts:18`); mil:1c l.113: right-click targets — _fixed:_ `act` with own
             finished towers sets their target (kept while fair and in range); right-click an enemy unit with only
@@ -1100,7 +1101,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             auto-healing starts once ordered to heal · `lens-f/s4-priests.ts` §2
       - [ ] P30 · nice · pathing · units squeezing a 1-tile forest gap cut the corner 0.18 tile into a tree tile for
             ~15 ticks (nobody stops inside) · `node lens-f/s1b-trace.ts 1 20`
-      - [ ] P31 · nice · orders · a clubman ordered at a fishing boat 3.5 tiles offshore holds the order 180 s+ ·
+      - [x] P31 · nice · orders · a clubman ordered at a fishing boat 3.5 tiles offshore holds the order 180 s+ ·
             `lens-f/s9-unreach-long.ts`
       - [ ] P32 · nice · hunting · a hunter goes idle when its carcass runs out with a live gazelle 5 tiles off
             (unconfirmed vs research) · `lens-f/s8-settle.ts` §3

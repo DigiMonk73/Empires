@@ -291,6 +291,43 @@ describe('tower targets (M15.10 P28)', () => {
   });
 });
 
+describe('targets across the shore (M15.10 P27, P31)', () => {
+  // Land on the left 14 columns, water on the right.
+  const shore = (units: U[]) => {
+    const ascii = Array.from({ length: 24 }, () => '.'.repeat(14) + '~'.repeat(26));
+    const sim = Sim.create({ seed: 3, map: { w: 40, h: 24, ascii }, players: [{ civ: 'greek' }, { civ: 'persian' }], victory: 'none', scenario: { units } });
+    const e = sim.world.ents;
+    const slot = (type: string) => {
+      for (let s2 = 0; s2 < e.top; s2++) if (e.alive[s2] && e.type[s2] === unitTypeIndex(type)) return s2;
+      throw new Error(type);
+    };
+    return { sim, w: sim.world, e, slot };
+  };
+
+  it('a clubman ordered at a boat out of reach off the shore gives up', () => {
+    const { sim, w, e, slot } = shore([{ type: 'clubman', owner: 1, x: 10.5, y: 12.5 }, { type: 'fishingBoat', owner: 2, x: 17.5, y: 12.5 }]);
+    const c = slot('clubman');
+    sim.step([{ player: 1, cmd: { t: 'act', ids: [e.handleOf(c)], h: e.handleOf(slot('fishingBoat')) } }]);
+    for (let i = 0; i < 20 * 15; i++) sim.step();
+    expect(w.orders[c]?.[0]?.k).not.toBe('attack');
+  });
+
+  it('a warship does not set out after a villager inland it can never reach', () => {
+    // In sight (LOS 9) but 7.5 tiles inland: range 6 from the water's edge never reaches it.
+    const { sim, w, e, slot } = shore([{ type: 'warGalley', owner: 1, x: 15.5, y: 12.5 }, { type: 'villager', owner: 2, x: 6.5, y: 12.5 }]);
+    const g = slot('warGalley');
+    const v = slot('villager');
+    sim.step([{ player: 2, cmd: { t: 'stance', ids: [e.handleOf(v)], stand: true } }]);
+    let attacking = 0;
+    for (let i = 0; i < 20 * 60; i++) {
+      sim.step();
+      if (w.orders[g]?.[0]?.k === 'attack') attacking++;
+    }
+    expect(attacking, 'ticks spent on the attack').toBeLessThan(20 * 5);
+    expect(e.hp[v]).toBe(25);
+  });
+});
+
 describe('Stand Ground catapults (M15.10 P25)', () => {
   it('a catapult on Stand Ground holds its fire until ordered (patch 1.0a, mil:2)', () => {
     const { of, step, e } = setup([

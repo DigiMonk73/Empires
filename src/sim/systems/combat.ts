@@ -199,6 +199,11 @@ function mayReact(w: World, s: number): boolean {
   return canAttack(w, s);
 }
 
+/** One of the two moves on water and the other on land: they can strike each other only across the shore. */
+function crossesShore(w: World, a: number, b: number): boolean {
+  return (TYPES[w.ents.type[a]!]!.moveClass === MOVE_WATER) !== (TYPES[w.ents.type[b]!]!.moveClass === MOVE_WATER);
+}
+
 /** Patch 1.0a (mil:2): a catapult on Stand Ground holds its fire — it shoots only when ordered (M15.10 P25). */
 function holdsFire(w: World, s: number): boolean {
   return w.ents.stance[s] === 1 && !!TYPES[w.ents.type[s]!]!.unit?.tags.includes('catapultLine');
@@ -261,6 +266,7 @@ export function targetSystem(w: World): void {
       if (!lion && !w.fog.vis[owner]![Math.floor(e.y[j]!) * w.map.w + Math.floor(e.x[j]!)]) return;
       const d = edgeDist(w, s, j);
       if (d > look || d > bestD || (d === bestD && j > best)) return;
+      if (d > reach && crossesShore(w, s, j)) return; // a ship doesn't set out after a villager inland (M15.10 P27)
       best = j;
       bestD = d;
     });
@@ -437,6 +443,18 @@ export function attackSystem(w: World): void {
         }
       }
       continue;
+    }
+    // Across the shore (a land unit after a ship, a ship after a land unit) the target can stay out of reach for
+    // good — a clubman walked the beach after a fishing boat for minutes, a galley sat after a villager inland: 4 s
+    // without getting closer and it gives up (M15.10 P27, P31).
+    if (crossesShore(w, s, t)) {
+      if (o.best === undefined || d < o.best - 0.25) {
+        o.best = d;
+        o.away = 0;
+      } else if ((o.away = (o.away ?? 0) + 1) > 80) {
+        finish(w, s);
+        continue;
+      }
     }
     // Chase: (re)path toward the target when idle or when it has moved away from our path's end.
     const path = w.paths[s];
