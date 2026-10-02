@@ -157,3 +157,51 @@ describe('AI at sea: invasions (M8.8c)', () => {
     expect(landed).toBeGreaterThan(0);
   }, 30_000); // a long simulated game
 });
+
+describe('AI at sea: the island stall (M16.9)', () => {
+  it('over its population limit with no fishing boat to spare, an island computer makes room for a transport', () => {
+    // Dev water seeds 402, 426, 430 and 446 sat to the 2-hour mark at 54–90 of 50 (priests' conversions) with the wood
+    // for a transport and an army at home: the only room-maker deleted a fishing boat, and there was none.
+    // Two islands: ours x < 14, the enemy's x ≥ 34, open sea between.
+    const ascii = Array.from({ length: 40 }, () => '.'.repeat(14) + '~'.repeat(20) + '.'.repeat(14));
+    const sim = Sim.create({
+      seed: 4,
+      map: { w: 48, h: 40, ascii },
+      victory: 'none',
+      revealMap: true,
+      popCap: 20,
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 3, ty: 3 },
+          { type: 'dock', owner: 1, tx: 14, ty: 20 },
+          ...Array.from({ length: 4 }, (_, i) => ({ type: 'house', owner: 1, tx: 2 + i * 3, ty: 34 })),
+          { type: 'townCenter', owner: 2, tx: 40, ty: 18 },
+        ],
+        units: [
+          ...Array.from({ length: 20 }, (_, i) => ({ type: 'axeman', owner: 1, x: 5.5 + (i % 5), y: 14.5 + Math.floor(i / 5) })),
+          ...Array.from({ length: 6 }, (_, i) => ({ type: 'villager', owner: 1, x: 3.5 + i, y: 9.5 })),
+        ],
+      },
+    });
+    const w = sim.world;
+    for (const age of ['toolAge', 'bronzeAge']) completeResearch(w, 1, age);
+    w.players[1]!.res.set([1000, 1000, 500, 0]);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    sim.step();
+    expect(view.me().pop, 'over the limit').toBeGreaterThan(view.me().popCap);
+    let transport = 0;
+    let landed = 0;
+    for (let t = 0; t < 20 * 60 * 6 && !landed; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      if (t % 20) continue;
+      const units = view.ownUnits();
+      if (!transport && units.some((u) => u.cls === 'transport')) transport = t;
+      if (units.some((u) => u.cls === 'infantry' && u.x >= 34)) landed = t;
+    }
+    expect(transport, 'a transport afloat').toBeGreaterThan(0);
+    expect(landed, 'soldiers on the enemy island').toBeGreaterThan(0);
+  }, 30_000);
+});

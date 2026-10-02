@@ -63,6 +63,12 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 12:00 — work queue item 1, step 1 (M16.9): an island computer over its population limit (priests'
+  conversions) with no fishing boat to delete now deletes idle villagers, then idle soldiers at home, to make room
+  for its transport (dev water 171 → 177/192 at shifts 0–3; band PASS, water 182, baseline re-recorded). The other
+  stalls on the dev seeds, traced: Docks sealing their own transport in a pocket of water (425, 417, 437), a Market
+  with no room on a full island (407, 447 — no farms, Tool Age forever), and true wood exhaustion on both islands
+  (most of the rest). `diagnose.ts water <base> <shift>` and `water-trace … --shift k`; `ai-band.ts --keep`.
 - 2026-10-02 11:00 — tagged `v1.0.1` and `v1.1.0-rc1` in both repos (the exact packaged commits). Branch
   `m16-multiplayer` (837cb61+) is 1.1.0: multiplayer M16.1–M16.6 done and tested, verify:full green, both `.s9pk`
   1.1.0:0 built from empires-startos c8b4d2d — not installed on the VM. Next: work queue item 1.

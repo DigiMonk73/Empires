@@ -518,10 +518,20 @@ export class NavalBrain {
         // still from minute 50 to the end, 9,900 wood in the bank): make room — a fishing boat goes.
         // (Any boat: they are usually all busy by now — given this think's fishing orders — and that kept this from
         // ever firing: seed 312 stood at 56/50 without a transport from minute 45, KI-10.)
-        const boat = s.units.find((u) => u.cls === 'fishingShip' && !s.busy.has(u.h)) ?? s.units.find((u) => u.cls === 'fishingShip');
-        if (boat) {
-          cmds.push({ t: 'delete', ids: [boat.h] });
-          s.busy.add(boat.h);
+        // No boat, or more over than boats: idle villagers, then soldiers at home — enough to get under the limit
+        // (M16.9: priests' conversions held dev seeds 402, 426, 430 and 446 at 54–90 of 50, wood in the bank and no
+        // boat to delete, to the 2-hour mark).
+        const home = this.homeLand(s);
+        const free = (u: (typeof s.units)[number]) => !s.busy.has(u.h);
+        const victims = [
+          ...s.units.filter((u) => u.cls === 'fishingShip' && free(u)),
+          ...s.villagers.filter((u) => u.idle && free(u)),
+          ...s.units.filter((u) => u.cls === 'fishingShip' && !free(u)),
+          ...s.units.filter((u) => LAND_ARMY(u.cls) && u.idle && free(u) && this.landOf(s, u.x, u.y) === home),
+        ].slice(0, s.me.pop - s.me.popCap + 1);
+        if (victims.length) {
+          cmds.push({ t: 'delete', ids: victims.map((u) => u.h) });
+          for (const u of victims) s.busy.add(u.h);
           this.transportAt = s.v.tick - 80 * 20; // train the transport on one of the next thinks
         }
       }

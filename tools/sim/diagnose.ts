@@ -2,12 +2,15 @@
  * AI diagnostics (M14.6 — the scripts the water, war and ladder work was done with). Tune on the development sets,
  * never on the suite's held-out seeds (LOOP.md "AI work", D56, D58).
  *
- *   node tools/sim/diagnose.ts water [base=401]        48 water games (Small/Large Islands, Narrows; Tiny Moderate
- *                                                        mirrors, Small Hard mirrors) — decided in 2 h, undecided list
+ *   node tools/sim/diagnose.ts water [base=401] [shift=0]
+ *                                                        48 water games (Small/Large Islands, Narrows; Tiny Moderate
+ *                                                        mirrors, Small Hard mirrors) — decided in 2 h, undecided list;
+ *                                                        shift = the computers' think shift (the noise band, D70)
  *   node tools/sim/diagnose.ts wars [base=601]          24 Moderate 1v1s (Tiny) — decided in 45 / 60 min
  *   node tools/sim/diagnose.ts ladder [base=101] [strong>weak=hard>moderate]
  *                                                        64 games, both seats — wins by plan and map, the losses
- *   node tools/sim/diagnose.ts water-trace <seed…>      a water game (dev pattern) every 30 min: population,
+ *   node tools/sim/diagnose.ts water-trace <seed…> [--shift k] [--every m]
+ *                                                        a water game (dev pattern) every 30 (m) min: population,
  *                                                        army, fleet, transports, wood, stock, invasion target
  *   node tools/sim/diagnose.ts trace <seed> <type> <size> <levelA> <levelB> [minutes=60]
  *                                                        any match every 5 min, with plans, trained units, techs
@@ -30,11 +33,11 @@ function waterCase(seed: number, base: number): { type: GenMapType; size: MapSiz
   return { type: WATER[((k % 3) + 3) % 3]!, size: k % 2 ? 'small' : 'tiny', level: k % 2 ? 'hard' : 'moderate' };
 }
 
-async function water(base: number): Promise<void> {
+async function water(base: number, shift: number): Promise<void> {
   const jobs: MatchJob[] = [];
   for (let k = 0; k < 48; k++) {
     const c = waterCase(base + k, base);
-    jobs.push({ seed: base + k, type: c.type, size: c.size, levels: [c.level, c.level], minutes: 120 });
+    jobs.push({ seed: base + k, type: c.type, size: c.size, levels: [c.level, c.level], minutes: 120, ...(shift ? { thinkShift: shift } : {}) });
   }
   const res = await runMatches(jobs);
   const by: Record<string, [number, number]> = {};
@@ -47,7 +50,7 @@ async function water(base: number): Promise<void> {
     if (!(r instanceof Error) && r.winner) by[key][0]++;
     else undecided.push(j.seed);
   });
-  console.log(`water ${base}–${base + 47}: ${48 - undecided.length}/48 decided · ${JSON.stringify(by)} · undecided ${undecided.join(',')}`);
+  console.log(`water ${base}–${base + 47} shift ${shift}: ${48 - undecided.length}/48 decided · ${JSON.stringify(by)} · undecided ${undecided.join(',')}`);
 }
 
 async function wars(base: number): Promise<void> {
@@ -90,7 +93,7 @@ async function ladder(base: number, pair: string): Promise<void> {
   for (const l of losses) console.log('  ' + l);
 }
 
-function waterTrace(seeds: number[]): void {
+function waterTrace(seeds: number[], shift: number, every: number): void {
   const civs = ['greek', 'egyptian'];
   for (const seed of seeds) {
     const base = seed >= 501 && seed < 549 ? 501 : 401;
@@ -98,11 +101,11 @@ function waterTrace(seeds: number[]): void {
     const cfg = generateMap({ seed, type: c.type, size: c.size, players: civs.map((civ) => ({ civ })) });
     const sim = Sim.create({ ...cfg, players: cfg.players.map((p) => ({ ...p, ai: c.level })) });
     const w = sim.world;
-    const ais = [0, 1].map((i) => new AiPlayer(i + 1, c.level, seed * 31 + i, { civ: civs[i]! }));
+    const ais = [0, 1].map((i) => new AiPlayer(i + 1, c.level, seed * 31 + i, { civ: civs[i]!, thinkShift: shift }));
     const views = [0, 1].map((i) => new PlayerView(w, i + 1));
     const lines: string[] = [];
     for (let t = 0; t <= 20 * 60 * 120 && !w.gameOver; t++) {
-      if (t && t % (20 * 60 * 30) === 0) {
+      if (t && t % (20 * 60 * every) === 0) {
         lines.push(
           `  ${t / 1200}m ` +
             [1, 2]
@@ -120,7 +123,7 @@ function waterTrace(seeds: number[]): void {
       sim.step(ais.flatMap((ai, i) => ai.think(views[i]!).map((cmd) => ({ player: i + 1, cmd }))));
       sim.drainEvents();
     }
-    console.log(`${seed} ${c.type} ${c.size} ${c.level}: ${w.gameOver ? `P${w.gameOver.winners} wins at ${min(w.tick)}m (${w.gameOver.how})` : 'undecided'}`);
+    console.log(`${seed} ${c.type} ${c.size} ${c.level} shift ${shift}: ${w.gameOver ? `P${w.gameOver.winners} wins at ${min(w.tick)}m (${w.gameOver.how})` : 'undecided'}`);
     for (const l of lines) console.log(l);
   }
 }
@@ -137,7 +140,7 @@ function trace(seed: number, type: GenMapType, size: MapSizeId, a: AiLevel, b: A
 
 switch (cmd) {
   case 'water':
-    await water(Number(args[0] ?? 401));
+    await water(Number(args[0] ?? 401), Number(args[1] ?? 0));
     break;
   case 'wars':
     await wars(Number(args[0] ?? 601));
@@ -145,9 +148,11 @@ switch (cmd) {
   case 'ladder':
     await ladder(Number(args[0] ?? 101), args[1] ?? 'hard>moderate');
     break;
-  case 'water-trace':
-    waterTrace(args.map(Number));
+  case 'water-trace': {
+    const opt = (name: string, d: number): number => (args.includes(name) ? Number(args[args.indexOf(name) + 1]) : d);
+    waterTrace(args.filter((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')).map(Number), opt('--shift', 0), opt('--every', 30));
     break;
+  }
   case 'trace':
     trace(Number(args[0]), args[1] as GenMapType, args[2] as MapSizeId, args[3] as AiLevel, args[4] as AiLevel, Number(args[5] ?? 60));
     break;

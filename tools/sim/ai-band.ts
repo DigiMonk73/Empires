@@ -6,6 +6,8 @@
  * on the four-run average.
  *   node tools/sim/ai-band.ts            check against docs/metrics/ai-band.json (exit 1 on a failure)
  *   node tools/sim/ai-band.ts --record   run and save a new baseline
+ *   node tools/sim/ai-band.ts --keep     check, and on a pass save this run as the new baseline (a kept change's
+ *                                        re-record without running the band twice — the games are deterministic)
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -69,4 +71,8 @@ const med = runs.reduce((a, r) => a + r.duelMedianMin, 0) / n;
 if (med < 25 || med > 60) fails.push(`Hard duels' median averages ${med.toFixed(1)} min (Done 25–60)`);
 if (runs.some((r) => r.crashes)) fails.push('crashes');
 console.log(fails.length ? `BAND FAIL: ${fails.join('; ')}` : `BAND PASS (baseline ${JSON.stringify(base)})`);
+if (!fails.length && process.argv.includes('--keep')) {
+  writeFileSync(BASELINE, JSON.stringify({ shifts: SHIFTS, totals, runs }, null, 2) + '\n');
+  console.log(`baseline saved → ${BASELINE}`);
+}
 process.exit(fails.length ? 1 : 0);
