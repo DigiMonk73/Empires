@@ -21,10 +21,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   1.0.1:0 (empires-startos c252f98).
 - **AI gates (all pass):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars 24/24
   (1001–1024), water 48/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 47:08 (Done 25–60; D69); 0 crashes.
-- **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
-  Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
-  25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
-  value names its decision (D57, enforced by `data.test.ts`).
+- **Game:** 16 civs, 4 ages, the full RoR tree, water, hills (D58), alligators (D59), Ruins and Artifacts; every
+  victory, starting age and population 25–200; Full Tech Tree; diplomacy, server saves, music, voices (D57 data).
 - **StartOS:** 1.0.1:0 built (both arches, c252f98) — **unverified on the VM**; 1.0.0:0 was verified there (update,
   restart, reinstall, real play in both engines); backup → restore unverified (KI-3).
 - **Open issues:** KI-13 arrows, KI-14 island villager, KI-16/-17/-18 AI economy and villagers (all blocked by the AI
