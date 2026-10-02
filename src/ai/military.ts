@@ -312,7 +312,9 @@ export class MilitaryBrain {
   private train(s: Snapshot, cmds: Command[], army: OwnUnit[], threats: number, overdueFood: number, landCap: number, popReserve: number): void {
     // Attacked: match the raiders and then some, whatever the plan (the economy is worth nothing dead). On an
     // island the land army stays a home guard until transports can carry it (the naval AI says how many).
-    const want = Math.max(Math.min(this.wanted(s.me.age), landCap), threats ? threats + 3 : 0);
+    // A population limit above the default 50 raises the army in proportion: at 200 no computer passed 81 units, its
+    // army peaking at 21–26 (M15.10 lens E3, P78).
+    const want = Math.max(Math.min(Math.round(this.wanted(s.me.age) * Math.max(1, s.v.popLimit() / 50)), landCap), threats ? threats + 3 : 0);
     // An island out of wood can't raise the buildings the next age needs: saving food for it starved the army of a
     // Tiny-island game for an hour (M14.6b). Then soldiers take the food.
     const next0 = NEXT_AGE[s.me.age];

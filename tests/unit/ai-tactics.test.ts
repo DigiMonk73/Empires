@@ -355,3 +355,38 @@ describe('AI on a Deathmatch bank (M15.10 P54)', () => {
     expect(early, 'players in the Tool Age by 6:00, of 9').toBeGreaterThanOrEqual(7);
   }, 60_000);
 });
+
+describe('AI army at a raised population limit (M15.10 P78)', () => {
+  it('raises its army with the limit instead of stopping at the default-50 numbers', () => {
+    // At a 200 limit no computer passed 81 units: the army target (22 in the Iron Age) ignored the limit.
+    const W = 50;
+    const sim = Sim.create({
+      seed: 7,
+      map: { w: W, h: W },
+      victory: 'none',
+      popCap: 200,
+      players: [{ civ: 'greek', ai: 'hard' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 4, ty: 4 },
+          { type: 'barracks', owner: 1, tx: 14, ty: 4 },
+          { type: 'archeryRange', owner: 1, tx: 20, ty: 4 },
+          { type: 'stable', owner: 1, tx: 26, ty: 4 },
+          ...Array.from({ length: 24 }, (_, i) => ({ type: 'house', owner: 1, tx: 2 + (i % 12) * 3, ty: 40 + Math.floor(i / 12) * 3 })),
+        ],
+        units: Array.from({ length: 30 }, (_, i) => ({ type: 'villager', owner: 1, x: 10.5 + (i % 6), y: 14.5 + Math.floor(i / 6) })),
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([20000, 20000, 20000, 5000]);
+    for (const t of ['toolAge', 'bronzeAge', 'ironAge']) completeResearch(w, 1, t);
+    const ai = new AiPlayer(1, 'hard', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    for (let t = 0; t < 20 * 60 * 8; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+    }
+    const army = view.ownUnits().filter((u) => u.cls !== 'villager' && u.cls !== 'fishingShip').length;
+    expect(army, 'soldiers after 8 minutes (40 at the default-50 target)').toBeGreaterThan(55);
+  }, 60_000);
+});

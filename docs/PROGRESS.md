@@ -1023,7 +1023,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
       during the 20:25 verify:full), H, C, F, E, G (3× e2e); round two A2, B2, C2, D2, A3, then a 1.0.0 → tonight save
-      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3, H3, D3. _Next:_ E3.
+      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3, H3, D3, E3. _Next:_ F3.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1241,6 +1241,14 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
+      - _Lens E3 (WebKit — the Mac app's engine — 90 min, Gigantic 8p in 4 teams at a 200 limit; `lens-e2/e3.log`):
+        textures peak 227 MB (art 335 MB), frames p95 ≤ 8 ms, no stalled step, no errors; a team conquest at 60:54.
+        Found:_
+      - [x] P78 · should · AI at a raised limit · at 200 no computer passed 81 units: the army target (22 in the Iron
+            Age) ignores the limit — 1v1 Large armies peaked at 21–26 · `artifacts/polish/p78/pop.ts` — _fixed:_ above
+            the default 50 the army target scales with limit ÷ 50 (25 unchanged): 1v1 peaks 41–48; the E3 game
+            replayed in Node peaks at 299 units (269), worst tick 3.5 ms (4.2), same winners. Suite unchanged to the
+            game (all at 50). Test: `ai-tactics` "AI army at a raised population limit" (40 soldiers without, > 55)._
       - _Lens H3: the Mac app's hidden smoke test (the 00:25 checkpoint build) passes all 8 scenes, each up in < 1 s,
         render ≤ 0.12 ms avg._
       - _Lens D3 (Help and Keys vs tonight's behaviour): Help still right (conquest counts an army aboard, P26). Found
