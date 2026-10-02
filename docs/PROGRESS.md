@@ -11,7 +11,7 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   transports' riders, tower targets), UI (dialogs and keys, Backspace, notifications, Tech Tree reach, Keys list,
   banners and clocks at the end, one-team Start, Post-Iron Score), server saves. Blocked by the AI gates:
   P24 arrows (KI-13), P2, P17, P20, P27/P31 — the computers rely on uneven starts and forgiving arrows to finish.
-- **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI
+- **Last green:** verify:full at the M15.10 00:15 checkpoint (463669d), 577 s — 641 unit + 160 e2e, 604-game AI
   suite, 100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09).
 - **AI gates (all pass, M15.10 P59):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
   24/24 (1001–1024), water 48/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 46:15 (Done 25–60; D69);
