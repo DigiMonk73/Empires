@@ -1242,7 +1242,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             `hh-largeIslands-small-101` P2 19–25 min · `lens-a3/invalid.ts`; `ai.ts` hunting (`s.game` memory)
             _Tried (it. 46, `docs/patches/m15.10-p70-forget-dead-prey.patch`): the AI forgets a remembered animal when
             hunters sent at it a think ago aren't on it (the order refused) — 202 orders in 30 s → ≤ 8; but held-out
-            wars 24 → 23/24, water 48 → 46/48. Reverted; 1 of 3 cycles.
+            wars 24 → 23/24, water 48 → 46/48. Reverted; again after P71 (it. 48): the same. 2 of 3 cycles.
       - [x] P71 · should · AI pop 50 · the winner can't finish: 35 villagers + 8 idle fishing boats (no fish left;
             boats don't count in D69's 70%) + 5–7 soldiers, 2–6k banked · `hh-continental-small-102` (ahead from
             34 min, conquest 55.5); Mediterranean Hard–Hard 49/50 both, undecided · `lens-a3/probe.ts` — _fixed
