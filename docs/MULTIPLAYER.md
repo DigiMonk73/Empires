@@ -32,11 +32,11 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
   `delay = clamp(ceil(maxRTT / 50 ms) + 2, 4, 12)`.
 - **Speed and pause:** both become commands (`{t:'speed'}` / `{t:'pause'}`) so every peer applies them at the
   same tick. The host's choice wins; any player may pause (as the original).
-- **Disconnects:** the server tells the room `{left, peer}`. The host then submits a command
-  `{t:'aiTakeover', seat, level:'hard'}` that every peer applies at the same tick: that seat becomes an AI run by the
-  host from then on (the original kept the player's civilization under computer control). If the host leaves, the
-  game ends for everyone with a "host left" message and an autosave on each client (save/load of multiplayer games
-  comes later).
+- **Disconnects (as built, M16.5):** a dropped member keeps its seat for the hold (`--away-ms`, 30 s) and may
+  rejoin with its token; after that the server tells the room `{left, peer}`. The relay has delivered everything
+  that peer sent first, so every survivor calls `router.drop(peer)` and stops waiting after the same tick. The
+  lowest-numbered remaining peer runs a computer for the seat (and every computer seat, if the host left); its
+  commands travel in that peer's packets.
 - **Desync:** on `router.desync` show "Out of sync at tick N" with a button that saves a desync report (both
   hashes, the command log since the last check) to the server under `/data/desync/`.
 - **Chat:** text frames relayed by the server, shown in the messages area; Enter opens the chat box.
@@ -70,9 +70,8 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       computers, if the host left). A page reload rejoins within the hold (`--away-ms`, 30 s). Tests:
       `lockstep.test.ts` "a peer leaving", e2e "a player who closes the game". _Left:_ a guest who reloads after the
       hold can't come back; desync reports (M16.6).
-- [ ] **M16.5 (original plan)** `aiTakeover` command; host-left ending; reconnect within 30 s by room code (the
-      server buffers the room's packets so a rejoining client can replay from tick 0 — or from a save the host
-      sends; start with replay).
+- [ ] **M16.5b Late rejoin.** A guest back after the hold: the server keeps the room's packets so the client can
+      replay from tick 0 (or the authority sends a save), then the computer hands the seat back.
 - [ ] **M16.6 Desync report**, latency-based delay, room list polish.
 - [ ] **M16.7 StartOS.** README/instructions: multiplayer section (everyone opens the same address; the interface
       can be shared on the LAN or Tor). Version 1.1.0. Both `.s9pk`.
