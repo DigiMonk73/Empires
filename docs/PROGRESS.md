@@ -1030,9 +1030,17 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ran through seat (n+1)/2; now each side of it holds half the players spread over its own half-circle
             (2 players unchanged), and a cluster drawn at 17–23 tiles snaps wholly in or out of the 20-tile zone
             (it gave one start 2 more berry bushes). Test: `mapgen.test.ts` "Narrows: every start on dry land…".
-      - [ ] P7 · must · mapgen islands · 5–8 players on Tiny/Small (Small Islands also Medium): forest and resource
+      - [x] P7 · must · mapgen islands · 5–8 players on Tiny/Small (Small Islands also Medium): forest and resource
             clusters wall the start in — no passable tile around the TC · smallIslands small 7p seed 70134 (5 min,
             4 villagers each, ≤ 320 gathered); largeIslands small 8p seed 92555 (6/8 enclosed) · `lens-b/sweep.ts`
+            — _fixed:_ with 3+ players the ground within 4 tiles of each TC is held clear while the start's clusters
+            go down (was the TC's 3×3 only). Islands tiny–large, 2–8p × 6 seeds: maps with a villager on a blocked
+            tile 170/672 → 4 (all 2p); starts with no walk to the shore (a forest to chop) 123 → 15 of 210 on Tiny Small Islands. 2p maps
+            unchanged (P20). Test: `mapgen.test.ts` "Islands, 3–8 players…"; `artifacts/polish/p7-measure.ts`.
+      - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
+            (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
+            46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
+            finishes those even games: trace 501/505/523 with `diagnose.ts` first (`artifacts/polish/water-*.txt`)
       - [ ] P3 · should · AI villagers · 3 villagers of P4 jitter ~90 s under fire at (63,40): orders flip between
             "move to Town Center" and "attack the bowman" · g2 = `type=largeIslands&size=large&seed=23` 6p Hard,
             ticks 45600–47400 (`node artifacts/polish/lens-a/stuck.ts`). _Cause:_ `Tactics.militia` returns false

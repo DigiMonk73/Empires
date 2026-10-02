@@ -142,6 +142,43 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('Islands, 3–8 players on Tiny and Small: villagers start on open ground with room round the Town Center (M15.10 P7)', () => {
+    // (Two-player islands still bury a villager now and then — P20, held back by the water gate.)
+    for (const type of ['smallIslands', 'largeIslands'] as const) {
+      for (const size of ['tiny', 'small'] as const) {
+        for (let n = 3; n <= 8; n++) {
+          for (const seed of [7919, 15838]) {
+            const m = generateMap({ seed, type, size, players: Array.from({ length: n }, (_, i) => ({ civ: 'greek', team: i + 1 })) });
+            const w = Sim.create(m).world;
+            const W = w.map.w;
+            for (let p = 1; p <= n; p++) {
+              const tag = `${type} ${size} ${n}p seed ${seed} P${p}`;
+              // Walk the land from the villagers: every one on passable ground, and room enough to build on.
+              const seen = new Uint8Array(W * W);
+              const q: number[] = [];
+              for (let s = 0; s < w.ents.top; s++) {
+                if (!w.ents.alive[s] || w.ents.owner[s] !== p || w.ents.kind[s] !== EKind.unit) continue;
+                const x = Math.floor(w.ents.x[s]!);
+                const y = Math.floor(w.ents.y[s]!);
+                expect(w.map.passable(x, y, 1), `${tag} villager at ${x},${y}`).toBe(true);
+                if (!seen[y * W + x]) q.push(y * W + x), (seen[y * W + x] = 1);
+              }
+              for (let i = 0; i < q.length && q.length < 40; i++) {
+                const x = q[i]! % W;
+                const y = Math.floor(q[i]! / W);
+                for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+                  const j = (y + dy) * W + x + dx;
+                  if (w.map.passable(x + dx, y + dy, 1) && !seen[j]) q.push(j), (seen[j] = 1);
+                }
+              }
+              expect(q.length, tag).toBeGreaterThanOrEqual(40);
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('is deterministic and seed-sensitive', () => {
     const a = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
     const b = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });

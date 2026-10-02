@@ -466,13 +466,20 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     return { ...x, d };
   };
   // On the water maps each Town Center's own 3×3 stays ground: an island's woodline, pulled in, grew over it on ~2%
-  // of island starts (KI-10; the trees under a Town Center were cut off from everyone). Held as 'o' until the map is
-  // written out. (Land maps never showed it and keep their layouts exactly.)
+  // of island starts (KI-10; the trees under a Town Center were cut off from everyone). With 3+ players all ground
+  // within 4 tiles of its middle stays clear too: on their smaller islands the template, pulled in, walled the start
+  // and buried its villagers in forest, and they never moved (M15.10 P7). Held as 'o' until the map is written out.
+  // (Land maps never showed it and keep their layouts exactly; two-player water maps, which the water gate measures,
+  // keep theirs until P20.)
   const tcTiles: [number, string][] = [];
+  const crowded = n > 2;
   for (const [sx, sy] of WATERY.has(o.type) ? starts : []) {
-    for (let y = sy; y < sy + 3; y++) {
-      for (let x = sx; x < sx + 3; x++) {
-        if (!isOpen(at(g, x, y))) continue;
+    for (let y = sy - 3; y < sy + 6; y++) {
+      for (let x = sx - 3; x < sx + 6; x++) {
+        const dx = x - sx;
+        const dy = y - sy;
+        const keep = crowded ? (dx - 1) * (dx - 1) + (dy - 1) * (dy - 1) <= 16 : dx >= 0 && dx < 3 && dy >= 0 && dy < 3;
+        if (!keep || !isOpen(at(g, x, y))) continue;
         tcTiles.push([y * W + x, at(g, x, y)]);
         set(g, x, y, 'o');
       }
