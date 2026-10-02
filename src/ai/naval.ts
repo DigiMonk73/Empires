@@ -573,10 +573,16 @@ export class NavalBrain {
     }
     // Back to our shore; there, board idle soldiers once half a wave is ready.
     let room = 0;
-    // At its spot — or idle within 4 tiles of it, as close as it could get.
+    // At its spot — or idle within 4 tiles of it, as close as it could get — and beside the land the soldiers walk
+    // on: one stopped three tiles short, no shore beside it, had them told to board, give up and be told again for an
+    // hour (M16.9, dev water seed 417).
+    const ashoreBy = (t: (typeof transports)[number]) => {
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (s.v.region(1, Math.floor(t.x) + dx, Math.floor(t.y) + dy) === boardLand) return true;
+      return false;
+    };
     const atSpot = (t: (typeof transports)[number]) => {
       const d = dist(t.x, t.y, spotOf(t)[0] + 0.5, spotOf(t)[1] + 0.5);
-      return d <= 2.5 || (t.idle && d <= 4);
+      return (d <= 2.5 || (t.idle && d <= 4)) && ashoreBy(t);
     };
     for (const t of afloat) {
       const [sx, sy] = spotOf(t);

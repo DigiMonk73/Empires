@@ -241,3 +241,81 @@ describe('AI on a full island (M16.9)', () => {
     expect(market).toBe(true);
   });
 });
+
+describe('AI Docks (M16.9)', () => {
+  it('a Dock never seals off a pocket of water — its transports would never sail', () => {
+    // Dev water seeds 417, 425 and 437 sat to the 2-hour mark with their only transport (once with five soldiers
+    // aboard) in a cove a Dock had closed off. Here the nearest Dock spot to the Town Center is the mouth of a cove
+    // whose inner end holds fish (no Dock there).
+    const ascii = Array.from({ length: 40 }, (_, y) => '.'.repeat(9) + (y >= 18 && y <= 20 ? (y === 19 ? 'f~~' : '~~~') : '...') + '~'.repeat(36));
+    const sim = Sim.create({
+      seed: 6,
+      map: { w: 48, h: 40, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 3, ty: 18 }],
+        units: Array.from({ length: 6 }, (_, i) => ({ type: 'villager', owner: 1, x: 2.5 + i, y: 24.5 })),
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([1000, 1000, 0, 0]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const seas = () => {
+      const labels = new Set<number>();
+      for (let y = 0; y < 40; y++) for (let x = 0; x < 48; x++) if (view.region(2, x, y)) labels.add(view.region(2, x, y));
+      return labels.size;
+    };
+    expect(seas()).toBe(1);
+    let dock = false;
+    for (let t = 0; t < 20 * 90 && !dock; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      dock = view.ownBuildings().some((b) => b.type === 'dock');
+    }
+    expect(dock, 'a Dock goes up').toBe(true);
+    expect(seas(), 'the water stays one sea').toBe(1);
+  });
+});
+
+describe('AI transports board where soldiers can reach them (M16.9)', () => {
+  it('a transport idle near its boarding spot but off the shore goes in to it', () => {
+    // Dev water seed 417: the transport stopped three tiles short of its boarding spot, with no land beside it; idle
+    // within four tiles counted as there, so for an hour soldiers were told to board, gave up and were told again.
+    // (The spot is the shore tile nearest the Town Center: the first found round it, here 12,10.)
+    const ascii = Array.from({ length: 40 }, () => '.'.repeat(12) + '~'.repeat(24) + '.'.repeat(12));
+    const sim = Sim.create({
+      seed: 7,
+      map: { w: 48, h: 40, ascii },
+      victory: 'none',
+      revealMap: true,
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 2, ty: 18 },
+          ...[0, 1, 2].map((i) => ({ type: 'house', owner: 1, tx: 2 + i * 3, ty: 34 })),
+          { type: 'townCenter', owner: 2, tx: 40, ty: 18 },
+        ],
+        units: [
+          { type: 'lightTransport', owner: 1, x: 15.5, y: 10.5 },
+          ...Array.from({ length: 8 }, (_, i) => ({ type: 'axeman', owner: 1, x: 4.5 + (i % 4), y: 24.5 + Math.floor(i / 4) })),
+          ...Array.from({ length: 5 }, (_, i) => ({ type: 'villager', owner: 1, x: 2.5 + i, y: 28.5 })),
+        ],
+      },
+    });
+    const w = sim.world;
+    completeResearch(w, 1, 'toolAge');
+    w.players[1]!.res.set([1000, 0, 500, 0]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    let landed = 0;
+    for (let t = 0; t < 20 * 60 * 5 && !landed; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      if (t % 20 === 0 && view.ownUnits().some((u) => u.cls === 'infantry' && u.x >= 36)) landed = t;
+    }
+    expect((ai.naval.save() as { shore?: unknown }).shore).toEqual([12, 10]);
+    expect(landed, 'soldiers on the enemy island').toBeGreaterThan(0);
+  }, 30_000);
+});

@@ -54,6 +54,8 @@ const SHARES: Record<number, [number, number, number, number]> = {
 const NEXT_AGE_TECH: (string | null)[] = [null, 'toolAge', 'bronzeAge', 'ironAge', null];
 /** A Deathmatch-sized bank (M15.10 P54) — far beyond what a normal game holds while it still has ages to go. */
 const rich = (s: Snapshot): boolean => s.me.res[0]! >= 8000 && s.me.res[1]! >= 8000;
+/** Separate runs of true in a ring of flags (walked round, the last next to the first); 1 when all are true. */
+const runs = (ok: boolean[]): number => (ok.every(Boolean) ? 1 : ok.filter((x, i) => x && !ok[(i + 1) % ok.length]).length);
 
 /** A start past the Stone Age (Tool … Post-Iron). Nomad is a Stone Age start too: its town grows as a default one
  *  does, so no villager cap of 60% (it held Hard to 30 of 50, M15.10 P19). */
@@ -760,6 +762,7 @@ export class AiPlayer {
     // Only on the land (x, y) stands on: on a crowded island the search reached across the water and put houses on a
     // neighbour's island, never built and in its way (M15.10 P21). (A Dock stands half in the water.)
     const home = type === 'dock' ? 0 : landAt(s, x, y);
+    let sealing: [number, number] | null = null;
     for (let r = Math.floor(minD); r <= Math.ceil(maxD); r++) {
       const ring: [number, number][] = [];
       for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r) ring.push([dx, dy]);
@@ -777,11 +780,19 @@ export class AiPlayer {
         // …and not where raiders were just seen: a Dock went back down on the same contested tile 18 times in 7
         // minutes under the enemy army (M15.10 P73).
         if (type === 'dock' && this.military.danger(s, tx + size / 2, ty + size / 2)) continue;
+        // …and not across a cove's mouth: one that cut a pocket of water off trained its transports into it, where
+        // they sat all game (M16.9: dev water seeds 417, 425, 437 — once with five soldiers aboard). Such a spot only
+        // when there is no other.
+        if (type === 'dock' && runs(this.ring(tx, ty, size).map(([wx, wy]) => s.v.region(2, wx, wy) !== 0)) > 1) {
+          sealing ??= [tx, ty];
+          continue;
+        }
         return [tx, ty];
       }
     }
-    return null;
+    return sealing;
   }
+
 
   /** A one-tile clear ring around the footprint (farms may touch other farms). */
   private margin(s: Snapshot, tx: number, ty: number, size: number, farm: boolean): boolean {
@@ -801,15 +812,18 @@ export class AiPlayer {
    * Tool Age for two hours, 3,000 wood in the bank and no Market, so no farms.)
    */
   private looseMargin(s: Snapshot, tx: number, ty: number, size: number): boolean {
+    const clear = this.ring(tx, ty, size).map(([x, y]) => s.v.clear(x, y));
+    return runs(clear) <= 1 && clear.filter(Boolean).length >= size;
+  }
+
+  /** The tiles round a footprint, in order once round. */
+  private ring(tx: number, ty: number, size: number): [number, number][] {
     const ring: [number, number][] = [];
     for (let k = -1; k < size; k++) ring.push([tx + k, ty - 1]);
     for (let k = -1; k < size; k++) ring.push([tx + size, ty + k]);
     for (let k = size; k > -1; k--) ring.push([tx + k, ty + size]);
     for (let k = size; k > -1; k--) ring.push([tx - 1, ty + k]);
-    const clear = ring.map(([x, y]) => s.v.clear(x, y));
-    let breaks = 0;
-    for (let i = 0; i < clear.length; i++) if (clear[i] && !clear[(i + 1) % clear.length]) breaks++;
-    return breaks <= 1 && clear.filter(Boolean).length >= size;
+    return ring;
   }
 
   /** The land region at or next to (x, y), 0 if none within 3 tiles. */
