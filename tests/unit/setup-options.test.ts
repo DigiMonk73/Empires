@@ -5,7 +5,7 @@ import { CIV_BY_ID, TECHS } from '../../src/data/index.ts';
 import { TYPES } from '../../src/sim/rules/registry.ts';
 import { DEFAULT_SETUP, setupFromQuery, setupToQuery, skirmishConfig } from '../../src/game/skirmish.ts';
 import { SCORE_TARGETS, scoreTargetsFor } from '../../src/data/setup.ts';
-import { clockRows, winLine } from '../../src/ui/clocks.ts';
+import { clockRows, showsEnd, winLine } from '../../src/ui/clocks.ts';
 import { AiPlayer } from '../../src/ai/ai.ts';
 import { PlayerView } from '../../src/sim/view/playerView.ts';
 
@@ -93,6 +93,13 @@ describe('setup options (M14.3, econ:7)', () => {
     const odd = setupFromQuery(new URLSearchParams('scenario=skirmish&size=toString&res=lots&p=zzz.1.human,egyptian.2.hard'));
     expect([odd.size, odd.resources, odd.players[0]!.civ]).toEqual([DEFAULT_SETUP.size, 'default', 'greek']);
     expect(() => Sim.create(skirmishConfig(odd))).not.toThrow();
+  });
+
+  it('a fallen player who keeps watching sees no second Defeat when the team falls later (M15.10 P39)', () => {
+    expect(showsEnd(false, null, 1200)).toBe(true); // lost, never fell before: Defeat
+    expect(showsEnd(false, 1200, 1200)).toBe(true); // fell with the game's end: the end's own line
+    expect(showsEnd(false, 900, 1200)).toBe(false); // fell earlier, kept watching: no second banner
+    expect(showsEnd(true, 900, 1200)).toBe(true); // fell, but the team won: Victory
   });
 
   it('Nomad: with no Town Center site near its villagers a computer looks further out instead of freezing (M15.10 P10)', () => {

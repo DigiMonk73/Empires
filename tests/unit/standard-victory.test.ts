@@ -48,6 +48,16 @@ describe('Standard victory (M14.2, econ:7)', () => {
     expect(COUNTDOWN_TICKS).toBe(20000);
   });
 
+  it('the clocks stop when the game ends another way (M15.10 P41)', () => {
+    // A conquest ended the game at 75:36; the Ruins clock still counted down at 80:40 while the player watched on.
+    const g = game([{ type: 'wonder', owner: 2, tx: 15, ty: 15 }]);
+    g.step(1 + 2000);
+    const at = clockRows(g.w, 1)[0]!.text;
+    g.w.gameOver = { winners: [1], how: 'conquest', tick: g.w.tick } as never;
+    g.step(500);
+    expect(clockRows(g.w, 1)[0]!.text).toBe(at);
+  });
+
   it('a finished Wonder wins after 2000 years; a foundation starts nothing', () => {
     const g = game([
       { type: 'wonder', owner: 2, tx: 15, ty: 15 },

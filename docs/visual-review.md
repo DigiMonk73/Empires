@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P39, P41 · no visual change (6 shots ≤ 0.3% px)
+
 ## 2026-10-01 · M15.10 P28, P38 · no visual change (1 shot ≤ 0.3% px)
 
 ## 2026-10-01 · M15.10 P27/P31 (reverted), P26 · the P27/P31 run became the baseline; this run lists its reversal

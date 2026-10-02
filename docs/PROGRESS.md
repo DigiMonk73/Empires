@@ -1116,13 +1116,16 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - _Lens E (5 long games, ~450 game minutes, Chromium + WebKit; `artifacts/polish/lens-e/`): heap flat 16–23 MB,
         textures level off and fall as art is released, frame max ≤ 7.7 ms, no frozen tick, music to 90 min, no
         page or console errors, WebKit hash = Node._
-      - [ ] P39 · should · game over · the Defeat banner shows twice: the local seat falls (49:47), Keep watching,
+      - [x] P39 · should · game over · the Defeat banner shows twice: the local seat falls (49:47), Keep watching,
             and the same banner returns when its team loses (60:14) · g3 Mediterranean 3v3 seed 33 · `src/main.ts`
-            ~95 (the `victory` event sets `hud.outcome` again)
+            ~95 (the `victory` event sets `hud.outcome` again) — _fixed:_ a loss after the seat's own fall on an earlier tick
+            shows no second banner (a team win still does): `showsEnd()`. Test: `setup-options` "a fallen player…".
       - [ ] P40 · should · spectating · after defeat Keep watching shows the dead seat's fog — black but for stale
-            ground (g1, g3 minutes 40–90). Unconfirmed whether the original reveals the map on defeat.
-      - [ ] P41 · nice · HUD · a Standard countdown clock keeps counting after a conquest victory ends the game
-            (g2 75:36 → "Player 2 · All Ruins" still 101 at 80:40) · `lens-e/crops/m90-battle_92_112-tr.png`
+            ground (g1, g3 minutes 40–90). Unconfirmed whether the original reveals the map on defeat. _Left:_ a
+            reveal would be new behaviour without a rule to follow — for the user.
+      - [x] P41 · nice · HUD · a Standard countdown clock keeps counting after a conquest victory ends the game
+            (g2 75:36 → "Player 2 · All Ruins" still 101 at 80:40) · `lens-e/crops/m90-battle_92_112-tr.png` —
+            _fixed:_ the clocks read the game-over tick. Test: `standard-victory` "the clocks stop…".
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
