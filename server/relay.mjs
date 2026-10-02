@@ -13,9 +13,9 @@
 //   {t:'chat', text}                     → {t:'chat', from, name, text} to everyone
 //   {t:'pause', on}                      → {t:'pause', on, from, name} to everyone (a started game; anyone may)
 //   {t:'ping', at}                       → {t:'pong', at}
-//   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game} — back into a started game after a page
-//                                          load or a dropped connection (within AWAY_MS; the packets sent meanwhile
-//                                          are delivered first). `token` comes in your {t:'room'} message.
+//   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game} — into a started game from the game page
+//                                          (within AWAY_MS of the lobby page closing, before playing; the packets
+//                                          sent meanwhile are delivered first). `token` comes in your {t:'room'}.
 // Server → clients also: {t:'left', peer} (a member left a started game), {t:'closed', why} (the host left before
 // the start), {t:'error', error}.
 // Binary frames: game packets. In a started room each one goes unchanged to every other member.
@@ -156,6 +156,7 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
   function relay(c, data) {
     const room = c.room;
     if (!room || !room.started) return;
+    c.sent = true; // in the game now: from here a drop can't rejoin (see leave)
     for (const o of room.members) {
       if (o === c) continue;
       if (o.away) {
@@ -170,15 +171,18 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
     c.room = null;
     const peer = room.members.indexOf(c);
     if (room.started) {
-      // Peer indices stay fixed in a running game. A dropped member is held `awayMs` (a page load, a blip): its
-      // packets wait, and it may rejoin with its token; then the others hear who went.
+      // Peer indices stay fixed in a running game. A member that drops before sending anything — every member's
+      // page loads the game right after the start — is held `awayMs`: its packets wait, and it rejoins with its
+      // token. One already playing can't rejoin (its page would start the game over from tick 0 while the others
+      // wait for it — M16.5b, replay, is to do), so the others hear at once that it left and a computer takes its
+      // seat.
       const gone = () => {
         room.members[peer] = { closed: true, sendText() {}, sendBinary() {}, name: c.name, id: c.id };
         const live = room.members.filter((o) => !o.closed && !o.away);
         for (const o of live) sendJson(o, { t: 'left', peer });
         if (!room.members.some((o) => !o.closed)) rooms.delete(room.code);
       };
-      if (c.closed && c.token && awayMs > 0) {
+      if (c.closed && c.token && awayMs > 0 && !c.sent) {
         const held = { away: true, closed: false, buffer: [], token: c.token, name: c.name, id: c.id, sendText() {}, sendBinary() {} };
         held.awayTimer = setTimeout(() => room.members[peer] === held && gone(), awayMs);
         room.members[peer] = held; // (everyone is away a moment at the start: each page loads the game)

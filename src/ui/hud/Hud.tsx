@@ -439,23 +439,29 @@ function GameMenu() {
     <div class="gameover" data-testid="game-menu">
       <div class="gameover-panel">
         <div class="gameover-title small">Menu</div>
-        <div class="gameover-sub">
-          Game speed:{' '}
-          {[1, 1.5, 2].map((v) => (
-            <button class={`speed${hud.speed.value === v ? ' on' : ''}`} onClick={() => hudActions.setSpeed(v)}>
-              {v.toFixed(1)}
-            </button>
-          ))}
-        </div>
+        {!hud.multiplayer.value && (
+          <div class="gameover-sub">
+            Game speed:{' '}
+            {[1, 1.5, 2].map((v) => (
+              <button class={`speed${hud.speed.value === v ? ' on' : ''}`} onClick={() => hudActions.setSpeed(v)}>
+                {v.toFixed(1)}
+              </button>
+            ))}
+          </div>
+        )}
         <VolumeControls muteId="menu-sound" />
         <div class="gameover-buttons column">
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
-          <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
-          <button data-testid="menu-load" onClick={() => (hud.saveDialog.value = 'load')}>Load Game</button>
+          {!hud.multiplayer.value && (
+            <>
+              <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
+              <button data-testid="menu-load" onClick={() => (hud.saveDialog.value = 'load')}>Load Game</button>
+            </>
+          )}
           <button data-testid="menu-achievements" onClick={() => hudActions.showResults()}>Achievements</button>
           <button data-testid="menu-game-options" onClick={() => (hud.optionsOpen.value = true)}>Options</button>
           <button data-testid="menu-keys" onClick={() => (hud.keysOpen.value = true)}>Keys (F1)</button>
-          <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>
+          {!hud.multiplayer.value && <button data-testid="menu-restart" onClick={() => hudActions.restart()}>Restart</button>}
           <button data-testid="menu-resign" onClick={() => hudActions.resign()}>Resign</button>
           <button data-testid="menu-quit" onClick={() => hudActions.quit()}>Quit to main menu</button>
         </div>

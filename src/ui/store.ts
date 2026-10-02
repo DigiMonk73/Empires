@@ -36,6 +36,8 @@ export interface ResultRow extends ScoreLine {
 }
 
 export const hud = {
+  /** A multiplayer game (M16): the menu has no speed, Save, Load or Restart — those would leave the others behind. */
+  multiplayer: signal(false),
   /** Game over from the local player's point of view (null while playing); `why` is the line under the title. */
   outcome: signal<{ kind: 'victory' | 'defeat'; at: string; why: string } | null>(null),
   /** Standard-victory countdowns at the upper right, in their owners' colours (M14.2). */

@@ -327,3 +327,15 @@
   color: #f4ead2;
   font-size: 15px;
 }
+.mp-gone {
+  max-width: 560px;
+  margin: 18vh auto 0;
+  padding: 24px 28px;
+  background: rgba(20, 14, 8, 0.92);
+  border: 1px solid #8a6a3a;
+  color: #f4ead2;
+  font-size: 18px;
+}
+.mp-gone a {
+  color: #f2d27a;
+}

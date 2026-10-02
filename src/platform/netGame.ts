@@ -41,7 +41,16 @@ export async function startNetGame(): Promise<NetGame> {
   // The transport first: the packets that waited on the server arrive right after the rejoin.
   const transport = net.transport((p) => box.r?.receive(p));
   const router = (box.r = new LockstepRouter({ peer: launch.you, peers: launch.peers, delay, transport }));
-  await net.rejoin(launch.code, launch.you, launch.token);
+  await net.rejoin(launch.code, launch.you, launch.token).catch(() => {
+    // Only the page the lobby opened may rejoin (before playing): a reload mid-game can't catch up yet (M16.5b).
+    try {
+      sessionStorage.removeItem(MP_KEY);
+    } catch {
+      /* fine */
+    }
+    net.close();
+    throw Object.assign(new Error('That multiplayer game went on without you: a computer is playing your civilization.'), { name: 'NetGameGone' });
+  });
   const aiSeats = setup.players.map((p, i) => (p.controller === 'human' ? 0 : i + 1)).filter((n) => n > 0);
   const session = new GameSession(skirmishConfig(setup), seats[launch.you]!, router, { ais: launch.you === 0 ? aiSeats : [] });
   session.speed = setup.speed || 1;

@@ -88,7 +88,7 @@ test('two players host and join from the menu, then play one game in step (M16.3
   expect(errors).toEqual([]);
 });
 
-test('a player who closes the game: the other waits briefly, then a computer takes the seat and play goes on (M16.5)', async ({ browser }) => {
+test('a player who closes the game: a computer takes the seat at once and play goes on (M16.5)', async ({ browser }) => {
   test.setTimeout(120_000);
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   await enterLobby(host!, 'Ann');
@@ -102,12 +102,38 @@ test('a player who closes the game: the other waits briefly, then a computer tak
   await host!.getByTestId('setup-start').click();
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
   await guest!.close();
-  // The test server holds a seat 3 s (StartOS: 30 s) for a page that reloads; meanwhile the host waits.
-  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 15_000 });
+  // A player already in the game can't come back, so the host hears at once and plays on.
   const t0 = await tick(host!);
   await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(t0 + 100);
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
   // Player 2's villagers are working for the computer now.
+  await expect
+    .poll(() => host!.evaluate(() => window.__empires!.query.units(2).filter((u) => u.type === 'villager' && u.hasOrder).length), { timeout: 30_000 })
+    .toBeGreaterThan(0);
+});
+
+test('a player who reloads mid-game is told the game went on, and the other plays on (M16.5)', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
+  // The in-game menu has no Restart, Save, Load or speed in multiplayer.
+  await host!.keyboard.press('F10');
+  await expect(host!.getByTestId('menu-resume')).toBeVisible();
+  for (const id of ['menu-restart', 'menu-save', 'menu-load']) await expect(host!.getByTestId(id)).toHaveCount(0);
+  await host!.getByTestId('menu-resume').click();
+  await guest!.reload();
+  await expect(guest!.getByTestId('mp-gone')).toContainText('went on without you');
+  const t0 = await tick(host!);
+  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(t0 + 100);
   await expect
     .poll(() => host!.evaluate(() => window.__empires!.query.units(2).filter((u) => u.type === 'villager' && u.hasOrder).length), { timeout: 30_000 })
     .toBeGreaterThan(0);

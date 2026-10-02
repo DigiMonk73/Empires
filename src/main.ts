@@ -302,6 +302,9 @@ async function boot(): Promise<void> {
   let openChat: (() => void) | null = null;
   const mpBanner = mp ? document.createElement('div') : null;
   if (mp && mpBanner) {
+    hud.multiplayer.value = true;
+    let lost = false;
+    mp.net.onDisconnect = () => (lost = true);
     mpBanner.className = 'mp-banner';
     mpBanner.dataset.testid = 'mp-waiting';
     mpBanner.hidden = true;
@@ -341,6 +344,11 @@ async function boot(): Promise<void> {
     let chatSeq = 0;
     mp.onChat = (c) => notifier?.post(`${c.name}: ${c.text}`, { key: `chat-${chatSeq++}`, color: c.player ? lightColor(c.player) : undefined });
     setInterval(() => {
+      if (lost) {
+        mpBanner.textContent = 'Lost the connection to the game server — this game can’t go on here (the others carry on with a computer in your place).';
+        mpBanner.hidden = false;
+        return;
+      }
       const d = mp.router.desync;
       if (d) {
         mpBanner.textContent = `Out of sync with player ${mp.launch.game.seats[d.peer] ?? d.peer + 1} at ${formatClock(d.tick)} — this game can't continue.`;
@@ -840,6 +848,11 @@ function readGlInfo(app: Application): { renderer: string; vendor: string } {
 }
 
 boot().catch((err) => {
+  if ((err as Error).name === 'NetGameGone') {
+    // A multiplayer page that can't rejoin (M16.5): say so plainly, with the way back.
+    document.body.innerHTML = `<div class="mp-gone" data-testid="mp-gone"><p>${(err as Error).message}</p><p><a href="./">Back to the main menu</a></p></div>`;
+    return;
+  }
   console.error('[empires] boot failed', err);
   document.body.innerHTML = `<pre style="color:#f88;padding:16px">Empires failed to start:\n${String(err)}</pre>`;
 });

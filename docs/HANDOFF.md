@@ -53,7 +53,7 @@ playtest). Multiplayer is next (M16).
 ## Status
 - 2026-10-02 10:00 — `main` (cb9a3c6): M15.11 done but KI-13 arrows (see KNOWN_ISSUES). **`m16-multiplayer`**
   (this branch): M16.1–M16.5 + the Mac app's server address + a soak tool — playable multiplayer: host/join from
-  the menu, lockstep over the server's `/ws`, synced pause, chat, reload-rejoin within 30 s, a computer takes a
+  the menu, lockstep over the server's `/ws`, synced pause, chat, a computer takes a
   departed player's seat. Unit + e2e (both engines) green; `npm run verify` green at every commit.
 - Package repo `../empires-startos` has a matching branch `m16-multiplayer` with the multiplayer docs (version not
   bumped yet).

@@ -9,7 +9,7 @@ const URL_WS = `ws://127.0.0.1:${PORT}/ws`;
 let server: ChildProcess;
 
 beforeAll(async () => {
-  server = spawn('node', ['server/serve.mjs', '--dir', 'dist', '--port', String(PORT), '--host', '127.0.0.1', '--away-ms', '400'], { stdio: 'ignore' });
+  server = spawn('node', ['server/serve.mjs', '--dir', 'dist', '--port', String(PORT), '--host', '127.0.0.1', '--away-ms', '3000'], { stdio: 'ignore' });
   for (let i = 0; i < 100; i++) {
     try {
       if ((await fetch(`http://127.0.0.1:${PORT}/healthz`)).ok) return;
@@ -165,9 +165,11 @@ describe('multiplayer relay (M16.1)', () => {
     expect([...(await b2.nextBinary())]).toEqual([7, 7, 7]);
     b2.ws.send(new Uint8Array([1]));
     expect([...(await a.nextBinary())]).toEqual([1]);
-    // Gone for good: after the hold the others hear it.
+    // Once it has played, a drop can't rejoin (its page would start over from tick 0): the others hear at once.
+    const t0 = Date.now();
     b2.ws.close();
     expect(await a.next('left')).toMatchObject({ peer: 1 });
+    expect(Date.now() - t0, 'no hold for a member that played').toBeLessThan(1500);
     a.ws.close();
   });
 
