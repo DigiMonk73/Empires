@@ -42,7 +42,9 @@ async function start(port: number, data: string | null): Promise<ChildProcess> {
 
 describe('server saves API (M12.5)', () => {
   const DATA = `artifacts/test-data/server-saves-${process.pid}`;
-  const PORT = 4300 + (process.pid % 500);
+  // (Clear of the multiplayer tests' fixed 4391–4392: a pid landing on them talked to their server, whose saves are
+  // off — four 404s in one verify run, M16.9.)
+  const PORT = 4400 + (process.pid % 400);
   const url = (p: string) => `http://127.0.0.1:${PORT}/api/saves${p}`;
   let server: ChildProcess;
   let off: ChildProcess;
