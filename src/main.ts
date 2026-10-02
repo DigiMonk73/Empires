@@ -15,7 +15,7 @@ import { Minimap } from './render/minimap.ts';
 import { quantize } from './sim/commands/types.ts';
 import { BakedArt, gpuBytes } from './render/bakedArt.ts';
 import { idleVillagers, syncHud } from './ui/sync.ts';
-import { Notifier, notes } from './ui/notify.ts';
+import { Notifier, lightColor, notes } from './ui/notify.ts';
 import { diplomacyView } from './ui/diplomacy.ts';
 import { TimelineRecorder } from './game/timeline.ts';
 import { computeScores } from './sim/rules/score.ts';
@@ -69,8 +69,9 @@ async function boot(): Promise<void> {
   const menuMode = !loaded && !mp && !params.has('scenario') && !params.has('smoke') && !params.has('debug');
   const scenario = menuMode ? SCENARIOS.village! : (SCENARIOS[params.get('scenario') ?? 'demo'] ?? SCENARIOS.demo!);
   const session = mp ? mp.session : loaded ? loadSession(loaded) : new GameSession(scenario(params));
-  // Lockstep can't pause one player's game alone (everyone would wait): in multiplayer nothing here pauses it.
-  if (mp) Object.defineProperty(session, 'paused', { get: () => false, set: () => {} });
+  // Lockstep can't pause one player's game alone (everyone would wait): in multiplayer F3 pauses everyone (M16.4)
+  // and nothing else here pauses it — the menu and the dialogs leave the game running.
+  if (mp) Object.defineProperty(session, 'paused', { get: () => mp.pause.on, set: () => {} });
   // …nor change its speed alone (it would only wait on the others): the host's setup speed holds for everyone.
   if (mp) {
     const speed = session.speed;
@@ -298,6 +299,7 @@ async function boot(): Promise<void> {
       });
   if (notifier) session.onEvents((ev) => notifier.onEvents(ev));
   // Multiplayer (M16.4): a banner while a peer's packets are late, a message when one leaves, and the desync check.
+  let openChat: (() => void) | null = null;
   const mpBanner = mp ? document.createElement('div') : null;
   if (mp && mpBanner) {
     mpBanner.className = 'mp-banner';
@@ -313,10 +315,40 @@ async function boot(): Promise<void> {
         told = mp.left.size;
       }
     });
+    // Chat: a box at the lower left; Enter sends, Escape closes. Lines arrive as messages at the upper left.
+    const chat = document.createElement('input');
+    chat.className = 'mp-chat';
+    chat.dataset.testid = 'mp-chat';
+    chat.maxLength = 200;
+    chat.placeholder = 'Say something — Enter sends, Esc closes';
+    chat.hidden = true;
+    document.body.appendChild(chat);
+    openChat = () => {
+      chat.hidden = false;
+      chat.focus();
+    };
+    chat.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        const text = chat.value.trim();
+        if (e.key === 'Enter' && text) mp.net.chat(text);
+        chat.value = '';
+        chat.hidden = true;
+        chat.blur();
+      }
+    });
+    let chatSeq = 0;
+    mp.onChat = (c) => notifier?.post(`${c.name}: ${c.text}`, { key: `chat-${chatSeq++}`, color: c.player ? lightColor(c.player) : undefined });
     setInterval(() => {
       const d = mp.router.desync;
       if (d) {
         mpBanner.textContent = `Out of sync with player ${mp.launch.game.seats[d.peer] ?? d.peer + 1} at ${formatClock(d.tick)} — this game can't continue.`;
+        mpBanner.hidden = false;
+        return;
+      }
+      if (mp.pause.on) {
+        mpBanner.textContent = `Paused by ${mp.pause.by} — F3 resumes`;
         mpBanner.hidden = false;
         return;
       }
@@ -369,6 +401,12 @@ async function boot(): Promise<void> {
       closeTopDialog();
       return;
     }
+    // Multiplayer chat (M16.4): Enter opens the box.
+    if (mp && e.key === 'Enter' && !dialogOpen() && openChat) {
+      e.preventDefault();
+      openChat();
+      return;
+    }
     if (e.key === 'F1') {
       e.preventDefault();
       const open = !hud.keysOpen.value;
@@ -395,7 +433,10 @@ async function boot(): Promise<void> {
     // F3 / Pause: pause (research §5); F4: the score list; F11: time, speed and population.
     if (e.key === 'F3' || e.key === 'Pause') {
       e.preventDefault();
-      if (mp) return; // (no pausing in multiplayer yet)
+      if (mp) {
+        mp.net.pause(!mp.pause.on); // everyone's game pauses or resumes when the server passes it on
+        return;
+      }
       hud.userPaused.value = !hud.userPaused.value;
       session.paused = hud.userPaused.value;
       return;

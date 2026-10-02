@@ -14,8 +14,12 @@ export interface NetGame {
   router: LockstepRouter;
   net: NetClient;
   launch: MpLaunch;
-  /** Player numbers of the peers who left (their seats stand idle — M16.5 hands them to a computer). */
+  /** Player numbers of the peers who left (a computer plays their seats, M16.5). */
   left: Set<number>;
+  /** Paused for everyone (M16.4), and by whom. */
+  pause: { on: boolean; by: string };
+  /** Chat lines as they arrive (the game shows them as messages). */
+  onChat: (line: { player: number; name: string; text: string }) => void;
 }
 
 export function readLaunch(): MpLaunch | null {
@@ -43,7 +47,10 @@ export async function startNetGame(): Promise<NetGame> {
   session.speed = setup.speed || 1;
   const left = new Set<number>();
   net.onLeft = (peer) => takeOver({ router, session, seats, aiSeats, left, you: launch.you }, peer);
-  return { session, router, net, launch, left };
+  const g: NetGame = { session, router, net, launch, left, pause: { on: false, by: '' }, onChat: () => {} };
+  net.onPause = (p) => (g.pause = { on: p.on, by: p.name });
+  net.onChat = (c) => g.onChat({ player: seats[c.from] ?? 0, name: c.name, text: c.text });
+  return g;
 }
 
 /**

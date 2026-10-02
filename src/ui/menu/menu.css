@@ -315,3 +315,15 @@
   font-size: 16px;
   pointer-events: none;
 }
+.mp-chat {
+  position: fixed;
+  left: 12px;
+  bottom: 186px;
+  z-index: 50;
+  width: min(420px, 60vw);
+  padding: 6px 10px;
+  background: rgba(20, 14, 8, 0.92);
+  border: 1px solid #8a6a3a;
+  color: #f4ead2;
+  font-size: 15px;
+}

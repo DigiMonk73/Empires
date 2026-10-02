@@ -10,7 +10,8 @@
 //   {t:'leave'}
 //   {t:'setup', setup}       host only   → {t:'setup', setup} to the others
 //   {t:'start', game}        host only   → {t:'start', game, you, peers} to everyone (peer indices fixed from here)
-//   {t:'chat', text}                     → {t:'chat', from, text} to everyone
+//   {t:'chat', text}                     → {t:'chat', from, name, text} to everyone
+//   {t:'pause', on}                      → {t:'pause', on, from, name} to everyone (a started game; anyone may)
 //   {t:'ping', at}                       → {t:'pong', at}
 //   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game} — back into a started game after a page
 //                                          load or a dropped connection (within AWAY_MS; the packets sent meanwhile
@@ -132,6 +133,12 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         sendJson(c, { t: 'rejoined', code: r.code, you: peer, peers: r.members.length, game: r.game });
         for (const data of old.buffer) c.sendBinary(data);
         log(`room ${r.code}: peer ${peer} back (${old.buffer.length} packets waited)`);
+        return;
+      }
+      case 'pause': {
+        if (!room || !room.started) return;
+        const out = { t: 'pause', on: !!m.on, from: room.members.indexOf(c), name: c.name };
+        for (const o of room.members) sendJson(o, out);
         return;
       }
       case 'chat': {

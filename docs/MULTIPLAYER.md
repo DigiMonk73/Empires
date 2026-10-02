@@ -58,12 +58,10 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       e2e `tests/e2e/multiplayer.spec.ts` (both engines). Main menu → **Multiplayer**: Host (the skirmish setup with seats Human/Computer/Open and
       a room code) or Join (code or list). Players see the seats fill; the host starts when every Human seat is
       taken. e2e: two browser contexts host + join and both reach the game.
-- [ ] **M16.4 In game.** _Partly:_ `src/platform/netGame.ts` builds the session (host runs the computers); pausing
-      and speed changes are off in multiplayer (the menu and F3 don't pause; the host's setup speed holds — a synced
-      pause/speed command is still to do); a "Waiting for the other players…" banner, "Player N left" messages, an
-      out-of-sync banner. _Left:_ pause/speed as commands, a chat box (the relay and `NetClient.chat` exist). Session wiring (local seat, host runs AIs), speed/pause as commands, "Waiting for
-      Player N…" overlay when a peer's packets are late, chat. e2e: two contexts play 1 minute, both select and
-      move units, hashes equal.
+- [x] **M16.4 In game.** _Done:_ `src/platform/netGame.ts` builds the session (host runs the computers); F3 pauses
+      and resumes everyone (a relayed `{t:'pause'}` — pausing changes no game state, so no command is needed); the
+      menu and dialogs don't pause; speed is the host's setup speed; Enter opens a chat box (lines show as messages);
+      banners for "Waiting for the other players…", "Paused by …" and out of sync. e2e covers pause and chat.
 - [x] **M16.5 Disconnects** (the part that keeps a game alive). _Done:_ `LockstepRouter.drop(peer)` — the relay
       delivers everything a peer sent before announcing it left, so every survivor stops waiting after the same
       tick; `takeOver()` in `netGame.ts` gives the seat to a computer run by the lowest remaining peer (all the

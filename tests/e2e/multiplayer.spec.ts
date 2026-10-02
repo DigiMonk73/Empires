@@ -68,6 +68,23 @@ test('two players host and join from the menu, then play one game in step (M16.3
   expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
+
+  // F3 pauses everyone (M16.4): the guest's game stops and says who paused it; F3 again resumes.
+  await host!.keyboard.press('F3');
+  await expect(guest!.getByTestId('mp-waiting')).toHaveText(/Paused by Ann/);
+  const paused = await tick(guest!);
+  await guest!.waitForTimeout(800);
+  expect(await tick(guest!)).toBeLessThanOrEqual(paused + 6); // (the few ticks already in flight)
+  await host!.keyboard.press('F3');
+  await expect.poll(() => tick(guest!), { timeout: 10_000 }).toBeGreaterThan(paused + 20);
+
+  // Chat: Enter opens the box; the line reaches the other player's messages.
+  await guest!.keyboard.press('Enter');
+  await expect(guest!.getByTestId('mp-chat')).toBeFocused();
+  await guest!.keyboard.type('good luck');
+  await guest!.keyboard.press('Enter');
+  await expect(host!.getByTestId('messages')).toContainText('Bo: good luck');
+  await expect(guest!.getByTestId('mp-chat')).toBeHidden();
   expect(errors).toEqual([]);
 });
 

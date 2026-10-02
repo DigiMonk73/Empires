@@ -48,6 +48,8 @@ export class NetClient {
   /** The room closed before the start (the host left). */
   onClosed: Listener<string> = () => {};
   onChat: Listener<{ from: number; name: string; text: string }> = () => {};
+  /** Someone paused or resumed the game (everyone pauses together: lockstep would wait anyway). */
+  onPause: Listener<{ on: boolean; from: number; name: string }> = () => {};
   onError: Listener<string> = () => {};
   /** The connection dropped. */
   onDisconnect: Listener<void> = () => {};
@@ -147,6 +149,10 @@ export class NetClient {
     this.sendJson({ t: 'chat', text });
   }
 
+  pause(on: boolean): void {
+    this.sendJson({ t: 'pause', on });
+  }
+
   /** Round trip to the server in ms. */
   async ping(): Promise<number> {
     const at = Date.now();
@@ -211,6 +217,9 @@ export class NetClient {
         break;
       case 'chat':
         this.onChat({ from: m.from as number, name: String(m.name ?? ''), text: String(m.text ?? '') });
+        break;
+      case 'pause':
+        this.onPause({ on: !!m.on, from: m.from as number, name: String(m.name ?? '') });
         break;
       case 'error':
         if (i < 0) this.onError(String(m.error));
