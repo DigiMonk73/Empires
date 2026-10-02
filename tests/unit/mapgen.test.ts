@@ -106,6 +106,42 @@ describe('map generation (econ:8)', () => {
     });
   }
 
+  it('Narrows: every start on dry land, the strait between the teams, for 2–8 players (M15.10 P6, P8)', () => {
+    // Team layouts by seat: FFA for every count, and the even team splits the setup screen offers.
+    const layouts = ['12', '123', '1234', '12345', '123456', '1234567', '12345678', '1122', '1212', '111222', '121212', '11112222', '1112'];
+    // (Six or more on Small crowd each other's far resources onto their starts — P15, not the strait — so Medium.)
+    const cases = layouts.flatMap((l) => [11, 12].flatMap((seed) => (l.length <= 5 ? ['small', 'medium'] : ['medium']).map((size) => ({ layout: l, seed, size: size as MapSizeId }))));
+    for (const { layout, seed, size } of cases) {
+      {
+        const players = [...layout].map((t, i) => ({ civ: i % 2 ? 'persian' : 'greek', team: Number(t) }));
+        const m = generateMap({ seed, type: 'narrows', size, players });
+        const w = Sim.create(m).world;
+        const labels = w.pathing.regions.labels(1);
+        const tag = `${layout} ${size} seed ${seed}`;
+        // The Town Center's footprint and the ring around it are land: no start in or by the strait.
+        for (const [sx, sy] of m.starts) {
+          for (let y = sy - 1; y <= sy + 3; y++) for (let x = sx - 1; x <= sx + 3; x++) expect(['w', '~'], `${tag} (${x},${y})`).not.toContain(m.map.ascii![y]![x]);
+        }
+        // A player's land: the walkable region its villagers stand on (one may stand on a neighbour's mine — P15).
+        const land = players.map((_, i) => {
+          const rs = new Set<number>();
+          for (let s = 0; s < w.ents.top; s++) {
+            if (!w.ents.alive[s] || w.ents.owner[s] !== i + 1 || w.ents.kind[s] !== EKind.unit) continue;
+            const r = labels[Math.floor(w.ents.y[s]!) * w.map.w + Math.floor(w.ents.x[s]!)]!;
+            if (r) rs.add(r);
+          }
+          expect(rs.size, `${tag} P${i + 1} villagers`).toBe(1);
+          return [...rs][0]!;
+        });
+        expect(new Set(land).size, tag).toBe(2);
+        // Teams never straddle the strait; with two equal teams, each holds one side.
+        const teams = new Map<number, Set<number>>();
+        land.forEach((r, i) => teams.set(players[i]!.team, (teams.get(players[i]!.team) ?? new Set()).add(r)));
+        for (const [t, rs] of teams) if (layout.split(String(t)).length - 1 <= layout.length / 2) expect(rs.size, `${tag} team ${t}`).toBe(1);
+      }
+    }
+  });
+
   it('is deterministic and seed-sensitive', () => {
     const a = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
     const b = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });

@@ -1024,9 +1024,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
       - _Lens B (146-row pairwise matrix + 30 × 15 min + 2268-map sweep; `artifacts/polish/lens-b/`): 0 exceptions,
         176/176 save → load identical; stockpiles, starting techs, FTT stats, pop caps, time limit all right._
-      - [ ] P6 · must · mapgen Narrows · 3/5/7 players: the middle seat's TC and villagers start in the strait's deep
+      - [x] P6 · must · mapgen Narrows · 3/5/7 players: the middle seat's TC and villagers start in the strait's deep
             water (never acts, never defeated) · narrows small seed 11 3p (P3 TC at 16,49); 108/108 sweep maps ·
-            `artifacts/polish/lens-b/narrows.ts`; suspect `theta = rot + TRIG_STEPS/(2n)` in `generate.ts`
+            `artifacts/polish/lens-b/narrows.ts` — _fixed:_ the strait was drawn between seats 0 and 1, so its far end
+            ran through seat (n+1)/2; now each side of it holds half the players spread over its own half-circle
+            (2 players unchanged), and a cluster drawn at 17–23 tiles snaps wholly in or out of the 20-tile zone
+            (it gave one start 2 more berry bushes). Test: `mapgen.test.ts` "Narrows: every start on dry land…".
       - [ ] P7 · must · mapgen islands · 5–8 players on Tiny/Small (Small Islands also Medium): forest and resource
             clusters wall the start in — no passable tile around the TC · smallIslands small 7p seed 70134 (5 min,
             4 villagers each, ≤ 320 gathered); largeIslands small 8p seed 92555 (6/8 enclosed) · `lens-b/sweep.ts`
@@ -1034,8 +1037,9 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             "move to Town Center" and "attack the bowman" · g2 = `type=largeIslands&size=large&seed=23` 6p Hard,
             ticks 45600–47400 (`node artifacts/polish/lens-a/stuck.ts`). _Cause:_ `Tactics.militia` returns false
             once every militia villager already has its attack order, so `flee` sends them home; next think, back.
-      - [ ] P8 · should · mapgen Narrows · team games: the strait doesn't separate the teams (1122, 1212, 111222,
-            121212, 11112222 — 36/36 maps put an ally and an enemy on each side) · `lens-b/narrowsTeams.ts`
+      - [x] P8 · should · mapgen Narrows · team games: the strait doesn't separate the teams (1122, 1212, 111222,
+            121212, 11112222 — 36/36 maps put an ally and an enemy on each side) · `lens-b/narrowsTeams.ts` — _fixed with P6:_
+            whole teams take a side while the sides stay within one player (same test; probe: all layouts split).
       - [ ] P9 · should · victory · Score 250 + Post-Iron start is won at tick 0 when Full Tech Tree or Reveal Map is
             on (starting techs score + the most-techs bonus) · 2p continental seed 1 · `lens-b/probes.ts`
       - [ ] P10 · should · AI Nomad · no Town Center site within 8 tiles of the villagers → `found()`
@@ -1057,8 +1061,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [ ] P5 · nice · defeat · a defeated player's leftover fishing boats show pop "1/0" (conquest rightly ignores
             them) · g1 from 17:13
       - [ ] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu
-      - [ ] P15 · nice · setup · 6–8 players allowed on Tiny/Small: TCs 17–19 tiles apart, a neighbour's mine spawns
-            under villagers (they do walk off) · highland tiny 8p seed 50536; coastal tiny 4p seed 15838
+      - [ ] P15 · should · crowding · 6–8 players on Tiny/Small: TCs 17–24 tiles apart, a neighbour's far mine or
+            berries spawn under/around villagers — usually they walk off, but narrows small 8p seed 11 boxes P2's
+            villager into one tile between its TC and P7's far berries · highland tiny 8p seed 50536; coastal tiny 4p
+            seed 15838; `node artifacts/polish/probe-p6.ts 12345678 11 small 1 2`
       - [ ] P16 · nice · mapgen Large Islands · 56/96 team maps: allies' islands joined only through forest or mines
             · `lens-b/bridge.ts`
       - [ ] P17 · nice · mapgen · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;

@@ -368,10 +368,32 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     g.c.fill('w');
     const islands: { x: number; y: number; r: number }[] = [];
     if (o.type === 'narrows') {
-      placeStarts(rr, W * 0.32);
+      // A strait through the middle at angle `theta`, the players split into two sides of it, each side spread evenly
+      // over its own half-circle — so no start lies near the strait whatever the count (seating everyone evenly on
+      // one circle put an odd count's middle player in it, M15.10 P6). Whole teams take a side while the sides stay
+      // within one player of each other (P8); two players sit as before, opposite across it.
+      rot = rr.int(TRIG_STEPS);
+      const theta = (rot + TRIG_STEPS / 4) % TRIG_STEPS;
+      const cap = (n + 1) >> 1;
+      const byTeam = new Map<number, number[]>();
+      o.players.forEach((p, i) => byTeam.set(p.team ?? i + 1, [...(byTeam.get(p.team ?? i + 1) ?? []), i]));
+      const teamList = [...byTeam.entries()].sort((a, b) => b[1].length - a[1].length || a[0] - b[0]);
+      const sides: number[][] = [[], []];
+      for (const [, members] of teamList) {
+        const k = sides[0]!.length <= sides[1]!.length ? 0 : 1;
+        const fit = sides[k]!.length + members.length <= cap ? k : sides[1 - k]!.length + members.length <= cap ? 1 - k : -1;
+        if (fit >= 0) sides[fit]!.push(...members);
+        else for (const i of members) sides[sides[0]!.length < cap ? 0 : 1]!.push(i);
+      }
+      const ringR = W * 0.32;
+      sides.forEach((side, s) => {
+        side.forEach((i, k) => {
+          const step = (theta + s * (TRIG_STEPS / 2) + TRIG_STEPS / 2 + Math.floor(((2 * k + 1) * TRIG_STEPS) / (4 * side.length))) % TRIG_STEPS;
+          starts[i] = [Math.floor(mid + cosStep(step) * ringR) - 1, Math.floor(mid + sinStep(step) * ringR) - 1];
+          facing[i] = (step + TRIG_STEPS / 2) % TRIG_STEPS;
+        });
+      });
       g.c.fill('.');
-      // A strait through the middle, between the two halves of the seating order (teams sit together).
-      const theta = (rot + Math.floor(TRIG_STEPS / (2 * n))) % TRIG_STEPS;
       const nx = -sinStep(theta);
       const ny = cosStep(theta);
       const half = Math.max(3, W * 0.05);
@@ -477,7 +499,11 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
         rel(22, 30, 'G', 8), // far gold
         rel(15, 20, 'F', 55), // each player's own woodline (the map's other forests are extra)
       ]
-  ).map(cap);
+  )
+    .map(cap)
+    // Narrows has no island to pull clusters in, so one drawn at 17–23 tiles straddled the 20-tile zone — a few
+    // bushes inside it for one start, none for another (M15.10 P6): it goes wholly inside or outside, alike for all.
+    .map((x) => (o.type === 'narrows' && x.kind !== 'F' && x.d > 17 && x.d < 23 ? { ...x, d: x.d < 20 ? 17 : 23 } : x));
   const gazelles = cap({ d: 10 + r.float() * 8, a: r.int(TRIG_STEPS), n: 4 + r.int(5) });
   const trees: { d: number; a: number }[] = [];
   // (Fewer on the water template's small islands: pulled in, 10–15 trees filled the ring where houses go.)

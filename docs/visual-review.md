@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P6 · no e2e scene changed (6 shots ≤ 0.30% px: menu backdrop, save timestamps); Narrows 3p
+  small seed 11 checked as text (`artifacts/polish/ascii-map.ts`): one strait, 1 and 3 on one side, 2 on the other.
+
 ## 2026-10-01 · M15.10 P1 · no visual change (7 shots ≤ 0.33% px: menu backdrop edges, save timestamps)
 
 ## 2026-09-30 · M15.6b · visual pass, part 2: the art gallery (5 architecture sets × 4 ages) and the emblem
