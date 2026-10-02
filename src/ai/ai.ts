@@ -725,6 +725,9 @@ export class AiPlayer {
         if (d < minD || d > maxD) continue;
         if (!s.v.canPlace(type, tx, ty) || !this.margin(s, tx, ty, size, type === 'farm' || type === 'dock')) continue;
         if (home && s.v.region(1, tx, ty) !== home) continue;
+        // A Dock on a shore the builders can walk to from the Town Center: one across the water or behind a forest
+        // line stood unbuilt all game and counted towards the Dock limit (M15.10 P59).
+        if (type === 'dock' && s.tc && !s.v.reachable(s.tc.x + s.tc.size / 2 + 0.5, s.tc.y, tx, ty, tx + size, ty + size)) continue;
         return [tx, ty];
       }
     }

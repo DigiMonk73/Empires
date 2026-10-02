@@ -248,3 +248,32 @@ describe('AI foundations (M15.10 P55)', () => {
     expect(farm.done).toBe(true);
   });
 });
+
+describe('AI Docks (M15.10 P59)', () => {
+  it('a Dock goes on a shore the builders can walk to, not on an islet across the water', () => {
+    // Mainland to x 11, sea beyond, an islet at x 17–21 nearer the search than any free mainland shore: Docks went up
+    // where no villager could walk, stood unbuilt all game and counted towards the Dock limit.
+    const W = 40;
+    const ascii = Array.from({ length: W }, (_, y) => Array.from({ length: W }, (_, x) => (x <= 11 || (x >= 17 && x <= 21 && y >= 14 && y <= 20) ? '.' : 'w')).join(''));
+    const sim = Sim.create({
+      seed: 4,
+      map: { w: W, h: W, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [{ type: 'townCenter', owner: 1, tx: 3, ty: 16 }],
+        units: [0, 1, 2].map((i) => ({ type: 'villager', owner: 1, x: 7.5, y: 15.5 + i })),
+      },
+    });
+    const w = sim.world;
+    w.players[1]!.res.set([1000, 1000, 500, 200]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    const s = (ai as unknown as { snapshot(v: PlayerView, me: ReturnType<PlayerView['me']>): never }).snapshot(view, view.me());
+    const cmds: Command[] = [];
+    ai.build(s, cmds, 'dock', 19, 17, 0, 9, 1);
+    const b = cmds.find((c) => c.t === 'build') as { tx: number; ty: number } | undefined;
+    expect(b, 'a Dock placed').toBeDefined();
+    expect(b!.tx + 1, 'on the mainland shore').toBeLessThan(14);
+  });
+});

@@ -13,8 +13,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   P24 arrows (KI-13), P2, P17, P20, P27/P31 — the computers rely on uneven starts and forgiving arrows to finish.
 - **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI
   suite, 100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09).
-- **AI gates (all pass, M15.10 P55):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
-  24/24 (1001–1024), water 47/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 46:15 (Done 25–60; D69);
+- **AI gates (all pass, M15.10 P59):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
+  24/24 (1001–1024), water 48/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 46:15 (Done 25–60; D69);
   0 crashes. Margins are thin — LOOP.md "AI work" before touching AI or mapgen; `tools/sim/diagnose.ts`.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
@@ -1191,9 +1191,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             tiles, Tiny 7p/8p: Small Islands 17/42, 40/48 (before tonight 11, 39 — but villagers buried then); 3–6p
             0–1. Test: `mapgen` "Crowded starts…" now also checks Tiny islands' resources (and wants the 16-tile ring,
             not 40: the clusters take the rest). Water-gate and land suite maps unchanged.
-      - [ ] P59 · should · AI Docks · Docks placed where no villager can walk (P21's land check exempts them): 42 in
+      - [x] P59 · should · AI Docks · Docks placed where no villager can walk (P21's land check exempts them): 42 in
             288 AI games; across water (28) or on shore pockets behind forest (60); dead foundations count to the Dock
-            limit — narrows tiny 6p seed 52912: P1, P3, P5 never get a usable Dock · `lens-b2/classify.ts`
+            limit — narrows tiny 6p seed 52912: P1, P3, P5 never get a usable Dock · `lens-b2/classify.ts` —
+            _fixed:_ `findSpot` takes a Dock spot only if its shore is reachable by land from the Town Center. Suite:
+            held-out water 47 → 48/48, dev 44 → 46/48, the rest unchanged. Test: `ai-tactics` "AI Docks".
       - [x] P60 · should · mapgen Tiny Mediterranean/Narrows · forest or mines cut starts off by land (19 maps, 20
             before) — mediterranean tiny 6p seed 47514 (each start reaches 1 other) · `lens-b2/islcmp.ts` — _fixed:_ with
             3+ players, neighbouring starts round the map on one land get a held 3-tile path (round the coast through
@@ -1286,7 +1288,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             and then for 120 wood; meanwhile it builds a Dock and 6 fishing boats on a lake. Placing the pit at the
             nearest *forest* sped every economy (Tool 11:14 → 10:48, Bronze 20:15 → 17:57) but held-out wars fell
             24 → 23/24 and Hard > Moderate to 48/64 (the bar) — reverted. Needs the AI-work protocol (dev seeds
-            601–624, `diagnose.ts wars`) before another try.
+            601–624, `diagnose.ts wars`) before another try. _Again after D69/P55 (it. 40):_ Tool 10:48, Bronze 17:57,
+            water 47/48, but wars 23/24 again — reverted; 2 of 3 cycles.
       - [x] P4 · nice · HUD · "Not enough food." stacks 3× — the `no:<reason>` throttle (60 ticks, `src/ui/notify.ts`)
             is shorter than a message's life · g2 tick ≈ 40200 — _fixed:_ the same words still on screen move down as the newest instead
             of standing twice. Test: `notify` "a message still on screen is refreshed".
