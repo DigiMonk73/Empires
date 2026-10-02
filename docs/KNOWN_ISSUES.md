@@ -29,4 +29,14 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   its test). It moves the held-out gates: 1v1 wars 24 → 22/24, water 46 → 45/48, Hard > Moderate 51 → 48/64 (the
   bar). Next: retune the AI for accurate arrows on the dev sets (LOOP.md "AI work"), then apply; or the user
   accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
+- **KI-14 · should (blocked by the AI gates) · two-player island starts bury a villager now and then** — M15.10 P20.
+  ~15% of two-player Small/Large Islands maps (15 of the water suite's 96) start a villager on a forest or mine
+  tile, stuck for the game. Holding the Town Center's villager tiles clear fixes it but moves held-out water 46 →
+  44/48 (tried twice: before and after D69). Next: trace the water games that stop finishing (dev seeds 401–448,
+  `diagnose.ts water-trace`) — the computers seem to need the lopsided start to end the game.
+- **KI-15 · should (blocked by the AI gates) · land starts lose a gold, stone or berry cluster** — M15.10 P17. On
+  Continental/Inland a start's own cluster with nothing free within 8 tiles of its spot is dropped (70 of the AI
+  suite's 148 land maps; 55/160 2p maps leave one start < 70% of the other's gold or stone within 32). Swinging it
+  round the start fixes most (→ 40/160) but flips one held-out 1v1 war (24 → 23/24), with or without D69. Patch:
+  the P17 note in PROGRESS (M15.10).
 

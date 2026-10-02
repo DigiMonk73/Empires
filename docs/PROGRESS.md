@@ -1226,7 +1226,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
             duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
             share".
-      - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
+      - [ ] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
             finishes those even games: trace 501/505/523 with `diagnose.ts` first (`artifacts/polish/water-*.txt`)
@@ -1303,7 +1303,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             · `lens-b/bridge.ts` — _fixed:_ a three-tile path along each team bridge is held clear while clusters go
             down: 56/96 → 0/96. Two-player water maps (the water gate) have no bridges: unchanged. Test: `mapgen`
             "Large Islands: teammates walk to each other".
-      - [ ] P17 · nice · mapgen · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
+      - [ ] P17 · nice → should · mapgen · **[blocked → KI-15]** · continental tiny 4p seed 47514 has no stone anywhere (clusters aimed off the coast;
             the land nudge searches 8 tiles) — 3/252 continental maps. _Bigger than it looked (it. 15):_ a start's own gold, stone or
             berry cluster with nothing free within 8 tiles of its spot is dropped on Continental/Inland — 70 of the
             AI suite's 148 land maps; 55/160 2p maps leave one start < 70% of the other's gold or stone within 32
