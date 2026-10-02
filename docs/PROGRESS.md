@@ -1023,7 +1023,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
       during the 20:25 verify:full), H, C, F, E, G (3× e2e); round two A2, B2, C2, D2, A3, then a 1.0.0 → tonight save
-      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3, H3, D3, E3, F3, G3 (the diff since G2 — P54, P77–P79 — clean), D4. _Next:_ the wrap-up at 03:45.
+      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3, H3, D3, E3, F3, G3 (the diff since G2 — P54, P77–P79 — clean; e2e ×3 on the final code: 486 passed, 0 flaky), D4. _Next:_
+      the wrap-up at 03:45.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
