@@ -341,8 +341,9 @@ export class AiPlayer {
     // An island's population goes to boats and warships too: villagers stop at 26 there (26 + 10 fishers + a
     // guard of 4 + a fleet of 8 fits the 50), 22 while an invasion needs the room for its army.
     // A later starting age: at most 60% of the population limit in villagers — an Iron start filled 50 with 36–44
-    // villagers by 20 min and had no room left for an army (M14.6).
-    const lateCap = lateStart(s.v.startingAge()) ? Math.floor(s.v.popLimit() * 0.6) : Infinity;
+    // villagers by 20 min and had no room left for an army (M14.6). Any other start: 70% (D69) — at the default 50,
+    // Hard's 38–44 left an army of 6–12, and two such economies stalled each other for the hour (M15.10 P69).
+    const lateCap = Math.floor(s.v.popLimit() * (lateStart(s.v.startingAge()) ? 0.6 : 0.7));
     const target = Math.min(this.p.villagers[s.me.age] ?? 20, this.naval.villagerCap(), lateCap);
     if (s.villagers.length + tc.queue >= target) return;
     if (s.me.pop + tc.queue + this.naval.popReserve(s) >= s.me.popCap) return; // (room for missing transports)

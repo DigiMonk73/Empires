@@ -209,3 +209,15 @@ describe('AI starting ages (M15.10 P19)', () => {
     expect(['default', 'nomad', 'tool', 'bronze', 'iron', 'postIron'].map(lateStart)).toEqual([false, false, true, true, true, true]);
   });
 });
+
+describe('AI villager share (M15.10 P69, D69)', () => {
+  it('at a 50 population a computer keeps at most 70% villagers: room for an army', () => {
+    // Hard wants 38 villagers in the Bronze Age, 44 in the Iron: at the default limit of 50 that left 6–12 soldiers,
+    // and Hard-vs-Hard games stood still at the limit (2 of 16 undecided at 90 min).
+    const r = runMatch({ seed: 101, type: 'inland', size: 'tiny', levels: ['hard', 'hard'], minutes: 35, peaceful: true, popCap: 50 });
+    for (const p of [0, 1]) {
+      expect(Math.max(...r.samples.map((x) => x.players[p]!.villagers)), `P${p + 1}`).toBeLessThanOrEqual(35);
+      expect(Math.max(...r.samples.map((x) => x.players[p]!.pop)), `P${p + 1} fills the rest`).toBeGreaterThan(40);
+    }
+  }, 60_000);
+});

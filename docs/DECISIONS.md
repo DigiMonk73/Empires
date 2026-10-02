@@ -465,3 +465,9 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   `content-sweep.test.ts` now researches every tech at its building once its age and prerequisites are in and
   requires it to change the player's compiled stats, builds every building with villagers (the Wonder too), and
   upgrades every standing tower and wall and every ship. `done-audit --check` is a verify step.
+- **D69 — Computers keep at most 70% of the population limit in villagers** (2026-10-01, M15.10 P69). Their
+  per-age targets (Hard: 30 Tool, 38 Bronze, 44 Iron) were set for big limits; at the default 50 they left an army
+  of 6–12, and two even Hard economies stalled each other at the limit (Hard-vs-Hard 14/16 decided in 90 min,
+  median 51:05). The cap — 60% after a later start (M14.6), 70% otherwise — only binds below a limit of ~63. Full
+  suite: held out unchanged (1v1 wars 24/24, water 46/48, Hard > Moderate 51/64, Hardest > Hard 63/64); Hard duels
+  16/16, median 45:18; Hard idle 1.4 → 0.6%.

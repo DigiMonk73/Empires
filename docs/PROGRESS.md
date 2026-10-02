@@ -13,8 +13,8 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   P24 arrows (KI-13), P2, P17, P20, P27/P31 — the computers rely on uneven starts and forgiving arrows to finish.
 - **Last green:** verify:full at the M15.10 20:25 checkpoint (85bdd33), 1067 s — 617 unit + 134 e2e, 604-game AI
   suite, 100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09).
-- **AI gates (all pass, M15.10 P26):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
-  24/24 (1001–1024), water 46/48 (501–548, bar 44); Hard-vs-Hard median 51:05 (Done 25–60 — since P3, was 32);
+- **AI gates (all pass, M15.10 P69):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
+  24/24 (1001–1024), water 46/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 45:18 (Done 25–60; D69);
   0 crashes. Margins are thin — LOOP.md "AI work" before touching AI or mapgen; `tools/sim/diagnose.ts`.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
@@ -1221,6 +1221,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
         rally point. e2e `dialogs.spec.ts` (+6 tests × 2 engines).
       - [ ] P68 · nice · layout · Keys' Close below the fold at 800×600, 1024×640, 600×900 (the panel scrolls;
             Escape and the backdrop close it); Options' Back off-screen at 1280×400 · `lens-c2/resize.ts`
+      - [x] P69 · should · AI · Hard-vs-Hard games stalemate at the default 50 limit: Hard's villager targets (38
+            Bronze, 44 Iron) leave 6–12 soldiers a side (found tracing P17's duels) — _fixed (D69):_ computers keep
+            ≤ 70% of the limit in villagers (60% after a later start, as before). Suite: held out unchanged; Hard
+            duels 14 → 16/16 decided, median 51:05 → 45:18; Hard idle 1.4 → 0.6%. Test: `ai-tactics` "AI villager
+            share".
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
