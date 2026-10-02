@@ -3,30 +3,35 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Milestone:** **M15 Hardening & release** — M15.1–M15.8 done: **Empires 1.0.0** built and on the StartOS VM.
-  Waiting on **M15.9, the user's playtest** (a full skirmish vs Hard) — the M15 exit; then tag `m15`, M16 multiplayer.
-  **M15.10 polish run** in progress (`docs/POLISH_LOOP.md`, to 03:45 CDT): all 8 lenses run once (A2, D2 now);
-  30 of 41 findings fixed — map starts (Narrows, crowded islands and land, Coastal, team bridges), AI (villager
-  jitter, Nomad freeze, houses across water, Nomad villager cap), rules (Stand Ground catapults, converted
-  transports' riders, tower targets), UI (dialogs and keys, Backspace, notifications, Tech Tree reach, Keys list,
-  banners and clocks at the end, one-team Start, Post-Iron Score), server saves. Blocked by the AI gates:
-  P24 arrows (KI-13), P2, P17, P20, P27/P31 — the computers rely on uneven starts and forgiving arrows to finish.
-- **Last green:** verify:full at the M15.10 00:15 checkpoint (463669d), 577 s — 641 unit + 160 e2e, 604-game AI
-  suite, 100-seed determinism ×3 engines, soaks, Docker both arches, Tauri smoke, `make arm` (1.0.0, eaedb09).
-- **AI gates (all pass, M15.10 P59):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars
-  24/24 (1001–1024), water 48/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 46:15 (Done 25–60; D69);
-  0 crashes. Margins are thin — LOOP.md "AI work" before touching AI or mapgen; `tools/sim/diagnose.ts`.
+- **Milestone:** **M15 Hardening & release** — M15.1–M15.8 done; the **M15.10 polish run** (2026-10-01 16:53 →
+  10-02 04:10, `docs/POLISH_LOOP.md`) is done: **Empires 1.0.1**, both `.s9pk` built, not yet on the VM. Waiting on
+  **M15.9, the user's playtest** (a full skirmish vs Hard) — the M15 exit; then tag `m15`, M16 multiplayer.
+- **M15.10:** every lens three rounds; 64 of 79 findings fixed — map starts (Narrows, crowded islands and land,
+  Coastal, team bridges, land clusters), computer players (70% villager cap D69, idle boats, Docks under raiders,
+  Death Match ages, armies scaled to a raised limit, Nomad TC, houses and buildings only where villagers walk),
+  rules (Stand Ground catapults, transport riders, tower targets, queued moves wait — D18), UI (dialogs and Esc,
+  Backspace, tooltips and their reach, Keys list, end banners and clocks, one-team Start, Post-Iron Score), server
+  saves. Open: KI-13/-14/-16/-17/-18 and P70/P74/P75/P11/P72 (all gate-blocked), P40 + P29/P32 (need the user / a
+  source), P52 (by rules), P30 (nice).
+- **The AI gates' noise (for the user):** a 1–3-tick think shift with no rule changed moves 1v1 wars 22–24/24,
+  Hard > Moderate 46–52/64, held-out water 42–47/48; tonight's baseline is at the top, so "must not fall" blocks
+  most AI fixes by chance (KNOWN_ISSUES end). How to gate AI changes is the user's call.
+- **Last green:** verify:full at the M15.10 wrap-up (42a685c, 1.0.1), 1114 s — 645 unit + 162 e2e, 604-game AI
+  suite, 100-seed determinism ×3 engines, two-hour soaks, Docker both arches, Tauri smoke; `make` → both `.s9pk`
+  1.0.1:0 (empires-startos c252f98).
+- **AI gates (all pass):** Hard > Moderate 51/64 (bar 48), Hardest > Hard 63/64; held-out 1v1 wars 24/24
+  (1001–1024), water 48/48 (501–548, bar 44); Hard-vs-Hard 16/16, median 47:08 (Done 25–60; D69); 0 crashes.
 - **Game:** 16 civs, 4 ages, the full RoR tree, water, hills on every map (D58), alligators (D59), Ruins and
   Artifacts; victories Standard / Conquest / Score / Time Limit; starting ages Nomad … Post-Iron; population
   25–200; Full Tech Tree; diplomacy, tribute, server saves, generative music, voices. Every `verify: true` data
   value names its decision (D57, enforced by `data.test.ts`).
-- **StartOS:** 1.0.0:0 built (both arches, eaedb09) and verified on the VM (update from 0.12.0, restart, reinstall,
-  real play in both engines); backup → restore unverified (KI-3).
-- **Open issues:** KI-13 arrows (blocked by the AI gates — the user), KI-3 backups (a backup target on the VM — the
-  user), KI-5 voice licence (before a public release), KI-2 AI images (optional). No gate failing.
-- **Playable now:** `npm run preview` → `/` → Skirmish (setup: map, size, civs, levels, victory, starting age,
-  population, Full Tech Tree, reveal); the Mac app `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/
-  Empires.app`; review scenes `?scenario=relics|countdowns|map&gators=1|battle|…`.
+- **StartOS:** 1.0.1:0 built (both arches, c252f98) — **unverified on the VM**; 1.0.0:0 was verified there (update,
+  restart, reinstall, real play in both engines); backup → restore unverified (KI-3).
+- **Open issues:** KI-13 arrows, KI-14 island villager, KI-16/-17/-18 AI economy and villagers (all blocked by the AI
+  gates — the user), KI-3 backups (a backup target on the VM — the user), KI-5 voice licence (before a public
+  release), KI-2 AI images (optional). No gate failing.
+- **Playable now:** `npm run preview` → `/` → Skirmish; the Mac app `src-tauri/target/aarch64-apple-darwin/release/
+  bundle/macos/Empires.app` (copy to /Applications); review scenes `?scenario=relics|countdowns|map&gators=1|…`.
 - **Notes:** metrics `docs/metrics/*.csv`; reviews `docs/visual-review.md`; AI suite `node tools/sim/ai-suite.ts
   [--full --adjacent]`; `node tools/sim/diagnose.ts`; `node tools/sim/determinism.ts`; polish scripts `artifacts/polish/`.
 
@@ -1023,8 +1028,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
       during the 20:25 verify:full), H, C, F, E, G (3× e2e); round two A2, B2, C2, D2, A3, then a 1.0.0 → tonight save
-      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3, H3, D3, E3, F3, G3 (the diff since G2 — P54, P77–P79 — clean; e2e ×3 on the final code: 486 passed, 0 flaky), D4. _Next:_
-      the wrap-up at 03:45.
+      check (3 AI games saved at 15 min by 1.0.0 load with identical hashes and play on to 25 min), E2, F2, G2, H2; round three C3, A4, B3, H3, D3, E3, F3, G3 (the diff since G2 — P54, P77–P79 — clean; e2e ×3 on the final code: 486 passed, 0 flaky), D4. Wrap-up (04:10):
+      1.0.1 — verify:full green (1114 s), both `.s9pk` 1.0.1:0 built (c252f98), not installed on the VM.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
