@@ -215,9 +215,10 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
   const facing: number[] = new Array(n); // trig step from start toward the centre
   let rot = 0;
   /** Evenly on a circle about (cx, cy), random rotation; teams sit together. */
-  const placeStarts = (rr: Rng, ringR: number, cx = mid, cy = mid): void => {
+  const placeStarts = (rr: Rng, ringR: number, cx = mid, cy = mid, turn?: number): void => {
     const order = o.players.map((p, i) => ({ i, team: p.team ?? i + 1 })).sort((a, b) => a.team - b.team || a.i - b.i);
     rot = rr.int(TRIG_STEPS);
+    if (turn !== undefined) rot = turn; // (drawn all the same: the rest of the map keeps its numbers)
     order.forEach((p, k) => {
       const step = (rot + Math.floor((k * TRIG_STEPS) / n)) % TRIG_STEPS;
       starts[p.i] = [Math.floor(cx + cosStep(step) * ringR) - 1, Math.floor(cy + sinStep(step) * ringR) - 1];
@@ -355,7 +356,10 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
       const side = rr.int(4);
       const depth = W * 0.3;
       const away: [number, number] = [[1, 0], [0, 1], [-1, 0], [0, -1]][side] as [number, number];
-      placeStarts(rr, W * 0.26, mid + away[0] * W * 0.15, mid + away[1] * W * 0.15);
+      // The ring turned so its seats mirror each other across the line to the sea: two players stand side by side,
+      // the same way from the coast — a random turn put one 12 tiles from it and the other 48 (M15.10 P12).
+      const toSea = [TRIG_STEPS / 2, (3 * TRIG_STEPS) / 4, 0, TRIG_STEPS / 4][side]!;
+      placeStarts(rr, W * 0.26, mid + away[0] * W * 0.15, mid + away[1] * W * 0.15, (toSea + Math.floor(TRIG_STEPS / (2 * n))) % TRIG_STEPS);
       for (let i = 0; i < W * W; i++) {
         const x = i % W;
         const y = Math.floor(i / W);

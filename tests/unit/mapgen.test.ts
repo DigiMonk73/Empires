@@ -181,6 +181,24 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('Coastal: the seats face the sea alike — two players stand the same distance from the coast (M15.10 P12)', () => {
+    // The ring of starts took a random turn: one start 12 tiles from the sea, the other 48 (small seed 15838).
+    const coast = (m: ReturnType<typeof generateMap>, [sx, sy]: [number, number]): number => {
+      let best = Infinity;
+      m.map.ascii!.forEach((row, y) => [...row].forEach((ch, x) => {
+        if (ch === 'w' || ch === '~') best = Math.min(best, Math.hypot(x + 0.5 - sx - 1.5, y + 0.5 - sy - 1.5));
+      }));
+      return best;
+    };
+    for (const size of ['tiny', 'small', 'medium', 'large'] as const) {
+      for (const seed of [15838, 1, 2, 3]) {
+        const m = generateMap({ seed, type: 'coastal', size, players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
+        const [a, b] = m.starts.map((st) => coast(m, st));
+        expect(Math.abs(a! - b!), `${size} seed ${seed}: ${a!.toFixed(1)} vs ${b!.toFixed(1)}`).toBeLessThanOrEqual(3);
+      }
+    }
+  });
+
   it('is deterministic and seed-sensitive', () => {
     const a = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
     const b = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });

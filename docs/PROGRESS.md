@@ -1084,8 +1084,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [ ] P11 · should · mapgen islands fairness · 29/215 Small and 24/225 Large Islands maps (2–4p) leave a start
             with no land-reachable gold within 40 (stone similar); lions not balanced per island · smallIslands
             large 2p tool seed 85019 (P2: 0 gold, 8 lions + 3 gators vs 1 + 1) · `lens-b/deaths.ts`, `preds.ts`
-      - [ ] P12 · should · mapgen Coastal fairness · coast distance differs > 30 tiles between starts on 33–40/42
-            maps per size (2p seed 15838: small 48 vs 12, large 75 vs 21)
+      - [x] P12 · should · mapgen Coastal fairness · coast distance differs > 30 tiles between starts on 33–40/42
+            maps per size (2p seed 15838: small 48 vs 12, large 75 vs 21) — _fixed for 2p, eased for more:_ the
+            ring now turns so its seats mirror each other across the line to the sea (its random draw kept). Worst
+            spread over 6 seeds: 2p 27/36/54 → 0 (tiny/small/large); 3–8p 32–75 → 27–72 — a ring can't seat 3+
+            alike; a flatter ring would crowd them (`artifacts/polish/p12-geom.ts`, `p12-measure.ts`). Coastal
+            is in no AI gate. Test: `mapgen` "Coastal: the seats face the sea alike".
       - [x] P13 · should · data · Babylonian `armoredElephant` needs `ironShield` (disabled for Babylonian), Persian
             `irrigation` needs `plow` (disabled for Persian) — listed but unreachable (`src/data/civs.ts`); check
             research · continental medium postIron seed 81794 — _fixed (display):_ the research table has both quirks (econ:6.2 —
