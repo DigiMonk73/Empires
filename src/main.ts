@@ -42,6 +42,7 @@ import { serverSaves } from './platform/serverSaves.ts';
 import { techTree } from './ui/techTree.ts';
 import { startNetGame, type NetGame } from './platform/netGame.ts';
 import { MP_KEY } from './platform/netLaunch.ts';
+import { SIM_VERSION } from './sim/version.ts';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('game')!;
@@ -318,6 +319,7 @@ async function boot(): Promise<void> {
   if (mp && mpBanner) {
     hud.multiplayer.value = true;
     let lost = false;
+    let reported = false;
     // A dropped connection: load the page again — it rejoins within the server's hold and replays the game to
     // where it is (M16.5b). (Not when quitting.)
     mp.net.onDisconnect = () => {
@@ -369,6 +371,15 @@ async function boot(): Promise<void> {
         return;
       }
       const d = mp.router.desync;
+      if (d && !reported) {
+        // A report for whoever debugs it (M16.6): the tick, both hashes, the game.
+        reported = true;
+        void fetch('./api/desync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ room: mp.launch.code, you: mp.launch.you, desync: d, tick: session.sim.tick, game: mp.launch.game, simVersion: SIM_VERSION }),
+        }).catch(() => {});
+      }
       if (d) {
         mpBanner.textContent = `Out of sync with player ${mp.launch.game.seats[d.peer] ?? d.peer + 1} at ${formatClock(d.tick)} — this game can't continue.`;
         mpBanner.hidden = false;

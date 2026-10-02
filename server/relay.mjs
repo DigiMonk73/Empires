@@ -13,6 +13,7 @@
 //   {t:'chat', text}                     → {t:'chat', from, name, text} to everyone
 //   {t:'pause', on}                      → {t:'pause', on, from, name} to everyone (a started game; anyone may)
 //   {t:'ping', at}                       → {t:'pong', at}
+//   {t:'rtt', ms}                        (your measured round trip; members lists carry it — the host's delay, M16.6)
 //   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game, replay} — back into a started game within
 //                                          AWAY_MS of dropping (the game page after the lobby, a reload, a blip). Then
 //                                          come the packets it missed — or, if it had played, the room's whole log to
@@ -59,7 +60,7 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
   }
 
   function membersOf(room) {
-    return room.members.map((m, i) => ({ peer: i, name: m.name, id: m.id }));
+    return room.members.map((m, i) => ({ peer: i, name: m.name, id: m.id, rtt: m.rtt ?? 0 }));
   }
 
   function lobby(c, text) {
@@ -76,6 +77,12 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         return sendJson(c, { t: 'welcome', id: c.id });
       case 'ping':
         return sendJson(c, { t: 'pong', at: m.at });
+      case 'rtt': {
+        c.rtt = Math.max(0, Math.min(10_000, Number(m.ms) || 0));
+        const r = c.room;
+        if (r && !r.started) for (const o of r.members) sendJson(o, { t: 'members', members: membersOf(r) });
+        return;
+      }
       case 'list':
         return sendJson(c, {
           t: 'rooms',

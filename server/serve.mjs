@@ -67,6 +67,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (path === '/api/saves' || path.startsWith('/api/saves/')) return await savesApi(req, res, path);
+    if (path === '/api/desync') return await desyncApi(req, res);
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'method not allowed');
     if (path.endsWith('/')) path += 'index.html';
     const file = normalize(join(root, path));
@@ -227,6 +228,28 @@ async function savesApi(req, res, path) {
     return;
   }
   return json(res, 405, { error: 'method not allowed' });
+}
+
+/**
+ * Multiplayer desync reports (M16.6): a game that fell out of step posts what it knows (both hashes, the tick, the
+ * setup) to DATA_DIR/desync/ — for whoever debugs it. The newest 50 are kept.
+ */
+async function desyncApi(req, res) {
+  if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+  if (!dataDir) return json(res, 404, { error: 'no data directory' });
+  let report;
+  try {
+    report = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
+  } catch {
+    return json(res, 400, { error: 'not a JSON report' });
+  }
+  const dir = join(resolve(dataDir), 'desync');
+  await mkdir(dir, { recursive: true });
+  const name = `${new Date().toISOString().replace(/[:.]/g, '-')}-${++tmpSeq}.json`;
+  await writeFile(join(dir, name), JSON.stringify({ receivedAt: new Date().toISOString(), ...report }, null, 2));
+  const files = (await readdir(dir)).filter((f) => f.endsWith('.json')).sort();
+  for (const f of files.slice(0, Math.max(0, files.length - 50))) await unlink(join(dir, f)).catch(() => {});
+  return json(res, 200, { ok: true, name });
 }
 
 function send(res, code, text) {

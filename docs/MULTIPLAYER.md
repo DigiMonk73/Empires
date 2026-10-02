@@ -75,7 +75,11 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       and neither re-seals nor re-sends those ticks — what its computers re-decide meanwhile is dropped), and goes
       live at the first tick the log lacks; the others resume. Tests: `net-session.test.ts` "rejoining a game in
       progress", `server-ws.test.ts`, e2e "reloads mid-game" (both engines).
-- [ ] **M16.6 Desync report**, latency-based delay, room list polish.
+- [x] **M16.6 Desync report, latency-based delay.** _Done:_ each member measures its round trip to the server
+      (median of 3 pings, `NetClient.reportRtt`) and the members list carries it; the host's start sets the input
+      delay with `delayFor` (2 + worst round trip in 50 ms ticks, 4–12: 200 ms on a LAN, up to 600 ms over Tor). A
+      desync posts a report (tick, both hashes, the game) to `POST /api/desync` → `DATA_DIR/desync/` (newest 50).
+      _Left:_ room list polish (a room's members' pings shown).
 - [x] **M16.7 StartOS.** _Done:_ version 1.1.0; the package's instructions and README cover multiplayer (branch
       `m16-multiplayer` in `../empires-startos`, cc8b265 — with M16.5b); verify:full green (660 unit + 168 e2e, AI
       suite, determinism ×3, soaks, Docker both arches, Tauri, make arm); both `.s9pk` 1.1.0:0 built — **not

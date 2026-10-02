@@ -10,6 +10,8 @@ export interface RoomMember {
   peer: number;
   name: string;
   id: number;
+  /** Round trip to the server in ms, as the member measured it (M16.6). */
+  rtt?: number;
 }
 export interface RoomInfo {
   code: string;
@@ -170,6 +172,15 @@ export class NetClient {
     this.sendJson({ t: 'ping', at });
     await this.expect('pong');
     return Date.now() - at;
+  }
+
+  /** Measure the round trip (median of three) and tell the room — the host sets the input delay from it. */
+  async reportRtt(): Promise<number> {
+    const r: number[] = [];
+    for (let i = 0; i < 3; i++) r.push(await this.ping());
+    const ms = r.sort((a, b) => a - b)[1]!;
+    this.sendJson({ t: 'rtt', ms });
+    return ms;
   }
 
   /** The lockstep transport over this connection; `deliver` gets the other peers' packets. */

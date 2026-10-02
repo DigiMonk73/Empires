@@ -11,6 +11,7 @@ import { DEFAULT_SETUP, skirmishConfig, type SkirmishSetup } from '../../src/gam
 import { encodeCommands } from '../../src/sim/commands/codec.ts';
 import { OrderFuzzer } from '../../src/sim/testing/fuzz.ts';
 import { NetClient } from '../../src/platform/netClient.ts';
+import { delayFor } from '../../src/platform/netLaunch.ts';
 
 const PORT = 4392;
 let server: ChildProcess;
@@ -38,6 +39,15 @@ describe('lockstep packets on the wire (M16.2)', () => {
       expect(decodePacket(encodePacket(p))).toEqual(p);
     }
     expect(() => decodePacket(new Uint8Array([9, 9]))).toThrow();
+  });
+
+  it('sets the input delay from the room\'s round trips: 4 ticks on a LAN, at most 12 (M16.6)', () => {
+    expect(delayFor([])).toBe(4);
+    expect(delayFor([3, 12])).toBe(4);
+    expect(delayFor([20, 120])).toBe(5);
+    expect(delayFor([280])).toBe(8);
+    expect(delayFor([900])).toBe(12);
+    expect(delayFor([Number.NaN, -5])).toBe(4);
   });
 
   it('builds the relay URL from the page address, StartOS prefix included', () => {

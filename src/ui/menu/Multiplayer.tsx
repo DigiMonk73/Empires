@@ -4,7 +4,7 @@ import { MAP_TYPES } from '../../data/setup.ts';
 import type { SkirmishSetup } from '../../game/skirmish.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import { NetClient, type RoomInfo, type RoomState } from '../../platform/netClient.ts';
-import { MP_KEY, type MpLaunch, type NetGameInfo } from '../../platform/netLaunch.ts';
+import { delayFor, MP_KEY, type MpLaunch, type NetGameInfo } from '../../platform/netLaunch.ts';
 import { Skirmish } from './Menu.tsx';
 
 /**
@@ -108,6 +108,7 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
     try {
       await net.create(name.trim() || 'Player');
       setPhase('room');
+      void net.reportRtt().catch(() => {});
     } catch (e) {
       setNote((e as Error).message);
     }
@@ -117,6 +118,7 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
       await net.join(c.trim().toUpperCase(), name.trim() || 'Player');
       setPhase('room');
       setNote('');
+      void net.reportRtt().catch(() => {});
     } catch (e) {
       setNote((e as Error).message);
     }
@@ -139,7 +141,8 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
           share: (s) => net.setup(s),
           start: (s) => {
             const seats = s.players.map((p, i) => (p.controller === 'human' ? i + 1 : 0)).filter((n) => n > 0);
-            const game: NetGameInfo = { setup: s, delay: 4, seats };
+            // Input delay from the members' measured round trips (M16.6): 4 ticks on a LAN, up to 12 over Tor.
+            const game: NetGameInfo = { setup: s, delay: delayFor(room.members.map((m) => m.rtt ?? 0)), seats };
             net.start(game);
           },
         }}

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { decodeSave, decodeSaveMeta, encodeSave } from '../../src/game/saveCodec.ts';
 import type { SavedGame } from '../../src/game/saveGame.ts';
 
@@ -94,5 +94,16 @@ describe('server saves API (M12.5)', () => {
     const r = await fetch(`http://127.0.0.1:${PORT + 1}/api/saves`);
     expect(r.status).toBe(404);
     expect(await r.json()).toEqual({ error: 'server saves are off' });
+  });
+
+  it('keeps multiplayer desync reports in the data directory (M16.6)', async () => {
+    const report = { room: 'ABCD', you: 1, desync: { tick: 300, peer: 0, mine: 1, theirs: 2 } };
+    const r = await fetch(`http://127.0.0.1:${PORT}/api/desync`, { method: 'POST', body: JSON.stringify(report) });
+    expect(r.status).toBe(200);
+    const { name } = (await r.json()) as { name: string };
+    const saved = JSON.parse(readFileSync(`${DATA}/desync/${name}`, 'utf8')) as typeof report;
+    expect(saved).toMatchObject(report);
+    expect((await fetch(`http://127.0.0.1:${PORT}/api/desync`, { method: 'POST', body: 'not json' })).status).toBe(400);
+    expect((await fetch(`http://127.0.0.1:${PORT + 1}/api/desync`, { method: 'POST', body: '{}' })).status).toBe(404);
   });
 });
