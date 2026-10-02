@@ -36,3 +36,19 @@ what · next step. Remove entries when fixed (the commit log keeps history).
   every time (46 → 44, 46 → 44 after D69, 47 → 45 after P55: three cycles, blocked). Next: trace the water games that stop finishing (dev seeds 401–448,
   `diagnose.ts water-trace`) — the computers seem to need the lopsided start to end the game.
 - _KI-15 (land starts losing a cluster) closed in M15.10 (P17), after D69._
+- **KI-16 · should (blocked by the AI gates) · a computer's first Storage Pit goes to a lone tree** — M15.10 P2.
+  One tree within 5 tiles of the Town Center makes the woodline look close: no pit until those trees are cut,
+  and the forest's cutters walk every load home (a Hard computer short of wood around minute 10). The fix — the
+  first pit at the forest — is `docs/patches/m15.10-p2-first-pit-at-the-forest.patch` (with its scene test): three
+  tries each moved a held-out gate by 1–3 games (last: Hard > Moderate 51 → 48/64, at the bar).
+- **KI-17 · should (blocked by the AI gates) · hunters carry meat home from far herds** — M15.10 P53. Meat goes only
+  to a Storage Pit or the Town Center, but the far-food rule builds a *Granary* beside a far herd (it counts
+  hunters with the foragers): on big maps hunters carried meat 61–78 tiles. A pit beside hunts > 30 tiles out
+  (`docs/patches/m15.10-p53-pit-beside-far-hunts.patch`) cost 1v1 wars 24 → 23; earlier, wider tries cost more.
+- **KI-18 · should (blocked by the AI gates) · a builder near a lone raider swaps orders every think** — M15.10 P76.
+  `defend()` sends it at the raider (it skips fighters, not builders) and `finishFoundations` sends it straight
+  back; it never moves (a Hardest villager for a minute). Three fixes each passed a scene test (56 swaps in 15 s →
+  0) and moved a held-out gate by one game; `docs/patches/m15.10-p76-*.patch`.
+- _The AI gates' own noise (M15.10 it. 64): shifting the AIs' think timing 1–3 ticks — no rule changed — moves 1v1
+  wars 22–24/24, Hard > Moderate 46–52/64 and held-out water 42–47/48. KI-13, -14, -16, -17 and -18 each fell by
+  1–3 games: within that spread. How AI changes should be gated is the user's call._
