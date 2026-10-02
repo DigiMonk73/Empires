@@ -266,6 +266,23 @@ describe('auto-acquire and retaliation (mil:2)', () => {
   });
 });
 
+describe('Stand Ground catapults (M15.10 P25)', () => {
+  it('a catapult on Stand Ground holds its fire until ordered (patch 1.0a, mil:2)', () => {
+    const { of, step, e } = setup([
+      { type: 'stoneThrower', owner: 1, x: 6.5, y: 10.5 },
+      { type: 'clubman', owner: 2, x: 12.5, y: 10.5 },
+    ]);
+    const [st] = of('stoneThrower', 1);
+    const [c] = of('clubman', 2);
+    step(1, [{ player: 1, cmd: { t: 'stance', ids: [st!], stand: true } }]);
+    step(1, [{ player: 2, cmd: { t: 'stance', ids: [c!], stand: true } }]);
+    step(20 * 10);
+    expect(e.hp[e.slotOf(c!)], 'not fired on its own').toBe(40);
+    step(20 * 10, [{ player: 1, cmd: { t: 'act', ids: [st!], h: c! } }]);
+    expect(e.hp[e.slotOf(c!)] ?? 0, 'fires when ordered').toBeLessThan(40);
+  });
+});
+
 describe('attack-move, splash, trample, min range (M5.6)', () => {
   it('attack-move engages enemies met on the way, then carries on; a plain move walks past', () => {
     const units = [0, 1, 2].map((i) => ({ type: 'clubman', owner: 1, x: 4.5, y: 10.5 + i * 0.7 }));

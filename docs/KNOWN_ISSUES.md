@@ -21,3 +21,12 @@ what · next step. Remove entries when fixed (the commit log keeps history).
 - _KI-9 (hills vs the war gate) and KI-11 (the predator bug) closed by D58: 1v1s judged within 60 min, hills on,
   the fix applied._
 - _KI-10 (alligators vs the AI gates) closed by D59: alligators on; every land gate passes with them._
+- **KI-13 · must (blocked by the AI gates) · arrows miss units walking at the shooter** — M15.10 P24. Before
+  Ballistics a missile hits only if its target is within radius + 0.15 of the aim point (D26), so walking straight
+  at a tower or archer dodges every arrow (a Sentry Tower: 8 arrows, 0 damage); mil:2 says only *sideways*
+  movement dodges arrows (stones: any movement). The fix — straight missiles hit along their line of flight, to a
+  tile past the aim point; arcing stones unchanged — is `docs/patches/m15.10-p24-arrows-along-the-line.patch` (with
+  its test). It moves the held-out gates: 1v1 wars 24 → 22/24, water 46 → 45/48, Hard > Moderate 51 → 48/64 (the
+  bar). Next: retune the AI for accurate arrows on the dev sets (LOOP.md "AI work"), then apply; or the user
+  accepts the gate move. Changing D26 is not a locked decision (D1–D14), but the gates are.
+

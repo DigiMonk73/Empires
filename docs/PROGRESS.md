@@ -1024,7 +1024,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       (`.app` path, StartOS link); fold in their feedback.
 - [ ] **M15.10 Polish loop** (`docs/POLISH_LOOP.md`, 2026-10-01 18:40 → 10-02 03:45 CDT). Backlog below, one line
       per finding, ticked with its commit. _Lenses run:_ A, B (iteration 1, in parallel), G (grep only), D (reading,
-      during the 20:25 verify:full). _Next lens:_ C, then E, F, H, and G's 3× e2e flake run.
+      during the 20:25 verify:full), H; C and F running (21:00). _Next lens:_ E, then G's 3× e2e flake run.
       _Backlog:_
       - _Lens A (5 games to 45 min, 2–8 players, Hard/Hardest; scripts `artifacts/polish/lens-a/`): 0 page or
         console errors, CPU p95 ≤ 7 ms, no z-order/HUD clipping/fog defects, nothing stuck at walls/shores/forests._
@@ -1046,9 +1046,39 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - _Lens D (reading): Help matches the rules (ages, houses +4, Writing, Coinage, elevation D44, Shift-place);
         every Keys entry is bound except "S"; every key event has a sound, attacks a message and a ping. The game UI
         is English only — "5 languages" in POLISH_LOOP means the StartOS texts (lens H)._
+      - _Lens H: the Mac app's hidden smoke test passes on 8 scenes (village, harbor, battle, siege, relics, wonder,
+        hills, skirmish), each up in < 1 s, render ≤ 0.12 ms avg (`artifacts/polish/lens-h-smoke.ts`); the StartOS
+        instructions match the game (Keys, victories, setup). Nothing found._
       - [x] P23 · nice · Keys list · "F4 · S — Score list": S is the button by the minimap, no key does it
             (`src/ui/options/KeysReference.tsx`) — _fixed:_ "F4 · S button — Score list (the S beside the minimap)"; fits
             the `keys-grid` shot (where S is a grid key, so no key could be).
+      - _Lens F (unit behaviour, Node scenes, `artifacts/polish/lens-f/`): pathing through 1–2 tile gaps, walls,
+        docks and shores fine for 12–20 units of every size; attack-move, stop, queues, retreat, drop sites, farms,
+        builders, priests' range and rules, Stone Thrower minimum range, transports all right._
+      - [ ] P24 · must · combat · **[blocked → KI-13]** · before Ballistics a moving unit is almost never hit by arrows, even walking straight
+            at the shooter (Sentry Tower: 8 arrows, 0 damage at 4 axemen passing; 4 arrows, 0 at one walking in) —
+            D26's hit test wants the target within radius + 0.15 of the aim point; mil:2 l.196 says only sideways
+            movement dodges · `lens-f/s10-dodge.ts`, `s7b-tower.ts`
+      - [x] P25 · should · stance · a Stand Ground Stone Thrower still fires (killed a clubman 7 tiles off); mil:2
+            l.210: since patch 1.0a Stand Ground stops the catapult line firing at all · `lens-f/s8-settle.ts` §2 —
+            _fixed:_ a catapult on Stand Ground neither auto-acquires nor answers; it fires when ordered. The AI sets
+            no unit stances. Test: `combat` "Stand Ground catapults".
+      - [ ] P26 · should · priests · converting a loaded Light Transport converts its cargo too (3 clubmen landed as
+            the priest's); mil:3 l.253: the ship, not its cargo (D37 called it unverified) · `lens-f/s4-priests.ts` §4
+      - [ ] P27 · should · ships · a War Galley chases a villager 8 tiles inland (out of reach from any water) and
+            holds that self-given order 80 s+; under a direct order it flips attack/idle every ~5 s ·
+            `lens-f/s6-unreachable.ts`, `s6b-galley.ts`
+      - [ ] P28 · should · towers · no command makes a tower shoot a chosen unit (`ownedUnitSlots` drops buildings
+            from `act`, `src/sim/commands/apply.ts:18`); mil:1c l.113: right-click targets
+      - [ ] P29 · nice · priests · a priest never told to heal still heals wounded allies in sight; mil:3 l.269:
+            auto-healing starts once ordered to heal · `lens-f/s4-priests.ts` §2
+      - [ ] P30 · nice · pathing · units squeezing a 1-tile forest gap cut the corner 0.18 tile into a tree tile for
+            ~15 ticks (nobody stops inside) · `node lens-f/s1b-trace.ts 1 20`
+      - [ ] P31 · nice · orders · a clubman ordered at a fishing boat 3.5 tiles offshore holds the order 180 s+ ·
+            `lens-f/s9-unreach-long.ts`
+      - [ ] P32 · nice · hunting · a hunter goes idle when its carcass runs out with a live gazelle 5 tiles off
+            (unconfirmed vs research) · `lens-f/s8-settle.ts` §3
+      - _Not a bug (D27):_ units never attack buildings on their own — a documented choice.
       - [ ] P20 · should · mapgen islands 2p · ~15% of two-player island maps start a villager inside a forest
             (stuck all game): 15 of the water suite's 96 maps. Clearing the villagers' tiles moves held-out water
             46 → 44/48 (501, 505, 523 go undecided at 2:00:00; 531 decides) — blocked by the gate rule until the AI
@@ -1111,8 +1141,8 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [x] P4 · nice · HUD · "Not enough food." stacks 3× — the `no:<reason>` throttle (60 ticks, `src/ui/notify.ts`)
             is shorter than a message's life · g2 tick ≈ 40200 — _fixed:_ the same words still on screen move down as the newest instead
             of standing twice. Test: `notify` "a message still on screen is refreshed".
-      - [ ] P5 · nice · defeat · a defeated player's leftover fishing boats show pop "1/0" (conquest rightly ignores
-            them) · g1 from 17:13
+      - [x] P5 · nice · defeat · a defeated player's leftover fishing boats show pop "1/0" (conquest rightly ignores
+            them) · g1 from 17:13 — _won't fix:_ the count is true (one boat, no houses); nothing misleads.
       - [x] P14 · nice · setup · all players on one team → conquest win at tick 0, no warning in the menu — _fixed:_
             Start waits, with a note saying why (e2e `menu` "everyone on one team", screenshot `menu-one-team`).
       - [x] P15 · should · crowding · 6–8 players on Tiny/Small: TCs 17–24 tiles apart, a neighbour's far mine or
@@ -1132,7 +1162,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             AI suite's 148 land maps; 55/160 2p maps leave one start < 70% of the other's gold or stone within 32
             (continental tiny seed 9: stone 0 vs 1250; `artifacts/polish/p17-drops.ts`). Swinging the cluster round
             the start (as the water maps do) → 40/160, but GATE FAIL: Hard-vs-Hard median 70:39 (Done 25–60),
-            wars 23/24 — reverted. Needs AI work on even land starts first (like P20).
+            wars 23/24 — reverted. Needs AI work on even land starts first (like P20). _Why (it. 17, worktree):_
+            the Hard duels it tipped (405, 407) stalemate at the 50 limit with 32–40 villagers and 8–16 soldiers a
+            side — Hard's targets (38 Bronze, 44 Iron) fill a 50-pop game; even at HEAD 401 and 411 can't finish.
+            P17 + villagers ≤ 70% of the limit: hard duels 15/16 (median 46:13), ladder 52/64, 63/64, water 46/48 —
+            but held-out wars still 23/24 (P17's maps alone flip one), so not kept. `artifacts/polish/p17-duels*.txt`.
       - [x] P18 · nice · URL · `setupFromQuery` doesn't validate `size`/`res` (`size=foo` → "Invalid array length")
             or civ ids — _fixed:_ unknown size, resources and civ fall back like everything else (`Object.hasOwn`, so
             `size=toString` too). Test: `setup-options` "carries victory…".

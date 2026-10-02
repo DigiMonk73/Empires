@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P24 (reverted), P25 · the P24 run (green) became the baseline, so the P25 run lists its
+  reversal: ai-base 14.4%, army-clash 0.9%, raid/gameover/battle ≤ 0.8% — AI games back to the pre-P24 rules. P25
+  itself draws nothing new (no e2e scene has a Stand Ground catapult).
+
 ## 2026-10-01 · M15.10 P16 · no e2e scene uses Large Islands teams; 6 shots ≤ 0.3% px (menu backdrop, timestamps)
 
 ## 2026-10-01 · M15.10 P12 · no e2e scene uses Coastal; 3 shots ≤ 0.1% px (menu backdrop)

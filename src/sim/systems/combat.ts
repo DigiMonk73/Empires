@@ -193,8 +193,13 @@ function mayReact(w: World, s: number): boolean {
   const e = w.ents;
   if (!e.alive[s] || e.kind[s] !== EKind.unit || w.orders[s]) return false;
   const t = TYPES[e.type[s]!]!;
-  if (t.unit?.noAutoAttack || t.animal) return false;
+  if (t.unit?.noAutoAttack || t.animal || holdsFire(w, s)) return false;
   return canAttack(w, s);
+}
+
+/** Patch 1.0a (mil:2): a catapult on Stand Ground holds its fire — it shoots only when ordered (M15.10 P25). */
+function holdsFire(w: World, s: number): boolean {
+  return w.ents.stance[s] === 1 && !!TYPES[w.ents.type[s]!]!.unit?.tags.includes('catapultLine');
 }
 
 /**
@@ -240,7 +245,7 @@ export function targetSystem(w: World): void {
     const t = TYPES[e.type[s]!]!;
     const owner = e.owner[s]!;
     const lion = owner === 0 && t.animal?.behavior === 'aggressive';
-    if (!lion && (owner === 0 || isVillager(w, s) || t.unit?.noAutoAttack || !canAttack(w, s))) continue;
+    if (!lion && (owner === 0 || isVillager(w, s) || t.unit?.noAutoAttack || holdsFire(w, s) || !canAttack(w, s))) continue;
     const st = w.stats(owner, e.type[s]!);
     const reach = st.range > 0 ? st.range : t.radius + 0.25;
     const look = e.stance[s] === 1 ? reach + 0.5 : lion ? 3 : st.los;

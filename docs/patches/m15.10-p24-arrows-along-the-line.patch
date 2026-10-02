@@ -1,0 +1,60 @@
+diff --git a/src/sim/systems/combat.ts b/src/sim/systems/combat.ts
+index 05b63c4..8beaecf 100644
+--- a/src/sim/systems/combat.ts
++++ b/src/sim/systems/combat.ts
+@@ -580,11 +580,25 @@ export function projectileSystem(w: World): void {
+     if (e.kind[t] === EKind.building) {
+       const h = tt.size / 2 + 0.1;
+       on = Math.abs(p.x1 - e.x[t]!) <= h && Math.abs(p.y1 - e.y[t]!) <= h;
+-    } else {
++    } else if (p.arc) {
++      // An arcing stone lands where it was aimed: moving anywhere dodges it (mil:2).
+       const dx = p.x1 - e.x[t]!;
+       const dy = p.y1 - e.y[t]!;
+       const r = tt.radius + 0.15;
+       on = dx * dx + dy * dy <= r * r;
++    } else {
++      // An arrow flies a straight line through the aim point: only stepping sideways off that line dodges it
++      // (mil:2) — walking toward the archer or away along it does not. It reaches a tile past the aim point.
++      // (Hitting only at the aim point let units walk through tower fire untouched, M15.10 P24.)
++      const lx = p.x1 - p.x0;
++      const ly = p.y1 - p.y0;
++      const len = Math.sqrt(lx * lx + ly * ly) || 1;
++      const rx = e.x[t]! - p.x0;
++      const ry = e.y[t]! - p.y0;
++      const along = (rx * lx + ry * ly) / len;
++      const side = Math.abs(rx * ly - ry * lx) / len;
++      const r = tt.radius + 0.15;
++      on = side <= r && along >= -r && along <= len + r + 1;
+     }
+     if (!on) continue;
+     const atk = p.hunt ? HUNT_ATK : w.stats(p.owner, p.type).atk;
+diff --git a/tests/unit/combat.test.ts b/tests/unit/combat.test.ts
+index 1f4862c..6f7b587 100644
+--- a/tests/unit/combat.test.ts
++++ b/tests/unit/combat.test.ts
+@@ -156,6 +156,24 @@ describe('projectiles (mil:2)', () => {
+     expect(e.hp[e.slotOf(v!)]).toBe(25);
+   });
+ 
++  it('a target walking along the line of fire, toward the archer or away, is hit — only sideways dodges (M15.10 P24)', () => {
++    // mil:2: "move sideways against arrows, move anywhere against arcing stones". Arrows hit only at the aim point,
++    // so a Sentry Tower's 8 arrows did nothing to axemen walking straight at it.
++    for (const to of [7.5, 20.5]) {
++      const { of, step, w, e } = setup([
++        { type: 'bowman', owner: 1, x: 6.5, y: 10.5 },
++        { type: 'villager', owner: 2, x: 11.5, y: 10.5 },
++      ]);
++      const [b] = of('bowman', 1);
++      const [v] = of('villager', 2);
++      step(1, [{ player: 1, cmd: { t: 'act', ids: [b!], h: v! } }]);
++      for (let i = 0; i < WINDUP_TICKS; i++) step(1);
++      expect(w.projectiles.length).toBe(1);
++      step(w.projectiles[0]!.dur + 1, [{ player: 2, cmd: { t: 'move', ids: [v!], x: to, y: 10.5 } }]);
++      expect(e.hp[e.slotOf(v!)], `walking to x ${to}`).toBe(25 - 3);
++    }
++  });
++
+   it('projectiles in flight survive save/load', () => {
+     const { of, step, w, sim } = setup([
+       { type: 'bowman', owner: 1, x: 6.5, y: 10.5 },
