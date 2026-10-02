@@ -205,3 +205,39 @@ describe('AI at sea: the island stall (M16.9)', () => {
     expect(landed, 'soldiers on the enemy island').toBeGreaterThan(0);
   }, 30_000);
 });
+
+describe('AI on a full island (M16.9)', () => {
+  it('the Market goes up where no spot has a clear ring all round: one side may touch the shore', () => {
+    // Dev water seed 407: a tiny island full of houses and Storage Pits had no 3 × 3 spot with its ring clear, so no
+    // Market, no farms, the Tool Age for two hours with 3,000 wood in the bank. Here the island is four tiles deep:
+    // every spot's ring reaches the water on one side.
+    const ascii = Array.from({ length: 24 }, (_, y) => (y >= 10 && y <= 13 ? '~~~' + '.'.repeat(40) + '~~~~~' : '~'.repeat(48)));
+    const sim = Sim.create({
+      seed: 5,
+      map: { w: 48, h: 24, ascii },
+      victory: 'none',
+      players: [{ civ: 'greek', ai: 'moderate' }, { civ: 'persian' }],
+      scenario: {
+        buildings: [
+          { type: 'townCenter', owner: 1, tx: 20, ty: 10 },
+          { type: 'granary', owner: 1, tx: 8, ty: 10 },
+          { type: 'storagePit', owner: 1, tx: 34, ty: 10 },
+          ...[0, 1, 2].map((i) => ({ type: 'house', owner: 1, tx: 4 + i * 2, ty: 12 })),
+        ],
+        units: Array.from({ length: 6 }, (_, i) => ({ type: 'villager', owner: 1, x: 24.5 + i, y: 11.5 })),
+      },
+    });
+    const w = sim.world;
+    completeResearch(w, 1, 'toolAge');
+    w.players[1]!.res.set([1000, 1000, 500, 0]);
+    const ai = new AiPlayer(1, 'moderate', 1, { civ: 'greek' });
+    const view = new PlayerView(w, 1);
+    let market = false;
+    for (let t = 0; t < 20 * 60 && !market; t++) {
+      sim.step(ai.think(view).map((cmd) => ({ player: 1, cmd })));
+      sim.drainEvents();
+      market = view.ownBuildings().some((b) => b.type === 'market');
+    }
+    expect(market).toBe(true);
+  });
+});

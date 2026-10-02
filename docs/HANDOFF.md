@@ -63,6 +63,10 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 13:05 — item 1, step 2 (M16.9): on a full island a building may stand against what is round it when
+  the clear tiles of its ring run unbroken (dev 407: no Market for two hours). Band PASS (water 180), re-recorded.
+  Next (prototyped in `artifacts/wt2`, dev 186/192): Docks never seal a pocket of water; a transport is at its
+  boarding spot only beside our land.
 - 2026-10-02 12:00 — work queue item 1, step 1 (M16.9): an island computer over its population limit (priests'
   conversions) with no fishing boat to delete now deletes idle villagers, then idle soldiers at home, to make room
   for its transport (dev water 171 → 177/192 at shifts 0–3; band PASS, water 182, baseline re-recorded). The other

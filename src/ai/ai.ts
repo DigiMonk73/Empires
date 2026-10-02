@@ -741,7 +741,7 @@ export class AiPlayer {
     const spot =
       this.findSpot(s, type, size, x, y, minD, maxD) ??
       (s.v.hilly ? this.findSpot(s, type, size, x, y, maxD + 1, maxD + 5) : null) ??
-      (this.naval.onIsland && s.tc ? this.findSpot(s, type, size, s.tc.x, s.tc.y, 3, 18) : null);
+      (this.naval.onIsland && s.tc ? this.findSpot(s, type, size, s.tc.x, s.tc.y, 3, 18) ?? this.findSpot(s, type, size, s.tc.x, s.tc.y, 3, 18, true) : null);
     if (!spot) return false;
     const pool = s.villagers.filter((u) => !s.busy.has(u.h) && (this.exploreDone || u.h !== this.explorer) && u.order !== 'build');
     pool.sort((a, b) => rank(a) - rank(b) || dist(a.x, a.y, spot[0], spot[1]) - dist(b.x, b.y, spot[0], spot[1]) || a.h - b.h);
@@ -753,7 +753,7 @@ export class AiPlayer {
     return true;
   }
 
-  private findSpot(s: Snapshot, type: string, size: number, x: number, y: number, minD: number, maxD: number): [number, number] | null {
+  private findSpot(s: Snapshot, type: string, size: number, x: number, y: number, minD: number, maxD: number, loose = false): [number, number] | null {
     const cx = Math.floor(x);
     const cy = Math.floor(y);
     const offset = this.rng.int(8);
@@ -769,7 +769,7 @@ export class AiPlayer {
         const ty = cy + dy - Math.floor(size / 2);
         const d = dist(tx + size / 2, ty + size / 2, x, y);
         if (d < minD || d > maxD) continue;
-        if (!s.v.canPlace(type, tx, ty) || !this.margin(s, tx, ty, size, type === 'farm' || type === 'dock')) continue;
+        if (!s.v.canPlace(type, tx, ty) || !(loose ? this.looseMargin(s, tx, ty, size) : this.margin(s, tx, ty, size, type === 'farm' || type === 'dock'))) continue;
         if (home && s.v.region(1, tx, ty) !== home) continue;
         // A Dock on a shore the builders can walk to from the Town Center: one across the water or behind a forest
         // line stood unbuilt all game and counted towards the Dock limit (M15.10 P59).
@@ -792,6 +792,24 @@ export class AiPlayer {
       }
     }
     return true;
+  }
+
+  /**
+   * A crowded island's last resort (M16.9): the footprint may touch what stands round it, so long as the clear tiles
+   * of its ring run unbroken — then whatever walked through the footprint still walks round it, and nothing is walled
+   * off. (A full island of houses and Storage Pits had no spot with the whole ring clear: dev seed 407 sat in the
+   * Tool Age for two hours, 3,000 wood in the bank and no Market, so no farms.)
+   */
+  private looseMargin(s: Snapshot, tx: number, ty: number, size: number): boolean {
+    const ring: [number, number][] = [];
+    for (let k = -1; k < size; k++) ring.push([tx + k, ty - 1]);
+    for (let k = -1; k < size; k++) ring.push([tx + size, ty + k]);
+    for (let k = size; k > -1; k--) ring.push([tx + k, ty + size]);
+    for (let k = size; k > -1; k--) ring.push([tx - 1, ty + k]);
+    const clear = ring.map(([x, y]) => s.v.clear(x, y));
+    let breaks = 0;
+    for (let i = 0; i < clear.length; i++) if (clear[i] && !clear[(i + 1) % clear.length]) breaks++;
+    return breaks <= 1 && clear.filter(Boolean).length >= size;
   }
 
   /** The land region at or next to (x, y), 0 if none within 3 tiles. */
