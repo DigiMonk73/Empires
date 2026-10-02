@@ -234,6 +234,45 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('Mediterranean and Narrows, 3–8 players on Tiny: starts on one land walk to each other (M15.10 P60)', () => {
+    // Forest and mines walled neighbours apart on 17 of 72 such maps (each start reached one other, or none).
+    for (const type of ['mediterranean', 'narrows'] as const) {
+      for (let n = 3; n <= 8; n++) {
+        for (const seed of [7919, 23757, 47514]) {
+          const m = generateMap({ seed, type, size: 'tiny', players: Array.from({ length: n }, (_, i) => ({ civ: 'greek', team: i + 1 })) });
+          const w = Sim.create(m).world;
+          const W = w.map.w;
+          const walk = w.pathing.regions.labels(1);
+          // The land under each start by terrain alone (resources ignored), and by what can be walked.
+          const dryLand = new Int32Array(W * W);
+          let nx = 0;
+          for (let i = 0; i < W * W; i++) {
+            if (dryLand[i] || m.map.ascii![Math.floor(i / W)]![i % W] === 'w' || m.map.ascii![Math.floor(i / W)]![i % W] === '~') continue;
+            dryLand[i] = ++nx;
+            const st = [i];
+            while (st.length) {
+              const c = st.pop()!;
+              for (const j of [c - 1, c + 1, c - W, c + W]) {
+                if (j < 0 || j >= W * W || Math.abs((j % W) - (c % W)) > 1 || dryLand[j]) continue;
+                const ch = m.map.ascii![Math.floor(j / W)]![j % W];
+                if (ch === 'w' || ch === '~') continue;
+                dryLand[j] = nx;
+                st.push(j);
+              }
+            }
+          }
+          const ring = ([sx, sy]: [number, number], lab: ArrayLike<number>) => lab[(sy + 3) * W + sx + 3]!; // beside the TC
+          for (let a = 0; a < n; a++) {
+            for (let b = a + 1; b < n; b++) {
+              if (ring(m.starts[a]!, dryLand) !== ring(m.starts[b]!, dryLand)) continue;
+              expect(ring(m.starts[a]!, walk), `${type} ${n}p seed ${seed}: P${a + 1}–P${b + 1}`).toBe(ring(m.starts[b]!, walk));
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('is deterministic and seed-sensitive', () => {
     const a = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });
     const b = generateMap({ seed: 3, type: 'inland', size: 'small', players: [{ civ: 'greek' }, { civ: 'egyptian' }] });

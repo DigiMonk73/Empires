@@ -1192,8 +1192,12 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
       - [ ] P59 · should · AI Docks · Docks placed where no villager can walk (P21's land check exempts them): 42 in
             288 AI games; across water (28) or on shore pockets behind forest (60); dead foundations count to the Dock
             limit — narrows tiny 6p seed 52912: P1, P3, P5 never get a usable Dock · `lens-b2/classify.ts`
-      - [ ] P60 · should · mapgen Tiny Mediterranean/Narrows · forest or mines cut starts off by land (19 maps, 20
-            before) — mediterranean tiny 6p seed 47514 (each start reaches 1 other) · `lens-b2/islcmp.ts`
+      - [x] P60 · should · mapgen Tiny Mediterranean/Narrows · forest or mines cut starts off by land (19 maps, 20
+            before) — mediterranean tiny 6p seed 47514 (each start reaches 1 other) · `lens-b2/islcmp.ts` — _fixed:_ with
+            3+ players, neighbouring starts round the map on one land get a held 3-tile path (round the coast through
+            the start ring when the chord is wet); Tiny maps with a cut: Mediterranean 8/36 → 0, Narrows 9/36 → 0
+            (`artifacts/polish/p60-cut.ts`). Test: `mapgen` "Mediterranean and Narrows, 3–8 players…". Water-gate
+            maps (2p) unchanged.
       - _Noted (B2, nice):_ Narrows with uneven teams seats one ally across the strait (sides within one player —
         by P8's rule); P15 nudged a few land clusters (17 starts worse, 30 better); Large Islands tiny 2v2 seed 3:
         enemies' islands touch (before tonight too)._

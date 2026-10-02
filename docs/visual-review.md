@@ -2,6 +2,8 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-01 · M15.10 P60 · no e2e scene uses a 3+ player Mediterranean or Narrows; no visual change
+
 ## 2026-10-01 · M15.10 P58 · no e2e scene uses a crowded island map; no visual change
 
 ## 2026-10-01 · M15.10 P49–P51 · menu-skirmish/one-team ≤ 0.18% px: the missing count's number. No other change.

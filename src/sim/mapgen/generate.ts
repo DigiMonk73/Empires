@@ -498,6 +498,38 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
       }
     }
   }
+  // Mediterranean and Narrows with 3+ players: neighbouring starts on the same land get the same path, where the
+  // straight line between them stays on land — on Tiny maps forest and mines walled starts off from each other
+  // (17 of 72 maps, M15.10 P60).
+  if ((o.type === 'mediterranean' || o.type === 'narrows') && n > 2) {
+    // Their order round the middle by a "diamond angle" (rises with the angle; no trig in the sim).
+    const turn = (dx: number, dy: number): number =>
+      dy >= 0 ? (dx >= 0 ? dy / (dx + dy || 1) : 1 - dx / (-dx + dy)) : dx < 0 ? 2 - dy / (-dx - dy) : 3 + dx / (dx - dy);
+    const round = starts.map(([sx, sy], i) => ({ i, x: sx + 1.5, y: sy + 1.5, a: turn(sx + 1.5 - mid, sy + 1.5 - mid) }));
+    round.sort((p, q) => p.a - q.a || p.i - q.i);
+    const dry = (ax: number, ay: number, bx: number, by: number): boolean => {
+      const len = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) || 1;
+      for (let d = 0; d <= len; d += 0.5) if (isWater(at(g, Math.floor(ax + ((bx - ax) * d) / len), Math.floor(ay + ((by - ay) * d) / len)))) return false;
+      return true;
+    };
+    for (let k = 0; k < round.length; k++) {
+      const p = round[k]!;
+      const q = round[(k + 1) % round.length]!;
+      if (dry(p.x, p.y, q.x, q.y)) {
+        bridges.push([p.x, p.y, q.x, q.y]);
+        continue;
+      }
+      // The chord crosses the sea (Mediterranean, few players): round the coast through the point of the start
+      // ring between them.
+      const rr = Math.sqrt((p.x - mid) * (p.x - mid) + (p.y - mid) * (p.y - mid));
+      const hx = (p.x + q.x) / 2 - mid;
+      const hy = (p.y + q.y) / 2 - mid;
+      const hl = Math.sqrt(hx * hx + hy * hy) || 1;
+      const mx = mid + (hx / hl) * rr;
+      const my = mid + (hy / hl) * rr;
+      if (dry(p.x, p.y, mx, my) && dry(mx, my, q.x, q.y)) bridges.push([p.x, p.y, mx, my], [mx, my, q.x, q.y]);
+    }
+  }
   // A three-tile path along each team bridge stays clear too: forest and mines grew across it and teammates had to
   // chop their way to each other (M15.10 P16).
   for (const [ax, ay, bx, by] of bridges) {
