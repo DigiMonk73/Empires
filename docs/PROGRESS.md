@@ -8,11 +8,14 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   M16.9 fixed the island wood stall and landed KI-13 arrows.
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
-  182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. Baseline re-recorded.
-- **Last green:** `npm run verify` 201 s — 672 unit, 176 e2e, purity ok. No AI or map change, so the band was not re-run.
-  The 30-game-minute soak (`EMPIRES_MP_SOAK=1`) passed once: 36020 ticks, no desync. verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 3 shots ≤ 0.12% px (options, credits, a save-row clock). The panels still read. No must-fix.
-- **Open:** HANDOFF item 3 in progress (M16.14 speed keys, M16.15 a mismatched save is refused). P72 and P75 still open from M15.10.
+  182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. M16.16 re-recorded the baseline.
+- **Last green:** `npm run verify` 202 s — 673 unit, 176 e2e, purity ok. Map change banded PASS: wars 91/96,
+  Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
+  duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
+  verify:full last at the 1.1.0 rebuild (837cb61).
+- **Screens:** 9 shots. The continental coast loses a few edge specks (map 0.09%, the base view 0.55%). Five others
+  ≤ 0.37% are the menu backdrop and a save-row clock. The coast, the town and the panels still read. No must-fix.
+- **Open:** HANDOFF item 3 in progress (M16.14 speed keys, M16.15 a mismatched save, M16.16 continental specks). P75 still open from M15.10.
   KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
@@ -1334,8 +1337,13 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             (D69 amended):_ idle fishing boats take villagers' places in the 70%. Held out unchanged; Hard duels 15 →
             16/16. Test: `ai-tactics` "AI workers at the limit". (Counting every boat kept peaceful test games short
             of the limit M13.4's test needs.)
-      - [ ] P72 · should · map · **[AI-gate class: the fix changes every Continental map]** · checkerboard coasts at the map edge join only at corners: 95 land regions of ≤ 3
-            tiles on continental small 101; 17 units stranded at (40,7) · `lens-a3/pockets.ts` (before tonight too)
+      - [x] P72 · should · map · checkerboard coasts at the map edge join only at corners: 95 land regions of ≤ 3
+            tiles on continental small 101 (81 of them empty terrain specks; the count did not depend on the seed);
+            17 units stranded at (40,7) · `lens-a3/pockets.ts` — _fixed (M16.16):_ after the forests and mines are
+            placed, an empty land speck under 6 tiles becomes sea. One that holds an alligator stays. Calling
+            `despeckle` before placement, as the water maps do, moved Hard>Moderate to 204/256 (floor 205) and was
+            not kept. This one: wars 91/96, Hard>Moderate 210/256, water 182/192, duels 64/64, 0 crashes. Test:
+            `mapgen` "empty one-tile islands".
       - [x] P73 · should · AI Docks · a Dock foundation goes back down on the same contested tile under the enemy
             army (18× in 7 min, ~1,800 wood); worse since P59 (24/71 Dock foundations lost vs 11/43) ·
             `hh-smallIslands-small-102` P1 · `lens-a3/docks.ts` — _fixed:_ a Dock spot in a raiders' danger spot (`flee` marks them,
@@ -1356,6 +1364,7 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             room into a world a seat cannot play · a 3-player scenario saved, then a 2-player room — _fixed (M16.15):_
             the dialog says "That save is from a different game." and nobody reloads. Tests: `save-game.test.ts`
             "player counts"; `multiplayer.spec.ts` "different number of players".
+      - _Lens G4 (round four, 2026-10-03): no TODO, FIXME, `console.log`, `as any`, or suppression in `src`._
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
         51/50 (likely faithful)._
       - [x] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest

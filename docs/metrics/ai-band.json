@@ -6,37 +6,37 @@
     3
   ],
   "totals": {
-    "wars": 92,
-    "hardModerate": 213,
+    "wars": 91,
+    "hardModerate": 210,
     "hardestHard": 256,
     "water": 182,
-    "duels": 63
+    "duels": 64
   },
   "runs": [
     {
       "shift": 0,
-      "wars": 22,
-      "hardModerate": 53,
+      "wars": 23,
+      "hardModerate": 51,
       "hardestHard": 64,
       "water": 48,
       "duels": 16,
-      "duelMedianMin": 41.2,
+      "duelMedianMin": 39.36666666666667,
       "crashes": 0
     },
     {
       "shift": 1,
       "wars": 23,
-      "hardModerate": 53,
+      "hardModerate": 48,
       "hardestHard": 64,
       "water": 46,
-      "duels": 15,
-      "duelMedianMin": 36.78333333333333,
+      "duels": 16,
+      "duelMedianMin": 37.333333333333336,
       "crashes": 0
     },
     {
       "shift": 2,
-      "wars": 24,
-      "hardModerate": 54,
+      "wars": 23,
+      "hardModerate": 56,
       "hardestHard": 64,
       "water": 42,
       "duels": 16,
@@ -45,12 +45,12 @@
     },
     {
       "shift": 3,
-      "wars": 23,
-      "hardModerate": 53,
+      "wars": 22,
+      "hardModerate": 55,
       "hardestHard": 64,
       "water": 46,
       "duels": 16,
-      "duelMedianMin": 43.13333333333333,
+      "duelMedianMin": 39.68333333333333,
       "crashes": 0
     }
   ]

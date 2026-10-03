@@ -333,6 +333,43 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     }
   }
 
+  /** Land specks under 6 tiles with nobody and nothing on them become sea. Occupied ones stay (an alligator on a beach). */
+  function sinkEmptySpecks(): void {
+    const occ = new Uint8Array(W * W);
+    const mark = (x: number, y: number): void => {
+      if (x >= 0 && y >= 0 && x < W && y < W) occ[y * W + x] = 1;
+    };
+    for (const u of units) mark(Math.floor(u.x), Math.floor(u.y));
+    for (const b of buildings) {
+      const size = b.type === 'townCenter' ? 3 : b.type === 'ruins' ? 2 : 1;
+      for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) mark(b.tx + dx, b.ty + dy);
+    }
+    const seen = new Uint8Array(W * W);
+    const land = (ch: string): boolean => !isWater(ch);
+    for (let i = 0; i < W * W; i++) {
+      if (seen[i] || !land(g.c[i]!)) continue;
+      const comp = [i];
+      seen[i] = 1;
+      let held = occ[i] === 1;
+      for (let k = 0; k < comp.length; k++) {
+        const p = comp[k]!;
+        const x = p % W;
+        const y = (p - x) / W;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= W) continue;
+          const j = ny * W + nx;
+          if (seen[j] || !land(g.c[j]!)) continue;
+          seen[j] = 1;
+          comp.push(j);
+          if (occ[j]) held = true;
+        }
+      }
+      if (comp.length < 6 && !held) for (const p of comp) g.c[p] = '~';
+    }
+  }
+
   /**
    * The water maps (M8.7, D40). Mediterranean: a great sea in the middle, every start on its coast. Coastal: the sea
    * along one side of the map. Narrows: two landmasses split through the middle by a strait (no land bridge) that
@@ -816,6 +853,9 @@ export function generateMap(o: MapGenOptions): GeneratedMap {
     }
     stood.add(fy * W + fx);
   }
+  // The coast wobble leaves one-tile islands that meet the mainland only at a corner (P72: 81 of them on a small
+  // map). Sink the empty ones now, after forests and mines are placed, so the interior of the map stays put.
+  if (o.type === 'continental') sinkEmptySpecks();
   const ascii: string[] = [];
   for (let y = 0; y < W; y++) ascii.push(g.c.slice(y * W, (y + 1) * W).join(''));
   const hl = HILLS[o.type];

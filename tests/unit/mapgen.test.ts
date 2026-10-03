@@ -336,6 +336,56 @@ describe('map generation (econ:8)', () => {
     }
   });
 
+  it('a continental coast sinks its empty one-tile islands (P72)', () => {
+    // Coast noise joins tiles only at corners. continental small 101 had 81 empty terrain specks (95 walk-regions
+    // of ≤ 3 tiles), and the count does not depend on the seed. An alligator may still stand on one.
+    const specks = (size: MapSizeId): { empty: number; total: number } => {
+      const m = generateMap({ seed: 101, type: 'continental', size, players: [{ civ: 'greek' }, { civ: 'persian' }] });
+      const rows = m.map.ascii!;
+      const W = rows.length;
+      const occ = new Uint8Array(W * W);
+      for (const u of m.scenario?.units ?? []) occ[Math.floor(u.y) * W + Math.floor(u.x)] = 1;
+      const land = (i: number): boolean => {
+        const ch = rows[Math.floor(i / W)]![i % W]!;
+        return ch !== '~' && ch !== 'w' && ch !== 'f' && ch !== ',';
+      };
+      const seen = new Uint8Array(W * W);
+      let empty = 0;
+      let total = 0;
+      for (let start = 0; start < W * W; start++) {
+        if (seen[start] || !land(start)) continue;
+        const stack = [start];
+        seen[start] = 1;
+        let held = occ[start] === 1;
+        for (let k = 0; k < stack.length; k++) {
+          const p = stack[k]!;
+          const x = p % W;
+          const y = (p - x) / W;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= W || ny >= W) continue;
+            const j = ny * W + nx;
+            if (seen[j] || !land(j)) continue;
+            seen[j] = 1;
+            stack.push(j);
+            if (occ[j]) held = true;
+          }
+        }
+        if (stack.length < 6) {
+          total++;
+          if (!held) empty++;
+        }
+      }
+      return { empty, total };
+    };
+    for (const size of ['tiny', 'small', 'medium'] as const) {
+      const s = specks(size);
+      expect(s.empty, size).toBe(0);
+      expect(s.total, size).toBeLessThan(15);
+    }
+  });
+
   it('Tiny water maps: forest near enough to last, never over a start (KI-10)', () => {
     for (const type of ['smallIslands', 'largeIslands', 'narrows'] as const) {
       for (const seed of [301, 305, 307, 311]) {

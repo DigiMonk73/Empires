@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-03 · M16.16 · continental coast specks · 9 shots
+
+The continental map (0.09%, both engines) and the continental base view (0.55%) differ at the water's edge: a few
+one-tile islands are gone, including palms that stood on them. The shoreline, the town and the forest still read.
+Options, credits, help and the save dialog (≤ 0.37%) are the menu backdrop and a save-row clock. No must-fix.
+
 ## 2026-10-02 · M16.15 · a mismatched multiplayer save is refused · 3 shots ≤ 0.12% px
 
 Options, credits and the server save dialog. The diffs are the menu backdrop and a save-row clock. The options
