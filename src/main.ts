@@ -240,7 +240,8 @@ async function boot(): Promise<void> {
   };
   hudActions.setSpeed = (v) => {
     session.speed = v;
-    hud.speed.value = v;
+    // Multiplayer locks the setter (one player speeding up would only wait on the others). The line shows the speed that stuck.
+    hud.speed.value = session.speed;
   };
   hudActions.resign = () => {
     session.router.submit(session.localPlayer, { t: 'resign' });
@@ -530,8 +531,8 @@ async function boot(): Promise<void> {
         input.centerOnSelection();
       }
     }
-    // + / −: game speed (research §5).
-    if (e.key === '+' || e.key === '=' || e.key === '-') {
+    // + / −: game speed (research §5). Multiplayer keeps the host's setup speed, so these keys do nothing there.
+    if (!mp && (e.key === '+' || e.key === '=' || e.key === '-')) {
       const i = SPEEDS.indexOf(session.speed as 1);
       const next = SPEEDS[Math.max(0, Math.min(SPEEDS.length - 1, (i < 0 ? 0 : i) + (e.key === '-' ? -1 : 1)))]!;
       hudActions.setSpeed(next);

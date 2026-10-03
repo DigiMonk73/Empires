@@ -9,12 +9,11 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. Baseline re-recorded.
-- **Last green:** `npm run verify` 200 s — 671 unit, 172 e2e, purity ok. No AI or map change, so the band was not re-run.
+- **Last green:** `npm run verify` 202 s — 671 unit, 174 e2e, purity ok. No AI or map change, so the band was not re-run.
   The 30-game-minute soak (`EMPIRES_MP_SOAK=1`) passed once: 36020 ticks, no desync. verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 4 shots. menu-main 0.12% is backdrop noise. The save dialog still reads. saves-server differs because
-  the server list is shared by the tests (clocks, and the other engine's rows). The room-restart row is not in the shots. No must-fix.
-- **Open:** HANDOFF item 2 is done (M16.10–M16.13). Item 3 (polish lenses) is next and not started. KI-2, KI-3, KI-5.
-  P72 and P75 still open from M15.10.
+- **Screens:** 4 shots ≤ 0.14% px (credits, classic options, save-row clocks). The panels still read. No must-fix.
+- **Open:** HANDOFF item 3 started (M16.14, multiplayer speed keys). P72 and P75 still open from M15.10.
+  KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
 
@@ -1349,6 +1348,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             ferry finds it). Reverted; 2 of 3 cycles.
       - [ ] P75 · should · AI Stone Age economy · Hard reaches Tool at 18–24 min, 16 of 21 villagers walking 6–15
             tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts`
+      - [x] P80 · should · multiplayer speed · + rewrote the F11 line to 1.5× while the game stayed at the setup
+            speed (the menu already hid the speed buttons) · two browsers, F11 then + — _fixed (M16.14):_ + and −
+            do nothing in a multiplayer game, and the line shows the speed the session kept. A single-player game
+            still steps 1.0, 1.5 and 2.0. Test: `multiplayer.spec.ts` "plus and minus".
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
         51/50 (likely faithful)._
       - [x] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest

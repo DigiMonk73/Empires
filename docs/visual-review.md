@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M16.14 · multiplayer speed keys · 4 shots ≤ 0.14% px
+
+Credits, classic options, and the save dialog. The diffs are the menu backdrop and a save-row clock. Credits,
+the options controls and the save list still read. No must-fix.
+
 ## 2026-10-02 · M16.13 · the host's save restarts the room · 4 shots
 
 menu-main 0.12% is the backdrop; the title and the six buttons still read. saves-save 0.05% is the row's clock.

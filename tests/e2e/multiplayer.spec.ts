@@ -8,7 +8,7 @@ declare global {
   interface Window {
     __mp?: {
       router: { desync: unknown };
-      session: { localPlayer: number; sim: { world: { players: { civ: string; team: number }[] } }; router: { submit(p: number, c: unknown): void } };
+      session: { localPlayer: number; speed: number; sim: { world: { players: { civ: string; team: number }[] } }; router: { submit(p: number, c: unknown): void } };
     };
   }
 }
@@ -108,6 +108,35 @@ test('two players host and join from the menu, then play one game in step (M16.3
   await guest!.keyboard.press('Enter');
   await expect(host!.getByTestId('messages')).toContainText('Bo: good luck');
   await expect(guest!.getByTestId('mp-chat')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('plus and minus leave the multiplayer speed line on the setup speed (M16.14)', async ({ browser }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 60_000 });
+
+  // The menu hides speed. These keys used to rewrite the F11 line anyway, while the game stayed at the setup speed.
+  await host!.keyboard.press('F11');
+  await guest!.keyboard.press('F11');
+  await expect(host!.getByTestId('time-line')).toContainText('1.0×');
+  await expect(guest!.getByTestId('time-line')).toContainText('1.0×');
+  await host!.keyboard.press('+');
+  await guest!.keyboard.press('-');
+  await expect(host!.getByTestId('time-line')).toContainText('1.0×');
+  await expect(guest!.getByTestId('time-line')).toContainText('1.0×');
+  for (const p of [host!, guest!]) expect(await p.evaluate(() => window.__mp!.session.speed)).toBe(1);
   expect(errors).toEqual([]);
 });
 

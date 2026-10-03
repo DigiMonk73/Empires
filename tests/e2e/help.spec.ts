@@ -29,6 +29,10 @@ test('in game: score list (F4 and the S button), F11 time line, F3 pause', async
   await page.keyboard.press('F11');
   await expect(page.getByTestId('time-line')).toContainText('1.0×');
   await expect(page.getByTestId('time-line')).toContainText('Pop 5/');
+  await page.keyboard.press('+');
+  await expect(page.getByTestId('time-line')).toContainText('1.5×');
+  await page.keyboard.press('-');
+  await expect(page.getByTestId('time-line')).toContainText('1.0×');
   await page.keyboard.press('F3');
   await expect(page.getByTestId('paused')).toBeVisible();
   const t = await page.evaluate(() => window.__empires!.query.tick());
