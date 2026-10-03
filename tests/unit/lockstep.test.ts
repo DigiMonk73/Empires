@@ -33,6 +33,20 @@ describe('lockstep router', () => {
     expect(() => r.collect(3)).toThrow(/waiting/);
   });
 
+  it('a loaded game resumes at its tick: the next delay ticks need no packets, and earlier ones are stale (M16.13)', () => {
+    const sent: LockstepPacket[] = [];
+    const r = new LockstepRouter({ peer: 0, peers: 2, delay: 4, startTick: 500, transport: { send: (p) => sent.push(p) } });
+    expect(r.ready(500) && r.ready(503)).toBe(true);
+    expect(r.ready(504)).toBe(false);
+    expect(r.collect(500)).toEqual([]);
+    expect(sent.map((p) => p.tick)).toEqual([504]);
+    r.receive(packet(1, 100, [])); // from before the save
+    expect(r.ready(504)).toBe(false);
+    r.receive(packet(1, 504, [move(2, 1)]));
+    expect(r.ready(504)).toBe(true);
+    expect(r.collect(504)).toEqual([move(2, 1)]);
+  });
+
   it('reports a desync from the hashes the peers exchange', () => {
     const net = new LoopbackNetwork(1, { latency: 20, jitter: 60 });
     const peers: LockstepRouter[] = [];

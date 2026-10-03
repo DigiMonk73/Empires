@@ -41,7 +41,9 @@ export class LockstepRouter implements CommandRouter {
   /** Tick → each peer's commands for it (undefined: not in yet). */
   private inbox = new Map<number, (PlayerCommand[] | undefined)[]>();
   /** The last tick collected (packets for it or earlier are stale). */
-  private done = -1;
+  private done: number;
+  /** A loaded game resumes here. The next `delay` ticks are a fresh opening: nothing was scheduled for them. */
+  private readonly origin: number;
   /** Our recent hashes, and peers' hashes for ticks we haven't reached yet. */
   private mine = new Map<number, number>();
   private early: [number, number, number][] = [];
@@ -61,13 +63,15 @@ export class LockstepRouter implements CommandRouter {
   replaying = false;
   onLive: () => void = () => {};
 
-  constructor(o: { peer: number; peers: number; delay: number; transport: LockstepTransport; checkEvery?: number }) {
+  constructor(o: { peer: number; peers: number; delay: number; transport: LockstepTransport; checkEvery?: number; startTick?: number }) {
     if (o.delay < 1) throw new Error('lockstep needs a delay of at least one tick');
     this.peer = o.peer;
     this.peers = o.peers;
     this.delay = o.delay;
     this.checkEvery = o.checkEvery ?? 100;
     this.transport = o.transport;
+    this.origin = Math.max(0, o.startTick ?? 0);
+    this.done = this.origin - 1;
     this.lastFrom = new Array<number>(o.peers).fill(-1);
   }
 
@@ -90,9 +94,9 @@ export class LockstepRouter implements CommandRouter {
     this.pending.push({ player, cmd });
   }
 
-  /** Every peer's packet for `tick` is in (the first `delay` ticks have none: nothing could be scheduled there). */
+  /** Every peer's packet for `tick` is in (the first `delay` ticks, and the first `delay` after a loaded game, have none). */
   ready(tick: number): boolean {
-    if (tick < this.delay) return true;
+    if (tick < this.origin + this.delay) return true;
     const slot = this.inbox.get(tick);
     if (!slot) return false;
     for (let p = 0; p < this.peers; p++) {

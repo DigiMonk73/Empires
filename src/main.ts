@@ -40,7 +40,7 @@ import { AUTOSAVE_ID, AUTOSAVE_TICKS, loadQuery, loadSession, saveSession, type 
 import { saves } from './platform/saves.ts';
 import { serverSaves } from './platform/serverSaves.ts';
 import { techTree } from './ui/techTree.ts';
-import { startNetGame, type NetGame } from './platform/netGame.ts';
+import { readLaunch, startNetGame, type NetGame } from './platform/netGame.ts';
 import { MP_KEY } from './platform/netLaunch.ts';
 import { SIM_VERSION } from './sim/version.ts';
 
@@ -208,9 +208,11 @@ async function boot(): Promise<void> {
     return saveSession(session, { id, name, kind, savedAt: Date.now(), camera: { x: at.x, y: at.y, zoom: camera.zoom }, timeline: timeline.finish() });
   };
   hudActions.saveGame = async (name, overwrite, where) => {
+    // A multiplayer save has to live on the server: the other players reload it. A local file is this browser's alone.
+    const dest = mp ? 'server' : where;
     // (A random tail: two players saving to the same server in the same millisecond got the same id, M15.10.)
     const id = `g${Date.now().toString(36)}${Math.floor(Math.random() * 1679616).toString(36).padStart(4, '0')}`;
-    await (where === 'server' ? serverSaves : saves).put(snapshot(overwrite ?? id, name));
+    await (dest === 'server' ? serverSaves : saves).put(snapshot(overwrite ?? id, name));
   };
   // Autosave (M12.5): one rolling slot on this device, every 5 minutes of game time and on quitting — real games
   // only (skirmishes and loaded games), never after the game is decided.
@@ -228,6 +230,12 @@ async function boot(): Promise<void> {
     hud.techTree.value = { civ, columns: techTree(civ, world, me), full: world.fullTechTree };
   };
   hudActions.loadGame = (id, where) => {
+    if (mp) {
+      // The host's load restarts the room. The page reloads when the server says so, and so does everyone else.
+      if (mp.launch.you !== 0 || where !== 'server') return;
+      mp.net.load(id);
+      return;
+    }
     location.search = loadQuery(id, params, where);
   };
   hudActions.setSpeed = (v) => {
@@ -318,6 +326,21 @@ async function boot(): Promise<void> {
   const mpBanner = mp ? document.createElement('div') : null;
   if (mp && mpBanner) {
     hud.multiplayer.value = true;
+    hud.mpHost.value = mp.launch.you === 0;
+    // The host loaded a save: remember which one and reload into it. The server tells every member, including the host.
+    mp.net.onLoad = (id) => {
+      if (quitting) return;
+      try {
+        const launch = readLaunch();
+        if (launch) {
+          launch.game = { ...launch.game, resume: id };
+          sessionStorage.setItem(MP_KEY, JSON.stringify(launch));
+        }
+      } catch {
+        /* the rejoin carries the id too */
+      }
+      location.reload();
+    };
     let lost = false;
     let reported = false;
     // A dropped connection: load the page again — it rejoins within the server's hold and replays the game to

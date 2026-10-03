@@ -223,10 +223,12 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 300, null, { timeout: 60_000 });
-  // The in-game menu has no Restart, Save, Load or speed in multiplayer.
+  // The host can save and load. Restart stays hidden: it would reload one page and leave the other waiting.
   await host!.keyboard.press('F10');
   await expect(host!.getByTestId('menu-resume')).toBeVisible();
-  for (const id of ['menu-restart', 'menu-save', 'menu-load']) await expect(host!.getByTestId(id)).toHaveCount(0);
+  await expect(host!.getByTestId('menu-save')).toBeVisible();
+  await expect(host!.getByTestId('menu-load')).toBeVisible();
+  await expect(host!.getByTestId('menu-restart')).toHaveCount(0);
   await host!.getByTestId('menu-resume').click();
   // A connection blip (the socket closes, the page stays): the page reloads itself and rejoins.
   const blip = await tick(host!);
@@ -242,6 +244,81 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
   expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   // Still the guest's own seat (no computer took it).
+  expect(await guest!.evaluate(() => window.__mp!.session.localPlayer)).toBe(2);
+  expect(errors).toEqual([]);
+});
+
+test('the host saves, and a load restarts both players from that save (M16.13)', async ({ browser }, info) => {
+  test.setTimeout(120_000);
+  const saveName = `room-restart-${info.project.name}`;
+  const errors: string[] = [];
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
+
+  // A guest has no Save, Load or Restart. The host's save is the server's, so both pages can read it.
+  await guest!.keyboard.press('F10');
+  await expect(guest!.getByTestId('menu-resume')).toBeVisible();
+  for (const id of ['menu-save', 'menu-load', 'menu-restart']) await expect(guest!.getByTestId(id)).toHaveCount(0);
+  await guest!.getByTestId('menu-resume').click();
+
+  await host!.keyboard.press('F10');
+  await host!.getByTestId('menu-save').click();
+  await expect(host!.getByTestId('saves-save')).toBeVisible();
+  await expect(host!.getByTestId('saves-local')).toHaveCount(0);
+  await host!.getByTestId('save-name').fill(saveName);
+  await host!.getByTestId('save-confirm').click();
+  await expect(host!.getByTestId('save-note')).toHaveText('Game saved.');
+  const saved = await host!.evaluate(async (name) => {
+    const list = (await (await fetch('./api/saves')).json()) as { name: string; tick: number }[];
+    return list.find((s) => s.name === name)!.tick;
+  }, saveName);
+  await host!.getByTestId('saves-close').click();
+  await host!.getByTestId('menu-resume').click();
+
+  await expect.poll(() => tick(host!), { timeout: 20_000 }).toBeGreaterThan(saved + 80);
+  const ahead = await tick(host!);
+  // A reload wipes this. The tick briefly reads as missing (−1) while the new page boots, so wait for a fresh page.
+  await host!.evaluate(() => ((window as unknown as { __loadMark?: number }).__loadMark = 1));
+  await guest!.evaluate(() => ((window as unknown as { __loadMark?: number }).__loadMark = 1));
+  await host!.keyboard.press('F10');
+  await host!.getByTestId('menu-load').click();
+  await host!.getByTestId('save-row').filter({ hasText: saveName }).click();
+
+  const booted = (floor: number) => {
+    const mark = (window as unknown as { __loadMark?: number }).__loadMark;
+    const t = window.__empires?.query.tick();
+    return !mark && typeof t === 'number' && t >= floor;
+  };
+  await host!.waitForFunction(booted, saved, { timeout: 60_000 });
+  const resumed = await tick(host!);
+  expect(resumed).toBeGreaterThanOrEqual(saved);
+  expect(resumed).toBeLessThan(ahead);
+  await guest!.waitForFunction(booted, saved, { timeout: 60_000 });
+  expect(await tick(guest!)).toBeGreaterThanOrEqual(saved);
+  expect(await tick(guest!)).toBeLessThan(ahead);
+  // The server list is shared with the save-dialog screenshots. Take this row off it once both pages have it.
+  await host!.evaluate(async (name) => {
+    const list = (await (await fetch('./api/saves')).json()) as { id: string; name: string }[];
+    await Promise.all(list.filter((s) => s.name === name).map((s) => fetch(`./api/saves/${encodeURIComponent(s.id)}`, { method: 'DELETE' })));
+  }, saveName);
+
+  const a0 = await unitAt(guest!, 1);
+  await host!.evaluate(({ h, x, y }) => window.__mp!.session.router.submit(1, { t: 'move', ids: [h], x: x + 4, y }), a0);
+  await expect.poll(async () => (await unitAt(guest!, 1)).x - a0.x, { timeout: 20_000 }).toBeGreaterThan(2);
+  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(saved + 100);
+  await expect.poll(() => tick(guest!), { timeout: 30_000 }).toBeGreaterThan(saved + 100);
+  expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
+  expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   expect(await guest!.evaluate(() => window.__mp!.session.localPlayer)).toBe(2);
   expect(errors).toEqual([]);
 });

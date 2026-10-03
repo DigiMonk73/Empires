@@ -36,8 +36,10 @@ export interface ResultRow extends ScoreLine {
 }
 
 export const hud = {
-  /** A multiplayer game (M16): the menu has no speed, Save, Load or Restart — those would leave the others behind. */
+  /** A multiplayer game (M16): the menu has no speed or Restart, and only the host saves or loads. */
   multiplayer: signal(false),
+  /** The host of a multiplayer game. Save and Load are theirs; a load restarts the whole room (M16.13). */
+  mpHost: signal(false),
   /** Game over from the local player's point of view (null while playing); `why` is the line under the title. */
   outcome: signal<{ kind: 'victory' | 'defeat'; at: string; why: string } | null>(null),
   /** Standard-victory countdowns at the upper right, in their owners' colours (M14.2). */

@@ -67,6 +67,8 @@ export class NetClient {
   onDisconnect: Listener<void> = () => {};
   /** The server took us back into a started game — called before any packet that follows (they may be a replay). */
   onRejoined: Listener<StartInfo> = () => {};
+  /** The host is restarting the room from a server save. Reload; the id is on the rejoin too. */
+  onLoad: Listener<string> = () => {};
   room: RoomState | null = null;
 
   /** `url`: ws(s)://host/prefix/ws — `NetClient.urlFor(location)` builds it from the page's address. */
@@ -179,6 +181,11 @@ export class NetClient {
     this.sendJson({ t: 'pause', on });
   }
 
+  /** Host: restart the room from a server save. Everyone hears `{t:'load'}` and reloads. */
+  load(id: string): void {
+    this.sendJson({ t: 'load', id });
+  }
+
   /** Round trip to the server in ms. */
   async ping(): Promise<number> {
     const at = Date.now();
@@ -256,6 +263,9 @@ export class NetClient {
         break;
       case 'pause':
         this.onPause({ on: !!m.on, from: m.from as number, name: String(m.name ?? '') });
+        break;
+      case 'load':
+        this.onLoad(String(m.id ?? ''));
         break;
       case 'error':
         if (i < 0) this.onError(String(m.error));

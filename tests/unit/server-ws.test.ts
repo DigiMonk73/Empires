@@ -241,6 +241,49 @@ describe('multiplayer relay (M16.1)', () => {
     a.ws.close();
   });
 
+  it('the host loads a save: the old packets are dropped and a rejoin does not replay them (M16.13)', async () => {
+    const a = await connect();
+    const b = await connect();
+    a.send({ t: 'create', name: 'A' });
+    const created = await a.next('room');
+    const code = created.code as string;
+    const tokenA = created.token as string;
+    b.send({ t: 'join', code, name: 'B' });
+    const tokenB = (await b.next('room')).token as string;
+    a.send({ t: 'start', game: { seed: 3 } });
+    await a.next('start');
+    await b.next('start');
+    a.ws.send(new Uint8Array([9, 9]));
+    expect([...(await b.nextBinary())]).toEqual([9, 9]);
+
+    b.send({ t: 'load', id: 'g1' });
+    expect((await b.next('error')).error).toMatch(/host/);
+    a.send({ t: 'load', id: '../secret' });
+    expect((await a.next('error')).error).toMatch(/save/);
+
+    a.send({ t: 'load', id: 'g1' });
+    expect(await a.next('load')).toMatchObject({ id: 'g1' });
+    expect(await b.next('load')).toMatchObject({ id: 'g1' });
+    // The pages have not reloaded: anything they send now is the game being left, and is ignored.
+    a.ws.send(new Uint8Array([3]));
+    b.ws.send(new Uint8Array([4]));
+    await new Promise((r) => setTimeout(r, 40));
+    a.ws.close();
+    b.ws.close();
+    await new Promise((r) => setTimeout(r, 40));
+
+    const a2 = await connect();
+    a2.send({ t: 'rejoin', code, peer: 0, token: tokenA });
+    expect(await a2.next('rejoined')).toMatchObject({ you: 0, replay: false, game: { seed: 3, resume: 'g1' } });
+    a2.ws.send(new Uint8Array([5])); // B is still away: this waits for its rejoin
+    const b2 = await connect();
+    b2.send({ t: 'rejoin', code, peer: 1, token: tokenB });
+    expect(await b2.next('rejoined')).toMatchObject({ you: 1, replay: false, game: { resume: 'g1' } });
+    expect([...(await b2.nextBinary())]).toEqual([5]);
+    a2.ws.close();
+    b2.ws.close();
+  });
+
   it('answers ping with pong, and refuses a plain HTTP request to /ws', async () => {
     const p = await connect();
     p.send({ t: 'ping', at: 123 });

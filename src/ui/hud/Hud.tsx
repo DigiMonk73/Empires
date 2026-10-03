@@ -433,6 +433,7 @@ function GameMenu() {
         onSave={(name, overwrite, where) => hudActions.saveGame(name, overwrite, where)}
         onLoad={(id, where) => hudActions.loadGame(id, where)}
         onClose={() => (hud.saveDialog.value = null)}
+        only={hud.multiplayer.value ? 'server' : undefined}
       />
     );
   return (
@@ -452,7 +453,7 @@ function GameMenu() {
         <VolumeControls muteId="menu-sound" />
         <div class="gameover-buttons column">
           <button data-testid="menu-resume" onClick={() => hudActions.setMenu(false)}>Resume</button>
-          {!hud.multiplayer.value && (
+          {(!hud.multiplayer.value || hud.mpHost.value) && (
             <>
               <button data-testid="menu-save" disabled={!!hud.outcome.value} onClick={() => (hud.saveDialog.value = 'save')}>Save Game</button>
               <button data-testid="menu-load" onClick={() => (hud.saveDialog.value = 'load')}>Load Game</button>

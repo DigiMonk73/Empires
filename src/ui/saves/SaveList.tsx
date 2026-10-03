@@ -25,13 +25,15 @@ export function SaveList(props: {
   onSave?: (name: string, overwrite: string | null, where: SaveWhere) => Promise<void>;
   onLoad?: (id: string, where: SaveWhere) => void;
   onClose: () => void;
+  /** Multiplayer saves live on the server, so both players can reload them. Hides the device tab. */
+  only?: SaveWhere;
 }) {
   const [list, setList] = useState<SaveMeta[] | null>(null);
   const [name, setName] = useState(props.defaultName ?? '');
   const [picked, setPicked] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [server, setServer] = useState(false);
-  const [where, setWhereState] = useState<SaveWhere>('local');
+  const [where, setWhereState] = useState<SaveWhere>(props.only ?? 'local');
   const store = where === 'server' ? serverSaves : saves;
   const setWhere = (w: SaveWhere) => {
     if (w === where) return; // the list is already this one
@@ -63,6 +65,7 @@ export function SaveList(props: {
     );
   };
   useEffect(() => {
+    if (props.only) return;
     void serverSaves.available().then((ok) => {
       setServer(ok);
       if (ok && lastWhere() === 'server') {
@@ -95,7 +98,7 @@ export function SaveList(props: {
     <div class="saves" data-testid={`saves-${props.mode}`}>
       <div class="saves-panel">
         <h2>{props.mode === 'save' ? 'Save Game' : 'Load Game'}</h2>
-        {server && (
+        {server && !props.only && (
           <div class="saves-where">
             <button class={`small${where === 'local' ? ' on' : ''}`} data-testid="saves-local" onClick={() => setWhere('local')}>
               This device

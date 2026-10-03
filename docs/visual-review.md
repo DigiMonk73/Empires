@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M16.13 · the host's save restarts the room · 4 shots
+
+menu-main 0.12% is the backdrop; the title and the six buttons still read. saves-save 0.05% is the row's clock.
+saves-server is 3.53% (chromium) and 5.24% (webkit): the dialog still reads. The list is the shared server
+directory, so one engine's rows show up in the other's shot, and the clocks move. The multiplayer test's
+room-restart row is deleted once both pages have resumed, and it is not in these shots. No must-fix.
+
 ## 2026-10-02 · M16.12 · input monkey and soak · 3 shots ≤ 0.11% px
 
 Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock. The panels still

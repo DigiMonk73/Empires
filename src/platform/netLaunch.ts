@@ -15,6 +15,8 @@ export interface NetGameInfo {
   delay: number;
   /** The player number each peer controls (peer index → player). */
   seats: number[];
+  /** A server save the room is restarting from (M16.13). Absent on a new game. */
+  resume?: string;
 }
 export const MP_KEY = 'empires.mp';
 

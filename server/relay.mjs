@@ -14,6 +14,8 @@
 //   {t:'start', game}        host only   → {t:'start', game, you, peers} to everyone (peer indices fixed from here)
 //   {t:'chat', text}                     → {t:'chat', from, name, text} to everyone
 //   {t:'pause', on}                      → {t:'pause', on, from, name} to everyone (a started game; anyone may)
+//   {t:'load', id}           host only   → {t:'load', id} to everyone. The old packets are dropped. Each page
+//                                          reloads and rejoins; the id is a server save, not the world itself.
 //   {t:'ping', at}                       → {t:'pong', at}
 //   {t:'rtt', ms}                        (your measured round trip; members lists carry it — the host's delay, M16.6)
 //   {t:'rejoin', code, peer, token}      → {t:'rejoined', you, peers, game, replay} — back into a started game within
@@ -219,6 +221,27 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         log(`room ${r.code}: peer ${peer} back (${replay ? `replaying ${r.log.length}` : `${old.buffer.length} waited`} packets)`);
         return;
       }
+      case 'load': {
+        // The host restarts the room from a server save (M16.13). The id is all that crosses the socket —
+        // the world stays on the save API. Old packets would replay the game this load is leaving, so the
+        // log goes, and a page that has not reloaded yet is stale: its packets are kept for the rejoin
+        // instead of being played into the game it is about to leave.
+        if (!room || room.members[0] !== c || !room.started) return sendJson(c, { t: 'error', error: 'only the host loads a saved game' });
+        const id = String(m.id ?? '');
+        if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return sendJson(c, { t: 'error', error: 'that save cannot be loaded' });
+        room.log = [];
+        room.logFull = false;
+        room.game = room.game && typeof room.game === 'object' ? { ...room.game, resume: id } : { resume: id };
+        for (const o of room.members) {
+          if (o.closed) continue;
+          o.sent = false;
+          o.stale = true;
+          o.stash = [];
+        }
+        for (const o of room.members) if (!o.closed && !o.away) sendJson(o, { t: 'load', id });
+        log(`room ${room.code} loading save ${id}`);
+        return;
+      }
       case 'pause': {
         if (!room || !room.started) return;
         const out = { t: 'pause', on: !!m.on, from: room.members.indexOf(c), name: c.name };
@@ -239,13 +262,15 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
 
   function relay(c, data) {
     const room = c.room;
-    if (!room || !room.started) return;
+    if (!room || !room.started || c.stale) return; // a page that has not loaded the save yet sends nothing more
     c.sent = true; // in the game now: a drop from here rejoins by replaying the room's log (see rejoin)
     if (room.log.length < MAX_LOG) room.log.push(Buffer.from(data));
     else room.logFull = true;
     for (const o of room.members) {
       if (o === c) continue;
-      if (o.away) {
+      if (o.stale) {
+        if (o.stash && o.stash.length < MAX_BUFFERED) o.stash.push(Buffer.from(data));
+      } else if (o.away) {
         if (o.buffer.length < MAX_BUFFERED) o.buffer.push(Buffer.from(data));
       } else if (!o.closed) o.sendBinary(data);
     }
@@ -269,7 +294,7 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
         if (!room.members.some((o) => !o.closed)) rooms.delete(room.code);
       };
       if (c.closed && c.token && awayMs > 0 && !room.logFull) {
-        const held = { away: true, closed: false, buffer: [], sent: !!c.sent, token: c.token, name: c.name, id: c.id, sendText() {}, sendBinary() {} };
+        const held = { away: true, closed: false, buffer: c.stash ? c.stash.splice(0) : [], sent: c.stale ? false : !!c.sent, token: c.token, name: c.name, id: c.id, sendText() {}, sendBinary() {} };
         held.awayTimer = setTimeout(() => room.members[peer] === held && gone(), awayMs);
         room.members[peer] = held; // (everyone is away a moment at the start: each page loads the game)
         return;
