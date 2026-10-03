@@ -57,13 +57,18 @@ into `main` until the user has played multiplayer on the VM (M16.8).
      The soak is `EMPIRES_MP_SOAK=1` (not part of verify): two humans and two computers, 30 game minutes, no desync.
    - **[done, M16.13]** Saving a multiplayer game (the host saves; a load restarts the room from the save).
      The save is on the server. Guests have no Save or Load. Speed and Restart stay hidden.
-3. **Polish lenses, round four** (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
+3. **[done, M16.19]** Polish lenses, round four (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
    - **[done, M16.14]** In a multiplayer game, + and − leave the F11 speed line on the setup speed. A single-player game still steps 1.0, 1.5 and 2.0.
    - **[done, M16.15]** The host cannot restart the room from a server save with a different number of players. The dialog says so, and nobody reloads.
    - **[done, M16.16]** A continental coast no longer leaves empty one-tile islands. An alligator may still stand on one.
    - **[done, M16.17]** The keys list says that +/− and a pausing menu are single-player. In a multiplayer game F10 keeps the clock running.
+   - **[done, M16.18]** P75 rechecked. Hard's Tool Age still waits on a rush's food. Left open.
+   - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
 4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
-   final (tag `v1.1.0`), build both `.s9pk`.
+   final (tag `v1.1.0`), build both `.s9pk`. With that submodule bump, update `../empires-startos` `instructions.md`
+   and `README.md`: they still say a multiplayer game cannot be saved. That sentence matches the pinned game
+   (`4152c5b`), not this branch. Here the host saves on the server, guests have no Save or Load, and speed and
+   Restart stay hidden. Do not change those files before the pin moves.
 
 ## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
 ```
@@ -71,6 +76,13 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-03 — item 3 done (M16.19): round-four lenses A, B, E, F and H found nothing new. A was 11 node games
+  (save/load agreed). B was 209 setups. E was four longer games, including 60 minutes, with a mid-game save that
+  resumed. F was 155 generated maps plus the old unit scenes; arrows along the line and the coast-speck test still
+  pass. H: the last built Mac app (2 Oct 10:52, before M16.9) passed 8 hidden scenes and the full-population smoke
+  (render 1.03 ms). The README status line now says 1.1.0. StartOS instructions stay as they are until item 4 moves
+  the submodule. `npm run verify` green in 203 s (673 unit, 180 e2e). P75, P29, P30 and P32 stay open. Next is item 4,
+  which waits on the user's multiplayer game.
 - 2026-10-03 — item 3, step 5 (M16.18): P75 rechecked on inland small seed 404. Hard is still in the Stone Age at
   15:00 and in the Tool Age by 20:00, with nobody idle. Both seats rush and spend the food on clubmen, so the age
   waits on food. Left open. Not an AI change. `npm run verify` green in 204 s (673 unit, 180 e2e). Round four still

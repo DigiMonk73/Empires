@@ -4,7 +4,7 @@ An original real-time strategy game in the spirit of the 1997 classics: gather f
 advance through the Stone, Tool, Bronze and Iron ages, and lead one of sixteen ancient civilizations to
 victory. Rules follow the Rise of Rome era numbers; every sprite, sound and line of code is original.
 
-**Status:** early development (milestone M0). See `docs/PROGRESS.md`.
+**Status:** 1.1.0 on `m16-multiplayer` (multiplayer). `main` is 1.0.1. See `docs/PROGRESS.md`.
 
 ## Run it
 ```sh

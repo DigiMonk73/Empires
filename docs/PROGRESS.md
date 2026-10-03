@@ -9,13 +9,14 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. M16.16 re-recorded the baseline.
-- **Last green:** `npm run verify` 204 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
+- **Last green:** `npm run verify` 203 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
   Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
   duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
   verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 7 shots ≤ 0.38% (menu, options, save rows). The backdrop and a save-row clock. No must-fix.
-- **Open:** HANDOFF item 3 in progress (M16.14–M16.17). P75 still open from M15.10. Lens G4 was clean.
-  KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game.
+- **Screens:** 7 shots ≤ 0.33% (credits, options, save rows). The backdrop and a save-row clock. No must-fix.
+- **Open:** HANDOFF item 3 done (M16.19). P75, P29, P30, P32 still open. KI-2, KI-3, KI-5.
+  Item 4 waits on the user's multiplayer game. StartOS instructions still say a multiplayer game cannot be saved;
+  that matches pinned `4152c5b`, not this branch. Update them when the pin moves.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
 
@@ -1368,6 +1369,20 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             the dialog says "That save is from a different game." and nobody reloads. Tests: `save-game.test.ts`
             "player counts"; `multiplayer.spec.ts` "different number of players".
       - _Lens G4 (round four, 2026-10-03): no TODO, FIXME, `console.log`, `as any`, or suppression in `src`._
+      - _Lens A5 (round four, 2026-10-03, `artifacts/polish/lens-a5.ts`): 11 node games, coasts through a gigantic
+        8-player map. No crash, stuck share under 1%, save then 400 more ticks agreed._
+      - _Lens B4 (round four, 2026-10-03, `artifacts/polish/lens-b4.ts`): 209 setups, every map type and size at 2
+        and 8 players, plus ages, victories and resources. Villagers stood on open ground. Save/load agreed._
+      - _Lens E4 (round four, 2026-10-03, `artifacts/polish/lens-e4.ts`): continental 60 min (conquest at 32), small
+        islands 45 min (conquest at 39), mediterranean 8-player 30 min, gigantic 8-player 20 min. Idle under 1%,
+        stuck under 1%, slowest tick 6.9 ms. A save at 30 and at 20 minutes resumed._
+      - _Lens F4 (round four, 2026-10-03): 155 maps still give each town its berries, gold, stone and at least 8
+        trees, and no player unit stands on water. The old unit scenes match round one, except a retreat now takes
+        the hits M16.9 meant (arrows along the line). The arrow test and the coast-speck test pass._
+      - _Lens H4 (round four, 2026-10-03): hidden smoke on the Mac app built 2 Oct 10:52 (before M16.9) — village,
+        harbor, battle, siege, relics, wonder, hills, skirmish, each under 1 s, and full population at 1.03 ms
+        average. README status was still "milestone M0"; it now says 1.1.0. StartOS instructions are unchanged
+        until item 4._
       - [x] P82 · should · keys · the list said "+ / − Game speed" and "F10 Menu (pauses)" in a multiplayer game,
             where those keys do not change speed and the menu does not pause · F1 in a two-browser game — _fixed
             (M16.17):_ "Game speed (single player)" and "Menu (pauses a single-player game)". F3 still pauses
