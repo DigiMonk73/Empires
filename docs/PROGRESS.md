@@ -9,13 +9,13 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. M16.16 re-recorded the baseline.
-- **Last green:** `npm run verify` 202 s — 673 unit, 176 e2e, purity ok. Map change banded PASS: wars 91/96,
+- **Last green:** `npm run verify` 205 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
   Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
   duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
   verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 9 shots. The continental coast loses a few edge specks (map 0.09%, the base view 0.55%). Five others
-  ≤ 0.37% are the menu backdrop and a save-row clock. The coast, the town and the panels still read. No must-fix.
-- **Open:** HANDOFF item 3 in progress (M16.14 speed keys, M16.15 a mismatched save, M16.16 continental specks). P75 still open from M15.10.
+- **Screens:** 7 shots. The keys list (0.08%) now says speed and a pausing menu are single-player; Close still sits
+  on the panel. The other five ≤ 0.11% are the menu backdrop and a save-row clock. No must-fix.
+- **Open:** HANDOFF item 3 in progress (M16.14–M16.17). P75 still open from M15.10. Lens G4 was clean.
   KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
@@ -1365,6 +1365,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             the dialog says "That save is from a different game." and nobody reloads. Tests: `save-game.test.ts`
             "player counts"; `multiplayer.spec.ts` "different number of players".
       - _Lens G4 (round four, 2026-10-03): no TODO, FIXME, `console.log`, `as any`, or suppression in `src`._
+      - [x] P82 · should · keys · the list said "+ / − Game speed" and "F10 Menu (pauses)" in a multiplayer game,
+            where those keys do not change speed and the menu does not pause · F1 in a two-browser game — _fixed
+            (M16.17):_ "Game speed (single player)" and "Menu (pauses a single-player game)". F3 still pauses
+            everyone. Tests: `dialogs` "single-player"; `multiplayer.spec.ts` "does not pause".
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
         51/50 (likely faithful)._
       - [x] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest

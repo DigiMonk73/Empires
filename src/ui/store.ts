@@ -44,7 +44,7 @@ export const hud = {
   outcome: signal<{ kind: 'victory' | 'defeat'; at: string; why: string } | null>(null),
   /** Standard-victory countdowns at the upper right, in their owners' colours (M14.2). */
   clocks: signal<{ key: string; text: string; color: string }[]>([]),
-  /** In-game menu open (pauses the game). */
+  /** In-game menu open. A single-player game pauses; a multiplayer game keeps ticking. */
   menuOpen: signal(false),
   speed: signal(1),
   muted: signal(false),

@@ -402,7 +402,7 @@ function Results() {
   );
 }
 
-/** In-game menu (pauses the game): resume, game speed, restart, resign, quit to the main menu. */
+/** In-game menu: resume, game speed, restart, resign, quit. Opening it pauses a single-player game only. */
 function GameMenu() {
   if (!hud.menuOpen.value) return null;
   // Achievements replace the menu, like Options; their Back returns here (M15.6: they were drawn over it).

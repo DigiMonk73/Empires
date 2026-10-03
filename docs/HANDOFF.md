@@ -61,6 +61,7 @@ into `main` until the user has played multiplayer on the VM (M16.8).
    - **[done, M16.14]** In a multiplayer game, + and − leave the F11 speed line on the setup speed. A single-player game still steps 1.0, 1.5 and 2.0.
    - **[done, M16.15]** The host cannot restart the room from a server save with a different number of players. The dialog says so, and nobody reloads.
    - **[done, M16.16]** A continental coast no longer leaves empty one-tile islands. An alligator may still stand on one.
+   - **[done, M16.17]** The keys list says that +/− and a pausing menu are single-player. In a multiplayer game F10 keeps the clock running.
 4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
    final (tag `v1.1.0`), build both `.s9pk`.
 
@@ -70,6 +71,9 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-03 — item 3, step 4 (M16.17): the keys list no longer says that +/− change speed, or that the menu pauses, in a
+  multiplayer game. F10 keeps the clock running there; F3 still pauses everyone. `npm run verify` green in 205 s
+  (673 unit, 180 e2e). Next: the rest of the round-four lenses. P75 stays open.
 - 2026-10-03 — item 3, step 3 (M16.16): empty one-tile islands on a continental coast are sunk after the map is placed.
   Forests and mines stay where they were. `npm run verify` green in 202 s (673 unit, 176 e2e). The AI band passed
   and the baseline was re-recorded (wars 91/96, Hard>Moderate 210/256, water 182/192, duels 64/64, 0 crashes).

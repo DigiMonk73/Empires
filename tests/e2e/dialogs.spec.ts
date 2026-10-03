@@ -206,3 +206,12 @@ test('the Keys list says Esc closes the window on top (lens D3)', async ({ page 
   const esc = page.getByTestId('keys').locator('tr', { hasText: /^\s*Esc/ });
   await expect(esc).toContainText('Close the window on top');
 });
+
+test('the Keys list says speed and the menu pause are single-player (lens D)', async ({ page }) => {
+  await openGame(page, GAME);
+  await page.keyboard.press('F1');
+  await expect(page.getByTestId('keys')).toBeVisible();
+  const row = (key: string) => page.getByTestId('keys').locator('tr', { hasText: key });
+  await expect(row('+ / −')).toContainText('single player');
+  await expect(row('F10')).toContainText('single-player');
+});

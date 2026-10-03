@@ -17,11 +17,11 @@ const GENERAL: [string, string][] = [
   ['Delete', 'Delete the selection'],
   ['Esc', 'Close the window on top · cancel · back · deselect'],
   ['Arrows · edge', 'Scroll'],
-  ['+ / −', 'Game speed'],
+  ['+ / −', 'Game speed (single player)'],
   ['F3 · Pause', 'Pause / resume'],
   ['F4 · S button', 'Score list (the S beside the minimap)'],
   ['F11', 'Time, speed and population'],
-  ['F10', 'Menu (pauses)'],
+  ['F10', 'Menu (pauses a single-player game)'],
   ['F1', 'This list'],
 ];
 

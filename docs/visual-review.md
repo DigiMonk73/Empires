@@ -2,6 +2,12 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-03 · M16.17 · keys list, single-player speed and pause · 7 shots
+
+The keys panel (0.08%, both engines) reads "Game speed (single player)" and "Menu (pauses a single-player game)"
+on one line each. Close stays on the panel, and the grid of letters still reads. The main menu, options and the
+save dialog (≤ 0.11%) are the backdrop and a save-row clock. No must-fix.
+
 ## 2026-10-03 · M16.16 · continental coast specks · 9 shots
 
 The continental map (0.09%, both engines) and the continental base view (0.55%) differ at the water's edge: a few

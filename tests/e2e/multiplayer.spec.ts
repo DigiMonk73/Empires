@@ -140,6 +140,36 @@ test('plus and minus leave the multiplayer speed line on the setup speed (M16.14
   expect(errors).toEqual([]);
 });
 
+test('in multiplayer the menu does not pause, and the keys list says so (M16.17)', async ({ browser }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 60_000 });
+
+  await host!.keyboard.press('F1');
+  const row = (key: string) => host!.getByTestId('keys').locator('tr', { hasText: key });
+  await expect(row('+ / −')).toContainText('single player');
+  await expect(row('F10')).toContainText('single-player');
+  await host!.keyboard.press('Escape');
+
+  // F10 opens the menu and the game keeps ticking. F3 is what pauses everyone.
+  const before = await tick(host!);
+  await host!.keyboard.press('F10');
+  await expect(host!.getByTestId('menu-resume')).toBeVisible();
+  await expect.poll(() => tick(guest!), { timeout: 10_000 }).toBeGreaterThan(before + 20);
+  expect(errors).toEqual([]);
+});
+
 /** A seeded stream in [0, 1). The same seed repeats the same clicks. */
 function rng(seed: number): () => number {
   let s = seed >>> 0;
