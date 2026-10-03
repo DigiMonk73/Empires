@@ -19,7 +19,8 @@ const arg = (name: string, dflt: number): number => {
 const MINUTES = arg('minutes', 5);
 const SEED = arg('seed', 1);
 const record = process.argv.includes('--record');
-const GATE_P99 = 6;
+// 6 ms is this Mac. GitHub's shared runner is slower, so CI sets EMPIRES_PERF_MS (D72). A bad number fails closed.
+const GATE_P99 = Number(process.env.EMPIRES_PERF_MS ?? 6);
 
 const t0 = performance.now();
 const session = new GameSession(fullPopConfig(SEED), 0);

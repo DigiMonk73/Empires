@@ -250,6 +250,8 @@ async function main(): Promise<void> {
     status.set(step.id, res.status);
     results.push(res);
     console.log(`${res.status.toUpperCase()} (${res.seconds.toFixed(1)}s) ${res.note}`);
+    // Print now. A later step can run until the runner's time limit, and that limit used to discard this.
+    if (res.status === 'fail' && res.tail) console.log(`\n── ${res.title} ──\n${res.tail}`);
   }
   const failed = results.filter((r) => r.status === 'fail');
   const total = (Date.now() - t0) / 1000;

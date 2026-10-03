@@ -78,6 +78,12 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-03 — The first GitHub test run was stopped at 45 minutes (M16.21, D72). Drawing the sprites took 33
+  minutes and that copy was not kept. The rules tests and the full-population tick check had already failed, and
+  the time limit threw the reasons away. GitHub now runs the rules tests first, keeps the sprites, prints a
+  failure as soon as it happens, and allows 90 minutes. The 6 ms tick budget stays on this Mac; the runner
+  allows 24 ms. `npm run verify` green in 208 s (673 unit, 180 e2e). `develop` is not created yet. Next is
+  still item 4, after the playtest.
 - 2026-10-03 — CI is on this branch (M16.20, D71). Every push runs the test suite. `npm run verify` green in 206 s
   (673 unit, 180 e2e). A push to `main` builds the Mac disk image and moves the StartOS pin, which builds the
   `.s9pk`. That does not run until item 4 merges this branch. The wrapper branch has to be merged first.

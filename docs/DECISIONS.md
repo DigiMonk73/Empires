@@ -493,3 +493,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   Nothing is sent to the Start9 registry. The scaffold workflows that would do that still watch `master` and still
   need registry keys. A `develop` branch is not created yet: when it exists, pushes there run the tests only.
   Publishing stays on `main`. The disk image is ad-hoc signed until an Apple certificate is added.
+- **D72 — The 6 ms tick budget is the Mac; GitHub's runner allows 24 ms** (2026-10-03).
+  The full-population check fails a commit on this Mac when a tick's p99 is over 6 ms. Measured here it is about
+  2 ms. The first GitHub run drew all 175 models in software (33 minutes) and was stopped at 45 minutes, so the
+  drawn sprites were not kept and the failed steps' reasons were not kept either. The rules tests had exited 1,
+  and the tick check had exited 1, before the browser games were cut off. GitHub now runs the rules tests first,
+  draws the sprites once and keeps both the atlases and the lossless pages (the pages are what let the next run
+  skip the draw), prints a failed step's last lines immediately, and allows 90 minutes. The same tick check runs
+  there with `EMPIRES_PERF_MS=24`, because that computer is smaller and shared. A tick over 24 ms still fails
+  the run. The 6 ms budget on this Mac is unchanged.
