@@ -71,6 +71,10 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-03 — item 3, step 5 (M16.18): P75 rechecked on inland small seed 404. Hard is still in the Stone Age at
+  15:00 and in the Tool Age by 20:00, with nobody idle. Both seats rush and spend the food on clubmen, so the age
+  waits on food. Left open. Not an AI change. `npm run verify` green in 204 s (673 unit, 180 e2e). Round four still
+  owes lenses A, B, E, F and H (C is the M16.12 monkey, D is M16.17, G4 was clean).
 - 2026-10-03 — item 3, step 4 (M16.17): the keys list no longer says that +/− change speed, or that the menu pauses, in a
   multiplayer game. F10 keeps the clock running there; F3 still pauses everyone. `npm run verify` green in 205 s
   (673 unit, 180 e2e). Next: the rest of the round-four lenses. P75 stays open.

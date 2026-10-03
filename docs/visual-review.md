@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-03 · M16.18 · P75 rechecked, no picture change · 7 shots ≤ 0.38%
+
+Menu, options and the save dialog. The diffs are the backdrop and a save-row clock. The panels still read. No must-fix.
+
 ## 2026-10-03 · M16.17 · keys list, single-player speed and pause · 7 shots
 
 The keys panel (0.08%, both engines) reads "Game speed (single player)" and "Menu (pauses a single-player game)"

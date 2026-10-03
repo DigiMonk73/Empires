@@ -9,12 +9,11 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. M16.16 re-recorded the baseline.
-- **Last green:** `npm run verify` 205 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
+- **Last green:** `npm run verify` 204 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
   Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
   duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
   verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 7 shots. The keys list (0.08%) now says speed and a pausing menu are single-player; Close still sits
-  on the panel. The other five ≤ 0.11% are the menu backdrop and a save-row clock. No must-fix.
+- **Screens:** 7 shots ≤ 0.38% (menu, options, save rows). The backdrop and a save-row clock. No must-fix.
 - **Open:** HANDOFF item 3 in progress (M16.14–M16.17). P75 still open from M15.10. Lens G4 was clean.
   KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
@@ -1355,7 +1354,11 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             Docks only — water 46/48 again (walking at the far Dock seems to bring an army to the shore where the
             ferry finds it). Reverted; 2 of 3 cycles.
       - [ ] P75 · should · AI Stone Age economy · Hard reaches Tool at 18–24 min, 16 of 21 villagers walking 6–15
-            tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts`
+            tiles at 14 min (before tonight too) · `pop50-hh-inland-404` · `lens-a3/econ.ts` — _rechecked
+            2026-10-03 (`diagnose.ts trace 404 inland small hard hard`): still Stone at 15:00 with idle 0, Tool by
+            20:00. Both seats rush and spend the food on clubmen (one holds 1127 wood and 202 food at 15:00), so
+            the age waits on food. Left open: making a rush age sooner is an AI-gate change, and a 6–15 tile walk
+            is a carry, not a stall._
       - [x] P80 · should · multiplayer speed · + rewrote the F11 line to 1.5× while the game stayed at the setup
             speed (the menu already hid the speed buttons) · two browsers, F11 then + — _fixed (M16.14):_ + and −
             do nothing in a multiplayer game, and the line shows the speed the session kept. A single-player game
