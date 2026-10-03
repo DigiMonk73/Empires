@@ -9,11 +9,11 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. Baseline re-recorded.
-- **Last green:** `npm run verify` 189 s — 669 unit, 168 e2e, purity ok. No AI or map change, so the band was not re-run.
-  verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 8 shots ≤ 0.29% px (menu backdrop and save-row clocks). Help still reads. No must-fix.
-- **Open:** HANDOFF item 2 — guest civilization and team (M16.10) and seat pings (M16.11) done. Next: a two-client
-  monkey and a 30-minute soak, then multiplayer save/load. KI-2, KI-3, KI-5. P72 and P75 still open from M15.10.
+- **Last green:** `npm run verify` 190 s — 669 unit, 170 e2e, purity ok. No AI or map change, so the band was not re-run.
+  The 30-game-minute soak (`EMPIRES_MP_SOAK=1`) passed once: 36020 ticks, no desync. verify:full last at the 1.1.0 rebuild (837cb61).
+- **Screens:** 3 shots ≤ 0.11% px (menu backdrop and a save-row clock). Credits, options and the save dialog still read. No must-fix.
+- **Open:** HANDOFF item 2 — guest civilization and team (M16.10), seat pings (M16.11), and the monkey plus
+  30-minute soak (M16.12) done. Next: multiplayer save/load. KI-2, KI-3, KI-5. P72 and P75 still open from M15.10.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
 

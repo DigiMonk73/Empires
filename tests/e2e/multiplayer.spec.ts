@@ -111,6 +111,78 @@ test('two players host and join from the menu, then play one game in step (M16.3
   expect(errors).toEqual([]);
 });
 
+/** A seeded stream in [0, 1). The same seed repeats the same clicks. */
+function rng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+/** One harmless action: a map click, a key, a chat line, or the menu opened and closed. Never Quit or Resign. */
+async function poke(page: Page, rand: () => number): Promise<void> {
+  const kind = rand();
+  if (kind < 0.5) {
+    const box = await page.locator('#game canvas').boundingBox();
+    if (!box) return;
+    await page.mouse.click(box.x + 80 + rand() * Math.max(20, box.width - 160), box.y + 80 + rand() * Math.max(20, box.height - 260));
+  } else if (kind < 0.7) {
+    await page.keyboard.press(rand() < 0.5 ? 'Escape' : '.');
+  } else if (kind < 0.85) {
+    await page.keyboard.press('Enter');
+    if (await page.getByTestId('mp-chat').isVisible()) {
+      await page.keyboard.type('ok');
+      await page.keyboard.press('Enter');
+    }
+  } else {
+    await page.keyboard.press('F10');
+    const resume = page.getByTestId('menu-resume');
+    if (await resume.isVisible()) await resume.click();
+  }
+}
+
+test('two browsers survive a seeded input monkey without errors or a desync (M16.12)', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  for (const p of [host!, guest!]) {
+    p.on('pageerror', (e) => errors.push(`page: ${e}`));
+    p.on('console', (m) => {
+      if (m.type() === 'error') errors.push(`console: ${m.text()}`);
+    });
+  }
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 20, null, { timeout: 60_000 });
+
+  // Lens C, two clients: a smaller window, seeded clicks and keys, the menu, a pause, then back.
+  for (const p of [host!, guest!]) await p.setViewportSize({ width: 1024, height: 640 });
+  const rand = rng(1612);
+  const before = await tick(host!);
+  for (let i = 0; i < 16; i++) await poke(i % 2 === 0 ? host! : guest!, rand);
+  await host!.keyboard.press('Escape');
+  await host!.keyboard.press('F3');
+  await expect(guest!.getByTestId('mp-waiting')).toContainText(/Paused by Ann/);
+  await host!.keyboard.press('F3');
+  await expect(guest!.getByTestId('mp-waiting')).toBeHidden({ timeout: 10_000 });
+  for (let i = 0; i < 16; i++) await poke(i % 2 === 0 ? guest! : host!, rand);
+  for (const p of [host!, guest!]) await p.setViewportSize({ width: 1280, height: 800 });
+
+  await expect.poll(() => tick(host!), { timeout: 20_000 }).toBeGreaterThan(before + 30);
+  await expect.poll(() => tick(guest!), { timeout: 20_000 }).toBeGreaterThan(before + 30);
+  expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
+  expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
+  expect(errors).toEqual([]);
+});
+
 test('a player who closes the game: the other waits briefly, then a computer takes the seat and play goes on (M16.5)', async ({ browser }) => {
   test.setTimeout(120_000);
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));

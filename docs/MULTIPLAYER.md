@@ -86,7 +86,9 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       suite, determinism ×3, soaks, Docker both arches, Tauri, make arm); both `.s9pk` 1.1.0:0 built — **not
       installed on the VM** (the user's call).
 - [ ] **M16.8 Exit:** verify:full green; a 4-player game (2 humans in two headless browsers + 2 AIs) runs 30 game
-      minutes with no desync; the user plays one game against a friend.
+      minutes with no desync; the user plays one game against a friend. The automated half passed (M16.12):
+      chromium, 30 game minutes, no desync. verify:full and the user's game remain. A seeded two-client input
+      monkey is in the ordinary e2e.
 
 ## Risks
 - **Floating-point divergence between Chromium and WebKit** — already guarded: the sim is integer/fixed-step

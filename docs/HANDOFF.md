@@ -53,7 +53,8 @@ into `main` until the user has played multiplayer on the VM (M16.8).
    - **[done, M16.10]** A guest with a human seat picks that seat's civilization and team. The host sees it and
      cannot overwrite it by changing the map or rewriting the row. A member with no human seat cannot pick.
    - **[done, M16.11]** The room list and the seats show each member's ping (0 ms until measured; a fast link may stay 0).
-   - A two-client input monkey (lens C for multiplayer) and a 30-minute two-browser soak.
+   - **[done, M16.12]** A two-client input monkey (lens C for multiplayer) and a 30-minute two-browser soak.
+     The soak is `EMPIRES_MP_SOAK=1` (not part of verify): two humans and two computers, 30 game minutes, no desync.
    - Saving a multiplayer game (the host saves; a load restarts the room from the save).
 3. **Polish lenses, round four** (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
 4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
@@ -65,6 +66,9 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 — item 2, step 3 (M16.12): a seeded two-client input monkey is in verify, and a gated soak played 30
+  game minutes (two browsers, two computers) with no desync. Next: the host saves a multiplayer game and a load
+  restarts the room from that save.
 - 2026-10-02 — item 2, step 2 (M16.11): the room list and the seats show each member's ping. Next: a two-client
   input monkey and a 30-minute two-browser soak.
 - 2026-10-02 — item 2, step 1 (M16.10): a guest picks their own civilization and team. The relay keeps that choice
