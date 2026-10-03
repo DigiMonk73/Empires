@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-03 · M16.20 · CI, no picture change · 7 shots ≤ 0.36%
+
+Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock. The panels still read.
+No must-fix.
+
 ## 2026-10-03 · M16.19 · round-four lenses · 7 shots ≤ 0.33%
 
 Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 3).

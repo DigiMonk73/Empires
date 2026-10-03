@@ -65,10 +65,12 @@ into `main` until the user has played multiplayer on the VM (M16.8).
    - **[done, M16.18]** P75 rechecked. Hard's Tool Age still waits on a rush's food. Left open.
    - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
 4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
-   final (tag `v1.1.0`), build both `.s9pk`. With that submodule bump, update `../empires-startos` `instructions.md`
-   and `README.md`: they still say a multiplayer game cannot be saved. That sentence matches the pinned game
-   (`4152c5b`), not this branch. Here the host saves on the server, guests have no Save or Load, and speed and
-   Restart stay hidden. Do not change those files before the pin moves.
+   final (tag `v1.1.0`). Merge the wrapper first. The merge of this branch into `main` is what builds the Mac disk
+   image and moves the wrapper pin (D71); the wrapper then builds the `.s9pk`. Before that merge, add the two
+   secrets in the D71 note (`WRAPPER_TOKEN` on the game repo, `STARTOS_BUILD_KEY` on the wrapper). With the pin
+   move, update `../empires-startos` `instructions.md` and `README.md`: they still say a multiplayer game cannot
+   be saved. That sentence matches the pinned game (`4152c5b`), not this branch. Here the host saves on the server,
+   guests have no Save or Load, and speed and Restart stay hidden. Do not change those files before the pin moves.
 
 ## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
 ```
@@ -76,6 +78,10 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-03 — CI is on this branch (M16.20, D71). Every push runs the test suite. `npm run verify` green in 206 s
+  (673 unit, 180 e2e). A push to `main` builds the Mac disk image and moves the StartOS pin, which builds the
+  `.s9pk`. That does not run until item 4 merges this branch. The wrapper branch has to be merged first.
+  `develop` is not created yet. Next is still item 4, after the playtest.
 - 2026-10-03 — item 3 done (M16.19): round-four lenses A, B, E, F and H found nothing new. A was 11 node games
   (save/load agreed). B was 209 setups. E was four longer games, including 60 minutes, with a mid-game save that
   resumed. F was 155 generated maps plus the old unit scenes; arrows along the line and the coast-speck test still

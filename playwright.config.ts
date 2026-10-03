@@ -25,7 +25,14 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 800 },
         deviceScaleFactor: 2,
-        launchOptions: { args: ['--use-angle=metal', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] },
+        // Metal on a Mac. SwiftShader on Linux, which is where the GitHub test runner draws.
+        launchOptions: {
+          args: [
+            '--enable-unsafe-swiftshader',
+            '--ignore-gpu-blocklist',
+            ...(process.platform === 'darwin' ? ['--use-angle=metal'] : ['--use-angle=swiftshader']),
+          ],
+        },
       },
     },
     {

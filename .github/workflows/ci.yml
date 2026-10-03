@@ -1,0 +1,115 @@
+# Tests run on every push and every pull request.
+# A push to main, and only main, also builds a Mac disk image and points the StartOS
+# wrapper at that commit. The wrapper's own workflow then builds the .s9pk.
+# A future develop branch runs the tests and does not publish anything.
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install the browsers the tests play
+        run: npx playwright install --with-deps chromium webkit
+      - name: Reuse sprites when the art has not changed
+        uses: actions/cache@v4
+        with:
+          path: public/baked
+          key: baked-${{ hashFiles('src/art/**', 'tools/bake/**', 'bake.html') }}
+      - name: Run the full test suite
+        run: npm run verify
+      - name: Keep the logs if it failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-logs
+          path: |
+            artifacts/verify
+            artifacts/screens/CHANGED.md
+
+  dmg:
+    name: Mac disk image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: This image is for Apple Silicon
+        run: test "$(uname -m)" = "arm64"
+      - name: Build the disk image and open the app hidden
+        run: |
+          npx tauri build --target aarch64-apple-darwin --bundles dmg
+          node tools/tauri-smoke.ts
+      - name: Publish the disk image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dmg=$(find src-tauri/target/aarch64-apple-darwin/release/bundle/dmg -name '*.dmg' -print -quit)
+          test -n "$dmg"
+          tag="mac-${GITHUB_SHA::7}"
+          notes="Apple Silicon disk image from this commit of main.
+
+          macOS may say the app is from an unidentified developer. Right-click Empires, choose Open, then Open again.
+
+          The StartOS package is built by the wrapper when that repository is updated to this commit."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$dmg" --clobber
+          else
+            gh release create "$tag" "$dmg" --title "Empires for Mac (${GITHUB_SHA::7})" --notes "$notes"
+          fi
+
+  wrapper:
+    name: Point the StartOS wrapper at this commit
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: dmg
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move the wrapper's game pin
+        env:
+          WRAPPER_TOKEN: ${{ secrets.WRAPPER_TOKEN }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ -z "$WRAPPER_TOKEN" ]; then
+            echo "::error title=Missing WRAPPER_TOKEN::On DigiMonk73/Empires, add a secret named WRAPPER_TOKEN. It is a GitHub token whose only permission is to write contents of DigiMonk73/empires-startos. Without it the Mac disk image is published and the StartOS package is not."
+            exit 1
+          fi
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global credential.helper '!gh auth git-credential'
+          GH_TOKEN="$WRAPPER_TOKEN" gh repo clone DigiMonk73/empires-startos wrapper -- --branch main --single-branch
+          cd wrapper
+          git update-index --cacheinfo "160000,${SHA},upstream-project"
+          if git diff --cached --quiet; then
+            echo "The wrapper already points at ${SHA}."
+            exit 0
+          fi
+          git commit -m "Pin Empires ${SHA}"
+          git push origin HEAD:main

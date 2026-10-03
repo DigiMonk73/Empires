@@ -484,3 +484,12 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   `docs/metrics/ai-band.json` (wars 3/96, Hard > Moderate 8/256, Hardest > Hard 8/256, water 8/192, duels 3/64 —
   ≈ 1.2 σ of a difference of two 4-run totals), and the Done bars (DONE.md §3) must hold on the four-run average.
   The held-out seeds stay held out; the baseline is re-recorded when a change is kept.
+- **D71 — GitHub runs the tests, and `main` publishes the Mac app and the StartOS package** (2026-10-03).
+  Every push and pull request runs `npm run verify` on Linux (SwiftShader, because that runner has no Mac GPU).
+  A push to `main` builds an Apple Silicon disk image, checks the hidden app smoke, and publishes the `.dmg`.
+  That same push moves the `empires-startos` submodule to the new commit, and the step fails until the
+  `WRAPPER_TOKEN` secret exists. The disk image is already published by then.
+  The wrapper then builds `empires_aarch64.s9pk` and `empires_x86_64.s9pk` and attaches them to its own release.
+  Nothing is sent to the Start9 registry. The scaffold workflows that would do that still watch `master` and still
+  need registry keys. A `develop` branch is not created yet: when it exists, pushes there run the tests only.
+  Publishing stays on `main`. The disk image is ad-hoc signed until an Apple certificate is added.
