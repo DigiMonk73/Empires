@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M16.11 · seat pings · 8 shots ≤ 0.29% px
+
+Help, credits, options and the save dialog, both engines. The diffs are the menu backdrop and the save rows'
+clocks. Help's text still reads. No must-fix.
+
 ## 2026-10-02 · M16.10 · guest civilization and team · 6 shots ≤ 0.30% px
 
 Options, credits and the save dialog, both engines. The diffs are the menu backdrop and the save rows' clock

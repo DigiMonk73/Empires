@@ -3,7 +3,7 @@ import { CIVS } from '../../data/civs.ts';
 import { MAP_TYPES } from '../../data/setup.ts';
 import type { SkirmishPlayer, SkirmishSetup } from '../../game/skirmish.ts';
 import { withFlags } from '../../game/urlFlags.ts';
-import { NetClient, type RoomInfo, type RoomState } from '../../platform/netClient.ts';
+import { formatPing, NetClient, type RoomInfo, type RoomState } from '../../platform/netClient.ts';
 import { delayFor, MP_KEY, type MpLaunch, type NetGameInfo } from '../../platform/netLaunch.ts';
 import { Emblem } from '../emblems.tsx';
 import { CivInfo, Skirmish } from './Menu.tsx';
@@ -140,6 +140,7 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
         mp={{
           code: room.code,
           names: room.members.map((m) => m.name),
+          pings: room.members.map((m) => m.rtt ?? 0),
           remote: setup,
           share: (s) => net.setup(s),
           start: (s) => {
@@ -199,6 +200,7 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
                   <td>
                     {r.members}/{r.max}
                   </td>
+                  <td data-testid={`mp-pings-${r.code}`}>{(r.pings ?? []).map((ms) => formatPing(ms)).join(' · ')}</td>
                   <td>
                     <button class="small" data-testid={`mp-join-${r.code}`} onClick={() => join(r.code)}>
                       Join
@@ -215,7 +217,7 @@ export function Multiplayer({ onBack }: { onBack: () => void }) {
           </table>
           <div class="menu-buttons row">
             <button onClick={() => (net.close(), onBack())}>Back</button>
-            <button onClick={refresh}>Refresh</button>
+            <button data-testid="mp-refresh" onClick={refresh}>Refresh</button>
           </div>
         </div>
       ) : room ? (
@@ -265,7 +267,14 @@ function GuestRoom({ room, setup, onLeave, onSeat }: { room: RoomState; setup: S
               {setup.players.map((p, i) => (
                 <tr data-testid={`mp-seat-${i + 1}`}>
                   <td>Player {i + 1}</td>
-                  <td>{seatLabel(p, i)}</td>
+                  <td>
+                    {seatLabel(p, i)}
+                    {p.controller === 'human' && humans.indexOf(i) >= 0 && humans.indexOf(i) < room.members.length && (
+                      <span class="seat-ping" data-testid={`mp-ping-${i}`}>
+                        {formatPing(room.members[humans.indexOf(i)]?.rtt)}
+                      </span>
+                    )}
+                  </td>
                   <td>
                     {i === mine ? (
                       <span class="civ-cell">

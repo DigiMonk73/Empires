@@ -41,10 +41,17 @@ test('two players host and join from the menu, then play one game in step (M16.3
   const title = await host!.getByTestId('skirmish-setup').locator('h2').innerText();
   const code = /room ([A-Z]{4})/.exec(title)![1]!;
   await expect(host!.getByTestId('setup-start')).toBeDisabled(); // a Human seat is still open
+  await guest!.getByTestId('mp-refresh').click();
+  await expect(guest!.getByTestId(`mp-pings-${code}`)).toHaveText(/\d+ ms/);
   await guest!.getByTestId('mp-code').fill(code);
   await guest!.getByTestId('mp-join').click();
   await expect(guest!.getByTestId('mp-guest-room')).toBeVisible();
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  // Seats show each member's ping (M16.11). A localhost round trip may be 0 ms.
+  await expect(host!.getByTestId('setup-ping-0')).toHaveText(/\d+ ms/);
+  await expect(host!.getByTestId('setup-ping-1')).toHaveText(/\d+ ms/);
+  await expect(guest!.getByTestId('mp-ping-0')).toHaveText(/\d+ ms/);
+  await expect(guest!.getByTestId('mp-ping-1')).toHaveText(/\d+ ms/);
   await host!.getByTestId('setup-size').selectOption('tiny');
   await expect(guest!.getByTestId('mp-seat-2')).toContainText('Bo');
   // Bo picks a civilization and a team (M16.10). The host sees it, and changing the map does not put it back.

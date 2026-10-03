@@ -88,6 +88,8 @@ describe('multiplayer relay (M16.1)', () => {
     // Each member's measured round trip goes round the room (the host sets the delay from it, M16.6).
     b.send({ t: 'rtt', ms: 140 });
     expect(((await a.next('members')).members as { rtt: number }[]).map((m) => m.rtt)).toEqual([0, 140]);
+    b.send({ t: 'list' });
+    expect((await b.next('rooms')).rooms).toEqual(expect.arrayContaining([expect.objectContaining({ code, pings: [0, 140] })]));
     c.send({ t: 'join', code, name: 'Cy' });
     expect(await c.next('room')).toMatchObject({ you: 2 });
 

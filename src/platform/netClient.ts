@@ -19,6 +19,14 @@ export interface RoomInfo {
   members: number;
   max: number;
   started: boolean;
+  /** Each member's round trip to the server, host first. 0 until that member has measured. */
+  pings?: number[];
+}
+
+/** A seat's ping, in milliseconds. 0 is a real reading on a fast link. */
+export function formatPing(ms: number | undefined): string {
+  const n = Math.round(ms ?? 0);
+  return `${Number.isFinite(n) && n > 0 ? n : 0} ms`;
 }
 export interface RoomState {
   code: string;

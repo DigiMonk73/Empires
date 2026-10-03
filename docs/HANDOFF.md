@@ -52,7 +52,7 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 2. **Multiplayer polish** (`docs/MULTIPLAYER.md`), in this order, each as its own verified step:
    - **[done, M16.10]** A guest with a human seat picks that seat's civilization and team. The host sees it and
      cannot overwrite it by changing the map or rewriting the row. A member with no human seat cannot pick.
-   - The room list and seats show each member's ping.
+   - **[done, M16.11]** The room list and the seats show each member's ping (0 ms until measured; a fast link may stay 0).
    - A two-client input monkey (lens C for multiplayer) and a 30-minute two-browser soak.
    - Saving a multiplayer game (the host saves; a load restarts the room from the save).
 3. **Polish lenses, round four** (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
@@ -65,6 +65,8 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 — item 2, step 2 (M16.11): the room list and the seats show each member's ping. Next: a two-client
+  input monkey and a 30-minute two-browser soak.
 - 2026-10-02 — item 2, step 1 (M16.10): a guest picks their own civilization and team. The relay keeps that choice
   when the host sends a new setup. Next: the room list and seats show each member's ping.
 - 2026-10-02 14:30 — item 1 done (M16.9): the arrows patch on 3a64a96 banded PASS, water 182/192 (baseline 190 − 8), wars 92/96,

@@ -275,6 +275,12 @@
   color: #f2d27a;
   font-size: 14px;
 }
+.seat-ping {
+  margin-left: 8px;
+  color: #cdb487;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
 .mp-form,
 .mp-room {
   display: flex;

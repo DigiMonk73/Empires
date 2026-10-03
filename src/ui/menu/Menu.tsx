@@ -11,6 +11,7 @@ import { techTree } from '../techTree.ts';
 import { loadQuery } from '../../game/saveGame.ts';
 import { withFlags } from '../../game/urlFlags.ts';
 import { Emblem } from '../emblems.tsx';
+import { formatPing } from '../../platform/netClient.ts';
 import { VolumeControls } from '../options/VolumeControls.tsx';
 import { ControlOptions, QolOptions } from '../options/GameOptions.tsx';
 import { gameSettings } from '../settings.ts';
@@ -71,6 +72,8 @@ export interface HostRoom {
   code: string;
   /** The room's members' names, the host first. */
   names: string[];
+  /** Each member's round trip, in the same order as `names`. */
+  pings: number[];
   /** The server's setup after a guest picks a civilization or team. Null until one does. */
   remote: SkirmishSetup | null;
   share: (s: SkirmishSetup) => void;
@@ -244,7 +247,14 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
               </td>
               <td>
                 {i === 0 ? (
-                  <span>You</span>
+                  <span>
+                    You
+                    {mp && (
+                      <span class="seat-ping" data-testid="setup-ping-0">
+                        {formatPing(mp.pings[0])}
+                      </span>
+                    )}
+                  </span>
                 ) : (
                   <span class="seat-cell">
                     <select data-testid={`setup-controller-${i}`} value={p.controller} onChange={(e) => updP(i, { controller: (e.target as HTMLSelectElement).value as SkirmishPlayer['controller'] })}>
@@ -253,7 +263,14 @@ export function Skirmish({ onBack, mp }: { onBack: () => void; mp?: HostRoom }) 
                         <option value={l}>Computer ({cap(l)})</option>
                       ))}
                     </select>
-                    {mp && p.controller === 'human' && <span class="seat-name" data-testid={`setup-seat-name-${i}`}>{seatName(i)}</span>}
+                    {mp && p.controller === 'human' && (
+                      <>
+                        <span class="seat-name" data-testid={`setup-seat-name-${i}`}>{seatName(i)}</span>
+                        <span class="seat-ping" data-testid={`setup-ping-${i}`}>
+                          {formatPing(mp.pings[humanSeats.indexOf(i)])}
+                        </span>
+                      </>
+                    )}
                   </span>
                 )}
               </td>

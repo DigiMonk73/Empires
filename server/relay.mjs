@@ -4,7 +4,7 @@
 //
 // Text frames (JSON), client → server:
 //   {t:'hello', name}                    → {t:'welcome', id}
-//   {t:'list'}                           → {t:'rooms', rooms:[{code, host, members, max, started}]}
+//   {t:'list'}                           → {t:'rooms', rooms:[{code, host, members, max, started, pings}]}
 //   {t:'create', name, max?}             → {t:'room', code, you, host, members}     (you = your peer index)
 //   {t:'join', code, name}               → {t:'room', …} to you, {t:'members', members} to the others
 //   {t:'leave'}
@@ -134,7 +134,14 @@ export function attachRelay(server, { path = '/ws', log = () => {}, awayMs = AWA
       case 'list':
         return sendJson(c, {
           t: 'rooms',
-          rooms: [...rooms.values()].map((r) => ({ code: r.code, host: r.members[0]?.name ?? '', members: r.members.length, max: r.max, started: r.started })),
+          rooms: [...rooms.values()].map((r) => ({
+            code: r.code,
+            host: r.members[0]?.name ?? '',
+            members: r.members.length,
+            max: r.max,
+            started: r.started,
+            pings: r.members.map((m) => m.rtt ?? 0),
+          })),
         });
       case 'create': {
         if (room) leave(c);
