@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETUP, skirmishConfig } from '../../src/game/skirmish.ts';
 import { GameSession } from '../../src/game/session.ts';
-import { loadSession, saveSession } from '../../src/game/saveGame.ts';
+import { loadSession, resumeFits, saveSession } from '../../src/game/saveGame.ts';
 
 /** Two computer players on a tiny map; local player 0 (a spectator) so both AIs run. */
 function game(seed: number): GameSession {
@@ -36,6 +36,13 @@ describe('saved games', () => {
     run(b, 20 * 60 * 4);
     expect(b.sim.tick).toBe(a.sim.tick);
     expect(b.sim.hash()).toBe(a.sim.hash());
+  });
+
+  it('a multiplayer room resumes a save only when the player counts match', () => {
+    const save = saveSession(game(3), { id: 't', name: 'n', kind: '', savedAt: 0, camera: { x: 0, y: 0, zoom: 1 } });
+    expect(resumeFits(save, 2)).toBe(true);
+    expect(resumeFits(save, 4)).toBe(false);
+    expect(resumeFits({ ...save, world: new Uint8Array([1, 2, 3]) }, 2)).toBe(false);
   });
 
   it('a save without the AI memories diverges (the memories matter)', () => {

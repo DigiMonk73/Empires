@@ -36,7 +36,7 @@ import { completeResearch } from './sim/systems/production.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { AudioHooks } from './audio/hooks.ts';
 import './ui/fonts.css';
-import { AUTOSAVE_ID, AUTOSAVE_TICKS, loadQuery, loadSession, saveSession, type SavedGame } from './game/saveGame.ts';
+import { AUTOSAVE_ID, AUTOSAVE_TICKS, loadQuery, loadSession, resumeFits, saveSession, type SavedGame } from './game/saveGame.ts';
 import { saves } from './platform/saves.ts';
 import { serverSaves } from './platform/serverSaves.ts';
 import { techTree } from './ui/techTree.ts';
@@ -229,10 +229,14 @@ async function boot(): Promise<void> {
     const civ = world.players[me]?.civ ?? 'greek';
     hud.techTree.value = { civ, columns: techTree(civ, world, me), full: world.fullTechTree };
   };
-  hudActions.loadGame = (id, where) => {
+  hudActions.loadGame = async (id, where) => {
     if (mp) {
-      // The host's load restarts the room. The page reloads when the server says so, and so does everyone else.
+      // The host's load restarts the room. A save with a different number of players would leave a seat with no
+      // player, so it is refused here and nobody reloads.
       if (mp.launch.you !== 0 || where !== 'server') return;
+      const save = await serverSaves.get(id);
+      if (!save) return 'That saved game no longer exists.';
+      if (!resumeFits(save, mp.launch.game.setup.players.length)) return 'That save is from a different game.';
       mp.net.load(id);
       return;
     }

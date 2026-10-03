@@ -9,10 +9,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. Baseline re-recorded.
-- **Last green:** `npm run verify` 202 s — 671 unit, 174 e2e, purity ok. No AI or map change, so the band was not re-run.
+- **Last green:** `npm run verify` 201 s — 672 unit, 176 e2e, purity ok. No AI or map change, so the band was not re-run.
   The 30-game-minute soak (`EMPIRES_MP_SOAK=1`) passed once: 36020 ticks, no desync. verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 4 shots ≤ 0.14% px (credits, classic options, save-row clocks). The panels still read. No must-fix.
-- **Open:** HANDOFF item 3 started (M16.14, multiplayer speed keys). P72 and P75 still open from M15.10.
+- **Screens:** 3 shots ≤ 0.12% px (options, credits, a save-row clock). The panels still read. No must-fix.
+- **Open:** HANDOFF item 3 in progress (M16.14 speed keys, M16.15 a mismatched save is refused). P72 and P75 still open from M15.10.
   KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
@@ -1352,6 +1352,10 @@ Each task maps to a Done-definition item (PLAN.md). The AI gates already hold (M
             speed (the menu already hid the speed buttons) · two browsers, F11 then + — _fixed (M16.14):_ + and −
             do nothing in a multiplayer game, and the line shows the speed the session kept. A single-player game
             still steps 1.0, 1.5 and 2.0. Test: `multiplayer.spec.ts` "plus and minus".
+      - [x] P81 · should · multiplayer load · a host load of a save with a different player count would restart the
+            room into a world a seat cannot play · a 3-player scenario saved, then a 2-player room — _fixed (M16.15):_
+            the dialog says "That save is from a different game." and nobody reloads. Tests: `save-game.test.ts`
+            "player counts"; `multiplayer.spec.ts` "different number of players".
       - _Noted (A3, nice):_ a Narrows army waits 20–30 min for one transport; a priest's reconversion puts a player at
         51/50 (likely faithful)._
       - [x] P20 · should · mapgen islands 2p · **[blocked → KI-14; tried again after D69: water 44/48]** · ~15% of two-player island maps start a villager inside a forest

@@ -54,6 +54,18 @@ export function saveSession(session: GameSession, o: { id: string; name: string;
   };
 }
 
+/**
+ * A multiplayer room can resume a save only when it has the same number of players. Gaia is `players[0]`,
+ * so a two-player game has three entries. A save this room cannot resume is refused before anyone reloads.
+ */
+export function resumeFits(save: SavedGame, playerCount: number): boolean {
+  try {
+    return Sim.deserialize(save.world).world.players.length - 1 === playerCount;
+  } catch {
+    return false;
+  }
+}
+
 /** Rebuild the session a save was made from (throws when the save is from another sim version). */
 export function loadSession(save: SavedGame): GameSession {
   const session = new GameSession(Sim.deserialize(save.world), save.localPlayer);

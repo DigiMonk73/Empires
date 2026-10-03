@@ -408,7 +408,15 @@ function Menu() {
       {screen === 'credits' && <Credits onBack={back} />}
       {screen === 'skirmish' && <Skirmish onBack={back} />}
       {screen === 'multiplayer' && <Multiplayer onBack={back} />}
-      {screen === 'load' && <SaveList mode="load" onLoad={(id, where) => (location.search = loadQuery(id, new URLSearchParams(location.search), where))} onClose={back} />}
+      {screen === 'load' && (
+        <SaveList
+          mode="load"
+          onLoad={(id, where) => {
+            location.search = loadQuery(id, new URLSearchParams(location.search), where);
+          }}
+          onClose={back}
+        />
+      )}
     </div>
   );
 }

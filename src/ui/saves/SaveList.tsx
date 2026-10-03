@@ -23,7 +23,7 @@ export function SaveList(props: {
   mode: 'save' | 'load';
   defaultName?: string;
   onSave?: (name: string, overwrite: string | null, where: SaveWhere) => Promise<void>;
-  onLoad?: (id: string, where: SaveWhere) => void;
+  onLoad?: (id: string, where: SaveWhere) => void | Promise<string | void>;
   onClose: () => void;
   /** Multiplayer saves live on the server, so both players can reload them. Hides the device tab. */
   only?: SaveWhere;
@@ -122,8 +122,11 @@ export function SaveList(props: {
                     class={picked === g.id ? 'picked' : ''}
                     data-testid="save-row"
                     onClick={() => {
-                      if (props.mode === 'load') props.onLoad?.(g.id, where);
-                      else {
+                      if (props.mode === 'load') {
+                        void Promise.resolve(props.onLoad?.(g.id, where)).then((msg) => {
+                          if (msg) setNote(msg);
+                        });
+                      } else {
                         setPicked(g.id);
                         setName(g.name);
                       }

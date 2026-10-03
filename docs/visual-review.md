@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-02 · M16.15 · a mismatched multiplayer save is refused · 3 shots ≤ 0.12% px
+
+Options, credits and the server save dialog. The diffs are the menu backdrop and a save-row clock. The options
+controls, the credits text and the save list still read. No must-fix.
+
 ## 2026-10-02 · M16.14 · multiplayer speed keys · 4 shots ≤ 0.14% px
 
 Credits, classic options, and the save dialog. The diffs are the menu backdrop and a save-row clock. Credits,

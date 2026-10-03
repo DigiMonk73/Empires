@@ -351,3 +351,48 @@ test('the host saves, and a load restarts both players from that save (M16.13)',
   expect(await guest!.evaluate(() => window.__mp!.session.localPlayer)).toBe(2);
   expect(errors).toEqual([]);
 });
+
+test('the host cannot restart the room from a save with a different number of players (M16.15)', async ({ browser }, info) => {
+  test.setTimeout(120_000);
+  const saveName = `other-game-${info.project.name}`;
+  const errors: string[] = [];
+  const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
+  for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
+
+  // A three-player scenario, saved on the server. The room below has two players.
+  await host!.goto('./?scenario=diplomacy&edgeScroll=0');
+  await host!.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 0, null, { timeout: 30_000 });
+  await host!.keyboard.press('F10');
+  await host!.getByTestId('menu-save').click();
+  await host!.getByTestId('saves-server').click();
+  await host!.getByTestId('save-name').fill(saveName);
+  await host!.getByTestId('save-confirm').click();
+  await expect(host!.getByTestId('save-note')).toHaveText('Game saved.');
+
+  await enterLobby(host!, 'Ann');
+  await enterLobby(guest!, 'Bo');
+  await host!.getByTestId('mp-host').click();
+  const code = /room ([A-Z]{4})/.exec(await host!.getByTestId('skirmish-setup').locator('h2').innerText())![1]!;
+  await guest!.getByTestId('mp-code').fill(code);
+  await guest!.getByTestId('mp-join').click();
+  await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
+  await host!.getByTestId('setup-size').selectOption('tiny');
+  await host!.getByTestId('setup-start').click();
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 60_000 });
+
+  const before = await tick(host!);
+  await host!.evaluate(() => ((window as unknown as { __loadMark?: number }).__loadMark = 1));
+  await host!.keyboard.press('F10');
+  await host!.getByTestId('menu-load').click();
+  await host!.getByTestId('save-row').filter({ hasText: saveName }).click();
+  await expect(host!.getByTestId('save-note')).toHaveText('That save is from a different game.');
+  expect(await host!.evaluate(() => (window as unknown as { __loadMark?: number }).__loadMark)).toBe(1);
+  await expect.poll(() => tick(host!), { timeout: 15_000 }).toBeGreaterThan(before);
+  expect(await guest!.evaluate(() => window.__mp!.session.localPlayer)).toBe(2);
+
+  await host!.evaluate(async (name) => {
+    const list = (await (await fetch('./api/saves')).json()) as { id: string; name: string }[];
+    await Promise.all(list.filter((s) => s.name === name).map((s) => fetch(`./api/saves/${encodeURIComponent(s.id)}`, { method: 'DELETE' })));
+  }, saveName);
+  expect(errors).toEqual([]);
+});

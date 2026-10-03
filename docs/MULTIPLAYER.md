@@ -68,7 +68,7 @@ decisions: multiplayer goes through the StartOS server (PLAN.md "Locked decision
       delivers everything a peer sent before announcing it left, so every survivor stops waiting after the same
       tick; `takeOver()` in `netGame.ts` gives the seat to a computer run by the lowest remaining peer (all the
       computers, if the host left). A dropped member's seat is held (`--away-ms`, 30 s) while the others wait; Quit
-      sends `{t:'leave'}` and goes at once. The in-game menu has no speed or Restart in multiplayer. The host can save and load (M16.13): the save is on the server, and a load restarts the room from it. A guest has neither.
+      sends `{t:'leave'}` and goes at once. The in-game menu has no speed or Restart in multiplayer. The host can save and load (M16.13): the save is on the server, and a load restarts the room from it. A save with a different number of players is refused (M16.15). A guest has neither.
       Tests: `lockstep.test.ts` "a peer leaving", `server-ws.test.ts`, e2e "closes the game".
 - [x] **M16.5b Rejoin mid-game.** _Done:_ the server keeps each room's packets from the start (`room.log`, up to 2M);
       a member back within the hold that had played gets `{t:'rejoined', replay:true}` and the whole log. Its page

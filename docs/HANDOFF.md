@@ -59,6 +59,7 @@ into `main` until the user has played multiplayer on the VM (M16.8).
      The save is on the server. Guests have no Save or Load. Speed and Restart stay hidden.
 3. **Polish lenses, round four** (`docs/POLISH_LOOP.md` A–H) on the 1.1.0 build, single- and multiplayer.
    - **[done, M16.14]** In a multiplayer game, + and − leave the F11 speed line on the setup speed. A single-player game still steps 1.0, 1.5 and 2.0.
+   - **[done, M16.15]** The host cannot restart the room from a server save with a different number of players. The dialog says so, and nobody reloads.
 4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
    final (tag `v1.1.0`), build both `.s9pk`.
 
@@ -68,6 +69,9 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-02 — item 3, step 2 (M16.15): a host load of a server save with a different number of players is refused.
+  The dialog says "That save is from a different game." and nobody reloads. `npm run verify` green in 201 s
+  (672 unit, 176 e2e). Next: the rest of the round-four lenses. P72 and P75 stay open.
 - 2026-10-02 — item 3, step 1 (M16.14): in a multiplayer game, + and − leave the F11 speed line on the setup speed.
   A single-player game still steps 1.0, 1.5 and 2.0. `npm run verify` green in 202 s (671 unit, 174 e2e).
   Next: the rest of the round-four lenses. P72 and P75 stay open.
