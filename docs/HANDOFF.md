@@ -38,8 +38,8 @@ playtest). Multiplayer is next (M16).
 | Trace one AI game | `node tools/sim/diagnose.ts …` (see its header) |
 
 ## Work queue (in order — take the top unfinished item; tick it with its commit)
-Work on branch **`m16-multiplayer`** (the main checkout is on it; it contains everything on `main`). Don't merge it
-into `main` until the user has played multiplayer on the VM (M16.8).
+Work on branch **`m16-multiplayer`**. `main` is the 1.1.0 release (`a0f557e`, tag `v1.1.0`), made at the user's
+request on 2026-10-04.
 
 1. **[done, M16.9] Island wood stall, then KI-13 arrows.** The stall fixes (all banded and kept, water 183 → 190/192):
    room for a transport over the population limit; a full island's last-resort building spot (Market); Docks never
@@ -64,13 +64,12 @@ into `main` until the user has played multiplayer on the VM (M16.8).
    - **[done, M16.17]** The keys list says that +/− and a pausing menu are single-player. In a multiplayer game F10 keeps the clock running.
    - **[done, M16.18]** P75 rechecked. Hard's Tool Age still waits on a rush's food. Left open.
    - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
-4. When the user has played multiplayer (M16.8): merge `m16-multiplayer` into `main` in both repos, version 1.1.0
-   final (tag `v1.1.0`). Merge the wrapper first. The merge of this branch into `main` is what builds the Mac disk
-   image and moves the wrapper pin (D71); the wrapper then builds the `.s9pk`. Before that merge, add the two
-   secrets in the D71 note (`WRAPPER_TOKEN` on the game repo, `STARTOS_BUILD_KEY` on the wrapper). With the pin
-   move, update `../empires-startos` `instructions.md` and `README.md`: they still say a multiplayer game cannot
-   be saved. That sentence matches the pinned game (`4152c5b`), not this branch. Here the host saves on the server,
-   guests have no Save or Load, and speed and Restart stay hidden. Do not change those files before the pin moves.
+4. **[done, 2026-10-04]** Released at the user's request. `main` and tag `v1.1.0` are `a0f557e` (M16.22). The
+   wrapper was merged first. Its `main` (`c974e81`) says the host saves a multiplayer game on the server, a load
+   restarts the room, guests have no Save or Load, and speed and Restart stay hidden. Pushing the game's `main`
+   builds the Mac disk image and then moves the wrapper pin (D71). `WRAPPER_TOKEN` is on the game repo and
+   `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the pin commit, and is not
+   pushed. `develop` is not created.
 
 ## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
 ```
@@ -78,6 +77,7 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-04 — Item 4 done at the user's request (M16.23). `main` and tag `v1.1.0` are `a0f557e` (M16.22). The wrapper was merged first (`c974e81`): the host saves on the server, guests have no Save or Load, and speed and Restart stay hidden. Pushing `main` builds the disk image and then moves the pin (run 37203876093). `npm run verify` green in 199 s (673 unit, 180 e2e). `develop` is not created. P75, P29, P30, P32, KI-2, KI-3 and KI-5 stay open.
 - 2026-10-04 — The upgrade-programme match finished in 8.1s on the GitHub runner and Vitest's default 5s limit failed it (run 37146162213, M16.22). That one test now allows 60s, the same as the other long matches in the file. The 6 ms tick budget stays on this Mac; the runner still allows 24 ms. `npm run verify` green in 205 s (673 unit, 180 e2e). Next is still item 4, after the playtest.
 - 2026-10-03 — The first GitHub test run was stopped at 45 minutes (M16.21, D72). Drawing the sprites took 33
   minutes and that copy was not kept. The rules tests and the full-population tick check had already failed, and
