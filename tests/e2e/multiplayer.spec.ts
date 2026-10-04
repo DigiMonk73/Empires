@@ -257,10 +257,12 @@ test('a player who closes the game: the other waits briefly, then a computer tak
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
-  await guest!.close();
-  // This Mac holds a dropped seat 3 s. The Linux runner holds it 30 s, as StartOS does: closing the page there
-  // can take longer than 3 s, and the waiting line was already gone (M16.26). The clock waits with the seat.
+  // Closing the page can outlast the hold, and the waiting line is then already gone (M16.26).
+  // Watch for it while the page closes, so a slow close does not hide the line (M16.27).
+  const closing = guest!.close();
+  closing.catch(() => {});
   await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 30_000 });
+  await closing;
   const t0 = await tick(host!);
   await expect.poll(() => tick(host!), { timeout: 90_000 }).toBeGreaterThan(t0 + 100);
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
@@ -349,7 +351,8 @@ test('the host saves, and a load restarts both players from that save (M16.13)',
   await host!.getByTestId('saves-close').click();
   await host!.getByTestId('menu-resume').click();
 
-  await expect.poll(() => tick(host!), { timeout: 20_000 }).toBeGreaterThan(saved + 80);
+  // 80 ticks took more than 20 s on the runner (108 ticks when 131 were due, M16.27).
+  await expect.poll(() => tick(host!), { timeout: 60_000 }).toBeGreaterThan(saved + 80);
   const ahead = await tick(host!);
   // A reload wipes this. The tick briefly reads as missing (−1) while the new page boots, so wait for a fresh page.
   await host!.evaluate(() => ((window as unknown as { __loadMark?: number }).__loadMark = 1));

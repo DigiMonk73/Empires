@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-04 · M16.27 · Linux draws at the normal size, no picture change on this Mac · 5 shots ≤ 0.33%
+
+Options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).
+The options controls and the save list still read. No must-fix.
+
 ## 2026-10-04 · M16.26 · Linux browser waits, no picture change · 6 shots ≤ 0.34%
 
 Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).

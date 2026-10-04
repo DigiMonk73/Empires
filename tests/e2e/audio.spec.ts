@@ -75,7 +75,8 @@ test('audio: villagers\' tools are heard on their strike frame', async ({ page }
     api.issue(1, { t: 'gather', ids: v.map((u) => u.h), res: best });
     api.pause(false);
   }, vills);
-  await page.waitForFunction(() => Object.keys(window.__empires!.audioStats().played).some((k) => ['chop', 'mine', 'hoe', 'hammer'].includes(k)), null, { timeout: 20_000 });
+  // The strike is the renderer's hit frame. A slow frame on the runner can take most of a minute (M16.27).
+  await page.waitForFunction(() => Object.keys(window.__empires!.audioStats().played).some((k) => ['chop', 'mine', 'hoe', 'hammer'].includes(k)), null, { timeout: 60_000 });
   expect(pageErrors(page)).toEqual([]);
 });
 

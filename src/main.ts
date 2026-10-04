@@ -766,10 +766,12 @@ async function boot(): Promise<void> {
     settle: async () => {
       await document.fonts.ready; // screenshots show the real fonts, not the fallback
       const raf = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      // A texture that never arrives must not freeze the page (WebKit on the runner, M16.27).
+      const cap = (p: Promise<void>) => Promise.race([p, new Promise<void>((r) => setTimeout(r, 8_000))]);
       for (let i = 0; i < 6; i++) {
-        await raf();
+        await cap(raf());
         if (!art || !art.stats().pending) break;
-        await art.idle();
+        await cap(art.idle());
       }
     },
     artStats: () => art?.stats() ?? { loaded: 0, pending: 0, known: 0, bytes: 0, evicted: 0, inUseBytes: 0 },

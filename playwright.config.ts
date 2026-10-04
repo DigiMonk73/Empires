@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
+// Software drawing at double resolution left the simulation at a few ticks a second (M16.27).
+// Linux shots are the normal size. This Mac stays sharp. A blank frame is still rejected.
+const SCALE = process.platform === 'linux' ? 1 : 2;
 // Server saves (M12.5) go to a fresh folder per run (workers inherit the id, so they agree with the server).
 process.env.E2E_RUN ??= String(Date.now());
 const DATA_DIR = `artifacts/e2e-data/run-${process.env.E2E_RUN}`;
@@ -19,7 +22,7 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${PORT}/`,
     viewport: { width: 1280, height: 800 },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: SCALE,
     headless: true,
   },
   projects: [
@@ -28,7 +31,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 800 },
-        deviceScaleFactor: 2,
+        deviceScaleFactor: SCALE,
         // Metal on a Mac. SwiftShader on Linux, which is where the GitHub test runner draws.
         launchOptions: {
           args: [
@@ -41,7 +44,7 @@ export default defineConfig({
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 },
+      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 800 }, deviceScaleFactor: SCALE },
     },
   ],
   webServer: {

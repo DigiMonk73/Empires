@@ -3,7 +3,8 @@ import { pageErrors, snap } from './helpers.ts';
 
 async function openAfterMenu(page: Page, query: string): Promise<void> {
   await page.goto(`./?debug=1&edgeScroll=0&${query}`);
-  await page.waitForFunction(() => !!window.__empires, null, { timeout: 30_000 });
+  // The game page can take more than 30 s to boot under software drawing (M16.27).
+  await page.waitForFunction(() => !!window.__empires, null, { timeout: 90_000 });
   await page.evaluate(() => window.__empires!.ready());
 }
 
