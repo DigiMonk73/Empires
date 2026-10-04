@@ -9,7 +9,9 @@ export default defineConfig({
   testDir: 'tests/e2e',
   outputDir: 'artifacts/playwright',
   fullyParallel: true,
-  workers: 4,
+  // Four browsers on the GitHub runner left the simulation at a fraction of speed and 45 tests
+  // hit their time limit (M16.24). One browser there. This Mac still runs four.
+  workers: process.platform === 'linux' ? 1 : 4,
   reporter: [['list'], ['json', { outputFile: 'artifacts/playwright/results.json' }]],
   timeout: 60_000,
   use: {

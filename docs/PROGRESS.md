@@ -3,7 +3,7 @@
 ## State of the world
 _Rewritten every iteration. Keep ≤ 30 lines._
 
-- **Branch:** `m16-multiplayer`. `main` and tag `v1.1.0` are `a0f557e` (M16.22), released 2026-10-04 at the user's request.
+- **Branch:** `m16-multiplayer`. `v1.1.0` moves to this commit. The first `main` run (`a0f557e`) failed its browser tests.
 - **M16:** M16.1–M16.6 done. Tagged `v1.1.0-rc1`; both `.s9pk` 1.1.0:0 from empires-startos c8b4d2d, not on the VM.
   M16.9 fixed the island wood stall and landed KI-13 arrows.
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
@@ -13,10 +13,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
   duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
   verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 5 shots ≤ 0.31% (options, save rows). The backdrop and a save-row clock. No must-fix.
-- **Open:** HANDOFF items 1–4 done. The wrapper's `main` (`c974e81`) has the host-save wording. Game run
-  37203876093 builds the disk image and then moves the pin. The 6 ms tick budget stays; the runner still allows
-  24 ms (D72). P75, P29, P30, P32 still open. KI-2, KI-3, KI-5. `develop` is not created. The wrapper tag stays local.
+- **Screens:** 6 shots ≤ 0.27% (credits, options, save rows). The backdrop and a save-row clock. No must-fix.
+- **Open:** HANDOFF items 1–4 done. Run 37203876093: rules passed, 45 browser tests timed out under four workers.
+  Linux now uses one. The wrapper's `main` (`c974e81`) has the host-save wording. The 6 ms tick budget stays; the
+  runner still allows 24 ms (D72). P75, P29, P30, P32 still open. KI-2, KI-3, KI-5. `develop` is not created.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
 

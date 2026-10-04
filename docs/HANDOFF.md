@@ -64,12 +64,14 @@ request on 2026-10-04.
    - **[done, M16.17]** The keys list says that +/− and a pausing menu are single-player. In a multiplayer game F10 keeps the clock running.
    - **[done, M16.18]** P75 rechecked. Hard's Tool Age still waits on a rush's food. Left open.
    - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
-4. **[done, 2026-10-04]** Released at the user's request. `main` and tag `v1.1.0` are `a0f557e` (M16.22). The
-   wrapper was merged first. Its `main` (`c974e81`) says the host saves a multiplayer game on the server, a load
-   restarts the room, guests have no Save or Load, and speed and Restart stay hidden. Pushing the game's `main`
-   builds the Mac disk image and then moves the wrapper pin (D71). `WRAPPER_TOKEN` is on the game repo and
-   `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the pin commit, and is not
-   pushed. `develop` is not created.
+4. **[done, 2026-10-04]** Released at the user's request. The wrapper was merged first. Its `main` (`c974e81`)
+   says the host saves a multiplayer game on the server, a load restarts the room, guests have no Save or Load,
+   and speed and Restart stay hidden. The first game `main` run (37203876093, `a0f557e`) passed the rules and the
+   24 ms tick check, then 45 browser tests hit their time limit: four browsers left the simulation at about four
+   ticks a second. Linux now runs one browser. This Mac still runs four. The frame gates and both tick budgets stay.
+   `v1.1.0` is this commit. Pushing it builds the disk image and then moves the wrapper pin (D71). `WRAPPER_TOKEN`
+   is on the game repo and `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the
+   pin commit, and is not pushed. `develop` is not created.
 
 ## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
 ```
@@ -77,6 +79,7 @@ request on 2026-10-04.
 ```
 
 ## Status
+- 2026-10-04 — The release run 37203876093 failed in the browser tests (45 failed, 134 passed). Linux now plays one browser at a time (M16.24). This Mac still plays four. The 6 ms tick budget and the runner's 24 ms budget stay, and so do the frame gates. `npm run verify` green in 199 s (673 unit, 180 e2e). `develop` is not created. P75, P29, P30, P32, KI-2, KI-3 and KI-5 stay open.
 - 2026-10-04 — Item 4 done at the user's request (M16.23). `main` and tag `v1.1.0` are `a0f557e` (M16.22). The wrapper was merged first (`c974e81`): the host saves on the server, guests have no Save or Load, and speed and Restart stay hidden. Pushing `main` builds the disk image and then moves the pin (run 37203876093). `npm run verify` green in 199 s (673 unit, 180 e2e). `develop` is not created. P75, P29, P30, P32, KI-2, KI-3 and KI-5 stay open.
 - 2026-10-04 — The upgrade-programme match finished in 8.1s on the GitHub runner and Vitest's default 5s limit failed it (run 37146162213, M16.22). That one test now allows 60s, the same as the other long matches in the file. The 6 ms tick budget stays on this Mac; the runner still allows 24 ms. `npm run verify` green in 205 s (673 unit, 180 e2e). Next is still item 4, after the playtest.
 - 2026-10-03 — The first GitHub test run was stopped at 45 minutes (M16.21, D72). Drawing the sprites took 33
