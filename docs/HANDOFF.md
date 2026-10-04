@@ -65,14 +65,15 @@ Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the
    - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
 4. **[in progress, 2026-10-04]** Release at the user's request. The wrapper was merged first. Its `main`
    (`c974e81`) says the host saves a multiplayer game on the server, a load restarts the room, guests have no
-   Save or Load, and speed and Restart stay hidden. Linux runs one browser. This Mac still runs four. The music
-   check and the long matches allow 60s. The slow waits are longer on Linux (M16.26). Run 37212765373 still
-   failed eight browser tests after 83 minutes: software drawing at double resolution left the simulation at a
-   few ticks a second. Linux now draws at the normal size (M16.27). This Mac stays sharp. The frame gates and
-   both tick budgets stay. `v1.1.0` is this commit. Pushing it builds the
-   disk image and then moves the wrapper pin (D71). The disk image and the package are not built yet.
-   `WRAPPER_TOKEN` is on the game repo and `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag
-   stays local, on the pin commit, and is not pushed. `develop` is not created.
+   Save or Load, and speed and Restart stay hidden. Linux runs one browser and draws at the normal size.
+   This Mac still runs four and stays sharp. Run 37218611899 passed the rules and 175 browser tests in
+   65 minutes, then three tests ran out of time while the game was still starting. Those two multiplayer
+   starts now wait two minutes for the first ticks, and the achievements page allows three minutes. A font
+   or texture that never arrives can no longer freeze the page (M16.28). The frame gates and both tick
+   budgets stay. `v1.1.0` is this commit. Pushing it builds the disk image and then moves the wrapper pin
+   (D71). The disk image and the package are not built yet. `WRAPPER_TOKEN` is on the game repo and
+   `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the pin commit, and is
+   not pushed. `develop` is not created.
 
 ## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
 ```
@@ -80,6 +81,7 @@ Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the
 ```
 
 ## Status
+- 2026-10-04 — Release run 37218611899 passed the rules and the 24 ms tick check, then 3 browser tests ran out of time while the game was still starting (M16.28). 175 browser tests had passed. The input monkey and the different-player load now wait two minutes for the first ticks, and the achievements page allows three minutes. A font or texture that never arrives can no longer freeze the page. Linux still draws at the normal size. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 199 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37212765373 passed the rules and the 24 ms tick check, then 8 browser tests ran out of time after 83 minutes (M16.27). Software drawing at double resolution left the simulation at a few ticks a second. Linux now draws at the normal size. This Mac stays sharp. A dropped page is watched while it closes. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 199 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37208659774 passed the rules and the 24 ms tick check, then 8 browser tests ran out of time (M16.26). One browser on the runner still plays at about six ticks a second, and a few pages take more than 30 s to show the menu. Those waits are longer on Linux. This Mac is unchanged. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 198 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37207949885 failed the music check at 6.0s (M16.25). That test, the 12-minute boom, and the two long save matches now allow 60s. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 201 s (673 unit, 180 e2e).

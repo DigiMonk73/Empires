@@ -204,7 +204,7 @@ async function poke(page: Page, rand: () => number): Promise<void> {
 }
 
 test('two browsers survive a seeded input monkey without errors or a desync (M16.12)', async ({ browser }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(360_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) {
@@ -222,7 +222,8 @@ test('two browsers survive a seeded input monkey without errors or a desync (M16
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
-  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 20, null, { timeout: 60_000 });
+  // Both pages can take more than a minute to draw and reach the first ticks (M16.28).
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 20, null, { timeout: 120_000 });
 
   // Lens C, two clients: a smaller window, seeded clicks and keys, the menu, a pause, then back.
   for (const p of [host!, guest!]) await p.setViewportSize({ width: 1024, height: 640 });
@@ -391,7 +392,7 @@ test('the host saves, and a load restarts both players from that save (M16.13)',
 });
 
 test('the host cannot restart the room from a save with a different number of players (M16.15)', async ({ browser }, info) => {
-  test.setTimeout(240_000);
+  test.setTimeout(360_000);
   const saveName = `other-game-${info.project.name}`;
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
@@ -416,7 +417,8 @@ test('the host cannot restart the room from a save with a different number of pl
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
-  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 60_000 });
+  // The runner's first ticks can take more than a minute after the room opens (M16.28).
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 120_000 });
 
   const before = await tick(host!);
   await host!.evaluate(() => ((window as unknown as { __loadMark?: number }).__loadMark = 1));

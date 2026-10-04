@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { frames, openGame, pageErrors, snap } from './helpers.ts';
 
 test('achievements mid-game: the timeline graphs every player, metric by metric, with age marks', async ({ page }, info) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await openGame(page, 'scenario=skirmish&type=inland&size=tiny&seed=5&p=greek.1.human,egyptian.2.moderate&res=default&speed=1&paused=1');
   await page.evaluate(() => window.__empires!.autoplay('moderate'));
   for (let m = 0; m < 14; m++) {
