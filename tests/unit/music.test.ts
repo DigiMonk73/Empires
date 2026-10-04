@@ -43,7 +43,7 @@ describe('generative music', () => {
         expect(20 * Math.log10(quietest), `${c} ${m} quietest second`).toBeGreaterThan(-50);
       }
     }
-  });
+  }, 60_000); // 6.0s on the GitHub runner; the default 5s fails it (M16.25)
 
   it('is deterministic for a seed and different across seeds', () => {
     const x = new MusicGen(RATE, 'asian', 5).next(3)[0];

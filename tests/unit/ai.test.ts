@@ -18,7 +18,7 @@ describe('AI v1 economy (M6.4)', () => {
     for (const idle of r.idlePct) expect(idle).toBeLessThan(5);
     const last = r.samples[r.samples.length - 1]!;
     for (const p of last.players) expect(p.villagers).toBeGreaterThanOrEqual(18);
-  });
+  }, 60_000); // 4.2s on the GitHub runner, next to the 5s limit (M16.25)
 
   it('is deterministic', () => {
     const a = runMatch({ seed: 5, levels: ['moderate', 'easy'], minutes: 4 });

@@ -36,7 +36,7 @@ describe('saved games', () => {
     run(b, 20 * 60 * 4);
     expect(b.sim.tick).toBe(a.sim.tick);
     expect(b.sim.hash()).toBe(a.sim.hash());
-  });
+  }, 60_000); // 4.2s on the GitHub runner, next to the 5s limit (M16.25)
 
   it('a multiplayer room resumes a save only when the player counts match', () => {
     const save = saveSession(game(3), { id: 't', name: 'n', kind: '', savedAt: 0, camera: { x: 0, y: 0, zoom: 1 } });
@@ -53,5 +53,5 @@ describe('saved games', () => {
     run(a, 20 * 60 * 4);
     run(b, 20 * 60 * 4);
     expect(b.sim.hash()).not.toBe(a.sim.hash());
-  });
+  }, 60_000); // 3.0s on the GitHub runner, next to the 5s limit (M16.25)
 });
