@@ -13,7 +13,9 @@ export default defineConfig({
   // hit their time limit (M16.24). One browser there. This Mac still runs four.
   workers: process.platform === 'linux' ? 1 : 4,
   reporter: [['list'], ['json', { outputFile: 'artifacts/playwright/results.json' }]],
-  timeout: 60_000,
+  // One browser there still plays at about six ticks a second, and a test can spend a minute
+  // before its last click (M16.26). Three minutes there. This Mac still allows one.
+  timeout: process.platform === 'linux' ? 180_000 : 60_000,
   use: {
     baseURL: `http://127.0.0.1:${PORT}/`,
     viewport: { width: 1280, height: 800 },
@@ -43,7 +45,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `node server/serve.mjs --dir dist --port ${PORT} --host 127.0.0.1 --data ${DATA_DIR} --away-ms 3000`,
+    // A dropped seat is held 3 s here. Closing a page on the runner can take longer than that, so the
+    // waiting line was already gone (M16.26). The runner holds it 30 s, as StartOS does.
+    command: `node server/serve.mjs --dir dist --port ${PORT} --host 127.0.0.1 --data ${DATA_DIR} --away-ms ${process.platform === 'linux' ? 30_000 : 3_000}`,
     url: `http://127.0.0.1:${PORT}/healthz`,
     reuseExistingServer: false,
     timeout: 30_000,

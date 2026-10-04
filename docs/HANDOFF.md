@@ -38,8 +38,7 @@ playtest). Multiplayer is next (M16).
 | Trace one AI game | `node tools/sim/diagnose.ts …` (see its header) |
 
 ## Work queue (in order — take the top unfinished item; tick it with its commit)
-Work on branch **`m16-multiplayer`**. `main` is the 1.1.0 release (`a0f557e`, tag `v1.1.0`), made at the user's
-request on 2026-10-04.
+Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the user's request on 2026-10-04.
 
 1. **[done, M16.9] Island wood stall, then KI-13 arrows.** The stall fixes (all banded and kept, water 183 → 190/192):
    room for a transport over the population limit; a full island's last-resort building spot (Market); Docks never
@@ -64,16 +63,15 @@ request on 2026-10-04.
    - **[done, M16.17]** The keys list says that +/− and a pausing menu are single-player. In a multiplayer game F10 keeps the clock running.
    - **[done, M16.18]** P75 rechecked. Hard's Tool Age still waits on a rush's food. Left open.
    - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
-4. **[done, 2026-10-04]** Released at the user's request. The wrapper was merged first. Its `main` (`c974e81`)
-   says the host saves a multiplayer game on the server, a load restarts the room, guests have no Save or Load,
-   and speed and Restart stay hidden. The first game `main` run (37203876093, `a0f557e`) passed the rules and the
-   24 ms tick check, then 45 browser tests hit their time limit: four browsers left the simulation at about four
-   ticks a second. Linux now runs one browser. This Mac still runs four. The two-minute music check also finished
-   in 6.0s and the default 5s limit failed it; that test, and two matches that finished next to the limit, now
-   allow 60s. The frame gates and both tick budgets stay. `v1.1.0` is this commit. Pushing it builds the disk
-   image and then moves the wrapper pin (D71). `WRAPPER_TOKEN`
-   is on the game repo and `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the
-   pin commit, and is not pushed. `develop` is not created.
+4. **[in progress, 2026-10-04]** Release at the user's request. The wrapper was merged first. Its `main`
+   (`c974e81`) says the host saves a multiplayer game on the server, a load restarts the room, guests have no
+   Save or Load, and speed and Restart stay hidden. Linux runs one browser. This Mac still runs four. The music
+   check and the long matches allow 60s. Run 37208659774 still failed eight browser tests: one browser plays at
+   about six ticks a second, and a few pages take more than 30 s to show the menu. Those waits are longer on
+   Linux (M16.26). The frame gates and both tick budgets stay. `v1.1.0` is this commit. Pushing it builds the
+   disk image and then moves the wrapper pin (D71). The disk image and the package are not built yet.
+   `WRAPPER_TOKEN` is on the game repo and `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag
+   stays local, on the pin commit, and is not pushed. `develop` is not created.
 
 ## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
 ```
@@ -81,6 +79,7 @@ request on 2026-10-04.
 ```
 
 ## Status
+- 2026-10-04 — Release run 37208659774 passed the rules and the 24 ms tick check, then 8 browser tests ran out of time (M16.26). One browser on the runner still plays at about six ticks a second, and a few pages take more than 30 s to show the menu. Those waits are longer on Linux. This Mac is unchanged. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 198 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37207949885 failed the music check at 6.0s (M16.25). That test, the 12-minute boom, and the two long save matches now allow 60s. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 201 s (673 unit, 180 e2e).
 - 2026-10-04 — The release run 37203876093 failed in the browser tests (45 failed, 134 passed). Linux now plays one browser at a time (M16.24). This Mac still plays four. The 6 ms tick budget and the runner's 24 ms budget stay, and so do the frame gates. `npm run verify` green in 199 s (673 unit, 180 e2e). `develop` is not created. P75, P29, P30, P32, KI-2, KI-3 and KI-5 stay open.
 - 2026-10-04 — Item 4 done at the user's request (M16.23). `main` and tag `v1.1.0` are `a0f557e` (M16.22). The wrapper was merged first (`c974e81`): the host saves on the server, guests have no Save or Load, and speed and Restart stay hidden. Pushing `main` builds the disk image and then moves the pin (run 37203876093). `npm run verify` green in 199 s (673 unit, 180 e2e). `develop` is not created. P75, P29, P30, P32, KI-2, KI-3 and KI-5 stay open.

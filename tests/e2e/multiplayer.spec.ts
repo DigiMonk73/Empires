@@ -15,7 +15,8 @@ declare global {
 
 async function enterLobby(page: Page, name: string): Promise<void> {
   await page.goto('./?edgeScroll=0');
-  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
+  // The Linux runner can take more than 30 s to draw the menu (M16.26). A menu that is already up returns at once.
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 90_000 });
   await page.getByTestId('menu-multiplayer').click();
   await page.getByTestId('mp-name').fill(name);
   await page.getByTestId('mp-connect').click();
@@ -30,7 +31,7 @@ const unitAt = (p: Page, owner: number) =>
   }, owner);
 
 test('two players host and join from the menu, then play one game in step (M16.3)', async ({ browser }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
@@ -87,7 +88,8 @@ test('two players host and join from the menu, then play one game in step (M16.3
   await expect.poll(async () => (await unitAt(host!, 2)).y - b0.y, { timeout: 20_000 }).toBeGreaterThan(2);
 
   // Past two hash checkpoints (every 100 ticks), neither side saw a desync.
-  for (const p of [host!, guest!]) await expect.poll(() => tick(p), { timeout: 40_000 }).toBeGreaterThan(260);
+  // About six ticks a second on the runner: 260 ticks did not fit in 40 s (231 ticks, M16.26).
+  for (const p of [host!, guest!]) await expect.poll(() => tick(p), { timeout: 120_000 }).toBeGreaterThan(260);
   expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
@@ -112,7 +114,7 @@ test('two players host and join from the menu, then play one game in step (M16.3
 });
 
 test('plus and minus leave the multiplayer speed line on the setup speed (M16.14)', async ({ browser }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
@@ -141,7 +143,7 @@ test('plus and minus leave the multiplayer speed line on the setup speed (M16.14
 });
 
 test('in multiplayer the menu does not pause, and the keys list says so (M16.17)', async ({ browser }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
@@ -202,7 +204,7 @@ async function poke(page: Page, rand: () => number): Promise<void> {
 }
 
 test('two browsers survive a seeded input monkey without errors or a desync (M16.12)', async ({ browser }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) {
@@ -243,7 +245,7 @@ test('two browsers survive a seeded input monkey without errors or a desync (M16
 });
 
 test('a player who closes the game: the other waits briefly, then a computer takes the seat and play goes on (M16.5)', async ({ browser }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   await enterLobby(host!, 'Ann');
   await enterLobby(guest!, 'Bo');
@@ -256,10 +258,11 @@ test('a player who closes the game: the other waits briefly, then a computer tak
   await host!.getByTestId('setup-start').click();
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
   await guest!.close();
-  // The test server holds a dropped player's seat 3 s (StartOS: 30 s) in case they come back; meanwhile the host waits.
-  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 15_000 });
+  // This Mac holds a dropped seat 3 s. The Linux runner holds it 30 s, as StartOS does: closing the page there
+  // can take longer than 3 s, and the waiting line was already gone (M16.26). The clock waits with the seat.
+  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 30_000 });
   const t0 = await tick(host!);
-  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(t0 + 100);
+  await expect.poll(() => tick(host!), { timeout: 90_000 }).toBeGreaterThan(t0 + 100);
   await expect(host!.getByTestId('mp-waiting')).toBeHidden();
   // Player 2's villagers are working for the computer now.
   await expect
@@ -268,7 +271,7 @@ test('a player who closes the game: the other waits briefly, then a computer tak
 });
 
 test('a player who reloads mid-game catches up and both play on in step (M16.5b)', async ({ browser }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(360_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
@@ -281,7 +284,8 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
-  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 300, null, { timeout: 60_000 });
+  // 300 ticks at about six a second, after the page has drawn (M16.26).
+  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 300, null, { timeout: 180_000 });
   // The host can save and load. Restart stays hidden: it would reload one page and leave the other waiting.
   await host!.keyboard.press('F10');
   await expect(host!.getByTestId('menu-resume')).toBeVisible();
@@ -292,14 +296,15 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
   // A connection blip (the socket closes, the page stays): the page reloads itself and rejoins.
   const blip = await tick(host!);
   await guest!.evaluate(() => (window as unknown as { __mp: { net: { close(): void } } }).__mp.net.close());
-  await guest!.waitForFunction((t) => (window.__empires?.query.tick() ?? -1) > t, blip, { timeout: 60_000 });
+  await guest!.waitForFunction((t) => (window.__empires?.query.tick() ?? -1) > t, blip, { timeout: 180_000 });
   const before = await tick(host!);
   await guest!.reload();
   // The guest's page replays the game from the start and joins in again where it is.
-  await guest!.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 0, null, { timeout: 60_000 });
-  await expect.poll(() => tick(guest!), { timeout: 60_000 }).toBeGreaterThan(before);
-  await expect.poll(() => tick(host!), { timeout: 30_000 }).toBeGreaterThan(before + 200);
-  await expect.poll(() => tick(guest!), { timeout: 30_000 }).toBeGreaterThan(before + 200);
+  await guest!.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 0, null, { timeout: 120_000 });
+  await expect.poll(() => tick(guest!), { timeout: 120_000 }).toBeGreaterThan(before);
+  // 200 ticks is about half a minute at the runner's speed (M16.26).
+  await expect.poll(() => tick(host!), { timeout: 90_000 }).toBeGreaterThan(before + 200);
+  await expect.poll(() => tick(guest!), { timeout: 90_000 }).toBeGreaterThan(before + 200);
   expect(await host!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   expect(await guest!.evaluate(() => window.__mp!.router.desync)).toBeNull();
   // Still the guest's own seat (no computer took it).
@@ -308,7 +313,7 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
 });
 
 test('the host saves, and a load restarts both players from that save (M16.13)', async ({ browser }, info) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   const saveName = `room-restart-${info.project.name}`;
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
@@ -383,7 +388,7 @@ test('the host saves, and a load restarts both players from that save (M16.13)',
 });
 
 test('the host cannot restart the room from a save with a different number of players (M16.15)', async ({ browser }, info) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   const saveName = `other-game-${info.project.name}`;
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));

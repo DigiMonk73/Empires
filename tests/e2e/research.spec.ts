@@ -17,7 +17,8 @@ test('research by mouse: select the Town Center, advance to the Tool Age', async
   await expect(page.getByTestId('queue').locator('.queue-item')).toHaveCount(1);
   await snap(page, info, 'research-queued');
   await page.evaluate(() => window.__empires!.step(20 * 92));
-  await expect(page.getByTestId('age')).toHaveText('Tool Age');
+  // The age line updates on the next frame. That frame can take longer than 5 s under software drawing (M16.26).
+  await expect(page.getByTestId('age')).toHaveText('Tool Age', { timeout: 30_000 });
   expect(pageErrors(page)).toEqual([]);
 });
 

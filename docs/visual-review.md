@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-04 · M16.26 · Linux browser waits, no picture change · 6 shots ≤ 0.34%
+
+Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).
+The options controls, the credits text and the save list still read. No must-fix.
+
 ## 2026-10-04 · M16.25 · music check may take a minute, no picture change · 6 shots ≤ 0.31%
 
 Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).
