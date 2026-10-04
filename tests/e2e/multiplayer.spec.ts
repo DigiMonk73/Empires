@@ -143,7 +143,7 @@ test('plus and minus leave the multiplayer speed line on the setup speed (M16.14
 });
 
 test('in multiplayer the menu does not pause, and the keys list says so (M16.17)', async ({ browser }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
@@ -159,6 +159,8 @@ test('in multiplayer the menu does not pause, and the keys list says so (M16.17)
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 60_000 });
 
   await host!.keyboard.press('F1');
+  // The keys list can take more than a few seconds to draw once the game is running (M16.29).
+  await expect(host!.getByTestId('keys')).toBeVisible({ timeout: 30_000 });
   const row = (key: string) => host!.getByTestId('keys').locator('tr', { hasText: key });
   await expect(row('+ / −')).toContainText('single player');
   await expect(row('F10')).toContainText('single-player');
@@ -262,7 +264,8 @@ test('a player who closes the game: the other waits briefly, then a computer tak
   // Watch for it while the page closes, so a slow close does not hide the line (M16.27).
   const closing = guest!.close();
   closing.catch(() => {});
-  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 30_000 });
+  // A WebKit close can take more than half a minute to drop the seat (M16.29).
+  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 90_000 });
   await closing;
   const t0 = await tick(host!);
   await expect.poll(() => tick(host!), { timeout: 90_000 }).toBeGreaterThan(t0 + 100);
@@ -274,7 +277,7 @@ test('a player who closes the game: the other waits briefly, then a computer tak
 });
 
 test('a player who reloads mid-game catches up and both play on in step (M16.5b)', async ({ browser }) => {
-  test.setTimeout(360_000);
+  test.setTimeout(420_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) p.on('pageerror', (e) => errors.push(String(e)));
@@ -303,7 +306,8 @@ test('a player who reloads mid-game catches up and both play on in step (M16.5b)
   const before = await tick(host!);
   await guest!.reload();
   // The guest's page replays the game from the start and joins in again where it is.
-  await guest!.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 0, null, { timeout: 120_000 });
+  // That page can take more than two minutes to draw its first tick (M16.29).
+  await guest!.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 0, null, { timeout: 180_000 });
   await expect.poll(() => tick(guest!), { timeout: 120_000 }).toBeGreaterThan(before);
   // 200 ticks is about half a minute at the runner's speed (M16.26).
   await expect.poll(() => tick(host!), { timeout: 90_000 }).toBeGreaterThan(before + 200);

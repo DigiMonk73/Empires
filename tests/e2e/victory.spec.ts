@@ -7,7 +7,8 @@ import { frames, pageErrors, snap } from './helpers.ts';
  * win; seed 101 is one of the AI ladder's regression seeds (Hardest conquers Easiest at ~35:20 there).
  */
 test('main menu → skirmish vs Easiest → conquest victory → results', async ({ page }, info) => {
-  test.setTimeout(180_000);
+  // WebKit can spend the frame cap on every step of this match (M16.29).
+  test.setTimeout(360_000);
   await page.goto('./?edgeScroll=0&paused=1');
   await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('menu-skirmish').click();

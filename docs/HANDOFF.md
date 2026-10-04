@@ -66,10 +66,11 @@ Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the
 4. **[in progress, 2026-10-04]** Release at the user's request. The wrapper was merged first. Its `main`
    (`c974e81`) says the host saves a multiplayer game on the server, a load restarts the room, guests have no
    Save or Load, and speed and Restart stay hidden. Linux runs one browser and draws at the normal size.
-   This Mac still runs four and stays sharp. Run 37218611899 passed the rules and 175 browser tests in
-   65 minutes, then three tests ran out of time while the game was still starting. Those two multiplayer
-   starts now wait two minutes for the first ticks, and the achievements page allows three minutes. A font
-   or texture that never arrives can no longer freeze the page (M16.28). The frame gates and both tick
+   This Mac still runs four and stays sharp. Run 37229155599 passed the rules and 174 browser tests in
+   61 minutes, then five tests ran out of time. The keys list waits half a minute to draw, a dropped
+   WebKit seat is watched for a minute and a half, a reloaded page waits three minutes for its first tick,
+   and the victory match allows six minutes. The frame-time check stays on this Mac, because the crowd page
+   does not finish starting on software drawing (M16.29). The frame gates and both tick
    budgets stay. `v1.1.0` is this commit. Pushing it builds the disk image and then moves the wrapper pin
    (D71). The disk image and the package are not built yet. `WRAPPER_TOKEN` is on the game repo and
    `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the pin commit, and is
@@ -81,6 +82,7 @@ Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the
 ```
 
 ## Status
+- 2026-10-04 — Release run 37229155599 passed the rules and the 24 ms tick check, then 5 browser tests ran out of time (M16.29). 174 browser tests had passed. The keys list waits half a minute to draw, a dropped WebKit seat is watched for a minute and a half, a reloaded page waits three minutes for its first tick, and the victory match allows six minutes. The frame-time check stays on this Mac. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 198 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37218611899 passed the rules and the 24 ms tick check, then 3 browser tests ran out of time while the game was still starting (M16.28). 175 browser tests had passed. The input monkey and the different-player load now wait two minutes for the first ticks, and the achievements page allows three minutes. A font or texture that never arrives can no longer freeze the page. Linux still draws at the normal size. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 199 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37212765373 passed the rules and the 24 ms tick check, then 8 browser tests ran out of time after 83 minutes (M16.27). Software drawing at double resolution left the simulation at a few ticks a second. Linux now draws at the normal size. This Mac stays sharp. A dropped page is watched while it closes. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 199 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37208659774 passed the rules and the 24 ms tick check, then 8 browser tests ran out of time (M16.26). One browser on the runner still plays at about six ticks a second, and a few pages take more than 30 s to show the menu. Those waits are longer on Linux. This Mac is unchanged. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 198 s (673 unit, 180 e2e).

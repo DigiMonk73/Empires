@@ -765,7 +765,8 @@ async function boot(): Promise<void> {
     },
     settle: async () => {
       const cap = (p: Promise<unknown>) => Promise.race([p, new Promise<void>((r) => setTimeout(r, 8_000))]);
-      await cap(document.fonts.ready); // screenshots show the real fonts, not the fallback
+      // Already-loaded fonts resolve immediately. A font that never arrives must not freeze the page (M16.29).
+      if (document.fonts.status !== 'loaded') await cap(document.fonts.ready);
       const raf = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
       // One try. A texture that never arrives must not freeze the page (WebKit on the runner, M16.28).
       await cap(raf());
