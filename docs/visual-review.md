@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-04 · M16.22 · test timeout, no picture change · 7 shots ≤ 0.33%
+
+Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).
+The options controls and the save list still read. No must-fix.
+
 ## 2026-10-03 · M16.21 · CI logs and tick budget, no picture change · 7 shots ≤ 0.38%
 
 Credits, options and the save dialog. The diffs are the menu backdrop, the map behind the options panel, and a

@@ -37,7 +37,7 @@ describe('AI v2 (M13.2)', () => {
     const econ = ['woodworking', 'domestication', 'toolworking', 'wheel', 'leatherArmorSoldiers', 'leatherArmorArchers', 'leatherArmorCavalry'];
     expect(r.techs[0]!.filter((t) => econ.includes(t)).length).toBeGreaterThan(0);
     expect(r.techs[1]!.filter((t) => econ.includes(t))).toEqual([]); // Easiest researches none
-  });
+  }, 60_000); // 8.1s on the GitHub runner; the default 5s fails it (M16.22)
 
   it('Hardest starts with its head start (D48); other computers and humans do not', () => {
     const sim = Sim.create({ seed: 1, map: { w: 24, h: 24 }, players: [{ civ: 'greek' }, { civ: 'greek', ai: 'hardest' }, { civ: 'greek', ai: 'hard' }] });

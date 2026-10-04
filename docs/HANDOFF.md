@@ -1,6 +1,6 @@
 # HANDOFF — for whichever agent picks this up next
 
-_Kept current at every step (2026-10-02). If you are a new agent: read this, then `CLAUDE.md`, then the
+_Kept current at every step (2026-10-04). If you are a new agent: read this, then `CLAUDE.md`, then the
 `PROGRESS.md` header. The repo docs are the source of truth; nothing lives only in a conversation._
 
 ## What this is
@@ -78,6 +78,7 @@ into `main` until the user has played multiplayer on the VM (M16.8).
 ```
 
 ## Status
+- 2026-10-04 — The upgrade-programme match finished in 8.1s on the GitHub runner and Vitest's default 5s limit failed it (run 37146162213, M16.22). That one test now allows 60s, the same as the other long matches in the file. The 6 ms tick budget stays on this Mac; the runner still allows 24 ms. `npm run verify` green in 205 s (673 unit, 180 e2e). Next is still item 4, after the playtest.
 - 2026-10-03 — The first GitHub test run was stopped at 45 minutes (M16.21, D72). Drawing the sprites took 33
   minutes and that copy was not kept. The rules tests and the full-population tick check had already failed, and
   the time limit threw the reasons away. GitHub now runs the rules tests first, keeps the sprites, prints a

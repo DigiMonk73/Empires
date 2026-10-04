@@ -9,15 +9,15 @@ _Rewritten every iteration. Keep ≤ 30 lines._
 - **KI-13 / P24:** a straight missile hits along its line of flight, out to a tile past the aim point; an arcing
   stone still lands on the aim point. Band PASS: wars 92/96, Hard>Moderate 213/256, Hardest>Hard 256/256, water
   182/192 (average 45.5/48, bar 44; was 190, tolerance 8), duels 63/64 median 38.7 min, 0 crashes. M16.16 re-recorded the baseline.
-- **Last green:** `npm run verify` 208 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
+- **Last green:** `npm run verify` 205 s — 673 unit, 180 e2e, purity ok. Map change banded PASS: wars 91/96,
   Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
   duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
   verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 7 shots ≤ 0.38% (credits, options, save rows). The backdrop and a save-row clock. No must-fix.
-- **Open:** HANDOFF item 3 done (M16.19). CI is D71/D72. The first GitHub run was stopped at 45 minutes (sprite
-  draw 33 minutes, rules tests and the tick check had already failed, reasons not kept). M16.21 keeps the sprites
-  and allows 90 minutes. Disk image and `.s9pk` only from `main` after item 4. P75, P29, P30, P32 still open.
-  KI-2, KI-3, KI-5. Item 4 waits on the user's multiplayer game. StartOS instructions still match pinned `4152c5b`.
+- **Screens:** 7 shots ≤ 0.33% (credits, options, save rows). The backdrop and a save-row clock. No must-fix.
+- **Open:** HANDOFF items 1–3 done. M16.22 gives the 30-minute upgrade match 60s. GitHub's rules step failed it
+  at the default 5s (8.1s on that runner). The 6 ms tick budget stays; the runner still allows 24 ms (D72).
+  Disk image and `.s9pk` only from `main` after item 4. P75, P29, P30, P32 still open. KI-2, KI-3, KI-5.
+  Item 4 waits on the user's multiplayer game. StartOS instructions still match pinned `4152c5b`.
 - **Playable:** `npm run preview`. Remotes exist; this loop commits locally. 16 civs, 4 ages, water, hills,
   alligators, relics. Gates not relaxed. D1–D14 untouched.
 
