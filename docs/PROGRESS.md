@@ -13,10 +13,10 @@ _Rewritten every iteration. Keep ≤ 30 lines._
   Hard>Moderate 210/256 (average 52.5, bar 48), Hardest>Hard 256/256, water 182/192 (average 45.5, bar 44),
   duels 64/64, 0 crashes. Baseline re-recorded. Determinism 10/10. The 30-game-minute soak passed once (M16.12).
   verify:full last at the 1.1.0 rebuild (837cb61).
-- **Screens:** 3 shots ≤ 0.27% (options, save rows). The backdrop and a save-row clock. No must-fix.
-- **Open:** HANDOFF items 1–3 done. Item 4 is in progress. Run 37229155599 failed five browser tests after
-  61 minutes, after 174 had passed. Those waits are longer, and the frame-time check stays on this Mac.
-  The wrapper's `main`
+- **Screens:** 6 shots ≤ 0.16% (credits, options, save rows). The backdrop and a save-row clock. No must-fix.
+- **Open:** HANDOFF items 1–3 done. Item 4 is in progress. Run 37238522610 failed three browser tests after
+  65 minutes, after 175 had passed. Those starts now wait three minutes, and a leaving player closes the
+  socket first. The wrapper's `main`
   (`c974e81`) has the host-save wording. The disk image and the package are not built yet. The 6 ms tick
   budget stays; the runner still allows 24 ms (D72). P75, P29, P30, P32 still open. KI-2, KI-3, KI-5.
   `develop` is not created.

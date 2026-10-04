@@ -231,3 +231,4 @@ date,commit,seeds,worst_p99_ms,stuck,summary
 2026-10-04T19:36,9889c47,1 2 3,0.212,0,"seed 1: 69 s, P2 wins with 6; seed 2: 75 s, P1 wins with 6; seed 3: 77 s, P2 wins with 5"
 2026-10-04T21:56,a4a4697,1 2 3,0.200,0,"seed 1: 69 s, P2 wins with 6; seed 2: 75 s, P1 wins with 6; seed 3: 77 s, P2 wins with 5"
 2026-10-04T21:59,a4a4697,1 2 3,0.208,0,"seed 1: 69 s, P2 wins with 6; seed 2: 75 s, P1 wins with 6; seed 3: 77 s, P2 wins with 5"
+2026-10-04T23:13,fe27f0c,1 2 3,0.195,0,"seed 1: 69 s, P2 wins with 6; seed 2: 75 s, P1 wins with 6; seed 3: 77 s, P2 wins with 5"

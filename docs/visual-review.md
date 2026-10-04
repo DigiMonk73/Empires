@@ -2,6 +2,11 @@
 
 Newest first. Each entry: date · milestone.task · screenshots · scores (checklist numbers) · must-fix / should-fix.
 
+## 2026-10-04 · M16.30 · a leaving player closes the socket, no picture change on this Mac · 6 shots ≤ 0.16%
+
+Credits, options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).
+The options controls, the credits text and the save list still read. No must-fix.
+
 ## 2026-10-04 · M16.29 · a slow page may take three minutes, no picture change on this Mac · 3 shots ≤ 0.27%
 
 Options and the save dialog. The diffs are the menu backdrop and a save-row clock (the date reads Oct 4).

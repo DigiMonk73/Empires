@@ -13,6 +13,16 @@ declare global {
   }
 }
 
+/** Wait until the game has passed `above`. On a timeout, say what tick it was stuck on. */
+async function waitTick(page: Page, above: number, timeout: number): Promise<void> {
+  try {
+    await page.waitForFunction((n) => (window.__empires?.query.tick() ?? -1) > n, above, { timeout });
+  } catch (e) {
+    const tick = await page.evaluate(() => window.__empires?.query.tick() ?? -1).catch(() => -1);
+    throw new Error(`tick stayed at ${tick}`, { cause: e });
+  }
+}
+
 async function enterLobby(page: Page, name: string): Promise<void> {
   await page.goto('./?edgeScroll=0');
   // The Linux runner can take more than 30 s to draw the menu (M16.26). A menu that is already up returns at once.
@@ -206,7 +216,7 @@ async function poke(page: Page, rand: () => number): Promise<void> {
 }
 
 test('two browsers survive a seeded input monkey without errors or a desync (M16.12)', async ({ browser }) => {
-  test.setTimeout(360_000);
+  test.setTimeout(480_000);
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
   for (const p of [host!, guest!]) {
@@ -224,8 +234,8 @@ test('two browsers survive a seeded input monkey without errors or a desync (M16
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
-  // Both pages can take more than a minute to draw and reach the first ticks (M16.28).
-  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 20, null, { timeout: 120_000 });
+  // Both pages can take more than two minutes to draw and reach the first ticks (M16.30).
+  for (const p of [host!, guest!]) await waitTick(p, 20, 180_000);
 
   // Lens C, two clients: a smaller window, seeded clicks and keys, the menu, a pause, then back.
   for (const p of [host!, guest!]) await p.setViewportSize({ width: 1024, height: 640 });
@@ -260,12 +270,16 @@ test('a player who closes the game: the other waits briefly, then a computer tak
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
   for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 40, null, { timeout: 60_000 });
-  // Closing the page can outlast the hold, and the waiting line is then already gone (M16.26).
-  // Watch for it while the page closes, so a slow close does not hide the line (M16.27).
+  // WebKit keeps the socket open until the page has finished closing, so the other player
+  // never sees the drop (M16.30). Close the socket first, and do not reload: a closed game does not come back.
+  await guest!.evaluate(() => {
+    const mp = (window as unknown as { __mp: { net: { onDisconnect: () => void; close(): void } } }).__mp;
+    mp.net.onDisconnect = () => {};
+    mp.net.close();
+  });
   const closing = guest!.close();
   closing.catch(() => {});
-  // A WebKit close can take more than half a minute to drop the seat (M16.29).
-  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 90_000 });
+  await expect(host!.getByTestId('mp-waiting')).toBeVisible({ timeout: 30_000 });
   await closing;
   const t0 = await tick(host!);
   await expect.poll(() => tick(host!), { timeout: 90_000 }).toBeGreaterThan(t0 + 100);
@@ -396,7 +410,7 @@ test('the host saves, and a load restarts both players from that save (M16.13)',
 });
 
 test('the host cannot restart the room from a save with a different number of players (M16.15)', async ({ browser }, info) => {
-  test.setTimeout(360_000);
+  test.setTimeout(480_000);
   const saveName = `other-game-${info.project.name}`;
   const errors: string[] = [];
   const [host, guest] = await Promise.all([browser.newContext(), browser.newContext()].map(async (c) => (await c).newPage()));
@@ -421,8 +435,8 @@ test('the host cannot restart the room from a save with a different number of pl
   await expect(host!.getByTestId('setup-seat-name-1')).toHaveText('Bo');
   await host!.getByTestId('setup-size').selectOption('tiny');
   await host!.getByTestId('setup-start').click();
-  // The runner's first ticks can take more than a minute after the room opens (M16.28).
-  for (const p of [host!, guest!]) await p.waitForFunction(() => (window.__empires?.query.tick() ?? -1) > 10, null, { timeout: 120_000 });
+  // The runner's first ticks can take more than two minutes after the room opens (M16.30).
+  for (const p of [host!, guest!]) await waitTick(p, 10, 180_000);
 
   const before = await tick(host!);
   await host!.evaluate(() => ((window as unknown as { __loadMark?: number }).__loadMark = 1));
