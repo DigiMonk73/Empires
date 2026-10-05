@@ -1,4 +1,6 @@
 # Tests run on every push and every pull request.
+# Linux runs the game rules, the purity check, and the 24 ms tick budget (D73).
+# The full browser suite stays on the Mac (`npm run verify`).
 # A push to main, and only main, also builds a Mac disk image and points the StartOS
 # wrapper at that commit. The wrapper's own workflow then builds the .s9pk.
 # A future develop branch runs the tests and does not publish anything.
@@ -17,7 +19,7 @@ jobs:
   verify:
     name: Test suite
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,41 +27,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Typecheck
+        run: npm run -s typecheck
+      - name: Sim purity
+        run: npm run -s purity
       - name: Game rules
         run: npx vitest run --exclude tests/unit/bake-calibration.test.ts
-      - name: Install the browsers the tests play
-        run: npx playwright install --with-deps chromium webkit
-      - name: Reuse sprites when the art has not changed
-        id: sprites
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            public/baked
-            artifacts/bake/pages
-          key: baked-${{ hashFiles('src/art/**', 'tools/bake/**', 'bake.html') }}
-      - name: Draw the sprites
-        run: node tools/bake/cli.ts
-      - name: Save the sprites for the next run
-        if: steps.sprites.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            public/baked
-            artifacts/bake/pages
-          key: ${{ steps.sprites.outputs.cache-primary-key }}
-      - name: Run the full test suite
-        run: npm run verify
+      - name: Tick budget
+        run: node tools/sim/perf.ts
         env:
           # The 6 ms budget is the Mac. This runner is a smaller shared computer (D72).
           EMPIRES_PERF_MS: "24"
-      - name: Keep the logs if it failed
-        if: failure() || cancelled()
-        uses: actions/upload-artifact@v4
-        with:
-          name: verify-logs
-          path: |
-            artifacts/verify
-            artifacts/screens/CHANGED.md
 
   dmg:
     name: Mac disk image

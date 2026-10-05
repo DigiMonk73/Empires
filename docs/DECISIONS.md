@@ -485,7 +485,7 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   ≈ 1.2 σ of a difference of two 4-run totals), and the Done bars (DONE.md §3) must hold on the four-run average.
   The held-out seeds stay held out; the baseline is re-recorded when a change is kept.
 - **D71 — GitHub runs the tests, and `main` publishes the Mac app and the StartOS package** (2026-10-03).
-  Every push and pull request runs `npm run verify` on Linux (SwiftShader, because that runner has no Mac GPU).
+  Linux CI is rules + purity + tick budget (24 ms); full Playwright e2e stays on this Mac.
   A push to `main` builds an Apple Silicon disk image, checks the hidden app smoke, and publishes the `.dmg`.
   That same push moves the `empires-startos` submodule to the new commit, and the step fails until the
   `WRAPPER_TOKEN` secret exists. The disk image is already published by then.
@@ -502,3 +502,10 @@ Locked decisions D1–D14 come from the approved plan; changing one requires ask
   skip the draw), prints a failed step's last lines immediately, and allows 90 minutes. The same tick check runs
   there with `EMPIRES_PERF_MS=24`, because that computer is smaller and shared. A tick over 24 ms still fails
   the run. The 6 ms budget on this Mac is unchanged.
+- **D73 — Linux CI is the rules, not the browser suite** (2026-10-04).
+  GitHub's Ubuntu runner has no GPU. Release runs kept passing the game rules and about 175 Playwright tests,
+  then a few multiplayer pages timed out after 60–80 minutes. That full browser suite stays on this Mac, where
+  `npm run verify` is the gate before every commit and the tick budget stays 6 ms. Linux runs typecheck, sim
+  purity, the game-rules tests, and the full-population tick check at 24 ms (D72). It does not install a browser,
+  draw sprites, or play the 180 browser tests. The Mac disk image and the StartOS pin still wait on that job, so
+  a broken simulation cannot publish. The job allows 20 minutes.

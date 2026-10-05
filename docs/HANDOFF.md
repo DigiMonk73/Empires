@@ -8,7 +8,7 @@ _Kept current at every step (2026-10-04). If you are a new agent: read this, the
 original asset). TypeScript + PixiJS; a deterministic simulation (`src/sim`), computer players (`src/ai`), a Preact
 HUD (`src/ui`), a Tauri 2 Mac app (`src-tauri`) and a StartOS package (`../empires-startos`, this repo as its
 `upstream-project` submodule). Single-player 1.0.1 is complete (DONE.md: 8 of 9 criteria; the 9th is the user's
-playtest). Multiplayer is next (M16).
+playtest). Multiplayer is in the tree (M16).
 
 ## Rules you must keep (from CLAUDE.md)
 - **Headless only.** Never open visible windows, never `tauri dev`, never drive the user's screen. Playwright
@@ -37,8 +37,25 @@ playtest). Multiplayer is next (M16).
 | Determinism | `node tools/sim/determinism.ts --seeds 10` |
 | Trace one AI game | `node tools/sim/diagnose.ts …` (see its header) |
 
+## Paused
+Paused 2026-10-04 by the user, for a playtest and another job. This is not a crash and not a new milestone.
+
+Playable single-player is in the tree (1.0.1, except the user's own playtest). M16 multiplayer is in the tree: the host saves on the server, guests have no Save or Load, and speed and Restart stay hidden. Branch `m16-multiplayer`. Tag `v1.1.0` was moving with the release line and still names `461aacc` (M16.30) until the user asks to move it. M16.31 slims Linux CI and is committed locally; it is not pushed. Local `npm run verify` is green (201 s, 673 unit, 180 e2e). GitHub's full browser suite on Linux was the release blocker. The user's goal after this pause is to play with their son on StartOS, which needs an `.s9pk`, not more Linux timeout archaeology.
+
+Do not create `develop`. Do not push wrapper `v*` tags. `WRAPPER_TOKEN` is on the game repo. `STARTOS_BUILD_KEY` is on the wrapper. Wrapper `main` is `c974e81` until a pin lands. Do not start the StartOS VM unless the user says so. GitHub run 37243187371 attempt 2 is the old full-browser run on `461aacc`. Leave it alone. Do not cancel it and do not rerun it.
+
 ## Work queue (in order — take the top unfinished item; tick it with its commit)
-Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the user's request on 2026-10-04.
+Work on branch **`m16-multiplayer`**.
+
+1. **[paused → next]** Ship a StartOS package the user can install, without waiting on Linux Playwright.
+   Preferred: push `m16-multiplayer` and `main` only after M16.31 is committed and this Mac's `npm run verify` is green, so GitHub runs the slim Test suite, then the Mac disk image, then the wrapper pin. The wrapper then builds `empires_aarch64.s9pk` and `empires_x86_64.s9pk`.
+   Fallback if GitHub is still red or the user is in a hurry: in `/Users/b1ackswan/code/empires-startos`, point `upstream-project` at the playable Empires SHA, commit that bump, then `PATH=/Users/b1ackswan/code/btctx-vm-lab/bin:$PATH make arm` and install the `.s9pk`. The user starts the VM. The s9pk rule reads git HEAD, not dirty files.
+   Do not start the VM unless the user says so.
+2. **[open]** User playtest: Skirmish vs Easy or Easiest, then a two-player StartOS room (host and guest). Fold feedback into `docs/KNOWN_ISSUES.md`. User feedback outranks this list.
+3. **[open, after play]** Leftover polish, not blockers: P75 (Hard's rush spends food, so Tool Age is late), P29, P30, P32, KI-2 (optional AI images), KI-3 (StartOS backup and restore), KI-5 (voice licence, personal use). Island and arrow work (KI-13) is done.
+4. **[not now]** Do not reopen the Linux full browser suite. Do not lengthen Playwright timeouts. Do not add another "wait three more minutes" commit unless the user asks. The multiplayer soak (`EMPIRES_MP_SOAK=1`) stays optional and out of `npm run verify`.
+
+Already done on this branch, not the next step:
 
 1. **[done, M16.9] Island wood stall, then KI-13 arrows.** The stall fixes (all banded and kept, water 183 → 190/192):
    room for a transport over the population limit; a full island's last-resort building spot (Market); Docks never
@@ -63,24 +80,27 @@ Work on branch **`m16-multiplayer`**. `v1.1.0` moves to this commit, made at the
    - **[done, M16.17]** The keys list says that +/− and a pausing menu are single-player. In a multiplayer game F10 keeps the clock running.
    - **[done, M16.18]** P75 rechecked. Hard's Tool Age still waits on a rush's food. Left open.
    - **[done, M16.19]** Lenses A, B, E, F and H on this build. Nothing new. C is the M16.12 monkey, D is M16.17, G4 was clean.
-4. **[in progress, 2026-10-04]** Release at the user's request. The wrapper was merged first. Its `main`
-   (`c974e81`) says the host saves a multiplayer game on the server, a load restarts the room, guests have no
-   Save or Load, and speed and Restart stay hidden. Linux runs one browser and draws at the normal size.
-   This Mac still runs four and stays sharp. Run 37238522610 passed the rules and 175 browser tests in
-   65 minutes, then three tests ran out of time. The two slow Chromium starts now wait three minutes for
-   the first ticks. A player who leaves closes the socket first, because WebKit keeps it open until the
-   page has finished closing and the waiting line never appears (M16.30). The frame gates and both tick
-   budgets stay. `v1.1.0` is this commit. Pushing it builds the disk image and then moves the wrapper pin
-   (D71). The disk image and the package are not built yet. `WRAPPER_TOKEN` is on the game repo and
-   `STARTOS_BUILD_KEY` is on the wrapper. The wrapper's `v1.1.0` tag stays local, on the pin commit, and is
-   not pushed. `develop` is not created.
+4. **[done through M16.30]** The release line reached `461aacc`. The wrapper's `main` (`c974e81`) already says the host saves on the server. Linux full-browser runs kept timing out after the rules had passed. M16.31 stops that job from playing the browsers.
 
-## The loop prompt (start a fresh session in `/Users/b1ackswan/code/Empires` and paste)
+## Prompts
+Do not start either prompt with `/loop`. In this app that word creates a timer. This pause does not schedule one.
+
+### A) Resume after pause
+Paste in a new session in `/Users/b1ackswan/code/Empires`:
+
 ```
-/loop Empires work loop, repo /Users/b1ackswan/code/Empires (branch m16-multiplayer). Each wakeup: run `date`, then read docs/HANDOFF.md (rules, work queue, status), docs/LOOP.md and docs/POLISH_LOOP.md — the repo docs are the source of truth, not memory. Take the top unfinished item of HANDOFF's work queue and do one verified step: reproduce it with a failing test, fix it, `npm run verify` green (plus `node tools/sim/determinism.ts --seeds 10` and `node tools/sim/ai-band.ts` for AI, pathing or mapgen changes), look at the changed screenshots, commit locally as `M<n>.<k>: …`, and update HANDOFF's status line. Headless only, local git only (never push or add remotes), never relax a gate or touch D1–D14, don't start the StartOS VM or tag m15. Three failed cycles on an item: record it in docs/KNOWN_ISSUES.md and move to the next. Long jobs (verify:full, ai-band, soaks) in the background. Keep going until the queue is empty or the user says stop.
+Empires resume after the 2026-10-04 pause. Repo /Users/b1ackswan/code/Empires, branch m16-multiplayer. Read docs/HANDOFF.md and follow it. Do not start a timer. The top queue item is to ship a StartOS package the user can install. M16.31 is the local commit that slims Linux CI to typecheck, purity, the game rules, and the 24 ms tick budget. This Mac's npm run verify must still be green. Then push origin main and m16-multiplayer so GitHub runs that slim Test suite, then the Mac disk image, then the wrapper pin, and the wrapper builds both .s9pk files. Leave GitHub run 37243187371 alone if it is still going. Do not cancel it and do not rerun it. Do not create develop. Do not push a wrapper v* tag. Do not start the StartOS VM unless the user says so. Do not reopen Linux full Playwright, and do not lengthen browser timeouts. Headless only. Never relax a gate or touch D1–D14. User feedback outranks the queue.
+```
+
+### B) Local package, if GitHub is still red or the user is in a hurry
+Paste in a new session in `/Users/b1ackswan/code/empires-startos`:
+
+```
+Empires local StartOS package. Repo /Users/b1ackswan/code/empires-startos. The user wants an .s9pk without waiting on GitHub Playwright. Point the upstream-project submodule at the playable Empires commit (M16.31 unless they name another), commit that bump, then run PATH=/Users/b1ackswan/code/btctx-vm-lab/bin:$PATH make arm. The package rule reads git HEAD, not dirty files. Do not start the StartOS VM unless the user says so. Do not push a wrapper v* tag. Do not create develop.
 ```
 
 ## Status
+- 2026-10-04 — Paused by the user for a playtest and another job (M16.31). Linux CI keeps typecheck, purity, the game rules, and the 24 ms tick budget, and drops the full browser suite. The Mac gate is unchanged. `npm run verify` green in 201 s (673 unit, 180 e2e). Not pushed. Run 37243187371 is left alone. `develop` is not created. P75, P29, P30, P32, KI-2, KI-3 and KI-5 stay open.
 - 2026-10-04 — Release run 37238522610 passed the rules and the 24 ms tick check, then 3 browser tests ran out of time (M16.30). 175 browser tests had passed. The two slow Chromium starts now wait three minutes for the first ticks. A player who leaves closes the socket first, because WebKit keeps it open until the page has finished closing. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 198 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37229155599 passed the rules and the 24 ms tick check, then 5 browser tests ran out of time (M16.29). 174 browser tests had passed. The keys list waits half a minute to draw, a dropped WebKit seat is watched for a minute and a half, a reloaded page waits three minutes for its first tick, and the victory match allows six minutes. The frame-time check stays on this Mac. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 198 s (673 unit, 180 e2e).
 - 2026-10-04 — Release run 37218611899 passed the rules and the 24 ms tick check, then 3 browser tests ran out of time while the game was still starting (M16.28). 175 browser tests had passed. The input monkey and the different-player load now wait two minutes for the first ticks, and the achievements page allows three minutes. A font or texture that never arrives can no longer freeze the page. Linux still draws at the normal size. The 6 ms tick budget and the runner's 24 ms budget stay. `npm run verify` green in 199 s (673 unit, 180 e2e).
